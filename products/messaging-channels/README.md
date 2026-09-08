@@ -28,10 +28,14 @@ confirmation are not provided by this move.
 `gateway-teams` keeps default Adaptive Cards and explicit legacy MessageCards.
 The webhook fixes the destination; `recipient` is informational and does not
 retarget messages. No automatic fallback or inbound service is added.
+`gateway-telegram` includes send/status/start/stop and the legacy long-poll loop,
+with repeatable message text, allowlist/rate limiting and offset/PID state.
+Account credentials and installed state are not copied; OS partition migration
+remains responsible for existing data.
 
 This is a source move, not completion of the connector lifecycle redesign.
 Authenticated owner/sender admission and durable replay handling still need
-the system-owned connector interface; Discord's legacy `cos agent ask` path is not
+the system-owned connector interface; Discord and Telegram legacy `cos agent ask` paths are not
 newly authorized. No credentials or installed state are copied.
 
 See [MODULE.md](MODULE.md) for boundaries and commands.

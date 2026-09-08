@@ -2,7 +2,8 @@
 
 Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`,
 `gateway-googlechat`, `gateway-larksuite`, `gateway-matrix`, `gateway-mattermost`,
-`gateway-rocketchat`, `gateway-signal`, `gateway-slack`, `gateway-sms` and `gateway-teams`.
+`gateway-rocketchat`, `gateway-signal`, `gateway-slack`, `gateway-sms`, `gateway-teams`
+and `gateway-telegram`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -22,6 +23,7 @@ super-privileged App identity.
 | `apps/gateway/slack/` | Web API send/status, bot-token authentication and API-level error handling |
 | `apps/gateway/sms/` | Twilio send/status, form encoding and phone/Messaging Service sender selection |
 | `apps/gateway/teams/` | Fixed-destination webhook, Adaptive Card and explicit legacy MessageCard send/status |
+| `apps/gateway/telegram/` | Bot API send/status/start/stop, legacy polling, offset/PID state and allowlist/rate-limit tests |
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
@@ -32,11 +34,12 @@ OS-owned; moving code grants nothing new.
 
 Source relocation preserves the legacy operations adapter, environment/config
 precedence, Discord API/resume restrictions and App-scoped
-`apps/gateway-discord` state layout. Do not copy credentials, config, cursors,
+`apps/gateway-discord` state layout. Telegram retains `apps/gateway-telegram`
+offset/PID state and its existing OS partition migration. Do not copy credentials, config, cursors,
 session identifiers or PID files into this repository. Existing OS state
 partition migration remains the authority for installed data.
 
-Discord's legacy inbound path still invokes `cos agent ask`. Local sender allowlists
+Discord and Telegram legacy inbound paths still invoke `cos agent ask`. Local sender allowlists
 and rate limits are not an authenticated owner-bound connector admission API,
 and relocation does not make App-originated system-Agent calls authorized.
 Service lifecycle, authenticated sender/owner binding and durable replay
@@ -104,6 +107,12 @@ selection, not automatic fallback. Its recipient flag is informational; the
 configured webhook fixes the destination. Existing wildcard network, exact
 credential and self-memory grants remain unchanged, with actual host checks
 in shared egress. No inbound service, delivery lifecycle or state store is added.
+
+Telegram retains four operations and its repeatable-text send contract.
+Direct/SDK tests use synthetic transport, subprocesses and signals with temporary
+offset/PID files; they do not establish that App-originated Agent dispatch is
+authorized. Existing polling, allowlists, rate limits and grants are preserved,
+not upgraded into authenticated owner-bound admission or durable delivery.
 
 ```bash
 python3 tools/test.py messaging-channels
