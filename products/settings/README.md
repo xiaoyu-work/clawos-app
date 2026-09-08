@@ -17,6 +17,11 @@ sessions remain OS-owned.
 capture. Capture requires separate camera and exact destination-write grants;
 the OS rechecks node identity and persists images without overwriting.
 
+`display-manager` exposes ten tools for output layout, mode/scale, mirroring,
+backlight and restore. Apply/restore require explicit confirmation; layout
+files require exact read grants. COSMIC control and backup state remain
+OS-owned.
+
 Wayland, AT-SPI and PipeWire/WirePlumber execution and user-session validation remain behind
 the Claw OS broker. The native `cosmic-settings` UI and other system-management
 Apps are still pending; this product must not become a super-privileged

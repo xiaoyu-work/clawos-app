@@ -1,9 +1,10 @@
 # Settings Product
 
 Own `accessibility-manager`'s five MCP tools, `audio-manager`'s ten audio tools,
-`bluetooth-manager`'s twelve device-lifecycle tools and `camera-manager`'s
-two discovery/capture tools. Native `cosmic-settings` and other
-system-management Apps await their individual migrations.
+`bluetooth-manager`'s twelve device-lifecycle tools, `camera-manager`'s
+two discovery/capture tools and `display-manager`'s ten output/backlight tools.
+Native `cosmic-settings` and other system-management Apps await their
+individual migrations.
 
 | Path | Responsibility |
 | --- | --- |
@@ -20,6 +21,9 @@ system-management Apps await their individual migrations.
 | `apps/camera-manager/app.json` | Separate observation, camera capture and exact destination write scopes |
 | `apps/camera-manager/main.py`, `server.py` | Validated `cos __camera` requests and SDK handlers with bounded capture dimensions |
 | `apps/camera-manager/test_main.py` | Direct/SDK PNG/JPEG routes, default/explicit dimensions and pre-policy validation |
+| `apps/display-manager/app.json` | Observation/manage scopes, exact layout-read scope and explicit confirmation |
+| `apps/display-manager/main.py`, `server.py` | Validated `cos __display` requests and direct SDK handlers |
+| `apps/display-manager/test_main.py` | Direct/SDK routes, optional mode fields, numeric bounds and strict confirmation |
 | `package.json` | Product-owned staging and test inputs |
 
 Preserve the installed App identity. Status requires `sys.observe` scope
@@ -45,6 +49,12 @@ not pair, forget, trust or change any live device.
 The OS owns user-session/PipeWire access, node-serial revalidation, GStreamer
 execution and bounded, non-overwriting image persistence. Relocation does not
 move captured images or activate cameras.
+
+`display-manager` retains `sys.observe:display` and `device.display:manage`.
+Applying a layout also requires `fs.read` on its exact canonical source path.
+Apply/restore require explicit confirmation. COSMIC output control, kernel
+backlights, mutation serialization and owner-bound backup/restore state remain
+OS-owned; source relocation does not change the current display layout.
 
 Settings organizes interfaces, not a union of authority. Each provider must
 retain its own App identity, scope checks and consent boundary. Apps do not
