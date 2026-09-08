@@ -6,9 +6,13 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
-from stage_native import stage_assets
 
 ROOT = Path(__file__).resolve().parents[1]
+STAGE_SPEC = importlib.util.spec_from_file_location(
+    "stage_native", ROOT / "tools/stage_native.py",
+)
+stage_native = importlib.util.module_from_spec(STAGE_SPEC)
+STAGE_SPEC.loader.exec_module(stage_native)
 
 
 def prepare(product: str, toolkit: Path, destination: Path):
@@ -24,7 +28,7 @@ def prepare(product: str, toolkit: Path, destination: Path):
     if destination.exists():
         shutil.rmtree(destination)
     shutil.copytree(component, destination, symlinks=True)
-    stage_assets(source, package, name, destination)
+    stage_native.stage_assets(source, package, name, destination)
     if package.get("native_kind") == "binary":
         manifest = destination / "Cargo.toml"
         content = manifest.read_text().replace(
