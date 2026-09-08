@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/config-editor"],
+  "apps": ["apps/config-editor", "apps/systemd"],
   "tests": []
 }

@@ -21,7 +21,7 @@ remain in Claw OS.
 | Storage | [products/storage](products/storage/README.md) | `storage-manager` has moved; UDisks2 execution and block-device checks stay OS-owned; existing data is unchanged |
 | Settings | [products/settings](products/settings/README.md) | All eleven assigned management App sources have moved, including user-manager; native Settings remains pending and provider authority stays separate |
 | Security | [products/security](products/security/README.md) | `security-center`, `firewall-manager` and `usb-guard` have moved with separate grants; inspection, nftables/USB execution and durable state remain OS-owned |
-| Maintenance | [products/maintenance](products/maintenance/README.md) | `config-editor` has moved; validation, atomic replacement and backup state remain OS-owned; `systemd` awaits migration |
+| Maintenance | [products/maintenance](products/maintenance/README.md) | `config-editor` and `systemd` have moved with separate exact-path/unit grants; configuration/service execution, state and rollback remain OS-owned |
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 On Linux/WSL, run Mail contracts with `python3 tools/test.py mail`.

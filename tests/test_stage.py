@@ -81,7 +81,7 @@ def test_terminal_stage_preserves_exec_without_process_services(tmp_path):
     ("diagnostics", ["hardware-center", "crash-doctor", "netdiag"]),
     ("storage", ["storage-manager"]),
     ("security", ["security-center", "firewall-manager", "usb-guard"]),
-    ("maintenance", ["config-editor"]),
+    ("maintenance", ["config-editor", "systemd"]),
     ("settings", ["accessibility-manager", "audio-manager", "bluetooth-manager", "camera-manager", "display-manager", "desktop-manager", "location-manager", "network-manager", "power-manager", "printer-manager", "user-manager"]),
 ])
 def test_broker_products_stage_without_os_services(tmp_path, product, app_ids):
