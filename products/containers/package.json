@@ -1,0 +1,4 @@
+{
+  "apps": ["apps/container-manager"],
+  "tests": []
+}

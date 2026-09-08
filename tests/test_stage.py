@@ -74,6 +74,19 @@ def test_terminal_stage_preserves_exec_without_process_services(tmp_path):
     assert not (tmp_path / "var/lib/cos").exists()
 
 
+def test_containers_stage_preserves_the_broker_client_without_daemons(tmp_path):
+    assert "containers" in stage.products()
+    assert stage.stage("containers", tmp_path) == ["container-manager"]
+    app = tmp_path / "usr/lib/cos/apps/container-manager"
+    source = ROOT / "products/containers/apps/container-manager"
+    for filename in ("app.json", "main.py", "server.py"):
+        assert (app / filename).read_bytes() == (source / filename).read_bytes()
+    assert not (app / "test_main.py").exists()
+    assert not (tmp_path / "usr/lib/cos/python").exists()
+    assert not (tmp_path / "usr/bin").exists()
+    assert not (tmp_path / "var/lib").exists()
+
+
 def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
     assert stage.stage("mail", tmp_path) == ["mail-ai", "email", "gateway-email"]
     app = tmp_path / "usr/lib/cos/apps/mail-ai"
