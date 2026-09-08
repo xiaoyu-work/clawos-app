@@ -505,7 +505,9 @@ impl cosmic::Application for SettingsApp {
                 }
 
                 crate::pages::Message::Applications(message) => {
-                    page::update!(self.pages, message, applications::Page);
+                    if let Some(page) = self.pages.page_mut::<applications::Page>() {
+                        return page.update(message).map(Into::into);
+                    }
                 }
 
                 #[cfg(feature = "page-bluetooth")]

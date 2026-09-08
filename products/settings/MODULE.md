@@ -50,6 +50,7 @@ here, retaining its separate twelfth identity and original default pages.
 | `package.json` | Product-owned staging and test inputs |
 | `native/cosmic-settings/` | Entire independent GPL workspace, lock, all page/subscription crates and resource/config/translation inputs |
 | `native/cosmic-settings/cosmic-settings/src/mcp.rs` | Static page catalog/search and fixed OS Settings activation |
+| `native/cosmic-settings/cosmic-settings/src/permissions.rs`, `src/pages/applications/permissions.rs` | Shared OS permission client, cancellable Applications UI, fixed trusted human confirmation |
 | `native/cosmic-settings/cosmic-settings/src/claw_glue.rs`, `src/human.rs`, `human_bridge.py` | Human-only controlled filesystem/process/policy/snapshot adapters and SDK Agent context; no App dispatch |
 | `native/test_build.py`, `native/test_process.py` | Workspace/default graph, synthetic human adapters, installed resources and authenticated stdio MCP |
 
@@ -125,11 +126,35 @@ explicit confirmation. Tests do not change real users, groups or passwords.
 
 Settings organizes interfaces, not a union of authority. Each provider must
 retain its own App identity, scope checks and consent boundary. Apps do not
-call one another. Native MCP has only `settings.list_pages`, `settings.search`
+call one another. Native MCP preserves `settings.list_pages`, `settings.search`
 and `settings.open`. The first two require no device authority; opening uses
 only `proc.spawn:cosmic-settings` at the fixed OS Settings target. Optional page
 ids are checked against the native CLI's page commands before crossing the
 service boundary, including its existing magnifier and dock/panel-applet pages.
+
+Four new manifest-authoritative tools are `settings.permissions_list`,
+`settings.permissions_show`, `settings.permissions_request` and
+`settings.permissions_revoke`. They require only `sys.permissions:manage`.
+The Applications UI and MCP use the same typed OS route; identity comes from
+the authenticated broker session, never MCP metadata or user-provided owner
+fields. The UI's fixed polkit helper path is not an MCP operation.
+
+The page distinguishes verified declarations, owner/App enablement and current
+daemon grants, and shows quarantine/service errors plus pending/recent changes.
+Existing declarations default to enabled, not automatically granted. Revocation
+disables one brokered permission and invalidates that owner's target App grants;
+restart/retry the App afterward. Requesting restoration returns pending until
+a human confirms through the OS helper, with duration forever/until revoked.
+This removes a deny gate, never expands signed manifest/trust/caller ceilings.
+Filesystem mounts, direct egress/native authority and argument-bound scopes
+remain visible but explicitly cannot be changed in this first version.
+Cancellation discards stale results; an in-flight mutation may still complete,
+so refresh before retrying. No rollback of already-authorized effects is claimed.
+
+Installed Desktop requires the OS `claw-os-app-permissions-v1` service provided
+by Agent. Source development against an older service fails visibly, without
+raw socket/file authority or a silent success fallback. No live device/user
+state or independent manager grants are migrated.
 
 The native human UI retains its original D-Bus/Wayland and configuration
 behavior, not the eleven Apps' combined grants. Former filesystem/exec App

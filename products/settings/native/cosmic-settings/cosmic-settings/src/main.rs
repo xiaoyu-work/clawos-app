@@ -15,6 +15,7 @@ pub mod claw_glue;
 mod human;
 pub mod config;
 pub mod mcp;
+pub mod permissions;
 
 #[macro_use]
 pub mod localize;

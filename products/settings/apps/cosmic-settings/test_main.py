@@ -1,4 +1,4 @@
-"""Native Settings keeps only page discovery and its own fixed launch grant."""
+"""Native Settings management authority never includes its target Apps' grants."""
 
 import json
 from pathlib import Path
@@ -13,7 +13,17 @@ def test_native_identity_and_exact_grants():
     assert (manifest["id"], manifest["runtime"], manifest["schema_version"]) == ("cosmic-settings", "binary", 2)
     assert manifest["mcp"]["entry"] == "/usr/bin/cosmic-settings"
     tools = {tool["name"]: tool for tool in manifest["mcp"]["tools"]}
-    assert set(tools) == {"settings.list_pages", "settings.search", "settings.open"}
+    management = {f"settings.permissions_{action}" for action in ("list", "show", "request", "revoke")}
+    assert set(tools) == {"settings.list_pages", "settings.search", "settings.open"} | management
+    for name in management:
+        assert len(tools[name]["needs"]) == 1
+        assert tools[name]["needs"][0]["verb"] == "sys.permissions"
+        assert tools[name]["needs"][0]["scope"] == {
+            "kind": "fixed", "scope": {"kind": "name", "value": "manage"},
+        }
+        assert not {"owner_uid", "session", "approve", "confirm"} & {
+            arg["name"] for arg in tools[name]["args"]
+        }
     assert tools["settings.list_pages"]["args"] == []
     assert tools["settings.list_pages"]["needs"] == tools["settings.search"]["needs"] == []
     assert tools["settings.search"]["args"][1]["default"] == 5

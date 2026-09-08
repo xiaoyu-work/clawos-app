@@ -943,6 +943,30 @@ region = Region
 ## Applications
 
 applications = Applications
+app-permissions = App permissions
+app-permissions-description = Manage declared brokered permissions for your Apps. Settings never inherits their grants. Restoring a revoked permission requires trusted human confirmation; direct-resource and argument-bound permissions cannot yet be changed here.
+app-permissions-refresh = Refresh
+app-permissions-cancel = Cancel loading
+app-permissions-loading = Loading OS permission state…
+app-permissions-cancelled = Loading cancelled. An in-flight change may have completed; refresh to check.
+app-permissions-unsupported = This permission cannot safely be changed here.
+app-permissions-stale = The request is no longer in this App's pending list. Refresh first.
+app-permissions-truncated = The catalog was truncated by the OS service limit.
+app-permissions-pending = Request pending. No permission was granted; trusted confirmation is required.
+app-permissions-refresh-after-change = Change submitted. Live App sessions may need restart; the refreshed OS state below is authoritative.
+app-permissions-empty = No verified Apps available.
+app-permissions-quarantined = Quarantined package
+app-permissions-enabled = Owner policy enabled
+app-permissions-live = Current daemon grant
+app-permissions-revoke = Revoke permission
+app-permissions-request = Request restoration
+app-permissions-pending-title = Pending requests
+app-permissions-approve = Confirm with trusted helper…
+app-permissions-deny = Deny with trusted helper…
+app-permissions-recent = Recent decisions
+app-permissions-yes = Yes
+app-permissions-no = No
+app-permissions-unknown = Unknown / argument-bound
 
 ## Applications: Default applications
 

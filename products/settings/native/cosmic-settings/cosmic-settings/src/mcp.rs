@@ -32,7 +32,7 @@ const PAGES: &[(&str, &str, &str)] = &[
         "Appearance",
         "Light/dark mode, accent colour, theme import/export.",
     ),
-    ("applications", "Applications", "Installed app preferences."),
+    ("applications", "Applications", "Verified Apps, effective brokered permissions, requests and revocation."),
     (
         "bluetooth",
         "Bluetooth",
@@ -232,6 +232,39 @@ fn valid_page(page: &str) -> bool {
     crate::Args::command().get_subcommands().any(|command| command.get_name() == page)
 }
 
+struct PermissionsTool {
+    name: &'static str,
+    action: &'static str,
+}
+
+#[async_trait]
+impl Tool for PermissionsTool {
+    fn name(&self) -> &'static str { self.name }
+
+    async fn handle(&self, input: Value, context: CallContext) -> ToolResult {
+        if let Err(error) = context.check_cancelled() {
+            return ToolResult::error(error.to_string());
+        }
+        let mut request = input;
+        let Some(object) = request.as_object_mut() else {
+            return ToolResult::error("permission arguments must be an object");
+        };
+        if object.keys().any(|key| !matches!(key.as_str(), "app_id" | "permission_id" | "reason")) {
+            return ToolResult::error("unsupported permission argument; owner/session/approval cannot be supplied");
+        }
+        object.insert("action".into(), json!(self.action));
+        let result = crate::permissions::call(request).await;
+        if let Err(error) = context.check_cancelled() {
+            return ToolResult::error(format!("{error}; an in-flight request may have completed, refresh its status"));
+        }
+        match result {
+            Ok(value) => ToolResult::structured_with_text(value.clone(), value.to_string())
+                .unwrap_or_else(|error| ToolResult::error(error.to_string())),
+            Err(error) => ToolResult::error(error),
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
@@ -245,6 +278,14 @@ pub fn run() -> anyhow::Result<()> {
         app.bind(Arc::new(ListPagesTool))?;
         app.bind(Arc::new(SearchTool))?;
         app.bind(Arc::new(OpenTool))?;
+        for (name, action) in [
+            ("settings.permissions_list", "list"),
+            ("settings.permissions_show", "show"),
+            ("settings.permissions_request", "request"),
+            ("settings.permissions_revoke", "revoke"),
+        ] {
+            app.bind(Arc::new(PermissionsTool { name, action }))?;
+        }
         app.serve_stdio().await
     })
     .map_err(|error| anyhow::anyhow!("cosmic-settings MCP server exited: {error}"))

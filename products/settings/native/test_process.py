@@ -52,6 +52,13 @@ def main():
             f"root=pathlib.Path({namespace!r})\n"
             "args=sys.argv[1:]\n"
             "with (root/'calls').open('a') as f:f.write(json.dumps([args,os.environ.get('COS_SESSION')])+'\\n')\n"
+            "if args[1]=='__app-permissions':\n"
+            " request=json.loads(args[2]);assert not {'owner_uid','session','confirm','approve'} & request.keys()\n"
+            " action=request['action'];assert action in ['list','show','request','revoke']\n"
+            " if (root/'deny').exists():\n"
+            "  print(json.dumps({'wire_version':1,'ok':False,'error':{'code':'denied','message':'permission fixture denied'}}));sys.exit(1)\n"
+            " data={'list':{'apps':[{'app_id':'audio-manager'}]},'show':{'app_id':'audio-manager','permissions':[{'permission_id':'exact-id','enabled':False,'live_granted':False}]},'request':{'id':'ap-fixture','status':'pending','enabled':False},'revoke':{'revoked':True,'enabled':False,'restart_required':True}}[action]\n"
+            " print(json.dumps({'wire_version':1,'ok':True,'data':data}));sys.exit(0)\n"
             "assert args[1:5]==['__desktop','launch','--app-id','com.clawos.Settings'],args\n"
             "assert args[5:] in ([],['--uri','settings://wireless'],['--uri','settings://accessibility-magnifier'],['--uri','settings://dock-applet'],['--uri','settings://panel-applet']),args\n"
             "if (root/'deny').exists():\n"
@@ -125,6 +132,8 @@ def main():
         process.stdin.flush()
         assert {tool["name"] for tool in request("tools/list", {})["result"]["tools"]} == {
             "settings.list_pages", "settings.search", "settings.open",
+            "settings.permissions_list", "settings.permissions_show",
+            "settings.permissions_request", "settings.permissions_revoke",
         }
         assert "error" in request("tools/call", {"name": "settings.list_pages", "arguments": {}})
         pages = success(call("list_pages", {}))["pages"]
@@ -149,8 +158,29 @@ def main():
             reply = call(name, args, **context)
             assert "error" in reply or reply["result"].get("isError"), reply
         assert (fixture / "calls").read_bytes() == before
+        assert success(call("permissions_list", {}))["apps"][0]["app_id"] == "audio-manager"
+        assert not success(call("permissions_show", {"app_id": "audio-manager"}))["permissions"][0]["enabled"]
+        pending = success(call("permissions_request", {
+            "app_id": "audio-manager", "permission_id": "exact-id", "reason": "Need audio status",
+        }))
+        assert pending["status"] == "pending" and pending["enabled"] is False
+        assert success(call("permissions_revoke", {
+            "app_id": "audio-manager", "permission_id": "exact-id",
+        }))["revoked"]
+        before = (fixture / "calls").read_bytes()
+        for name, args in [
+            ("permissions_approve", {"id": "ap-fixture", "confirm": True}),
+            ("permissions_request", {"app_id": "audio-manager", "permission_id": "exact-id",
+                                     "reason": "forged", "owner_uid": 0}),
+            ("permissions_show", {"app_id": "audio-manager", "session": "another-owner"}),
+            ("permissions_revoke", {"app_id": "audio-manager"}),
+        ]:
+            reply = call(name, args)
+            assert "error" in reply or reply["result"].get("isError"), reply
+        assert (fixture / "calls").read_bytes() == before
         (fixture / "deny").touch()
         assert call("open", {})["result"]["isError"]
+        assert call("permissions_list", {})["result"]["isError"]
         (fixture / "deny").unlink()
         (fixture / "wrong-target").touch()
         assert call("open", {})["result"]["isError"]
@@ -158,7 +188,8 @@ def main():
         assert all(sid == "worker-session" and "app" not in args for args, sid in calls)
         assert not (fixture / "config").exists()
         print("Settings installed binary/resources: 32 localized entries, schemas/polkit/icons; "
-              "three authenticated MCP tools, 31 pages, search clamps, fixed launch, denial, "
+              "seven authenticated MCP tools, owner/session injection and self-approval rejection, "
+              "pending restoration and revocation responses; 31 pages, search clamps, fixed launch, denial, "
               "expiry and wrong-target rejection; no GUI/device/account access")
     finally:
         if process is not None:

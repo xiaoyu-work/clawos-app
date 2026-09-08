@@ -96,8 +96,13 @@ with generated inputs under `build/<product>-native` and a shared native target
 cache. CI compiles and tests Calendar, Clipboard and Desktop Widgets libraries
 and the complete Launcher, Editor, Files, Terminal, Store and Settings binaries.
 Settings preserves its nested workspace, all default pages, original toolkit
-patches and config-schema dependencies. Native MCP provides static discovery
-and fixed-target activation only; it never inherits management provider grants.
+patches and config-schema dependencies. Applications now presents verified App
+permissions through the same OS client as four permission-management MCP tools.
+Those tools require only `sys.permissions:manage`, never target provider grants.
+Requests are pending until the OS polkit helper confirms; revocation and live
+enforcement remain in the OS. Fixed brokered permissions can be disabled and
+restored; direct resources and argument-bound scopes are explicitly unsupported.
+The original discovery and fixed-target activation tools remain unchanged.
 Human UI adapters use OS filesystem/process services and SDK policy/snapshots,
 reject MCP entry, and never dispatch Files or Terminal Apps. Existing direct
 D-Bus/Wayland behavior remains human-only; credentials/configuration and backend
