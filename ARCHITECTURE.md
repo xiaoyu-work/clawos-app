@@ -26,7 +26,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/diagnostics/` | Hardware, crash and network diagnostic App contracts; privileged collectors, crash data, DNS-pinned probes and per-domain authority remain OS-owned |
 | `products/storage/` | Storage-management App contract; device validation, UDisks2 execution and read-only filesystem checkers remain OS-owned |
 | `products/settings/` | Eleven management App contracts including user-manager; system execution, credentials, account/queue state and independent provider authority remain OS-owned; native Settings is pending |
-| `products/security/` | Sensitive read-only security inspection App contract; evidence collection, report generation and privileged authority remain OS-owned |
+| `products/security/` | Security inspection and firewall App contracts with separate grants; collectors, nftables execution, durable rules and owner-bound rollback remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
 | `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
 | `tools/test.py` | Product-scoped tests using the locked runtime |

@@ -20,7 +20,7 @@ remain in Claw OS.
 | Diagnostics | [products/diagnostics](products/diagnostics/README.md) | `hardware-center`, `crash-doctor` and `netdiag` have moved with separate permissions; privileged collection and network probes stay OS-owned |
 | Storage | [products/storage](products/storage/README.md) | `storage-manager` has moved; UDisks2 execution and block-device checks stay OS-owned; existing data is unchanged |
 | Settings | [products/settings](products/settings/README.md) | All eleven assigned management App sources have moved, including user-manager; native Settings remains pending and provider authority stays separate |
-| Security | [products/security](products/security/README.md) | `security-center` has moved; sensitive inspection remains OS-owned; firewall and USB management await separate migrations |
+| Security | [products/security](products/security/README.md) | `security-center` and `firewall-manager` have moved with separate grants; inspection, nftables execution and durable state remain OS-owned; USB management awaits migration |
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 On Linux/WSL, run Mail contracts with `python3 tools/test.py mail`.

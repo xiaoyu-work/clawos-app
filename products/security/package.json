@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/security-center"],
+  "apps": ["apps/security-center", "apps/firewall-manager"],
   "tests": []
 }
