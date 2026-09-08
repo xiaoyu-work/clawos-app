@@ -25,6 +25,9 @@ unimplemented; relocation adds no inbound service or state store.
 `gateway-sms` owns the Twilio send/status client with phone or Messaging Service
 sender selection. Credentials remain OS-owned; inbound webhooks and delivery
 confirmation are not provided by this move.
+`gateway-teams` keeps default Adaptive Cards and explicit legacy MessageCards.
+The webhook fixes the destination; `recipient` is informational and does not
+retarget messages. No automatic fallback or inbound service is added.
 
 This is a source move, not completion of the connector lifecycle redesign.
 Authenticated owner/sender admission and durable replay handling still need

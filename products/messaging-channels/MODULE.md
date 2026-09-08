@@ -2,7 +2,7 @@
 
 Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`,
 `gateway-googlechat`, `gateway-larksuite`, `gateway-matrix`, `gateway-mattermost`,
-`gateway-rocketchat`, `gateway-signal`, `gateway-slack` and `gateway-sms`.
+`gateway-rocketchat`, `gateway-signal`, `gateway-slack`, `gateway-sms` and `gateway-teams`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -21,6 +21,7 @@ super-privileged App identity.
 | `apps/gateway/signal/` | External signal-cli-rest-api send/status, recipient normalization and group routing |
 | `apps/gateway/slack/` | Web API send/status, bot-token authentication and API-level error handling |
 | `apps/gateway/sms/` | Twilio send/status, form encoding and phone/Messaging Service sender selection |
+| `apps/gateway/teams/` | Fixed-destination webhook, Adaptive Card and explicit legacy MessageCard send/status |
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
@@ -97,6 +98,12 @@ Its existing Twilio-host, three exact credential and self-memory grants remain
 unchanged. Unlike Slack, status reads configuration credentials but never
 returns the account SID or auth token. No inbound webhook or delivery callback
 is implemented; a queued API response is not proof of SMS delivery.
+
+Teams preserves Adaptive Card v1.5 by default and explicit legacy MessageCard
+selection, not automatic fallback. Its recipient flag is informational; the
+configured webhook fixes the destination. Existing wildcard network, exact
+credential and self-memory grants remain unchanged, with actual host checks
+in shared egress. No inbound service, delivery lifecycle or state store is added.
 
 ```bash
 python3 tools/test.py messaging-channels
