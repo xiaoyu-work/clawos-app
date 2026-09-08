@@ -1,8 +1,9 @@
 # Settings Product
 
 Own `accessibility-manager`'s five MCP tools, `audio-manager`'s ten audio tools,
-and `bluetooth-manager`'s twelve device-lifecycle tools. Native `cosmic-settings`
-and other system-management Apps await their individual migrations.
+`bluetooth-manager`'s twelve device-lifecycle tools and `camera-manager`'s
+two discovery/capture tools. Native `cosmic-settings` and other
+system-management Apps await their individual migrations.
 
 | Path | Responsibility |
 | --- | --- |
@@ -16,6 +17,9 @@ and other system-management Apps await their individual migrations.
 | `apps/bluetooth-manager/app.json` | Observation/control scopes, scan default and pairing contracts |
 | `apps/bluetooth-manager/main.py`, `server.py` | Validated `cos __bluetooth` requests and SDK handlers; pairing responses use stdin |
 | `apps/bluetooth-manager/test_main.py` | Direct/SDK routes, MAC/ID normalization, validation and stdin-only pairing responses |
+| `apps/camera-manager/app.json` | Separate observation, camera capture and exact destination write scopes |
+| `apps/camera-manager/main.py`, `server.py` | Validated `cos __camera` requests and SDK handlers with bounded capture dimensions |
+| `apps/camera-manager/test_main.py` | Direct/SDK PNG/JPEG routes, default/explicit dimensions and pre-policy validation |
 | `package.json` | Product-owned staging and test inputs |
 
 Preserve the installed App identity. Status requires `sys.observe` scope
@@ -36,6 +40,12 @@ state, owner-bound pairing sessions and their lifetime remain OS-owned.
 Pairing responses stay off broker argv and go through stdin. Relocation does
 not pair, forget, trust or change any live device.
 
+`camera-manager` retains `sys.observe:camera` for status. Capture requires both
+`device.camera:capture` and `fs.write` on the exact canonical new destination.
+The OS owns user-session/PipeWire access, node-serial revalidation, GStreamer
+execution and bounded, non-overwriting image persistence. Relocation does not
+move captured images or activate cameras.
+
 Settings organizes interfaces, not a union of authority. Each provider must
 retain its own App identity, scope checks and consent boundary. Apps do not
 call one another; moving a native launcher alone is not a complete UI migration.
@@ -45,4 +55,4 @@ python3 tools/test.py settings
 python3 tools/stage.py settings --root build/settings-stage
 ```
 
-Tests use synthetic broker responses and do not change desktop, audio or Bluetooth state.
+Tests use synthetic broker responses and do not change device state or capture images.

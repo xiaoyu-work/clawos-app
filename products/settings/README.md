@@ -13,6 +13,10 @@ pairing prompts and device lifecycle control. MAC/pairing-ID normalization and
 stdin-only pairing responses are preserved; BlueZ and owner-bound pairing
 sessions remain OS-owned.
 
+`camera-manager` exposes two tools for discovery and bounded PNG/JPEG still
+capture. Capture requires separate camera and exact destination-write grants;
+the OS rechecks node identity and persists images without overwriting.
+
 Wayland, AT-SPI and PipeWire/WirePlumber execution and user-session validation remain behind
 the Claw OS broker. The native `cosmic-settings` UI and other system-management
 Apps are still pending; this product must not become a super-privileged

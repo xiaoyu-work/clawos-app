@@ -19,7 +19,7 @@ remain in Claw OS.
 | Store | [products/store](products/store/README.md) | `pkg` CLI/MCP source has moved; package transactions remain OS-owned; native Store UI and service integration remain pending |
 | Diagnostics | [products/diagnostics](products/diagnostics/README.md) | `hardware-center`, `crash-doctor` and `netdiag` have moved with separate permissions; privileged collection and network probes stay OS-owned |
 | Storage | [products/storage](products/storage/README.md) | `storage-manager` has moved; UDisks2 execution and block-device checks stay OS-owned; existing data is unchanged |
-| Settings | [products/settings](products/settings/README.md) | Accessibility, audio and Bluetooth manager Apps have moved; native Settings and other management Apps remain pending; provider authority stays separate |
+| Settings | [products/settings](products/settings/README.md) | Accessibility, audio, Bluetooth and camera manager Apps have moved; native Settings and other management Apps remain pending; provider authority stays separate |
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 On Linux/WSL, run Mail contracts with `python3 tools/test.py mail`.
