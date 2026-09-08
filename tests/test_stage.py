@@ -45,16 +45,21 @@ def test_files_stage_preserves_the_direct_mcp_contract(tmp_path):
 
 def test_browser_stage_preserves_search_without_os_services(tmp_path):
     assert "browser" in stage.products()
-    assert stage.stage("browser", tmp_path) == ["search", "web"]
-    for app_id in ("search", "web"):
+    assert stage.stage("browser", tmp_path) == ["search", "web", "browser-attached"]
+    for app_id in ("search", "web", "browser-attached"):
         app = tmp_path / "usr/lib/cos/apps" / app_id
         source = ROOT / "products/browser/apps" / app_id
         for filename in ("app.json", "main.py", "server.py"):
             assert (app / filename).read_bytes() == (source / filename).read_bytes()
         assert not (app / "test_main.py").exists()
+    native_host = "usr/lib/cos/apps/browser-attached/native_host.py"
+    assert (tmp_path / native_host).read_bytes() == (
+        ROOT / "products/browser/apps/browser-attached/native_host.py"
+    ).read_bytes()
     assert not (tmp_path / "usr/lib/cos/apps/_shared").exists()
     assert not (tmp_path / "usr/lib/cos/python").exists()
     assert not (tmp_path / "usr/bin/cos-browser").exists()
+    assert not (tmp_path / "etc/chromium").exists()
 
 
 def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):

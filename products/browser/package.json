@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/search", "apps/web"],
-  "tests": []
+  "apps": ["apps/search", "apps/web", "apps/browser-attached"],
+  "tests": ["extension/test_contract.py"]
 }

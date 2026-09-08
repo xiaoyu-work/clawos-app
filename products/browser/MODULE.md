@@ -1,8 +1,8 @@
 # Browser Product
 
-Own the Browser product's search and headless App implementations and MCP
-contracts. Native browser presentation and the attached browser entry point
-have not yet moved from the OS repository.
+Own the Browser product's search, headless and attached App implementations,
+MCP contracts, Chromium extension and Native Messaging host. Native browser
+presentation and the reusable engine have not moved.
 
 | Path | Responsibility |
 | --- | --- |
@@ -13,6 +13,8 @@ have not yet moved from the OS repository.
 | `apps/web/app.json` | Existing five-operation CLI and matching MCP schemas |
 | `apps/web/main.py`, `apps/web/server.py` | Headless reads, scraping, screenshots, forms and gated AI summaries |
 | `apps/web/test_main.py` | URL canonicalization, MCP dispatch and existing engine/AI behavior |
+| `apps/browser-attached/` | Ten attached-browser MCP tools, Native Host and authority/framing regressions |
+| `extension/` | MV3 service worker, top-frame DOM helpers and toolbar popup |
 | `package.json` | Product-owned staging and test inputs |
 
 Use the immutable platform dependency for SDK/runtime, credentials and safe
@@ -33,3 +35,10 @@ The `web` source move preserves its legacy operation-to-MCP adapter and plain
 read urllib degradation when the native engine is missing. It does not claim
 an MCP-only refactor or native engine migration. Its unit fixtures do not
 replace native browser build/rendering acceptance.
+
+The attached App payload is staged with the other Apps. Extension deployment
+remains an explicit OS `tools/install-browser-agent.sh` operation: it reads
+both extension and Native Host from the OS's immutable App source pin, retains
+the existing installed paths and configures the chosen extension ID.
+This move does not introduce automatic extension installation or APT updates.
+`clawd` still owns capabilities, origin injection and privileged socket access.
