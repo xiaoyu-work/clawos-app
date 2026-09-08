@@ -30,6 +30,17 @@ def test_calendar_stage_is_separate_and_preserves_its_manifest(tmp_path):
     assert not (tmp_path / "usr/lib/cos/apps/mail-ai").exists()
 
 
+def test_files_stage_preserves_the_direct_mcp_contract(tmp_path):
+    assert "files" in stage.products()
+    assert stage.stage("files", tmp_path) == ["fs"]
+    app = tmp_path / "usr/lib/cos/apps/fs"
+    source = ROOT / "products/files/apps/fs"
+    for filename in ("app.json", "main.py", "server.py"):
+        assert (app / filename).read_bytes() == (source / filename).read_bytes()
+    assert not (app / "test_main.py").exists()
+    assert not (tmp_path / "usr/lib/cos/python").exists()
+
+
 def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
     assert stage.stage("mail", tmp_path) == ["mail-ai", "email", "gateway-email"]
     app = tmp_path / "usr/lib/cos/apps/mail-ai"

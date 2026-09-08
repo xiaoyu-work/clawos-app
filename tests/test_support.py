@@ -7,6 +7,26 @@ import sys
 import pytest
 
 
+def authenticated_mcp_params(params, *, call_id="test-call"):
+    """Attach the same broker-owned context used by OS App contract fixtures."""
+    value = dict(params or {})
+    meta = dict(value.get("_meta", {}))
+    meta["claw-os.dev/call-context"] = {
+        "wire_version": 1,
+        "call_id": call_id,
+        "trace_id": "test-trace",
+        "session_id": "test-session",
+        "task_id": "test-task",
+        "caller": {
+            "kind": "system-agent",
+            "id": "test-agent-session",
+            "owner_uid": 1000,
+        },
+    }
+    value["_meta"] = meta
+    return value
+
+
 @pytest.fixture(autouse=True)
 def unit_policy_bridge(tmp_path, monkeypatch):
     """Imported only by App unit modules that use the original OS policy stub."""

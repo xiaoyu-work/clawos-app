@@ -1,0 +1,4 @@
+{
+  "apps": ["apps/fs"],
+  "tests": []
+}
