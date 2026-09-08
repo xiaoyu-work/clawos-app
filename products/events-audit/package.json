@@ -1,0 +1,4 @@
+{
+  "apps": ["apps/event-center"],
+  "tests": []
+}
