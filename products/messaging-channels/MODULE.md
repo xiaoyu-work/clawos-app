@@ -1,7 +1,7 @@
 # Messaging Channels
 
 Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`,
-`gateway-googlechat`, `gateway-larksuite` and `gateway-matrix`.
+`gateway-googlechat`, `gateway-larksuite`, `gateway-matrix` and `gateway-mattermost`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -15,6 +15,7 @@ super-privileged App identity.
 | `apps/gateway/googlechat/` | Outbound webhook send/status, text/cardsV2, thread queries and direct/SDK tests |
 | `apps/gateway/larksuite/` | Outbound text/rich-post/card send/status and official custom-bot HMAC signing |
 | `apps/gateway/matrix/` | Outbound room messages, escaped room IDs, transaction IDs and send/status SDK contracts |
+| `apps/gateway/mattermost/` | Outbound webhook send/status, channel/DM and username/icon overrides |
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
@@ -60,6 +61,12 @@ credential homeserver selection and existing default. It sends `m.text` through
 the Client-Server API, escapes the room ID as one path segment and generates a
 transaction ID per send. There is no local state store or inbound `/sync` loop;
 source relocation does not add either or establish a durable delivery lifecycle.
+
+Mattermost preserves send/status and existing grants. Unlike Google Chat,
+`recipient` becomes the webhook payload's `channel` and can select a channel
+name or `@handle`; omission leaves the webhook default in place. Username/icon
+overrides remain payload fields, not separately fetched resources. No inbound
+endpoint, local state store or new delivery lifecycle is introduced.
 
 ```bash
 python3 tools/test.py messaging-channels
