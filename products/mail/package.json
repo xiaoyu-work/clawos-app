@@ -1,0 +1,4 @@
+{
+  "apps": ["apps/mail-ai"],
+  "extension": "extension"
+}
