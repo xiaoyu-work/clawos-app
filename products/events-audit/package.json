@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/event-center"],
+  "apps": ["apps/event-center", "apps/log"],
   "tests": []
 }

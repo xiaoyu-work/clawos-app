@@ -1,7 +1,8 @@
 # Events and Audit Product
 
-Own `event-center`'s status/recent/watch-pid MCP tools. The assigned `log` App
-awaits its separate migration; grouping does not merge event and audit authority.
+Own `event-center`'s three MCP tools and `log`'s four legacy activity-log tools.
+Both assigned App sources have moved; system audit-service integration is
+still pending and grouping does not merge event and audit authority.
 
 | Path | Responsibility |
 | --- | --- |
@@ -9,6 +10,7 @@ awaits its separate migration; grouping does not merge event and audit authority
 | `apps/event-center/main.py` | Limit/source/PID validation and typed `cos __events` requests |
 | `apps/event-center/server.py` | Direct SDK MCP handlers |
 | `apps/event-center/test_main.py` | Direct/SDK routing, defaults, bounds, scopes and broker errors |
+| `apps/log/` | Legacy JSONL read/tail/search/manual-write implementation and isolated direct/SDK tests |
 | `package.json` | Product-owned staging and test inputs |
 
 Preserve the installed `event-center` identity and existing event observation
@@ -23,9 +25,21 @@ not another watcher or event database. Audit, context-event and notification
 stores retain their own boundaries. No state is copied or reset by relocation,
 and Apps do not invoke other Apps.
 
+`log` retains separate `data.log.read` and `data.log.write` Wild grants. Read is
+newest-first, tail is chronological and search preserves stored order; manual
+entries keep `source=user`. Unlike `event-center`, this is not a broker client:
+it directly uses `COS_DATA_DIR/logs/audit.jsonl` (fallback `/var/lib/cos`).
+The App Host supplies an isolated data directory, so the filename and legacy
+manifest description do not prove access to the OS's authoritative audit trail.
+Do not mount the system audit file writable or append these unchained manual
+entries to it. A typed, owner-scoped audit service and explicit manual-entry
+semantics are pending; the OS retains audit integrity and persistence authority.
+This source move preserves the existing file layout and copies no runtime logs.
+
 ```bash
 python3 tools/test.py events-audit
 python3 tools/stage.py events-audit --root build/events-audit-stage
 ```
 
-Tests use synthetic broker replies; they do not read real events or register PID watches.
+Tests use synthetic broker replies and temporary JSONL files; they do not read
+real audit/events or register PID watches.

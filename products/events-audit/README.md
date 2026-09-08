@@ -6,6 +6,13 @@ sensitive `sys.events:observe` grant.
 
 The OS owns subscriptions, event records and pidfd watches. This source move
 does not create a new journal or merge events into audit or notifications.
-The `log` App awaits migration; a unified presentation is not implemented here.
+`log` also lives here, retaining read/tail/search/manual-write operations and
+their existing grants. It is a legacy direct JSONL implementation, not an OS
+audit-service client: the isolated App data directory is not the authoritative
+system audit trail. No runtime logs are copied or audit access expanded.
+
+Both App sources have moved, but typed audit-service integration and unified
+presentation remain pending. Do not treat manual App entries as trusted OS
+audit records.
 
 See [MODULE.md](MODULE.md) for source responsibilities and commands.
