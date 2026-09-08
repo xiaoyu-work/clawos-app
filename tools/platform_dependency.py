@@ -49,6 +49,36 @@ def prepare():
     return [*paths, destination / "apps"]
 
 
+def prepare_native():
+    lock = json.loads((ROOT / "platform.lock.json").read_text())
+    revision = lock["revision"]
+    if not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise ValueError("Native platform dependency requires a full immutable Git revision")
+    if lock.get("native_sources") != ["desktop/toolkit"]:
+        raise ValueError("Native platform dependency may contain only the shared UI toolkit")
+    destination = ROOT / "build" / "native-platform" / revision
+    git = ["git", "-C", str(destination)]
+    if not destination.exists():
+        destination.mkdir(parents=True)
+        subprocess.run([*git, "init", "--quiet"], check=True)
+        subprocess.run([*git, "remote", "add", "origin", lock["repository"]], check=True)
+        subprocess.run([*git, "sparse-checkout", "init", "--cone"], check=True)
+        subprocess.run([*git, "sparse-checkout", "set", *lock["native_sources"]], check=True)
+        subprocess.run([*git, "fetch", "--quiet", "--depth=1", "--filter=blob:none",
+                        "origin", revision], check=True)
+        subprocess.run([*git, "checkout", "--quiet", "--detach", revision], check=True)
+    if subprocess.check_output([*git, "rev-parse", "HEAD"], text=True).strip() != revision:
+        raise RuntimeError("Cached native platform dependency has the wrong revision")
+    if subprocess.check_output(
+        [*git, "status", "--porcelain", "--untracked-files=normal"], text=True
+    ):
+        raise RuntimeError("Cached native platform dependency is modified")
+    toolkit = destination / "desktop/toolkit"
+    if not (toolkit / "Cargo.toml").is_file():
+        raise RuntimeError("Cached native platform dependency is incomplete")
+    return toolkit
+
+
 if __name__ == "__main__":
     for path in prepare():
         print(path)

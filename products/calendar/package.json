@@ -1,4 +1,5 @@
 {
-  "apps": ["apps/calendar"],
-  "tests": []
+  "apps": ["apps/calendar", "apps/panel-calendar"],
+  "tests": ["native/test_build.py"],
+  "native": {"claw-applet-calendar": "native/claw-applet-calendar"}
 }

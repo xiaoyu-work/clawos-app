@@ -16,7 +16,7 @@ points without duplicating its account state or inheriting a union of grants.
 | Surface | Owner |
 | --- | --- |
 | `products/mail/` | Thunderbird source, Mail AI, legacy email and restricted delivery, extension UI and product packaging |
-| `products/calendar/` | Local events, Google/Outlook integration and Calendar MCP |
+| `products/calendar/` | Local events, Google/Outlook integration, Calendar MCP and the complete native panel UI library/assets |
 | `products/files/` | Filesystem MCP operations, metadata, bounded IO and owner-scoped Recoll document search |
 | `products/browser/` | Search, headless browsing and attached-browser Apps, MV3 extension and Native Host; privileged provider and native engine remain OS-owned |
 | `products/terminal/` | Command/script and background process App operations; sandbox and process authority remain OS-owned |
@@ -69,3 +69,13 @@ explicit extra tests; it never recursively collects a vendored source tree.
 Calendar's event database and provider authority are unchanged by relocation.
 OS integration tests consume the pinned product source to retain coverage of
 real Calendar code crossing the broker and sandbox boundaries.
+
+The native Calendar library accepts an `AgendaProvider` callback rather than
+depending on another App. The OS shell links the library and injects its
+shared read-only Calendar provider; policy checks remain before database
+access. UI resources and build inputs are product-owned. Development checks
+out only the locked shared `desktop/toolkit` source, including its iced tree,
+into a separate native dependency cache. OS builds use their own forked
+toolkit and immutable App source pin. The panel manifest and compiled shell
+remain in `claw-os-desktop`; Calendar's Python backend remains in
+`claw-os-agent`. Installed state, grants and signed APT updates do not change.

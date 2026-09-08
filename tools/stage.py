@@ -15,7 +15,7 @@ def products() -> list[str]:
     return sorted(path.parent.name for path in (ROOT / "products").glob("*/package.json"))
 
 
-def stage(product: str, destination: Path) -> list[str]:
+def stage(product: str, destination: Path, app_ids: list[str] | None = None) -> list[str]:
     source = ROOT / "products" / product
     package = json.loads((source / "package.json").read_text())
     installed = []
@@ -30,12 +30,14 @@ def stage(product: str, destination: Path) -> list[str]:
         app_id = manifest["id"]
         if app_id != "-".join(layout.parts):
             raise ValueError("Installed App identity does not match its layout")
+        if app_ids is not None and app_id not in app_ids:
+            continue
         target = destination / "usr/lib/cos/apps" / layout
         shutil.copytree(app, target, symlinks=True,
                         ignore=shutil.ignore_patterns("__pycache__", "test_*.py", ".pytest_cache"))
         installed.append(app_id)
     extension = package.get("extension")
-    if extension:
+    if extension and "mail-ai" in installed:
         specification = importlib.util.spec_from_file_location(
             "product_extension_builder", source / "build-extension.py"
         )
@@ -55,5 +57,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("product", choices=products())
     parser.add_argument("--root", required=True, type=Path)
+    parser.add_argument("--apps", nargs="*", help="Stage only these installed identities")
     args = parser.parse_args()
-    print(json.dumps(stage(args.product, args.root)))
+    print(json.dumps(stage(args.product, args.root, args.apps)))

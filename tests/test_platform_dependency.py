@@ -26,18 +26,21 @@ def dependency(tmp_path, monkeypatch):
     subprocess.run([*git, "config", "user.email", "fixture@example.invalid"], check=True)
     libraries = ["claw-os-sdk/python/src", "cos-runtime/python/src",
                  "apps/_shared", "apps/gateway/_shared"]
-    for relative in [*libraries, "apps/other-product", "apps/gateway/other-product"]:
+    for relative in [*libraries, "desktop/toolkit", "desktop/other-app",
+                     "apps/other-product", "apps/gateway/other-product"]:
         path = upstream / relative / "fixture.py"
         path.parent.mkdir(parents=True)
         path.write_text("VALUE = 1\n")
     (upstream / "apps/canonical_argv.py").write_text("VALUE = 1\n")
+    (upstream / "desktop/toolkit/Cargo.toml").write_text("[workspace]\n")
     subprocess.run([*git, "add", "."], check=True)
     subprocess.run([*git, "commit", "--quiet", "-m", "fixture"], check=True)
     revision = subprocess.check_output([*git, "rev-parse", "HEAD"], text=True).strip()
     root = tmp_path / "product"
     root.mkdir()
     lock = {"repository": str(upstream), "revision": revision,
-            "python_sources": libraries[:2], "python_packages": libraries[2:]}
+            "python_sources": libraries[:2], "python_packages": libraries[2:],
+            "native_sources": ["desktop/toolkit"]}
     (root / "platform.lock.json").write_text(json.dumps(lock))
     monkeypatch.setattr(platform, "ROOT", root)
     return root, lock
@@ -61,6 +64,26 @@ def test_changed_library_cache_is_rejected(dependency):
     (paths[-1] / "_shared/fixture.py").write_text("VALUE = 2\n")
     with pytest.raises(RuntimeError, match="modified"):
         platform.prepare()
+
+
+def test_native_dependency_contains_only_pinned_shared_toolkit(dependency):
+    root, lock = dependency
+    toolkit = platform.prepare_native()
+    assert toolkit == root / "build/native-platform" / lock["revision"] / "desktop/toolkit"
+    assert not (toolkit.parent / "other-app").exists()
+    assert not (toolkit.parents[1] / "apps").exists()
+    assert platform.prepare_native() == toolkit
+    (toolkit / "Cargo.toml").write_text("modified")
+    with pytest.raises(RuntimeError, match="modified"):
+        platform.prepare_native()
+
+
+def test_native_dependency_rejects_app_implementation(dependency):
+    root, lock = dependency
+    lock["native_sources"] = ["desktop/applets"]
+    (root / "platform.lock.json").write_text(json.dumps(lock))
+    with pytest.raises(ValueError, match="shared UI toolkit"):
+        platform.prepare_native()
 
 
 @pytest.mark.parametrize("field,value", [

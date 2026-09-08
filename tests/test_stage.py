@@ -20,7 +20,7 @@ SPEC.loader.exec_module(stage)
 
 def test_calendar_stage_is_separate_and_preserves_its_manifest(tmp_path):
     assert {"mail", "calendar"} <= set(stage.products())
-    assert stage.stage("calendar", tmp_path) == ["calendar"]
+    assert stage.stage("calendar", tmp_path) == ["calendar", "panel-calendar"]
     app = tmp_path / "usr/lib/cos/apps/calendar"
     source = ROOT / "products/calendar/apps/calendar"
     assert (app / "app.json").read_bytes() == (source / "app.json").read_bytes()

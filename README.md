@@ -10,7 +10,7 @@ remain in Claw OS.
 | Product | Source | Migration state |
 | --- | --- | --- |
 | Mail | [products/mail](products/mail/README.md) | Native Thunderbird source, Mail AI/UI, legacy email and restricted delivery have moved; product consolidation remains pending |
-| Calendar | [products/calendar](products/calendar/README.md) | Event operations and provider integration have moved; panel presentation remains pending |
+| Calendar | [products/calendar](products/calendar/README.md) | Event operations, provider integration and complete native panel UI/build have moved; OS policy and data paths remain unchanged |
 | Files | [products/files](products/files/README.md) | Direct `fs` and Recoll-backed `docs` MCP operations have moved; native UI remains pending |
 | Browser | [products/browser](products/browser/README.md) | `search`, `web`, `browser-attached`, Native Host and MV3 extension have moved; native browser UI remains pending |
 | Terminal | [products/terminal](products/terminal/README.md) | `exec` operations have moved; native UI and shared terminal-session integration remain pending |

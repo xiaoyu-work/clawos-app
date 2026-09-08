@@ -28,3 +28,22 @@ jobs:
         if: matrix.product == 'files'
         run: sudo apt-get update -qq && sudo apt-get install -y ripgrep
       - run: python3 tools/test.py ${{ matrix.product }}
+
+  native-calendar:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_BUILD_JOBS: "2"
+      CARGO_PROFILE_DEV_DEBUG: "0"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install native toolkit build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y pkg-config cmake libfontconfig-dev libfreetype-dev \
+            libwayland-dev libxkbcommon-dev libudev-dev libinput-dev libdbus-1-dev \
+            libsystemd-dev libegl1-mesa-dev libgbm-dev
+      - run: rustup toolchain install stable --profile minimal && rustup default stable
+      - run: python3 products/calendar/native/build.py test
