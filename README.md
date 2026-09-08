@@ -29,7 +29,8 @@ remain in Claw OS.
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 Messaging connector sources are grouped under
 [products/messaging-channels](products/messaging-channels/README.md), starting
-with Discord. Source relocation does not complete authenticated inbound admission.
+with Discord and outbound-only DingTalk. Source relocation does not complete
+authenticated inbound admission.
 
 On Linux/WSL, run Mail contracts with `python3 tools/test.py mail`.
 Run Calendar contracts with `python3 tools/test.py calendar`, or select both

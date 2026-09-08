@@ -1,6 +1,6 @@
 # Messaging Channels
 
-Own optional messaging connector sources, starting with `gateway-discord`.
+Own optional messaging connector sources: `gateway-discord` and `gateway-dingtalk`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -10,9 +10,10 @@ super-privileged App identity.
 | `apps/gateway/discord/main.py` | Discord REST/WebSocket transport, allowlists, rate limits, config and resume state |
 | `apps/gateway/discord/server.py` | Existing manifest-bound SDK adapter |
 | `apps/gateway/discord/test_main.py` | Transport/routing regression tests and real SDK dispatch with synthetic effects |
+| `apps/gateway/dingtalk/` | Outbound robot send/status, HMAC signing, Markdown/keyword/mentions and direct/SDK tests |
 | `package.json` | Product-owned nested staging and tests |
 
-Preserve `gateway-discord` and installed `apps/gateway/discord` layout.
+Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
 Import the pinned `gateway._shared` namespace, not the unrelated App `_shared`
 package or a sibling OS checkout. Shared egress, WebSocket, memory and process
 helpers remain platform dependencies. Credential and network authority remain
@@ -24,12 +25,18 @@ precedence, Discord API/resume restrictions and App-scoped
 session identifiers or PID files into this repository. Existing OS state
 partition migration remains the authority for installed data.
 
-The legacy inbound path still invokes `cos agent ask`. Local sender allowlists
+Discord's legacy inbound path still invokes `cos agent ask`. Local sender allowlists
 and rate limits are not an authenticated owner-bound connector admission API,
 and relocation does not make App-originated system-Agent calls authorized.
 Service lifecycle, authenticated sender/owner binding and durable replay
 handling remain pending. Do not weaken broker restrictions, introduce an
 App-to-App route or claim the production inbound loop is accepted by these tests.
+
+DingTalk is outbound-only, with no inbound Agent loop or local state store.
+Keep its existing operations adapter, optional signing and environment/credential
+precedence. Its manifest retains the existing wildcard network grant; the shared
+egress helper still checks the actual destination host. This move does not narrow
+or expand consent, add retries/delivery leases or change webhook policy.
 
 ```bash
 python3 tools/test.py messaging-channels
@@ -37,4 +44,4 @@ python3 tools/stage.py messaging-channels --root build/messaging-channels-stage
 ```
 
 Tests use temporary state and mocked transport/process boundaries; no real
-Discord connection, message delivery or Agent task is created.
+Discord connection, DingTalk webhook request, message delivery or Agent task is created.
