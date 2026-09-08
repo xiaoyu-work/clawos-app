@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/security-center", "apps/firewall-manager"],
+  "apps": ["apps/security-center", "apps/firewall-manager", "apps/usb-guard"],
   "tests": []
 }
