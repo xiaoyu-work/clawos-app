@@ -2,7 +2,7 @@
 
 Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`,
 `gateway-googlechat`, `gateway-larksuite`, `gateway-matrix`, `gateway-mattermost`
-and `gateway-rocketchat`.
+`gateway-rocketchat` and `gateway-signal`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -18,6 +18,7 @@ super-privileged App identity.
 | `apps/gateway/matrix/` | Outbound room messages, escaped room IDs, transaction IDs and send/status SDK contracts |
 | `apps/gateway/mattermost/` | Outbound webhook send/status, channel/DM and username/icon overrides |
 | `apps/gateway/rocketchat/` | REST send/status, channel/DM targets and separate token/user-id headers |
+| `apps/gateway/signal/` | External signal-cli-rest-api send/status, recipient normalization and group routing |
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
@@ -74,6 +75,13 @@ Rocket.Chat retains REST `chat.postMessage` send/status with channel names,
 `#channels` and `@handles` passed unchanged. Its site/user-id/token credentials
 and environment precedence remain separate, with the existing exact secret
 grants and shared host-gated egress. No inbound service or local state is added.
+
+Signal preserves its `/v2/send` client, phone normalization, group-ID heuristic
+and existing grants/base-URL selection. `signal-cli-rest-api` remains an external
+dependency; account pairing and service state are not copied or staged here.
+The default local endpoint does not grant private-network access: shared egress
+restrictions remain enforced, without automatically enabling a bypass.
+Inbound `/v1/receive` polling remains unimplemented.
 
 ```bash
 python3 tools/test.py messaging-channels

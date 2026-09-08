@@ -16,6 +16,9 @@ status. Its `/sync` inbound loop remains unimplemented.
 channel/DM, username and icon overrides; inbound endpoints remain out of scope.
 `gateway-rocketchat` sends through REST `chat.postMessage` with separate token
 and user-id headers, retaining channel/DM targets and configuration status.
+`gateway-signal` is the outbound client for an external `signal-cli-rest-api`
+service. Phone/group handling remains intact; account state, inbound polling
+and private-network authorization are not supplied by this source relocation.
 
 This is a source move, not completion of the connector lifecycle redesign.
 Authenticated owner/sender admission and durable replay handling still need
