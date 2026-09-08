@@ -1,0 +1,5 @@
+{
+  "apps": ["apps/widget-rail"],
+  "tests": ["native/test_build.py"],
+  "native": {"claw-applet-widget-rail": "native/claw-applet-widget-rail"}
+}

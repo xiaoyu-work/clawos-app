@@ -27,6 +27,7 @@ remain in Claw OS.
 | Clipboard | [products/clipboard](products/clipboard/README.md) | `clipboard-manager` has moved; Wayland execution stays OS-owned; native panel and CopyQ history integration remain pending |
 | Notification Delivery | [products/notification-delivery](products/notification-delivery/README.md) | One-shot `gateway-ntfy`, `gateway-pushover` and `gateway-webhook` have moved; durable notification service and Rust ntfy dispatcher stay OS-owned; service integration remains separate |
 | Home Integration | [products/home-integration](products/home-integration/README.md) | `gateway-homeassistant` REST adapter has moved; external server/device state, OS egress and credentials remain separate; no new UI |
+| Desktop Widgets | [products/desktop-widgets](products/desktop-widgets/README.md) | Complete native Widget Rail UI/build/resources; independently authorized Calendar/task/telemetry providers remain OS-owned |
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 Messaging connector sources are grouped under

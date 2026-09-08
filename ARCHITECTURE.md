@@ -33,6 +33,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/clipboard/` | Selection App contract and complete native CopyQ history panel; separate selection/history grants, with policy and Wayland authority OS-owned |
 | `products/notification-delivery/` | One-shot ntfy/Pushover/Webhook App sources; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
+| `products/desktop-widgets/` | Complete Widget Rail native presentation and assets; Calendar/task/telemetry access and authority remain OS-provided |
 | `products/home-integration/` | Home Assistant REST adapter source; external server, accounts, devices and automation state are not imported; OS credentials and egress authority remain separate |
 | `products/messaging-channels/` | Discord/Telegram and outbound-only DingTalk/Google Chat/Lark/Matrix/Mattermost/Rocket.Chat/Signal/Slack/SMS/Teams/Webex/WhatsApp/Zulip connector sources; authenticated inbound owner/sender admission, lifecycle and durable replay handling remain pending |
 | `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
@@ -91,4 +92,13 @@ does not integrate the two backends or move user history.
 `tools/native_build.py <product> test` is the shared native development/CI runner.
 It uses each product's checked-in lock and the common toolkit patch mapping,
 with generated inputs under `build/<product>-native` and a shared native target
-cache. CI compiles and tests both Calendar and Clipboard libraries.
+cache. CI compiles and tests Calendar, Clipboard and Desktop Widgets libraries.
+
+Desktop Widgets uses typed `Providers` callbacks for Calendar, read-only Agent
+tasks and telemetry. OS shared services retain exact policy checks, data paths,
+bounded commands and existing Linux telemetry fallback. Agent Activity shares
+only the OS read-only task adapter; no App calls another App. Sampling state
+stays process-local in the host, while the complete original rail UI, refresh
+guards, suggestions, resources and tests are product-owned. The descriptor and
+linked shell remain desktop-package assets. This move does not introduce a new
+Agent executor, data owner or visual redesign.
