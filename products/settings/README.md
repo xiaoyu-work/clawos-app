@@ -53,7 +53,29 @@ OS-owned.
 
 Wayland, AT-SPI and PipeWire/WirePlumber execution and user-session validation remain behind
 the Claw OS broker. All eleven assigned management App sources have moved,
-but the native `cosmic-settings` UI remains pending. This product must not become a super-privileged
-Settings process or call other Apps to obtain their authority.
+and the complete native `cosmic-settings` UI/workspace now lives in
+`native/cosmic-settings`, including every page/subscription crate, original
+default features, toolkit patches, translations, resources and packaging.
+This product is not a super-privileged Settings process: its twelve identities
+retain independent authority and do not call other Apps.
+
+Native MCP exposes only page listing, search and opening a page. Opening uses
+the fixed OS Settings target under the existing `proc.spawn:cosmic-settings`
+grant, never the management Apps' device/account permissions. Human UI writes,
+spawns and snapshot-backed mutations use controlled OS services, while
+interactive D-Bus/Wayland behavior and existing configuration remain unchanged.
+
+```bash
+python3 tools/test.py settings
+python3 tools/native_build.py settings test
+python3 tools/native_build.py settings build
+python3 products/settings/native/test_process.py
+```
+
+Build/test on Linux/WSL with the native dependencies listed in the CI workflow.
+The last command scratch-installs the real binary/resources and tests MCP with
+a synthetic broker, without touching live accounts, devices or configuration.
+Interactive Wayland/visual acceptance and provider/backend consolidation remain
+separate work. See [PROVENANCE.md](PROVENANCE.md) for original ownership.
 
 See [MODULE.md](MODULE.md) for source navigation and commands.

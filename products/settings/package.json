@@ -1,4 +1,9 @@
 {
-  "apps": ["apps/accessibility-manager", "apps/audio-manager", "apps/bluetooth-manager", "apps/camera-manager", "apps/display-manager", "apps/desktop-manager", "apps/location-manager", "apps/network-manager", "apps/power-manager", "apps/printer-manager", "apps/user-manager"],
-  "tests": []
+  "apps": ["apps/accessibility-manager", "apps/audio-manager", "apps/bluetooth-manager", "apps/camera-manager", "apps/display-manager", "apps/desktop-manager", "apps/location-manager", "apps/network-manager", "apps/power-manager", "apps/printer-manager", "apps/user-manager", "apps/cosmic-settings"],
+  "tests": ["native/test_build.py"],
+  "native": {"cosmic-settings": "native/cosmic-settings"},
+  "native_kind": "binary",
+  "native_assets": {
+    "cosmic-settings": {"app.json": "apps/cosmic-settings/app.json"}
+  }
 }

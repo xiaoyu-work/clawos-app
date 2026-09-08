@@ -11,3 +11,6 @@ products/store/native/cosmic-store/.github/PULL_REQUEST_TEMPLATE.md whitespace=-
 products/store/native/cosmic-store/debian/postinst whitespace=-blank-at-eof
 products/store/native/cosmic-store/debian/prerm whitespace=-blank-at-eof
 products/store/native/cosmic-store/i18n/zh-TW/cosmic_store.ftl whitespace=-blank-at-eol
+products/settings/native/cosmic-settings/.github/PULL_REQUEST_TEMPLATE.md whitespace=-blank-at-eof
+products/settings/native/cosmic-settings/crates/cosmic-pipewire/LICENSE.md whitespace=-blank-at-eol
+products/settings/native/cosmic-settings/subscriptions/*/LICENSE.md whitespace=-blank-at-eol,-blank-at-eof

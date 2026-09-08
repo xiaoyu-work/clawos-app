@@ -1,0 +1,11 @@
+app = Innstillingar
+cancel = Avbryt
+close = Lukk
+dbus-connection-error = Klara ikkje å kobla til DBus
+identity = Identitet
+password = Passord
+password-confirm = Bekreft Passord
+settings = Innstillingar
+power = Straum og batteri
+    .desc = Administrer strauminnstillinger
+save = Lagra

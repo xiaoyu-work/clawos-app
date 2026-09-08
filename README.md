@@ -19,7 +19,7 @@ remain in Claw OS.
 | Store | [products/store](products/store/README.md) | Complete native Store UI/MCP/resources and shared pkg catalog source; OS transactions and native grants stay separate; UI/backend data consolidation remains pending |
 | Diagnostics | [products/diagnostics](products/diagnostics/README.md) | `hardware-center`, `crash-doctor` and `netdiag` have moved with separate permissions; privileged collection and network probes stay OS-owned |
 | Storage | [products/storage](products/storage/README.md) | `storage-manager` has moved; UDisks2 execution and block-device checks stay OS-owned; existing data is unchanged |
-| Settings | [products/settings](products/settings/README.md) | All eleven assigned management App sources have moved, including user-manager; native Settings remains pending and provider authority stays separate |
+| Settings | [products/settings](products/settings/README.md) | Complete native UI/workspace/MCP/resources plus eleven management Apps; twelve identities and provider grants remain independent; visual acceptance and backend consolidation remain separate |
 | Security | [products/security](products/security/README.md) | `security-center`, `firewall-manager` and `usb-guard` have moved with separate grants; inspection, nftables/USB execution and durable state remain OS-owned |
 | Maintenance | [products/maintenance](products/maintenance/README.md) | `config-editor` and `systemd` have moved with separate exact-path/unit grants; configuration/service execution, state and rollback remain OS-owned |
 | Events and Audit | [products/events-audit](products/events-audit/README.md) | `event-center` and legacy `log` have moved; OS event/audit authority stays separate; typed audit-service integration remains pending |

@@ -87,7 +87,7 @@ def test_terminal_stage_preserves_exec_without_process_services(tmp_path):
     ("events-audit", ["event-center", "log"]),
     ("launcher", ["launcher", "cosmic-launcher"]),
     ("clipboard", ["clipboard-manager", "panel-clipboard"]),
-    ("settings", ["accessibility-manager", "audio-manager", "bluetooth-manager", "camera-manager", "display-manager", "desktop-manager", "location-manager", "network-manager", "power-manager", "printer-manager", "user-manager"]),
+    ("settings", ["accessibility-manager", "audio-manager", "bluetooth-manager", "camera-manager", "display-manager", "desktop-manager", "location-manager", "network-manager", "power-manager", "printer-manager", "user-manager", "cosmic-settings"]),
 ])
 def test_broker_products_stage_without_os_services(tmp_path, product, app_ids):
     assert product in stage.products()
@@ -95,7 +95,7 @@ def test_broker_products_stage_without_os_services(tmp_path, product, app_ids):
     for app_id in app_ids:
         app = tmp_path / "usr/lib/cos/apps" / app_id
         source = ROOT / "products" / product / "apps" / app_id
-        filenames = (("app.json",) if app_id in ("cosmic-launcher", "cosmic-store") else
+        filenames = (("app.json",) if app_id in ("cosmic-launcher", "cosmic-store", "cosmic-settings") else
                      ("app.json", "main.sh") if app_id == "panel-clipboard" else
                      ("app.json", "main.py", "server.py"))
         for filename in filenames:

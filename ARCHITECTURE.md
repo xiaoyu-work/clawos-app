@@ -25,7 +25,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/store/` | Complete native Store UI/MCP/resources, shared package catalog and pkg contract; privileged transactions and installed state remain OS-owned |
 | `products/diagnostics/` | Hardware, crash and network diagnostic App contracts; privileged collectors, crash data, DNS-pinned probes and per-domain authority remain OS-owned |
 | `products/storage/` | Storage-management App contract; device validation, UDisks2 execution and read-only filesystem checkers remain OS-owned |
-| `products/settings/` | Eleven management App contracts including user-manager; system execution, credentials, account/queue state and independent provider authority remain OS-owned; native Settings is pending |
+| `products/settings/` | Complete native Settings UI/workspace/MCP/resources plus eleven management Apps; system execution, credentials, account/queue state and twelve independent identities/grants remain separate |
 | `products/security/` | Security inspection, firewall and USB App contracts with separate grants; collectors, nftables/sysfs/udev/UDisks2 execution, durable rules and owner-bound rollback remain OS-owned |
 | `products/maintenance/` | Exact-path configuration and exact-unit service App contracts; validators, atomic writes, systemctl execution, mutation records and rollback remain OS-owned |
 | `products/events-audit/` | Event service client and legacy JSONL activity App; event/audit authority remains OS-owned; `log` still needs typed audit-service integration rather than direct system-audit access |
@@ -94,7 +94,14 @@ does not integrate the two backends or move user history.
 It uses each product's checked-in lock and the common toolkit patch mapping,
 with generated inputs under `build/<product>-native` and a shared native target
 cache. CI compiles and tests Calendar, Clipboard and Desktop Widgets libraries
-and the complete Launcher, Editor, Files, Terminal and Store binaries. Store
+and the complete Launcher, Editor, Files, Terminal, Store and Settings binaries.
+Settings preserves its nested workspace, all default pages, original toolkit
+patches and config-schema dependencies. Native MCP provides static discovery
+and fixed-target activation only; it never inherits management provider grants.
+Human UI adapters use OS filesystem/process services and SDK policy/snapshots,
+reject MCP entry, and never dispatch Files or Terminal Apps. Existing direct
+D-Bus/Wayland behavior remains human-only; credentials/configuration and backend
+consolidation are not part of source relocation. Store
 preserves its standalone default-feature graph and nested flathub-stats helper.
 Its native queries embed the canonical product catalog library, never the pkg
 App entrypoint or transaction identity. Native UI ref reads/data cleanup use

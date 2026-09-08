@@ -30,16 +30,18 @@ def prepare(product: str, toolkit: Path, destination: Path):
     shutil.copytree(component, destination, symlinks=True)
     stage_native.stage_assets(source, package, name, destination)
     if package.get("native_kind") == "binary":
-        manifest = destination / "Cargo.toml"
-        content = manifest.read_text().replace(
-            '"../../../desktop/', '"' + toolkit.parent.as_posix() + "/"
-        )
-        for library in ("cos-runtime", "claw-os-sdk"):
-            content = content.replace(
-                f'"../../../{library}/',
-                '"' + (toolkit.parents[1] / library).as_posix() + "/",
+        for manifest in destination.rglob("Cargo.toml"):
+            depth = len(manifest.relative_to(destination).parts) - 1
+            prefix = "../" * (3 + depth)
+            content = manifest.read_text().replace(
+                f'"{prefix}desktop/', '"' + toolkit.parent.as_posix() + "/"
             )
-        manifest.write_text(content)
+            for library in ("cos-runtime", "claw-os-sdk"):
+                content = content.replace(
+                    f'"{prefix}{library}/',
+                    '"' + (toolkit.parents[1] / library).as_posix() + "/",
+                )
+            manifest.write_text(content)
     else:
         shutil.copy2(source / "native/Cargo.lock", destination / "Cargo.lock")
         patches = (ROOT / "tools/native-patches.toml").read_text()

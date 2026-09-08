@@ -8,7 +8,8 @@ two location/timezone tools, plus `network-manager`'s eleven network tools,
 `power-manager`'s seven status/power tools and `printer-manager`'s five
 discovery/queue/printing tools, and `user-manager`'s twelve identity tools.
 All eleven management App sources assigned to Settings have moved.
-Native `cosmic-settings` still awaits its complete UI/build migration.
+The complete native `cosmic-settings` workspace, UI, MCP and resources also live
+here, retaining its separate twelfth identity and original default pages.
 
 | Path | Responsibility |
 | --- | --- |
@@ -47,6 +48,10 @@ Native `cosmic-settings` still awaits its complete UI/build migration.
 | `apps/user-manager/main.py`, `server.py` | Validated `cos __users` requests and SDK handlers; no password plaintext |
 | `apps/user-manager/test_main.py` | All direct/SDK routes, optional creation fields, group/token normalization and destructive confirmation |
 | `package.json` | Product-owned staging and test inputs |
+| `native/cosmic-settings/` | Entire independent GPL workspace, lock, all page/subscription crates and resource/config/translation inputs |
+| `native/cosmic-settings/cosmic-settings/src/mcp.rs` | Static page catalog/search and fixed OS Settings activation |
+| `native/cosmic-settings/cosmic-settings/src/claw_glue.rs`, `src/human.rs`, `human_bridge.py` | Human-only controlled filesystem/process/policy/snapshot adapters and SDK Agent context; no App dispatch |
+| `native/test_build.py`, `native/test_process.py` | Workspace/default graph, synthetic human adapters, installed resources and authenticated stdio MCP |
 
 Preserve the installed App identity. Status requires `sys.observe` scope
 `accessibility`; mutations require `ui.accessibility` scope `control`.
@@ -120,11 +125,30 @@ explicit confirmation. Tests do not change real users, groups or passwords.
 
 Settings organizes interfaces, not a union of authority. Each provider must
 retain its own App identity, scope checks and consent boundary. Apps do not
-call one another; moving a native launcher alone is not a complete UI migration.
+call one another. Native MCP has only `settings.list_pages`, `settings.search`
+and `settings.open`. The first two require no device authority; opening uses
+only `proc.spawn:cosmic-settings` at the fixed OS Settings target. Optional page
+ids are checked against the native CLI's page commands before crossing the
+service boundary, including its existing magnifier and dock/panel-applet pages.
+
+The native human UI retains its original D-Bus/Wayland and configuration
+behavior, not the eleven Apps' combined grants. Former filesystem/exec App
+bridges now use controlled OS text writes, registered process spawning and
+human-only SDK policy/snapshot adapters. Queries remain timeout/output bounded
+and credential-scrubbed. These adapters reject MCP before any policy or effect.
+Provider credentials, consent, settings-daemon/config services and user state
+stay OS-owned. Source completion is not backend/data consolidation or visual
+and hardware acceptance.
 
 ```bash
 python3 tools/test.py settings
 python3 tools/stage.py settings --root build/settings-stage
+python3 tools/native_build.py settings test
+python3 tools/native_build.py settings build
+python3 products/settings/native/test_process.py
 ```
 
 Tests use synthetic broker responses and do not change device state or capture images.
+Native builds require the normal toolkit libraries plus PipeWire, PulseAudio,
+xkbregistry, libclang and gettext development inputs. Native process tests use
+`just` and Bubblewrap for scratch installation and an isolated synthetic broker.
