@@ -130,8 +130,8 @@ def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
 
 
 def test_notification_delivery_stages_only_product_payload(tmp_path):
-    assert stage.stage("notification-delivery", tmp_path) == ["gateway-ntfy", "gateway-pushover"]
-    for channel in ("ntfy", "pushover"):
+    assert stage.stage("notification-delivery", tmp_path) == ["gateway-ntfy", "gateway-pushover", "gateway-webhook"]
+    for channel in ("ntfy", "pushover", "webhook"):
         source = ROOT / "products/notification-delivery/apps/gateway" / channel
         installed = tmp_path / "usr/lib/cos/apps/gateway" / channel
         assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}

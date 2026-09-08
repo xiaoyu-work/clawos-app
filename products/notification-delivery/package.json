@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/gateway/ntfy", "apps/gateway/pushover"],
+  "apps": ["apps/gateway/ntfy", "apps/gateway/pushover", "apps/gateway/webhook"],
   "tests": []
 }

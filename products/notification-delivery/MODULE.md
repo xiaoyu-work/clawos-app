@@ -12,6 +12,7 @@ Preserve App identities, nested installed paths and separate grants.
 | `apps/gateway/ntfy/server.py` | Existing manifest-bound SDK adapter |
 | `apps/gateway/ntfy/test_main.py` | Direct/SDK dispatch and migrated gateway argument/auth regressions |
 | `apps/gateway/pushover/` | One-shot send/status, user/group key overrides, emergency options and API results |
+| `apps/gateway/webhook/` | JSON/raw POST, target/default credentials, authentication and egress regressions |
 | `package.json` | Product-owned payload staging and tests |
 
 ## Boundaries
@@ -31,6 +32,15 @@ Pushover retains its exact API host, two credential grants and self-memory scope
 suggests. Emergency `retry`/`expire` fields are remote Pushover behavior, not a
 local delivery queue. Returning a receipt identifier does not poll or confirm
 acknowledgement. No DND, retry state or credentials are copied into this product.
+
+Webhook retains its existing wildcard network declaration, two exact secret
+grants and self-memory scope; runtime egress still enforces host policy and
+blocks private endpoints/redirects. The target is a flag or configured default,
+not a leading positional. Authentication precedence is bearer, then basic,
+then API key; HMAC signing is independent and can accompany any of them.
+These are the implementation contracts, not the older docstring's
+last-option-wins claim. HTTP and HTTPS are both accepted. No incoming webhook,
+retry queue or durable delivery integration is added by relocation.
 
 The platform's `core/src/notifications/` service and Rust ntfy adapter remain
 separate from this one-shot App. Notification records, DND, leases, retries,
