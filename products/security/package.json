@@ -1,0 +1,4 @@
+{
+  "apps": ["apps/security-center"],
+  "tests": []
+}
