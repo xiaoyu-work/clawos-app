@@ -1,0 +1,81 @@
+// SPDX-License-Identifier: GPL-3.0-only
+//
+// Thin sync adapter over `claw-os-sdk` for cosmic-edit.
+//
+// Each function turns a `BridgeError` into a plain `io::Error` so call
+// sites can keep their `match … { Ok / Err(io::Error) }` shape. A
+// kernel "denied" decision surfaces as `io::ErrorKind::PermissionDenied`
+// so the existing pkexec fallback in `tab.rs::save` keeps working
+// unchanged.
+//
+// AI helpers (`summarize` / `explain` / `rewrite`) live in the [`ai`]
+// submodule. They are `async` and return `Result<_, String>` because
+// the MCP server and any future UI surface want a flat
+// human-presentable error, not an `io::Error`.
+
+pub mod ai;
+
+use std::io;
+use std::path::Path;
+
+use cos_runtime::{BridgeError, ask_claw, desktop, filesystem};
+use serde::Serialize;
+
+fn map_err(err: BridgeError) -> io::Error {
+    let kind = if err.is_denied() {
+        io::ErrorKind::PermissionDenied
+    } else {
+        io::ErrorKind::Other
+    };
+    io::Error::new(kind, err.to_string())
+}
+
+fn path_str(path: &Path) -> io::Result<&str> {
+    path.to_str().ok_or_else(|| {
+        io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "path is not valid UTF-8 (claw-os-sdk requires UTF-8 paths)",
+        )
+    })
+}
+
+/// User-intent file read (reload tab from disk after an external change).
+///
+/// Hot-path reads (syntax highlighting, project tree population, etc.)
+/// MUST keep using `std::fs` directly — those happen on every keystroke
+/// and routing each one through a subprocess would tank the editor.
+pub fn read_to_string(path: &Path) -> io::Result<String> {
+    let p = path_str(path)?;
+    filesystem::read(p).map(|r| r.content).map_err(map_err)
+}
+
+/// User-intent file save.
+///
+/// Returns `io::ErrorKind::PermissionDenied` on a kernel denial — the
+/// caller may then prompt the user for elevation (pkexec) exactly as
+/// it did before claw-os-sdk existed.
+pub fn write_text(path: &Path, contents: &str) -> io::Result<()> {
+    let p = path_str(path)?;
+    filesystem::write(p, contents).map(|_| ()).map_err(map_err)
+}
+
+/// Open another editor through the fixed OS desktop target.
+pub fn new_window() -> io::Result<()> {
+    desktop::open_editor(None).map_err(map_err)
+}
+
+#[derive(Serialize)]
+struct EditContext<'a> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    file: Option<&'a str>,
+}
+
+impl ask_claw::Context for EditContext<'_> {
+    const APP_ID: &'static str = "cosmic-edit";
+}
+
+/// Open Ask Claw with the optional active document path.
+pub fn ask_claw_overlay(file: Option<&Path>) -> Result<(), ask_claw::LaunchError> {
+    let file = file.and_then(Path::to_str);
+    ask_claw::launch(&EditContext { file })
+}

@@ -1,0 +1,9 @@
+{
+  "apps": ["apps/cosmic-edit"],
+  "tests": [],
+  "native": {"cosmic-edit": "native/cosmic-edit"},
+  "native_kind": "binary",
+  "native_assets": {
+    "cosmic-edit": {"app.json": "apps/cosmic-edit/app.json"}
+  }
+}

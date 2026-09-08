@@ -30,6 +30,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/maintenance/` | Exact-path configuration and exact-unit service App contracts; validators, atomic writes, systemctl execution, mutation records and rollback remain OS-owned |
 | `products/events-audit/` | Event service client and legacy JSONL activity App; event/audit authority remains OS-owned; `log` still needs typed audit-service integration rather than direct system-audit access |
 | `products/launcher/` | Complete native Launcher UI and Python/native MCP surfaces sharing product catalog/search/recent and typed launch logic; desktop execution and native UI backend service stay OS-owned |
+| `products/editor/` | Complete native Text Editor UI, seven MCP handlers and shared SDK AI presentation; controlled filesystem/snapshot, desktop and model-provider authority remain OS-owned |
 | `products/clipboard/` | Selection App contract and complete native CopyQ history panel; separate selection/history grants, with policy and Wayland authority OS-owned |
 | `products/notification-delivery/` | One-shot ntfy/Pushover/Webhook App sources; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
@@ -93,7 +94,11 @@ does not integrate the two backends or move user history.
 It uses each product's checked-in lock and the common toolkit patch mapping,
 with generated inputs under `build/<product>-native` and a shared native target
 cache. CI compiles and tests Calendar, Clipboard and Desktop Widgets libraries
-and the complete Launcher binary. Launcher additionally uses immutable
+and the complete Launcher and Editor binaries. Editor retains its original
+locked upstream toolkit/file-chooser graph and immutable SDK/runtime. Its
+interactive unsaved-buffer AI actions share the MCP SDK helper rather than
+calling the Document App; both retain the Editor identity and untrusted-content
+origin. Neither AI path saves files or memory. Launcher additionally uses immutable
 OS SDK/runtime and launcher-backend library/service sources. Its native MCP
 embeds the canonical Python product implementation and SDK adapter at compile
 time, then replaces its process with isolated system Python; no mutable App

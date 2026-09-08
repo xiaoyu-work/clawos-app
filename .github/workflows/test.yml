@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: [mail, calendar, files, browser, terminal, containers, backup-recovery, store, diagnostics, storage, settings, security, maintenance, events-audit, launcher, clipboard, messaging-channels, notification-delivery, home-integration, desktop-widgets]
+        product: [mail, calendar, files, browser, terminal, containers, backup-recovery, store, diagnostics, storage, settings, security, maintenance, events-audit, launcher, clipboard, messaging-channels, notification-delivery, home-integration, desktop-widgets, editor]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: [calendar, clipboard, desktop-widgets, launcher]
+        product: [calendar, clipboard, desktop-widgets, launcher, editor]
     env:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
@@ -49,6 +49,9 @@ jobs:
             libwayland-dev libxkbcommon-dev libudev-dev libinput-dev libdbus-1-dev \
             libsystemd-dev libegl1-mesa-dev libgbm-dev
       - run: rustup toolchain install stable --profile minimal && rustup default stable
+      - name: Install Editor file chooser dependencies
+        if: matrix.product == 'editor'
+        run: sudo apt-get install -y libglib2.0-dev
       - run: python3 tools/native_build.py ${{ matrix.product }} test
       - name: Build and exercise native Launcher executable
         if: matrix.product == 'launcher'
@@ -59,3 +62,8 @@ jobs:
           fi
           python3 tools/native_build.py launcher build
           python3 products/launcher/native/test_process.py
+      - name: Build and exercise native Editor executable
+        if: matrix.product == 'editor'
+        run: |
+          python3 tools/native_build.py editor build
+          python3 products/editor/native/test_process.py

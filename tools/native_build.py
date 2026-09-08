@@ -1,4 +1,4 @@
-"""Build/test the native UI against the immutable Claw OS toolkit, not upstream styling."""
+"""Build/test native products with their locked library and toolkit boundaries."""
 
 import argparse
 import importlib.util
@@ -68,9 +68,10 @@ def main(product=None):
     prepare(product, toolkit, destination)
     package = json.loads((ROOT / "products" / product / "package.json").read_text())
     targets = [] if package.get("native_kind") == "binary" else ["--lib"]
+    arguments = ["--", "--test-threads=1"] if options.command == "test" else []
     subprocess.run(
         ["cargo", options.command, "--locked", "--manifest-path", str(destination / "Cargo.toml"),
-         "--target-dir", str(ROOT / "build/native-target"), *targets],
+         "--target-dir", str(ROOT / "build/native-target"), *targets, *arguments],
         check=True, cwd=ROOT,
     )
 
