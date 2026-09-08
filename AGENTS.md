@@ -9,7 +9,7 @@ Read `ARCHITECTURE.md` and the product's `MODULE.md` before changing its boundar
   work. Use the versioned SDK/runtime for controlled OS and AI access.
 - Keep authority, credentials, consent, audit, App Host and system services in
   `xiaoyu-work/claw-os`. Do not copy their implementations here.
-- `platform.lock.json` pins development SDK/runtime dependencies. Fetch them
+- `platform.lock.json` pins development SDK/runtime and shared App libraries. Fetch them
   through `tools/platform_dependency.py`; never import from a sibling OS checkout.
 - Preserve upstream licenses, source pins, executable modes and symlinks.
   Build native products on Linux/WSL's Linux filesystem.

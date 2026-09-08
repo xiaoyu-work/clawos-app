@@ -1,4 +1,4 @@
-"""Fetch the immutable development SDK/runtime, never a sibling checkout."""
+"""Fetch immutable development libraries, never a sibling checkout."""
 
 import json
 from pathlib import Path
@@ -17,6 +17,9 @@ def prepare():
     sources = lock["python_sources"]
     if sources != ["claw-os-sdk/python/src", "cos-runtime/python/src"]:
         raise ValueError("Platform dependency may contain only the SDK and first-party runtime")
+    packages = lock["python_packages"]
+    if packages != ["apps/_shared"]:
+        raise ValueError("Platform packages may contain only the shared App library")
     destination = ROOT / "build" / "platform" / revision
     if not destination.exists():
         destination.mkdir(parents=True)
@@ -24,7 +27,7 @@ def prepare():
         subprocess.run([*git, "init", "--quiet"], check=True)
         subprocess.run([*git, "remote", "add", "origin", lock["repository"]], check=True)
         subprocess.run([*git, "sparse-checkout", "init", "--cone"], check=True)
-        subprocess.run([*git, "sparse-checkout", "set", *sources], check=True)
+        subprocess.run([*git, "sparse-checkout", "set", *sources, *packages], check=True)
         subprocess.run([*git, "fetch", "--quiet", "--depth=1", "--filter=blob:none",
                         "origin", revision], check=True)
         subprocess.run([*git, "checkout", "--quiet", "--detach", revision], check=True)
@@ -38,9 +41,12 @@ def prepare():
     if dirty:
         raise RuntimeError(f"Cached platform dependency is modified: {destination}")
     paths = [destination / source for source in sources]
-    if not all(path.is_dir() for path in paths):
+    package_paths = [destination / package for package in packages]
+    if not all(path.is_dir() for path in [*paths, *package_paths]) or not (
+        destination / "apps/canonical_argv.py"
+    ).is_file():
         raise RuntimeError("Cached platform dependency is incomplete")
-    return paths
+    return [*paths, *(path.parent for path in package_paths)]
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ remain in Claw OS.
 
 | Product | Source | Migration state |
 | --- | --- | --- |
-| Mail | [products/mail](products/mail/README.md) | Native Thunderbird source and existing Mail AI/UI; legacy email/delivery consolidation remains pending |
+| Mail | [products/mail](products/mail/README.md) | Native Thunderbird source, Mail AI/UI and legacy email transport; delivery source move and product consolidation remain pending |
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 On Linux/WSL, run Mail contracts with `python3 tools/test.py mail`.

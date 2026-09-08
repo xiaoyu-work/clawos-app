@@ -15,11 +15,16 @@ SPEC.loader.exec_module(stage)
 
 
 def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
-    assert stage.stage("mail", tmp_path) == ["mail-ai"]
+    assert stage.stage("mail", tmp_path) == ["mail-ai", "email"]
     app = tmp_path / "usr/lib/cos/apps/mail-ai"
     assert (app / "server.py").is_file()
     assert (app / "native_host.py").is_file()
     assert not (app / "test_main.py").exists()
+    email = tmp_path / "usr/lib/cos/apps/email"
+    assert (email / "main.py").is_file()
+    assert (email / "server.py").is_file()
+    assert not (email / "test_main.py").exists()
+    assert not (tmp_path / "usr/lib/cos/apps/_shared").exists()
     assert not (tmp_path / "usr/lib/cos/python").exists()
     assert not (tmp_path / "usr/lib/cos/claw-mail-ai-host").exists()
     manifest = json.loads((app / "app.json").read_text())

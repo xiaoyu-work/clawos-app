@@ -19,12 +19,14 @@ def main():
     product = ROOT / "products" / options.product
     tests = [
         product / "apps" / "mail-ai" / "test_main.py",
+        product / "apps" / "email" / "test_main.py",
         product / "extension" / "test_contract.py",
         product / "test_build.py",
         product / "test_extension_package.py",
         ROOT / "tests" / "test_stage.py",
+        ROOT / "tests" / "test_platform_dependency.py",
     ]
-    subprocess.run([sys.executable, "-m", "pytest", "-q", *map(str, tests)],
+    subprocess.run([sys.executable, "-m", "pytest", "-q", "--import-mode=importlib", *map(str, tests)],
                    cwd=ROOT, env=env, check=True)
 
 

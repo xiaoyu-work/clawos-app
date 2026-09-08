@@ -10,6 +10,7 @@ model policy and signed installation.
 | --- | --- |
 | `comm/` | Full Thunderbird source; native account, message and compose engine |
 | `apps/mail-ai/` | Existing six shared AI operations and manifest |
+| `apps/email/` | Legacy SMTP/Gmail/Outlook operations, preserving provider-specific grants until the native-engine cutover |
 | `extension/` | Thunderbird UI using those operations |
 | `build.py`, `mozconfig`, `upstream.json` | Matched native source build |
 | `build-extension.py`, `package.json` | Deterministic XPI and installed asset ownership |
@@ -18,8 +19,10 @@ model policy and signed installation.
 The native product build is independent of the OS Rust workspace. Keep
 provider credentials and authorization in the OS; importing source does not
 grant access to a user's profile. The repository move preserves installed
-`mail-ai` identity, paths, grants and protocol. Legacy `email` and
-`gateway-email` still await their own migration and product consolidation.
+`mail-ai` and `email` identities, paths, grants and protocols. `gateway-email`
+still awaits its source move; all legacy identities await product consolidation.
+Email's `_shared` dependency is a pinned shared library, not another App or a
+copied credential/HTTP implementation.
 
 From the repository root, use `python3 tools/test.py mail`. For native tests,
 build first and use `python3 products/mail/build.py test comm/path/to/test.js`.
