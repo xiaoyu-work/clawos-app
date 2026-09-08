@@ -11,6 +11,7 @@ Preserve App identities, nested installed paths and separate grants.
 | `apps/gateway/ntfy/main.py` | One-shot UTF-8 publish, topic/auth selection, metadata and status |
 | `apps/gateway/ntfy/server.py` | Existing manifest-bound SDK adapter |
 | `apps/gateway/ntfy/test_main.py` | Direct/SDK dispatch and migrated gateway argument/auth regressions |
+| `apps/gateway/pushover/` | One-shot send/status, user/group key overrides, emergency options and API results |
 | `package.json` | Product-owned payload staging and tests |
 
 ## Boundaries
@@ -24,6 +25,12 @@ docstring's server-resolution description is the current launch contract.
 The source move preserves this requirement, optional topic lookup, explicit
 bearer-before-basic precedence and stored-token suppression for the public
 default server. It does not broaden network grants or copy account state.
+
+Pushover retains its exact API host, two credential grants and self-memory scope.
+`recipient` is an optional flag, not a positional argument as the old docstring
+suggests. Emergency `retry`/`expire` fields are remote Pushover behavior, not a
+local delivery queue. Returning a receipt identifier does not poll or confirm
+acknowledgement. No DND, retry state or credentials are copied into this product.
 
 The platform's `core/src/notifications/` service and Rust ntfy adapter remain
 separate from this one-shot App. Notification records, DND, leases, retries,

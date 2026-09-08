@@ -130,13 +130,14 @@ def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
 
 
 def test_notification_delivery_stages_only_product_payload(tmp_path):
-    assert stage.stage("notification-delivery", tmp_path) == ["gateway-ntfy"]
-    source = ROOT / "products/notification-delivery/apps/gateway/ntfy"
-    installed = tmp_path / "usr/lib/cos/apps/gateway/ntfy"
-    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
-    for filename in ("app.json", "main.py", "server.py"):
-        assert (installed / filename).read_bytes() == (source / filename).read_bytes()
-    assert not (tmp_path / "usr/lib/cos/apps/gateway-ntfy").exists()
+    assert stage.stage("notification-delivery", tmp_path) == ["gateway-ntfy", "gateway-pushover"]
+    for channel in ("ntfy", "pushover"):
+        source = ROOT / "products/notification-delivery/apps/gateway" / channel
+        installed = tmp_path / "usr/lib/cos/apps/gateway" / channel
+        assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
+        for filename in ("app.json", "main.py", "server.py"):
+            assert (installed / filename).read_bytes() == (source / filename).read_bytes()
+        assert not (tmp_path / "usr/lib/cos/apps" / f"gateway-{channel}").exists()
     assert not (tmp_path / "usr/lib/cos/apps/gateway/_shared").exists()
     assert not (tmp_path / "var/lib").exists()
 

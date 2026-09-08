@@ -31,7 +31,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/events-audit/` | Event service client and legacy JSONL activity App; event/audit authority remains OS-owned; `log` still needs typed audit-service integration rather than direct system-audit access |
 | `products/launcher/` | Python catalog/search/recent and typed launch App; desktop execution stays OS-owned; native Launcher and shared catalog/history integration remain pending |
 | `products/clipboard/` | Selection App contract with separate read/write grants; Wayland execution and source descriptors stay OS-owned; native history panel remains pending |
-| `products/notification-delivery/` | One-shot ntfy App source; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
+| `products/notification-delivery/` | One-shot ntfy/Pushover App sources; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
 | `products/messaging-channels/` | Discord/Telegram and outbound-only DingTalk/Google Chat/Lark/Matrix/Mattermost/Rocket.Chat/Signal/Slack/SMS/Teams/Webex/WhatsApp/Zulip connector sources; authenticated inbound owner/sender admission, lifecycle and durable replay handling remain pending |
 | `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
