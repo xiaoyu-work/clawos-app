@@ -46,9 +46,14 @@ printing and cancellation. Printing keeps exact source-file read authority;
 cancellation keeps explicit confirmation and OS job-owner checks. CUPS and
 existing print queues remain OS-owned.
 
+`user-manager` exposes twelve local identity tools. Observation is separate
+from identity management; password changes use exact secret references, not
+plaintext arguments. Account state, home directories and rollback remain
+OS-owned.
+
 Wayland, AT-SPI and PipeWire/WirePlumber execution and user-session validation remain behind
-the Claw OS broker. The native `cosmic-settings` UI and other system-management
-Apps are still pending; this product must not become a super-privileged
+the Claw OS broker. All eleven assigned management App sources have moved,
+but the native `cosmic-settings` UI remains pending. This product must not become a super-privileged
 Settings process or call other Apps to obtain their authority.
 
 See [MODULE.md](MODULE.md) for source navigation and commands.

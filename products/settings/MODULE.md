@@ -6,9 +6,9 @@ two discovery/capture tools, `display-manager`'s ten output/backlight tools,
 `desktop-manager`'s four window-management tools and `location-manager`'s
 two location/timezone tools, plus `network-manager`'s eleven network tools,
 `power-manager`'s seven status/power tools and `printer-manager`'s five
-discovery/queue/printing tools.
-Native `cosmic-settings` and other system-management Apps await their
-individual migrations.
+discovery/queue/printing tools, and `user-manager`'s twelve identity tools.
+All eleven management App sources assigned to Settings have moved.
+Native `cosmic-settings` still awaits its complete UI/build migration.
 
 | Path | Responsibility |
 | --- | --- |
@@ -43,6 +43,9 @@ individual migrations.
 | `apps/printer-manager/app.json` | Separate discovery/queue/print/control grants and exact source-file read scope |
 | `apps/printer-manager/main.py`, `server.py` | Validated `cos __printer` requests and SDK handlers with bounded print options |
 | `apps/printer-manager/test_main.py` | Direct/SDK routes, optional printer, all duplex choices, print defaults and strict cancel confirmation |
+| `apps/user-manager/app.json` | Separate identity observation/manage grants and exact password credential read |
+| `apps/user-manager/main.py`, `server.py` | Validated `cos __users` requests and SDK handlers; no password plaintext |
+| `apps/user-manager/test_main.py` | All direct/SDK routes, optional creation fields, group/token normalization and destructive confirmation |
 | `package.json` | Product-owned staging and test inputs |
 
 Preserve the installed App identity. Status requires `sys.observe` scope
@@ -107,6 +110,13 @@ control. Printing also requires `fs.read` on the exact canonical source;
 cancellation requires explicit confirmation. CUPS execution, pinned source-file
 descriptors, job-owner checks and mutation serialization remain OS-owned.
 Existing queues/documents stay in place; tests do not submit or cancel real jobs.
+
+`user-manager` retains `sys.observe:identities` for status and
+`sys.identity:manage` for mutations. Password changes also require exact
+`secret.read` authority on a credential reference. Local account/group state,
+password handling, shadow utilities, shell allowlisting and owner-bound rollback
+remain OS-owned. Deletion retains home directories; destructive actions keep
+explicit confirmation. Tests do not change real users, groups or passwords.
 
 Settings organizes interfaces, not a union of authority. Each provider must
 retain its own App identity, scope checks and consent boundary. Apps do not
