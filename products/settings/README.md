@@ -31,6 +31,11 @@ accuracy levels and a city-level default. The existing location grant remains
 required; the OS owns GeoClue access and offline timezone suggestions, without
 changing the system timezone.
 
+`network-manager` exposes eleven tools for network observations, Wi-Fi, VPN
+and airplane mode. Each control domain retains its own grant. Optional Wi-Fi
+credentials remain exact secret references; the OS loads passwords and executes
+NetworkManager operations without moving existing profiles.
+
 Wayland, AT-SPI and PipeWire/WirePlumber execution and user-session validation remain behind
 the Claw OS broker. The native `cosmic-settings` UI and other system-management
 Apps are still pending; this product must not become a super-privileged
