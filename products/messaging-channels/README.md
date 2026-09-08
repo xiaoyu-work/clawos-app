@@ -10,6 +10,8 @@ the configured webhook, not the informational recipient, fixes the destination.
 `gateway-larksuite` owns Lark/Feishu text, rich posts and interactive cards.
 Its signing implementation is corrected to the official custom-bot algorithm;
 existing optional signing and permissions are preserved.
+`gateway-matrix` sends room text through the Client-Server API and reports
+status. Its `/sync` inbound loop remains unimplemented.
 
 This is a source move, not completion of the connector lifecycle redesign.
 Authenticated owner/sender admission and durable replay handling still need

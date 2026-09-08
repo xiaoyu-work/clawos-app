@@ -1,7 +1,7 @@
 # Messaging Channels
 
-Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`
-`gateway-googlechat` and `gateway-larksuite`.
+Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`,
+`gateway-googlechat`, `gateway-larksuite` and `gateway-matrix`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -14,6 +14,7 @@ super-privileged App identity.
 | `apps/gateway/dingtalk/` | Outbound robot send/status, HMAC signing, Markdown/keyword/mentions and direct/SDK tests |
 | `apps/gateway/googlechat/` | Outbound webhook send/status, text/cardsV2, thread queries and direct/SDK tests |
 | `apps/gateway/larksuite/` | Outbound text/rich-post/card send/status and official custom-bot HMAC signing |
+| `apps/gateway/matrix/` | Outbound room messages, escaped room IDs, transaction IDs and send/status SDK contracts |
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
@@ -53,6 +54,12 @@ then base64-encodes the result; timestamps are seconds. See the
 [official custom-bot guide](https://open.larksuite.com/document/client-docs/bot-v3/add-custom-bot).
 Known-answer tests cover the signer and all three message shapes through MCP.
 Unsigned mode remains available as before; no credential or state migration occurs.
+
+Matrix preserves send/status and existing grants, including its environment/
+credential homeserver selection and existing default. It sends `m.text` through
+the Client-Server API, escapes the room ID as one path segment and generates a
+transaction ID per send. There is no local state store or inbound `/sync` loop;
+source relocation does not add either or establish a durable delivery lifecycle.
 
 ```bash
 python3 tools/test.py messaging-channels
