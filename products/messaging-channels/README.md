@@ -22,6 +22,9 @@ and private-network authorization are not supplied by this source relocation.
 `gateway-slack` keeps Web API `chat.postMessage` and status, bot-token
 authentication and API error reporting. Socket Mode / Events HTTP remain
 unimplemented; relocation adds no inbound service or state store.
+`gateway-sms` owns the Twilio send/status client with phone or Messaging Service
+sender selection. Credentials remain OS-owned; inbound webhooks and delivery
+confirmation are not provided by this move.
 
 This is a source move, not completion of the connector lifecycle redesign.
 Authenticated owner/sender admission and durable replay handling still need

@@ -2,7 +2,7 @@
 
 Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`,
 `gateway-googlechat`, `gateway-larksuite`, `gateway-matrix`, `gateway-mattermost`,
-`gateway-rocketchat`, `gateway-signal` and `gateway-slack`.
+`gateway-rocketchat`, `gateway-signal`, `gateway-slack` and `gateway-sms`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -20,6 +20,7 @@ super-privileged App identity.
 | `apps/gateway/rocketchat/` | REST send/status, channel/DM targets and separate token/user-id headers |
 | `apps/gateway/signal/` | External signal-cli-rest-api send/status, recipient normalization and group routing |
 | `apps/gateway/slack/` | Web API send/status, bot-token authentication and API-level error handling |
+| `apps/gateway/sms/` | Twilio send/status, form encoding and phone/Messaging Service sender selection |
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
@@ -89,6 +90,13 @@ truncation and API-level failure reporting even on HTTP success. The manifest's
 existing Slack-host, exact credential and self-memory grants remain unchanged;
 status needs no credentials or network. Socket Mode and Events HTTP remain
 unimplemented, with no new service lifecycle or state store.
+
+SMS preserves the Twilio Messages REST client, Basic authentication,
+phone normalization and mutually exclusive `From`/`MessagingServiceSid` fields.
+Its existing Twilio-host, three exact credential and self-memory grants remain
+unchanged. Unlike Slack, status reads configuration credentials but never
+returns the account SID or auth token. No inbound webhook or delivery callback
+is implemented; a queued API response is not proof of SMS delivery.
 
 ```bash
 python3 tools/test.py messaging-channels
