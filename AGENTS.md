@@ -11,8 +11,8 @@ Read `ARCHITECTURE.md` and the product's `MODULE.md` before changing its boundar
   `xiaoyu-work/claw-os`. Do not copy their implementations here.
 - `platform.lock.json` pins development SDK/runtime and shared App libraries. Fetch them
   through `tools/platform_dependency.py`; never import from a sibling OS checkout.
-  Native Calendar uses `prepare_native()` for the shared toolkit only; run
-  `python3 products/calendar/native/build.py test` for actual native coverage.
+  Native products use `prepare_native()` for the shared toolkit only; run
+  `python3 tools/native_build.py <product> test` for actual native coverage.
 - Preserve upstream licenses, source pins, executable modes and symlinks.
   Build native products on Linux/WSL's Linux filesystem.
 - Keep installed identities and permissions unchanged during repository moves.

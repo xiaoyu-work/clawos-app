@@ -13,7 +13,7 @@ def stage(product: str, destination: Path) -> list[str]:
     source = ROOT / "products" / product
     package = json.loads((source / "package.json").read_text())
     installed = []
-    for name, relative in package.get("native", {}).items():
+    for name, relative in sorted(package.get("native", {}).items()):
         if not re.fullmatch(r"[a-z][a-z0-9-]*", name):
             raise ValueError("Invalid native component name")
         component = source / relative

@@ -30,7 +30,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/maintenance/` | Exact-path configuration and exact-unit service App contracts; validators, atomic writes, systemctl execution, mutation records and rollback remain OS-owned |
 | `products/events-audit/` | Event service client and legacy JSONL activity App; event/audit authority remains OS-owned; `log` still needs typed audit-service integration rather than direct system-audit access |
 | `products/launcher/` | Python catalog/search/recent and typed launch App; desktop execution stays OS-owned; native Launcher and shared catalog/history integration remain pending |
-| `products/clipboard/` | Selection App contract with separate read/write grants; Wayland execution and source descriptors stay OS-owned; native history panel remains pending |
+| `products/clipboard/` | Selection App contract and complete native CopyQ history panel; separate selection/history grants, with policy and Wayland authority OS-owned |
 | `products/notification-delivery/` | One-shot ntfy/Pushover/Webhook App sources; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
 | `products/home-integration/` | Home Assistant REST adapter source; external server, accounts, devices and automation state are not imported; OS credentials and egress authority remain separate |
@@ -79,3 +79,16 @@ into a separate native dependency cache. OS builds use their own forked
 toolkit and immutable App source pin. The panel manifest and compiled shell
 remain in `claw-os-desktop`; Calendar's Python backend remains in
 `claw-os-agent`. Installed state, grants and signed APT updates do not change.
+
+Clipboard's complete native popup, CopyQ implementation and resources use the
+same native staging/build mechanism. Its `HistoryPolicy` callback asks the OS
+host for read/write authorization on the named history scope before executing
+CopyQ; authority is not imported from Widget Rail or copied into the product.
+The human-only `panel-clipboard` identity and desktop package ownership remain
+separate from `clipboard-manager` and its Wayland selection grants. Relocation
+does not integrate the two backends or move user history.
+
+`tools/native_build.py <product> test` is the shared native development/CI runner.
+It uses each product's checked-in lock and the common toolkit patch mapping,
+with generated inputs under `build/<product>-native` and a shared native target
+cache. CI compiles and tests both Calendar and Clipboard libraries.

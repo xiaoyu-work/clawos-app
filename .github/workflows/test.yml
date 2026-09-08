@@ -29,8 +29,11 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y ripgrep
       - run: python3 tools/test.py ${{ matrix.product }}
 
-  native-calendar:
+  native:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        product: [calendar, clipboard]
     env:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
@@ -46,4 +49,4 @@ jobs:
             libwayland-dev libxkbcommon-dev libudev-dev libinput-dev libdbus-1-dev \
             libsystemd-dev libegl1-mesa-dev libgbm-dev
       - run: rustup toolchain install stable --profile minimal && rustup default stable
-      - run: python3 products/calendar/native/build.py test
+      - run: python3 tools/native_build.py ${{ matrix.product }} test

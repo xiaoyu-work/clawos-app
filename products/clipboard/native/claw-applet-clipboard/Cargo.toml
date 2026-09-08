@@ -1,0 +1,22 @@
+[package]
+name = "claw-applet-clipboard"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-only"
+autobins = false
+
+[workspace]
+
+[dependencies]
+i18n-embed-fl = "0.10"
+i18n-embed = { version = "0.16.0", features = ["fluent-system", "desktop-requester"] }
+jiff = "0.2"
+libcosmic = { git = "https://github.com/pop-os/libcosmic", default-features = false, features = [
+    "applet", "applet-token", "dbus-config", "multi-window", "tokio",
+    "wayland", "desktop-systemd-scope", "winit",
+] }
+rust-embed = "8.11.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1.49.0", features = ["full"] }
+tracing = "0.1"

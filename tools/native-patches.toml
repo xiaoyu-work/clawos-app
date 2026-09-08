@@ -10,7 +10,7 @@ cosmic-client-toolkit = { git = "https://github.com/pop-os/cosmic-protocols//", 
 # upower_dbus = { path = "../dbus-settings-bindings/upower" }
 # nm-secret-agent-manager = { path = "../dbus-settings-bindings/nm-secret-agent-manager" }
 
-# Build the panel applets against the vendored toolkit rather than upstream
+# Build native products against the vendored toolkit rather than upstream
 # libcosmic. Applet popup shells, tooltips and menus are styled inside
 # `desktop/toolkit`; without this patch the dock and top bar would keep
 # resolving the pinned upstream crate and render stock COSMIC grey.
