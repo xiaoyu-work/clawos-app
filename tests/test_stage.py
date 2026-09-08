@@ -129,6 +129,19 @@ def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
         stage.stage("mail", tmp_path)
 
 
+def test_messaging_channels_stage_nested_connector_without_shared_runtime_or_state(tmp_path):
+    assert stage.stage("messaging-channels", tmp_path) == ["gateway-discord"]
+    source = ROOT / "products/messaging-channels/apps/gateway/discord"
+    installed = tmp_path / "usr/lib/cos/apps/gateway/discord"
+    for filename in ("app.json", "main.py", "server.py"):
+        assert (installed / filename).read_bytes() == (source / filename).read_bytes()
+    assert not (installed / "test_main.py").exists()
+    assert not (tmp_path / "usr/lib/cos/apps/gateway-discord").exists()
+    assert not (tmp_path / "usr/lib/cos/apps/gateway/_shared").exists()
+    assert not (tmp_path / "usr/lib/cos/python").exists()
+    assert not (tmp_path / "var/lib").exists()
+
+
 @pytest.mark.parametrize("layout,app_id", [
     ("apps/gateway/email", "email"),
     ("apps/../outside", "outside"),
