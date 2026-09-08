@@ -59,9 +59,25 @@ default features, toolkit patches, translations, resources and packaging.
 This product is not a super-privileged Settings process: its twelve identities
 retain independent authority and do not call other Apps.
 
-Native MCP exposes only page listing, search and opening a page. Opening uses
+Native MCP exposes page listing, search, opening a page and four owner-scoped
+permission tools: list, show, request restoration and revoke. Opening uses
 the fixed OS Settings target under the existing `proc.spawn:cosmic-settings`
-grant, never the management Apps' device/account permissions. Human UI writes,
+grant, never the management Apps' device/account permissions. The OS activates
+the fixed GUI through the owner's independent user service manager, without
+relaxing daemon/worker isolation. Applications UI and MCP share the SDK
+permission client; permission and fixed-launch calls explicitly use installed
+`/usr/local/bin/cos` even when
+PATH is sanitized and no override is set.
+
+Restoration stays pending until a human confirms through the fixed OS polkit
+helper. The OS persists until-revoked policy consent independently of its
+30-day execution-grant ceiling, preserving earlier approved restorations but
+not overriding a newer owner/App/session revocation. Enabled is not granted;
+manifest/trust/caller ceilings and ordinary launch approvals still apply.
+MCP cannot approve or forge an owner/session. Direct resources and dynamic
+argument scopes remain explicitly unsupported.
+
+Human UI writes,
 spawns and snapshot-backed mutations use controlled OS services, while
 interactive D-Bus/Wayland behavior and existing configuration remain unchanged.
 

@@ -52,7 +52,7 @@ here, retaining its separate twelfth identity and original default pages.
 | `native/cosmic-settings/cosmic-settings/src/mcp.rs` | Static page catalog/search and fixed OS Settings activation |
 | `native/cosmic-settings/cosmic-settings/src/permissions.rs`, `src/pages/applications/permissions.rs` | Shared OS permission client, cancellable Applications UI, fixed trusted human confirmation |
 | `native/cosmic-settings/cosmic-settings/src/claw_glue.rs`, `src/human.rs`, `human_bridge.py` | Human-only controlled filesystem/process/policy/snapshot adapters and SDK Agent context; no App dispatch |
-| `native/test_build.py`, `native/test_process.py` | Workspace/default graph, synthetic human adapters, installed resources and authenticated stdio MCP |
+| `native/test_build.py`, `native/test_process.py` | Workspace/default graph, synthetic human adapters, installed resources, authenticated stdio MCP and clean-environment native permission client |
 
 Preserve the installed App identity. Status requires `sys.observe` scope
 `accessibility`; mutations require `ui.accessibility` scope `control`.
@@ -131,6 +131,10 @@ and `settings.open`. The first two require no device authority; opening uses
 only `proc.spawn:cosmic-settings` at the fixed OS Settings target. Optional page
 ids are checked against the native CLI's page commands before crossing the
 service boundary, including its existing magnifier and dock/panel-applet pages.
+The OS activates this fixed target through the authenticated owner's independent
+user systemd service manager, with a closed environment and startup
+acknowledgement rather than waiting for the GUI to exit. Daemon and worker
+`NoNewPrivileges` remain intact; no session service means an explicit error.
 
 Four new manifest-authoritative tools are `settings.permissions_list`,
 `settings.permissions_show`, `settings.permissions_request` and
@@ -138,6 +142,10 @@ Four new manifest-authoritative tools are `settings.permissions_list`,
 The Applications UI and MCP use the same typed OS route; identity comes from
 the authenticated broker session, never MCP metadata or user-provided owner
 fields. The UI's fixed polkit helper path is not an MCP operation.
+Permission and fixed-launch clients explicitly select `/usr/local/bin/cos`
+through the SDK's shared wire/error transport. A sanitized desktop PATH and absent `CLAW_COS_BIN` are
+supported without process-wide environment mutation or another subprocess
+implementation.
 
 The page distinguishes verified declarations, owner/App enablement and current
 daemon grants, and shows quarantine/service errors plus pending/recent changes.
@@ -145,6 +153,11 @@ Existing declarations default to enabled, not automatically granted. Revocation
 disables one brokered permission and invalidates that owner's target App grants;
 restart/retry the App afterward. Requesting restoration returns pending until
 a human confirms through the OS helper, with duration forever/until revoked.
+The OS stores durable exact owner/App/capability-generation-bound policy
+receipts, separate from ordinary expiring execution grants. Existing approved
+Settings receipts retain this meaning across upgrades and restarts; a newer
+App, owner or approval-session revocation still invalidates them. Restoration
+has no execution expiry/use budget and cannot be redeemed as execution authority.
 This removes a deny gate, never expands signed manifest/trust/caller ceilings.
 Filesystem mounts, direct egress/native authority and argument-bound scopes
 remain visible but explicitly cannot be changed in this first version.

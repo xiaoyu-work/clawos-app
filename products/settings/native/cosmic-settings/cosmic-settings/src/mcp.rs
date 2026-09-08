@@ -215,7 +215,9 @@ fn open(page: Option<&str>) -> Result<(), cos_runtime::BridgeError> {
     if let Some(page) = page {
         args.extend(["--uri".into(), format!("settings://{page}")]);
     }
-    let value = claw_os_sdk::cos_call_json("desktop", "launch", args)?;
+    let value = claw_os_sdk::cos_call_json_with_binary(
+        "/usr/local/bin/cos", "desktop", "launch", args,
+    )?;
     if value["launched"] != true || value["app_id"] != "com.clawos.Settings"
         || value["launcher"] != "/usr/bin/cosmic-settings"
     {

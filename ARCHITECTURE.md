@@ -114,7 +114,16 @@ patches and config-schema dependencies. Applications now presents verified App
 permissions through the same OS client as four permission-management MCP tools.
 Those tools require only `sys.permissions:manage`, never target provider grants.
 Requests are pending until the OS polkit helper confirms; revocation and live
-enforcement remain in the OS. Fixed brokered permissions can be disabled and
+enforcement remain in the OS. Until-revoked restoration is durable policy
+consent rather than expiring execution authority; old approved Settings receipts
+retain that meaning while newer owner/App/session revocations still win.
+The shared permission client explicitly selects installed `/usr/local/bin/cos`
+through the SDK decoder without relying on PATH or changing process environment.
+Fixed Settings activation uses the authenticated owner's independent user
+systemd service, preserving daemon/worker `NoNewPrivileges` and immediate
+startup error reporting without tying the GUI lifetime to the broker.
+Only the human UI may present polkit confirmation; no approval route is
+available to MCP. Fixed brokered permissions can be disabled and
 restored; direct resources and argument-bound scopes are explicitly unsupported.
 The original discovery and fixed-target activation tools remain unchanged.
 Human UI adapters use OS filesystem/process services and SDK policy/snapshots,

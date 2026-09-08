@@ -1,5 +1,16 @@
 use super::*;
 
+#[tokio::test]
+#[ignore = "installed native process fixture provides the fixed OS executable"]
+async fn installed_permission_client_uses_closed_environment() {
+    assert!(std::env::var_os("CLAW_COS_BIN").is_none());
+    assert!(std::env::var_os("COS_MCP_SERVER").is_none());
+    assert!(std::env::var_os("COS_SESSION").is_none());
+    assert_eq!(std::env::var("PATH").unwrap(), "/usr/sbin:/usr/bin:/sbin:/bin");
+    let result = call(json!({"action":"list"})).await.unwrap();
+    assert_eq!(result["apps"][0]["app_id"], "audio-manager");
+}
+
 #[test]
 fn helper_ids_are_bounded_and_cannot_be_arguments() {
     assert!(valid_request_id("ap-123abcd"));

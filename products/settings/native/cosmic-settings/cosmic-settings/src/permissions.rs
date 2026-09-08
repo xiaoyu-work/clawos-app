@@ -4,7 +4,8 @@ use serde_json::{Value, json};
 
 pub async fn call(request: Value) -> Result<Value, String> {
     tokio::task::spawn_blocking(move || {
-        claw_os_sdk::cos_call_json(
+        claw_os_sdk::cos_call_json_with_binary(
+            "/usr/local/bin/cos",
             "permissions",
             "manage",
             vec!["__app-permissions".into(), request.to_string()],

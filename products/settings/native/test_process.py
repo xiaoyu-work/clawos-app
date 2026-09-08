@@ -50,26 +50,28 @@ def main():
             "#!/usr/bin/python3\n"
             "import json,pathlib,sys,os\n"
             f"root=pathlib.Path({namespace!r})\n"
+            "assert 'CLAW_COS_BIN' not in os.environ\n"
+            "assert os.environ['PATH']=='/usr/sbin:/usr/bin:/sbin:/bin'\n"
             "args=sys.argv[1:]\n"
             "with (root/'calls').open('a') as f:f.write(json.dumps([args,os.environ.get('COS_SESSION')])+'\\n')\n"
             "if args[1]=='__app-permissions':\n"
             " request=json.loads(args[2]);assert not {'owner_uid','session','confirm','approve'} & request.keys()\n"
             " action=request['action'];assert action in ['list','show','request','revoke']\n"
             " if (root/'deny').exists():\n"
-            "  print(json.dumps({'wire_version':1,'ok':False,'error':{'code':'denied','message':'permission fixture denied'}}));sys.exit(1)\n"
+            "  print(json.dumps({'wire_version':1,'ok':False,'code':'PERMISSION_DENIED','error':'permission fixture denied'}));sys.exit(1)\n"
             " data={'list':{'apps':[{'app_id':'audio-manager'}]},'show':{'app_id':'audio-manager','permissions':[{'permission_id':'exact-id','enabled':False,'live_granted':False}]},'request':{'id':'ap-fixture','status':'pending','enabled':False},'revoke':{'revoked':True,'enabled':False,'restart_required':True}}[action]\n"
             " print(json.dumps({'wire_version':1,'ok':True,'data':data}));sys.exit(0)\n"
             "assert args[1:5]==['__desktop','launch','--app-id','com.clawos.Settings'],args\n"
             "assert args[5:] in ([],['--uri','settings://wireless'],['--uri','settings://accessibility-magnifier'],['--uri','settings://dock-applet'],['--uri','settings://panel-applet']),args\n"
             "if (root/'deny').exists():\n"
-            " print(json.dumps({'wire_version':1,'ok':False,'error':{'code':'denied','message':'fixture denied'}}));sys.exit(1)\n"
+            " print(json.dumps({'wire_version':1,'ok':False,'code':'PERMISSION_DENIED','error':'fixture denied'}));sys.exit(1)\n"
             "data={'launched':True,'app_id':'com.clawos.Settings','launcher':'/usr/bin/cosmic-settings'}\n"
             "if (root/'wrong-target').exists():data['app_id']='com.clawos.Store'\n"
             "print(json.dumps({'wire_version':1,'ok':True,'data':data}))\n"
         )
         broker.chmod(0o755)
         command = [
-            "bwrap", "--die-with-parent", "--unshare-net", "--ro-bind", "/", "/",
+            "bwrap", "--die-with-parent", "--unshare-net", "--clearenv", "--ro-bind", "/", "/",
             "--dev", "/dev", "--tmpfs", "/run", "--tmpfs", "/usr/local/bin", "--tmpfs", "/usr/bin",
             "--bind", str(fixture), namespace,
             "--ro-bind", str(Path("/usr/bin/python3").resolve()), "/usr/bin/python3",
@@ -84,7 +86,7 @@ def main():
             "HOME": namespace, "XDG_CONFIG_HOME": namespace + "/config",
             "XDG_DATA_HOME": namespace + "/data", "XDG_CACHE_HOME": namespace + "/cache",
             "XDG_RUNTIME_DIR": namespace, "TMPDIR": namespace,
-            "CLAW_COS_BIN": "/usr/local/bin/cos", "PATH": "/usr/bin",
+            "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
             "DISPLAY": "", "WAYLAND_DISPLAY": "", "DBUS_SESSION_BUS_ADDRESS": "",
             "DBUS_SYSTEM_BUS_ADDRESS": "unix:path=/not-present",
         }.items():
@@ -180,17 +182,44 @@ def main():
         assert (fixture / "calls").read_bytes() == before
         (fixture / "deny").touch()
         assert call("open", {})["result"]["isError"]
-        assert call("permissions_list", {})["result"]["isError"]
+        denied = call("permissions_list", {})
+        assert denied["result"]["isError"]
+        assert "permission fixture denied" in denied["result"]["content"][0]["text"]
         (fixture / "deny").unlink()
         (fixture / "wrong-target").touch()
         assert call("open", {})["result"]["isError"]
         calls = [json.loads(line) for line in (fixture / "calls").read_text().splitlines()]
         assert all(sid == "worker-session" and "app" not in args for args, sid in calls)
+        # Exercise the very same client with the human GUI's environment, without
+        # initializing a renderer or adding a fixture-only production CLI route.
+        artifacts = subprocess.run([
+            "cargo", "test", "--locked", "--no-run", "--message-format=json",
+            "--manifest-path", str(ROOT / "build/settings-native/Cargo.toml"),
+            "--target-dir", str(ROOT / "build/native-target"), "--package", "cosmic-settings",
+        ], check=True, stdout=subprocess.PIPE, text=True)
+        tests = [
+            entry["executable"]
+            for entry in map(json.loads, artifacts.stdout.splitlines())
+            if entry.get("reason") == "compiler-artifact" and entry.get("executable")
+            and entry["target"]["name"] == "cosmic-settings" and entry["profile"]["test"]
+        ]
+        assert len(tests) == 1, tests
+        human = subprocess.run([
+            *command, "--unsetenv", "COS_MCP_SERVER", "--unsetenv", "COS_SESSION",
+            "--ro-bind", tests[0], "/usr/bin/settings-permission-client-fixture",
+            "--", "/usr/bin/settings-permission-client-fixture", "--ignored", "--exact",
+            "permissions::tests::installed_permission_client_uses_closed_environment",
+            "--test-threads=1",
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)
+        assert human.returncode == 0, human.stdout + human.stderr
+        final_call = json.loads((fixture / "calls").read_text().splitlines()[-1])
+        assert final_call == [["--wire=1", "__app-permissions", '{"action":"list"}'], None]
         assert not (fixture / "config").exists()
         print("Settings installed binary/resources: 32 localized entries, schemas/polkit/icons; "
               "seven authenticated MCP tools, owner/session injection and self-approval rejection, "
               "pending restoration and revocation responses; 31 pages, search clamps, fixed launch, denial, "
-              "expiry and wrong-target rejection; no GUI/device/account access")
+              "expiry and wrong-target rejection; human and MCP permission clients use sanitized PATH "
+              "without CLAW_COS_BIN; no GUI/device/account access")
     finally:
         if process is not None:
             process.terminate()
