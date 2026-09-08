@@ -2,7 +2,8 @@
 
 Own `accessibility-manager`'s five MCP tools, `audio-manager`'s ten audio tools,
 `bluetooth-manager`'s twelve device-lifecycle tools, `camera-manager`'s
-two discovery/capture tools and `display-manager`'s ten output/backlight tools.
+two discovery/capture tools, `display-manager`'s ten output/backlight tools
+and `desktop-manager`'s four window-management tools.
 Native `cosmic-settings` and other system-management Apps await their
 individual migrations.
 
@@ -24,6 +25,9 @@ individual migrations.
 | `apps/display-manager/app.json` | Observation/manage scopes, exact layout-read scope and explicit confirmation |
 | `apps/display-manager/main.py`, `server.py` | Validated `cos __display` requests and direct SDK handlers |
 | `apps/display-manager/test_main.py` | Direct/SDK routes, optional mode fields, numeric bounds and strict confirmation |
+| `apps/desktop-manager/app.json` | Separate desktop observation, window control and exact AppID launch grants |
+| `apps/desktop-manager/main.py`, `server.py` | Validated `cos __desktop` window requests and direct SDK handlers |
+| `apps/desktop-manager/test_main.py` | All direct/SDK routes, exact scopes/argv, identifier validation and broker failures |
 | `package.json` | Product-owned staging and test inputs |
 
 Preserve the installed App identity. Status requires `sys.observe` scope
@@ -55,6 +59,13 @@ Applying a layout also requires `fs.read` on its exact canonical source path.
 Apply/restore require explicit confirmation. COSMIC output control, kernel
 backlights, mutation serialization and owner-bound backup/restore state remain
 OS-owned; source relocation does not change the current display layout.
+
+`desktop-manager` retains `sys.observe:desktop` for listing and
+`desktop.window:control` for focus/close/restart. Restart also requires
+`desktop.launch` for the exact compositor AppID. The OS owns Wayland access,
+window identity checks, close completion and native relaunch. This uses a typed
+OS service, not another App's business/MCP interface; the App cannot invoke the
+separate `launcher`-owned generic launch route.
 
 Settings organizes interfaces, not a union of authority. Each provider must
 retain its own App identity, scope checks and consent boundary. Apps do not

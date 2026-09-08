@@ -22,6 +22,10 @@ backlight and restore. Apply/restore require explicit confirmation; layout
 files require exact read grants. COSMIC control and backup state remain
 OS-owned.
 
+`desktop-manager` exposes four tools for listing, focusing, closing and
+restarting windows. Restart requires window control plus exact AppID launch
+authority and uses the OS window service, not another App's MCP interface.
+
 Wayland, AT-SPI and PipeWire/WirePlumber execution and user-session validation remain behind
 the Claw OS broker. The native `cosmic-settings` UI and other system-management
 Apps are still pending; this product must not become a super-privileged
