@@ -17,7 +17,7 @@ points without duplicating its account state or inheriting a union of grants.
 | --- | --- |
 | `products/mail/` | Thunderbird source, Mail AI, legacy email and restricted delivery, extension UI and product packaging |
 | `products/calendar/` | Local events, Google/Outlook integration, Calendar MCP and the complete native panel UI library/assets |
-| `products/files/` | Filesystem MCP operations, metadata, bounded IO and owner-scoped Recoll document search |
+| `products/files/` | Complete native Files UI/library/companion, filesystem MCP, owner-scoped Recoll, shared document parsing and SDK AI |
 | `products/browser/` | Search, headless browsing and attached-browser Apps, MV3 extension and Native Host; privileged provider and native engine remain OS-owned |
 | `products/terminal/` | Command/script and background process App operations; sandbox and process authority remain OS-owned |
 | `products/containers/` | Container-management App contract and typed broker client; privileged backend remains OS-owned |
@@ -94,7 +94,16 @@ does not integrate the two backends or move user history.
 It uses each product's checked-in lock and the common toolkit patch mapping,
 with generated inputs under `build/<product>-native` and a shared native target
 cache. CI compiles and tests Calendar, Clipboard and Desktop Widgets libraries
-and the complete Launcher and Editor binaries. Editor retains its original
+and the complete Launcher, Editor and Files binaries. Files retains its
+original locked toolkit patches and workspace, including the applet executable.
+Its private native bridge embeds the canonical product filesystem/Recoll and
+document parsing sources, calling only system-installed SDK/runtime authority.
+The pure document parsing/conversion library also ships in the Agent package
+for the remaining Document App; native builds embed the same source rather
+than loading mutable App scripts. Summary memory belongs to `cosmic-files`,
+metadata's tag sidecar needs an exact parent read, and reveal is the fixed OS
+Files target. Existing UI hot-path/cache/backend consolidation is separate.
+Editor retains its original
 locked upstream toolkit/file-chooser graph and immutable SDK/runtime. Its
 interactive unsaved-buffer AI actions share the MCP SDK helper rather than
 calling the Document App; both retain the Editor identity and untrusted-content

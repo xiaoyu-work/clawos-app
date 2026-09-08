@@ -1,4 +1,16 @@
 {
-  "apps": ["apps/fs", "apps/docs"],
-  "tests": []
+  "apps": ["apps/fs", "apps/docs", "apps/cosmic-files"],
+  "tests": [],
+  "native": {"cosmic-files": "native/cosmic-files"},
+  "native_kind": "binary",
+  "native_packages": ["cosmic-files", "cosmic-files-applet"],
+  "python_library": {"path": "python/claw_files", "apps": ["fs", "docs"]},
+  "native_assets": {
+    "cosmic-files": {
+      "app.json": "apps/cosmic-files/app.json",
+      "fs_backend.py": "apps/fs/main.py",
+      "recoll_backend.py": "apps/docs/main.py",
+      "document_backend.py": "python/claw_files/document.py"
+    }
+  }
 }

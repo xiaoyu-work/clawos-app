@@ -36,6 +36,15 @@ def stage(product: str, destination: Path, app_ids: list[str] | None = None) -> 
         shutil.copytree(app, target, symlinks=True,
                         ignore=shutil.ignore_patterns("__pycache__", "test_*.py", ".pytest_cache"))
         installed.append(app_id)
+    library = package.get("python_library")
+    if library and set(library["apps"]).intersection(installed):
+        path = source / library["path"]
+        if not path.resolve().is_relative_to(source.resolve()):
+            raise ValueError("Python library must belong to the product")
+        shutil.copytree(
+            path, destination / "usr/lib/cos/python" / path.name, symlinks=True,
+            ignore=shutil.ignore_patterns("__pycache__", "test_*.py", ".pytest_cache"),
+        )
     extension = package.get("extension")
     if extension and "mail-ai" in installed:
         specification = importlib.util.spec_from_file_location(

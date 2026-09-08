@@ -32,14 +32,16 @@ def test_calendar_stage_is_separate_and_preserves_its_manifest(tmp_path):
 
 def test_files_stage_preserves_the_direct_mcp_contract(tmp_path):
     assert "files" in stage.products()
-    assert stage.stage("files", tmp_path) == ["fs", "docs"]
+    assert stage.stage("files", tmp_path) == ["fs", "docs", "cosmic-files"]
     for app_id in ("fs", "docs"):
         app = tmp_path / "usr/lib/cos/apps" / app_id
         source = ROOT / "products/files/apps" / app_id
         for filename in ("app.json", "main.py", "server.py"):
             assert (app / filename).read_bytes() == (source / filename).read_bytes()
         assert not (app / "test_main.py").exists()
-    assert not (tmp_path / "usr/lib/cos/python").exists()
+    assert (tmp_path / "usr/lib/cos/python/claw_files/document.py").read_bytes() == (
+        ROOT / "products/files/python/claw_files/document.py"
+    ).read_bytes()
     assert not (tmp_path / "usr/lib/systemd").exists()
 
 

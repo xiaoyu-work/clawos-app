@@ -69,11 +69,15 @@ def main(product=None):
     package = json.loads((ROOT / "products" / product / "package.json").read_text())
     targets = [] if package.get("native_kind") == "binary" else ["--lib"]
     arguments = ["--", "--test-threads=1"] if options.command == "test" else []
-    subprocess.run(
-        ["cargo", options.command, "--locked", "--manifest-path", str(destination / "Cargo.toml"),
-         "--target-dir", str(ROOT / "build/native-target"), *targets, *arguments],
-        check=True, cwd=ROOT,
-    )
+    # Match workspaces whose upstream justfile builds binaries separately:
+    # combining packages would incorrectly unify renderer/applet features.
+    for member in package.get("native_packages", [None]):
+        selection = ["--package", member] if member else []
+        subprocess.run(
+            ["cargo", options.command, "--locked", "--manifest-path", str(destination / "Cargo.toml"),
+             "--target-dir", str(ROOT / "build/native-target"), *targets, *selection, *arguments],
+            check=True, cwd=ROOT,
+        )
 
 
 if __name__ == "__main__":
