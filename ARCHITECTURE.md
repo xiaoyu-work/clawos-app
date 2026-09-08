@@ -18,7 +18,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/mail/` | Thunderbird source, Mail AI, legacy email and restricted delivery, extension UI and product packaging |
 | `products/calendar/` | Local events, Google/Outlook integration and Calendar MCP |
 | `products/files/` | Filesystem MCP operations, metadata, bounded IO and owner-scoped Recoll document search |
-| `products/browser/` | Explicit-provider web/image search and its MCP contract |
+| `products/browser/` | Explicit-provider search and headless browsing/AI summary App contracts; native engine remains OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
 | `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
 | `tools/test.py` | Product-scoped tests using the locked runtime |
