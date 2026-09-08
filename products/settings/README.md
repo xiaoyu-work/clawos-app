@@ -36,6 +36,11 @@ and airplane mode. Each control domain retains its own grant. Optional Wi-Fi
 credentials remain exact secret references; the OS loads passwords and executes
 NetworkManager operations without moving existing profiles.
 
+`power-manager` exposes status and six sleep/reboot/shutdown tools. The
+observation grant stays separate from critical `sys.power` authority; each
+power action requires explicit `confirm=true`. UPower/logind execution remains
+in the OS, and product tests never perform real power actions.
+
 Wayland, AT-SPI and PipeWire/WirePlumber execution and user-session validation remain behind
 the Claw OS broker. The native `cosmic-settings` UI and other system-management
 Apps are still pending; this product must not become a super-privileged

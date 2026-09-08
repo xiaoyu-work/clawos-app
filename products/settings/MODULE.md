@@ -2,9 +2,10 @@
 
 Own `accessibility-manager`'s five MCP tools, `audio-manager`'s ten audio tools,
 `bluetooth-manager`'s twelve device-lifecycle tools, `camera-manager`'s
-two discovery/capture tools, `display-manager`'s ten output/backlight tools
+two discovery/capture tools, `display-manager`'s ten output/backlight tools,
 `desktop-manager`'s four window-management tools and `location-manager`'s
-two location/timezone tools, plus `network-manager`'s eleven network tools.
+two location/timezone tools, plus `network-manager`'s eleven network tools
+and `power-manager`'s seven status/power tools.
 Native `cosmic-settings` and other system-management Apps await their
 individual migrations.
 
@@ -35,6 +36,9 @@ individual migrations.
 | `apps/network-manager/app.json` | Separate observation/Wi-Fi/VPN/airplane scopes and conditional exact secret grant |
 | `apps/network-manager/main.py`, `server.py` | Validated `cos __network` requests and SDK handlers using credential references |
 | `apps/network-manager/test_main.py` | All direct/SDK routes, open/protected Wi-Fi, radio states and exact scopes/argv |
+| `apps/power-manager/app.json` | Separate power observation and critical system power grant; explicit true confirmation |
+| `apps/power-manager/main.py`, `server.py` | Validated `cos __power` requests and direct SDK handlers |
+| `apps/power-manager/test_main.py` | All direct/SDK routes, strict confirmation for all six mutations and broker errors |
 | `package.json` | Product-owned staging and test inputs |
 
 Preserve the installed App identity. Status requires `sys.observe` scope
@@ -86,6 +90,12 @@ requiring exact `secret.read`; only the OS loads the password. NetworkManager
 execution, profile/device validation, mutation serialization and before/after
 state collection remain OS-owned. No saved profiles, passwords or live network
 state move, and the App does not execute `nmcli` directly.
+
+`power-manager` retains `sys.observe:power` for status and the existing
+`sys.power` Wild-scope grant for six machine-wide actions. Each action requires
+the exact boolean `confirm=true` before policy. UPower/logind access, capability
+checks, mutation serialization and power execution remain OS-owned. Neither
+source relocation nor product tests issue real sleep, reboot or shutdown calls.
 
 Settings organizes interfaces, not a union of authority. Each provider must
 retain its own App identity, scope checks and consent boundary. Apps do not
