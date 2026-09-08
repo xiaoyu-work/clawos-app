@@ -130,8 +130,8 @@ def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
 
 
 def test_messaging_channels_stage_nested_connector_without_shared_runtime_or_state(tmp_path):
-    assert stage.stage("messaging-channels", tmp_path) == ["gateway-discord", "gateway-dingtalk", "gateway-googlechat", "gateway-larksuite", "gateway-matrix", "gateway-mattermost"]
-    for channel in ("discord", "dingtalk", "googlechat", "larksuite", "matrix", "mattermost"):
+    assert stage.stage("messaging-channels", tmp_path) == ["gateway-discord", "gateway-dingtalk", "gateway-googlechat", "gateway-larksuite", "gateway-matrix", "gateway-mattermost", "gateway-rocketchat"]
+    for channel in ("discord", "dingtalk", "googlechat", "larksuite", "matrix", "mattermost", "rocketchat"):
         source = ROOT / "products/messaging-channels/apps/gateway" / channel
         installed = tmp_path / "usr/lib/cos/apps/gateway" / channel
         for filename in ("app.json", "main.py", "server.py"):

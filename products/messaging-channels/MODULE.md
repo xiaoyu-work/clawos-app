@@ -1,7 +1,8 @@
 # Messaging Channels
 
 Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`,
-`gateway-googlechat`, `gateway-larksuite`, `gateway-matrix` and `gateway-mattermost`.
+`gateway-googlechat`, `gateway-larksuite`, `gateway-matrix`, `gateway-mattermost`
+and `gateway-rocketchat`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -16,6 +17,7 @@ super-privileged App identity.
 | `apps/gateway/larksuite/` | Outbound text/rich-post/card send/status and official custom-bot HMAC signing |
 | `apps/gateway/matrix/` | Outbound room messages, escaped room IDs, transaction IDs and send/status SDK contracts |
 | `apps/gateway/mattermost/` | Outbound webhook send/status, channel/DM and username/icon overrides |
+| `apps/gateway/rocketchat/` | REST send/status, channel/DM targets and separate token/user-id headers |
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
@@ -67,6 +69,11 @@ Mattermost preserves send/status and existing grants. Unlike Google Chat,
 name or `@handle`; omission leaves the webhook default in place. Username/icon
 overrides remain payload fields, not separately fetched resources. No inbound
 endpoint, local state store or new delivery lifecycle is introduced.
+
+Rocket.Chat retains REST `chat.postMessage` send/status with channel names,
+`#channels` and `@handles` passed unchanged. Its site/user-id/token credentials
+and environment precedence remain separate, with the existing exact secret
+grants and shared host-gated egress. No inbound service or local state is added.
 
 ```bash
 python3 tools/test.py messaging-channels

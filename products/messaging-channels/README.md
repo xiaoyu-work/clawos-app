@@ -14,6 +14,8 @@ existing optional signing and permissions are preserved.
 status. Its `/sync` inbound loop remains unimplemented.
 `gateway-mattermost` preserves outgoing webhook messages with optional
 channel/DM, username and icon overrides; inbound endpoints remain out of scope.
+`gateway-rocketchat` sends through REST `chat.postMessage` with separate token
+and user-id headers, retaining channel/DM targets and configuration status.
 
 This is a source move, not completion of the connector lifecycle redesign.
 Authenticated owner/sender admission and durable replay handling still need
