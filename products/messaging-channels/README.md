@@ -38,6 +38,10 @@ descriptions; this source move preserves routing and adds no inbound service.
 `gateway-whatsapp` keeps Cloud API text send/status, using the Meta sender
 phone-number ID separately from the normalized recipient number. Existing API
 version and grants remain unchanged; no webhook or delivery confirmation is added.
+`gateway-zulip` preserves stream/topic and private-email messages, realm
+configuration and API-level results. All fifteen Messaging Channels source
+identities in the product plan now live here; inbound/lifecycle redesign is
+still incomplete.
 
 This is a source move, not completion of the connector lifecycle redesign.
 Authenticated owner/sender admission and durable replay handling still need

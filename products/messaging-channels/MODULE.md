@@ -3,7 +3,7 @@
 Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`,
 `gateway-googlechat`, `gateway-larksuite`, `gateway-matrix`, `gateway-mattermost`,
 `gateway-rocketchat`, `gateway-signal`, `gateway-slack`, `gateway-sms`, `gateway-teams`,
-`gateway-telegram`, `gateway-webex` and `gateway-whatsapp`.
+`gateway-telegram`, `gateway-webex`, `gateway-whatsapp` and `gateway-zulip`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -26,6 +26,7 @@ super-privileged App identity.
 | `apps/gateway/telegram/` | Bot API send/status/start/stop, legacy polling, offset/PID state and allowlist/rate-limit tests |
 | `apps/gateway/webex/` | REST send/status, email/room routing and Markdown/plain-text payloads |
 | `apps/gateway/whatsapp/` | Cloud API send/status, sender phone-number ID and recipient normalization |
+| `apps/gateway/zulip/` | Realm send/status, stream/topic and private-email routing with API-level results |
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
@@ -127,6 +128,12 @@ recipient digit normalization, text truncation and disabled URL previews.
 Its existing Graph-host, exact credential and self-memory grants are unchanged;
 status reads no credentials and performs no network request. Webhook reception
 and delivery confirmation remain unimplemented; a message ID is not a receipt.
+
+Zulip preserves stream/topic addressing, the existing empty-topic default,
+single/group email private messages and form encoding with Basic authentication.
+Only an API `result=success` reports success. Existing wildcard network, three
+exact credentials and self-memory grants remain unchanged; shared egress checks
+the actual realm host. No inbound event loop or local state store is introduced.
 
 ```bash
 python3 tools/test.py messaging-channels
