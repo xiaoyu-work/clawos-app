@@ -24,6 +24,7 @@ remain in Claw OS.
 | Maintenance | [products/maintenance](products/maintenance/README.md) | `config-editor` and `systemd` have moved with separate exact-path/unit grants; configuration/service execution, state and rollback remain OS-owned |
 | Events and Audit | [products/events-audit](products/events-audit/README.md) | `event-center` and legacy `log` have moved; OS event/audit authority stays separate; typed audit-service integration remains pending |
 | Launcher | [products/launcher](products/launcher/README.md) | Python `launcher` has moved; native UI/build, legacy forwarding replacement and shared catalog/history integration remain pending |
+| Clipboard | [products/clipboard](products/clipboard/README.md) | `clipboard-manager` has moved; Wayland execution stays OS-owned; native panel and CopyQ history integration remain pending |
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 On Linux/WSL, run Mail contracts with `python3 tools/test.py mail`.
