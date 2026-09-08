@@ -19,3 +19,7 @@ each declared App's unit module plus explicit product tests and shared build
 contracts; multiple requested products run in one pytest invocation.
 `tests/test_platform_dependency.py` covers immutable pins, sparse library-only
 checkout and refusal of modified caches or product-source dependencies.
+Binary products may declare `native_examples` for fixture-only executables;
+`native_build.py <product> build` builds them separately with the same lock.
+Capture declares its `native_process_test` beside these inputs; CI runs that
+script against the built binary, original installer and an isolated fake portal.

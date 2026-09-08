@@ -31,6 +31,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/events-audit/` | Event service client and legacy JSONL activity App; event/audit authority remains OS-owned; `log` still needs typed audit-service integration rather than direct system-audit access |
 | `products/launcher/` | Complete native Launcher UI and Python/native MCP surfaces sharing product catalog/search/recent and typed launch logic; desktop execution and native UI backend service stay OS-owned |
 | `products/editor/` | Complete native Text Editor UI, seven MCP handlers and shared SDK AI presentation; controlled filesystem/snapshot, desktop and model-provider authority remain OS-owned |
+| `products/capture/` | Complete native screenshot portal client, MCP and resources; interactive portal UI, session/capture authority and durable output remain OS-owned |
 | `products/clipboard/` | Selection App contract and complete native CopyQ history panel; separate selection/history grants, with policy and Wayland authority OS-owned |
 | `products/notification-delivery/` | One-shot ntfy/Pushover/Webhook App sources; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
@@ -94,7 +95,20 @@ does not integrate the two backends or move user history.
 It uses each product's checked-in lock and the common toolkit patch mapping,
 with generated inputs under `build/<product>-native` and a shared native target
 cache. CI compiles and tests Calendar, Clipboard and Desktop Widgets libraries
-and the complete Launcher, Editor, Files, Terminal, Store and Settings binaries.
+and the complete Launcher, Editor, Files, Terminal, Store, Settings and Capture binaries.
+Capture preserves the independent ashpd/zbus/Tokio graph, original interactive
+portal experience, notifications, 72 locales and all icons/build inputs. It has
+no libcosmic renderer or file-chooser dependency to replace. Non-interactive
+UI/CLI and MCP use the same typed OS service and fixed product-native PNG pipe
+mode. The broker requires `desktop.capture:screen` separately from exact
+destination write authority, bounds the owner-session process and persists
+non-overwriting private output with OS task snapshots. MCP holds no session
+bus, exposes no interactive/clipboard or arbitrary native launch route, and
+does not call another App. Existing screenshot/configuration paths do not move.
+The new screen grant requires explicit consent; identities are not renamed.
+Direct human CLI requests retain an already-connected stderr terminal for the
+existing OS session bootstrap; unauthenticated headless requests remain denied.
+
 Settings preserves its nested workspace, all default pages, original toolkit
 patches and config-schema dependencies. Applications now presents verified App
 permissions through the same OS client as four permission-management MCP tools.

@@ -1,0 +1,81 @@
+{
+  "id": "cosmic-screenshot",
+  "version": "0.1.0",
+  "schema_version": 2,
+  "name": {
+    "en": "Screenshot"
+  },
+  "summary": {
+    "en": "Capture the screen through xdg-desktop-portal and save a PNG."
+  },
+  "icon": "📸",
+  "runtime": "binary",
+  "mcp": {
+    "entry": "/usr/bin/cosmic-screenshot",
+    "transport": "stdio",
+    "lifecycle": "lazy",
+    "tools": [
+      {
+        "name": "screenshot.capture",
+        "summary": {
+          "en": "Capture the screen through the OS portal service into exactly save_dir and return a path or cancellation. Interactive selection and clipboard capture are human-only."
+        },
+        "args": [
+          {
+            "name": "interactive",
+            "kind": "bool",
+            "required": false,
+            "default": false,
+            "choices": [false],
+            "label": {
+              "en": "Must be false for MCP. Use the native UI for interactive region and clipboard selection."
+            }
+          },
+          {
+            "name": "modal",
+            "kind": "bool",
+            "required": false,
+            "default": true,
+            "label": {
+              "en": "Render the portal dialog as modal."
+            }
+          },
+          {
+            "name": "save_dir",
+            "kind": "path",
+            "required": false,
+            "default": "~/Pictures",
+            "label": {
+              "en": "Existing directory for a non-interactive PNG. Defaults to the owner's Pictures directory."
+            }
+          }
+        ],
+        "needs": [
+          {
+            "verb": "desktop.capture",
+            "scope": {
+              "kind": "fixed",
+              "scope": {"kind": "name", "value": "screen"}
+            },
+            "why": {"en": "Capture the authenticated owner's screen without granting clipboard or general desktop access."}
+          },
+          {
+            "verb": "fs.write",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "save_dir"
+            },
+            "when": {
+              "kind": "arg-equals",
+              "arg": "interactive",
+              "value": false
+            },
+            "why": {
+              "en": "Save a non-interactive screenshot in exactly the resolved destination directory."
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

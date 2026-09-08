@@ -80,6 +80,13 @@ def main(product=None):
              "--target-dir", str(ROOT / "build/native-target"), *targets, *selection, *arguments],
             check=True, cwd=ROOT,
         )
+    if options.command == "build":
+        for example in package.get("native_examples", []):
+            subprocess.run(
+                ["cargo", "build", "--locked", "--manifest-path", str(destination / "Cargo.toml"),
+                 "--target-dir", str(ROOT / "build/native-target"), "--example", example],
+                check=True, cwd=ROOT,
+            )
 
 
 if __name__ == "__main__":

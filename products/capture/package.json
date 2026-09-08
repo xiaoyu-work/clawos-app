@@ -1,0 +1,11 @@
+{
+  "apps": ["apps/cosmic-screenshot"],
+  "tests": [],
+  "native": {"cosmic-screenshot": "native/cosmic-screenshot"},
+  "native_kind": "binary",
+  "native_examples": ["capture-portal-fixture"],
+  "native_process_test": "native/test_process.py",
+  "native_assets": {
+    "cosmic-screenshot": {"app.json": "apps/cosmic-screenshot/app.json"}
+  }
+}

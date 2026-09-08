@@ -1,0 +1,42 @@
+[package]
+name = "cosmic-screenshot"
+version = "0.1.0"
+edition = "2024"
+
+[workspace]
+# The portal client keeps its original standalone graph, without a UI toolkit.
+
+[dependencies]
+cos-runtime = { path = "../../../cos-runtime/rust" }
+claw-os-sdk = { path = "../../../claw-os-sdk/rust" }
+ashpd = { version = "0.12", default-features = false, features = ["tokio"] }
+async-trait = "0.1"
+jiff = "0.2"
+dirs = "6"
+serde_json = "1"
+libc = "0.2"
+tokio = { version = "1.52.1", default-features = false, features = ["macros"] }
+clap = { version = "4.6.1", features = ["derive"] }
+zbus = { version = "5", default-features = false }
+
+# Internationalization
+i18n-embed = { version = "0.16", features = [
+    "fluent-system",
+    "desktop-requester",
+] }
+i18n-embed-fl = "0.10"
+rust-embed = "8.11"
+
+[dev-dependencies]
+tempfile = "3"
+
+[[example]]
+name = "capture-portal-fixture"
+path = "test/support/portal.rs"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = 3
+panic = "abort"
+strip = true
