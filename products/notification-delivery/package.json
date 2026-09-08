@@ -1,0 +1,4 @@
+{
+  "apps": ["apps/gateway/ntfy"],
+  "tests": []
+}

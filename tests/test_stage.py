@@ -129,6 +129,18 @@ def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
         stage.stage("mail", tmp_path)
 
 
+def test_notification_delivery_stages_only_product_payload(tmp_path):
+    assert stage.stage("notification-delivery", tmp_path) == ["gateway-ntfy"]
+    source = ROOT / "products/notification-delivery/apps/gateway/ntfy"
+    installed = tmp_path / "usr/lib/cos/apps/gateway/ntfy"
+    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
+    for filename in ("app.json", "main.py", "server.py"):
+        assert (installed / filename).read_bytes() == (source / filename).read_bytes()
+    assert not (tmp_path / "usr/lib/cos/apps/gateway-ntfy").exists()
+    assert not (tmp_path / "usr/lib/cos/apps/gateway/_shared").exists()
+    assert not (tmp_path / "var/lib").exists()
+
+
 def test_messaging_channels_stage_nested_connector_without_shared_runtime_or_state(tmp_path):
     assert stage.stage("messaging-channels", tmp_path) == ["gateway-discord", "gateway-dingtalk", "gateway-googlechat", "gateway-larksuite", "gateway-matrix", "gateway-mattermost", "gateway-rocketchat", "gateway-signal", "gateway-slack", "gateway-sms", "gateway-teams", "gateway-telegram", "gateway-webex", "gateway-whatsapp", "gateway-zulip"]
     for channel in ("discord", "dingtalk", "googlechat", "larksuite", "matrix", "mattermost", "rocketchat", "signal", "slack", "sms", "teams", "telegram", "webex", "whatsapp", "zulip"):
