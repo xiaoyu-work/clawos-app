@@ -1,0 +1,4 @@
+{
+  "apps": ["apps/accessibility-manager"],
+  "tests": []
+}

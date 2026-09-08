@@ -25,6 +25,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/store/` | Package catalog queries and package-management App contract; privileged transactions and installed state remain OS-owned |
 | `products/diagnostics/` | Hardware, crash and network diagnostic App contracts; privileged collectors, crash data, DNS-pinned probes and per-domain authority remain OS-owned |
 | `products/storage/` | Storage-management App contract; device validation, UDisks2 execution and read-only filesystem checkers remain OS-owned |
+| `products/settings/` | Accessibility App contract; session-bound Wayland/AT-SPI execution and independent provider authority remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
 | `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
 | `tools/test.py` | Product-scoped tests using the locked runtime |
