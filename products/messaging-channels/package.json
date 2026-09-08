@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/gateway/discord", "apps/gateway/dingtalk"],
+  "apps": ["apps/gateway/discord", "apps/gateway/dingtalk", "apps/gateway/googlechat"],
   "tests": []
 }

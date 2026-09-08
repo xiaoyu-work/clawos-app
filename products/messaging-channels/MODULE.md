@@ -1,6 +1,7 @@
 # Messaging Channels
 
-Own optional messaging connector sources: `gateway-discord` and `gateway-dingtalk`.
+Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`
+and `gateway-googlechat`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -11,6 +12,7 @@ super-privileged App identity.
 | `apps/gateway/discord/server.py` | Existing manifest-bound SDK adapter |
 | `apps/gateway/discord/test_main.py` | Transport/routing regression tests and real SDK dispatch with synthetic effects |
 | `apps/gateway/dingtalk/` | Outbound robot send/status, HMAC signing, Markdown/keyword/mentions and direct/SDK tests |
+| `apps/gateway/googlechat/` | Outbound webhook send/status, text/cardsV2, thread queries and direct/SDK tests |
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
@@ -38,10 +40,15 @@ precedence. Its manifest retains the existing wildcard network grant; the shared
 egress helper still checks the actual destination host. This move does not narrow
 or expand consent, add retries/delivery leases or change webhook policy.
 
+Google Chat is also outbound-only and keeps its operations adapter and existing
+network/credential/memory grants. The webhook fixes the space; `recipient` is
+informational and never retargets a request. Thread keys retain the existing
+reply-or-create behavior. No local state or notification delivery service is added.
+
 ```bash
 python3 tools/test.py messaging-channels
 python3 tools/stage.py messaging-channels --root build/messaging-channels-stage
 ```
 
 Tests use temporary state and mocked transport/process boundaries; no real
-Discord connection, DingTalk webhook request, message delivery or Agent task is created.
+Discord connection, webhook request, message delivery or Agent task is created.
