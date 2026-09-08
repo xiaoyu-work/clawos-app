@@ -19,6 +19,9 @@ and user-id headers, retaining channel/DM targets and configuration status.
 `gateway-signal` is the outbound client for an external `signal-cli-rest-api`
 service. Phone/group handling remains intact; account state, inbound polling
 and private-network authorization are not supplied by this source relocation.
+`gateway-slack` keeps Web API `chat.postMessage` and status, bot-token
+authentication and API error reporting. Socket Mode / Events HTTP remain
+unimplemented; relocation adds no inbound service or state store.
 
 This is a source move, not completion of the connector lifecycle redesign.
 Authenticated owner/sender admission and durable replay handling still need

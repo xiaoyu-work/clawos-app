@@ -1,8 +1,8 @@
 # Messaging Channels
 
 Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`,
-`gateway-googlechat`, `gateway-larksuite`, `gateway-matrix`, `gateway-mattermost`
-`gateway-rocketchat` and `gateway-signal`.
+`gateway-googlechat`, `gateway-larksuite`, `gateway-matrix`, `gateway-mattermost`,
+`gateway-rocketchat`, `gateway-signal` and `gateway-slack`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -19,6 +19,7 @@ super-privileged App identity.
 | `apps/gateway/mattermost/` | Outbound webhook send/status, channel/DM and username/icon overrides |
 | `apps/gateway/rocketchat/` | REST send/status, channel/DM targets and separate token/user-id headers |
 | `apps/gateway/signal/` | External signal-cli-rest-api send/status, recipient normalization and group routing |
+| `apps/gateway/slack/` | Web API send/status, bot-token authentication and API-level error handling |
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
@@ -82,6 +83,12 @@ dependency; account pairing and service state are not copied or staged here.
 The default local endpoint does not grant private-network access: shared egress
 restrictions remain enforced, without automatically enabling a bypass.
 Inbound `/v1/receive` polling remains unimplemented.
+
+Slack keeps `chat.postMessage` send/status, token environment precedence, text
+truncation and API-level failure reporting even on HTTP success. The manifest's
+existing Slack-host, exact credential and self-memory grants remain unchanged;
+status needs no credentials or network. Socket Mode and Events HTTP remain
+unimplemented, with no new service lifecycle or state store.
 
 ```bash
 python3 tools/test.py messaging-channels

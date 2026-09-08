@@ -29,7 +29,7 @@ remain in Claw OS.
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 Messaging connector sources are grouped under
 [products/messaging-channels](products/messaging-channels/README.md), starting
-with Discord and outbound-only DingTalk/Google Chat/Lark/Matrix/Mattermost/Rocket.Chat/Signal.
+with Discord and outbound-only DingTalk/Google Chat/Lark/Matrix/Mattermost/Rocket.Chat/Signal/Slack.
 Source relocation does not complete
 authenticated inbound admission.
 
