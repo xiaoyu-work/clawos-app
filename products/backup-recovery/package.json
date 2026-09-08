@@ -1,0 +1,4 @@
+{
+  "apps": ["apps/backup-center"],
+  "tests": []
+}
