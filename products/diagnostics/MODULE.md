@@ -1,7 +1,7 @@
 # Diagnostics Product
 
-Own `hardware-center`'s nine hardware inventory tools and `crash-doctor`'s
-three crash inspection tools. Network diagnostics (`netdiag`) await migration.
+Own `hardware-center`'s nine hardware inventory tools, `crash-doctor`'s
+three crash inspection tools and `netdiag`'s five network diagnostic tools.
 The product groups diagnostic interfaces, not their permissions or OS providers.
 
 | Path | Responsibility |
@@ -13,6 +13,9 @@ The product groups diagnostic interfaces, not their permissions or OS providers.
 | `apps/crash-doctor/app.json` | Sensitive crash scope, bounded queries and coredump selector |
 | `apps/crash-doctor/main.py`, `server.py` | Validated `cos __crash` requests and direct SDK MCP handlers |
 | `apps/crash-doctor/test_main.py` | Bounds/ID validation, error propagation and real SDK dispatch |
+| `apps/netdiag/app.json` | Network observation and exact target resolution/probe needs |
+| `apps/netdiag/main.py`, `server.py` | Validated bounded requests through the private network diagnostics runtime bridge |
+| `apps/netdiag/test_main.py` | Target/port/budget validation, SDK defaults and all diagnostic routes |
 | `package.json` | Product-owned staging and test inputs |
 
 Preserve the `hardware-center` installed identity and `sys.observe` scope
@@ -26,9 +29,15 @@ service implementation is copied into this product.
 execution remain behind the OS crash provider. Source relocation does not copy
 crash data or let hardware observation grants authorize crash inspection.
 
+`netdiag` retains its installed identity and separate network observation,
+resolution and probe scopes. It has no direct sockets or host network access.
+The OS owns interface/route collection, bounded DNS resolution and DNS-pinned
+TCP probes. TCP diagnosis requires an explicit port and a bounded probe
+budget; neither product grouping nor source relocation relaxes these limits.
+
 ```bash
 python3 tools/test.py diagnostics
 python3 tools/stage.py diagnostics --root build/diagnostics-stage
 ```
 
-Tests use synthetic inventory and crash responses rather than inspecting the host.
+Tests use synthetic diagnostic responses, not host inspection or network probes.

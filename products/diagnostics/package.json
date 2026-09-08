@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/hardware-center", "apps/crash-doctor"],
+  "apps": ["apps/hardware-center", "apps/crash-doctor", "apps/netdiag"],
   "tests": []
 }
