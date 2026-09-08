@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/fs"],
+  "apps": ["apps/fs", "apps/docs"],
   "tests": []
 }
