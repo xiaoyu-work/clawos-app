@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: [calendar, clipboard, desktop-widgets, launcher, editor, files]
+        product: [calendar, clipboard, desktop-widgets, launcher, editor, files, terminal]
     env:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
@@ -50,7 +50,7 @@ jobs:
             libsystemd-dev libegl1-mesa-dev libgbm-dev
       - run: rustup toolchain install stable --profile minimal && rustup default stable
       - name: Install Editor file chooser dependencies
-        if: matrix.product == 'editor' || matrix.product == 'files'
+        if: matrix.product == 'editor' || matrix.product == 'files' || matrix.product == 'terminal'
         run: sudo apt-get install -y libglib2.0-dev
       - run: python3 tools/native_build.py ${{ matrix.product }} test
       - name: Build and exercise native Launcher executable
@@ -76,3 +76,12 @@ jobs:
           fi
           python3 tools/native_build.py files build
           python3 products/files/native/test_process.py
+      - name: Build and exercise native Terminal executable
+        if: matrix.product == 'terminal'
+        run: |
+          sudo apt-get install -y bubblewrap
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+          python3 tools/native_build.py terminal build
+          python3 products/terminal/native/test_process.py

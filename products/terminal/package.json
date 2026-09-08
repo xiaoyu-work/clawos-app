@@ -1,4 +1,12 @@
 {
-  "apps": ["apps/exec"],
-  "tests": []
+  "apps": ["apps/exec", "apps/cosmic-term"],
+  "tests": ["native/test_build.py"],
+  "native": {"cosmic-term": "native/cosmic-term"},
+  "native_kind": "binary",
+  "native_assets": {
+    "cosmic-term": {
+      "app.json": "apps/cosmic-term/app.json",
+      "exec_backend.py": "apps/exec/main.py"
+    }
+  }
 }

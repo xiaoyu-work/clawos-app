@@ -66,7 +66,7 @@ def test_browser_stage_preserves_search_without_os_services(tmp_path):
 
 def test_terminal_stage_preserves_exec_without_process_services(tmp_path):
     assert "terminal" in stage.products()
-    assert stage.stage("terminal", tmp_path) == ["exec"]
+    assert stage.stage("terminal", tmp_path) == ["exec", "cosmic-term"]
     app = tmp_path / "usr/lib/cos/apps/exec"
     source = ROOT / "products/terminal/apps/exec"
     for filename in ("app.json", "main.py", "server.py"):

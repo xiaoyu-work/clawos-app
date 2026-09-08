@@ -19,7 +19,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/calendar/` | Local events, Google/Outlook integration, Calendar MCP and the complete native panel UI library/assets |
 | `products/files/` | Complete native Files UI/library/companion, filesystem MCP, owner-scoped Recoll, shared document parsing and SDK AI |
 | `products/browser/` | Search, headless browsing and attached-browser Apps, MV3 extension and Native Host; privileged provider and native engine remain OS-owned |
-| `products/terminal/` | Command/script and background process App operations; sandbox and process authority remain OS-owned |
+| `products/terminal/` | Complete native Terminal UI/MCP/resources and command/script/background App operations; sandbox, snapshots and process authority remain OS-owned |
 | `products/containers/` | Container-management App contract and typed broker client; privileged backend remains OS-owned |
 | `products/backup-recovery/` | Data-backup and whole-system recovery App contracts; backend execution, credentials, mount authorization and snapshot index remain OS-owned |
 | `products/store/` | Package catalog queries and package-management App contract; privileged transactions and installed state remain OS-owned |
@@ -94,7 +94,13 @@ does not integrate the two backends or move user history.
 It uses each product's checked-in lock and the common toolkit patch mapping,
 with generated inputs under `build/<product>-native` and a shared native target
 cache. CI compiles and tests Calendar, Clipboard and Desktop Widgets libraries
-and the complete Launcher, Editor and Files binaries. Files retains its
+and the complete Launcher, Editor, Files and Terminal binaries. Terminal retains
+its original upstream toolkit/file-chooser and renderer graph. Native MCP
+embeds the canonical Terminal command library for bounded run/PATH lookup;
+native launch and UI snapshots go through controlled OS services, not Apps.
+`cosmic-term` and `exec` retain independent grants and process state, and caller
+metadata never substitutes the worker's authenticated broker session.
+Files retains its
 original locked toolkit patches and workspace, including the applet executable.
 Its private native bridge embeds the canonical product filesystem/Recoll and
 document parsing sources, calling only system-installed SDK/runtime authority.

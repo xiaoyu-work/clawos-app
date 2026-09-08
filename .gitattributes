@@ -4,3 +4,6 @@ products/calendar/native/LICENSE whitespace=-blank-at-eof
 products/clipboard/native/LICENSE whitespace=-blank-at-eof
 products/desktop-widgets/native/LICENSE whitespace=-blank-at-eof
 products/editor/native/cosmic-edit/.github/PULL_REQUEST_TEMPLATE.md whitespace=-blank-at-eof
+products/terminal/native/cosmic-term/.envrc whitespace=-blank-at-eof
+products/terminal/native/cosmic-term/.github/PULL_REQUEST_TEMPLATE.md whitespace=-blank-at-eof
+products/terminal/native/cosmic-term/color-schemes/Modus-Vivendi.ron whitespace=-blank-at-eof
