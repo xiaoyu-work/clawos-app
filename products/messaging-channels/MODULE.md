@@ -1,7 +1,7 @@
 # Messaging Channels
 
 Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`
-and `gateway-googlechat`.
+`gateway-googlechat` and `gateway-larksuite`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -13,6 +13,7 @@ super-privileged App identity.
 | `apps/gateway/discord/test_main.py` | Transport/routing regression tests and real SDK dispatch with synthetic effects |
 | `apps/gateway/dingtalk/` | Outbound robot send/status, HMAC signing, Markdown/keyword/mentions and direct/SDK tests |
 | `apps/gateway/googlechat/` | Outbound webhook send/status, text/cardsV2, thread queries and direct/SDK tests |
+| `apps/gateway/larksuite/` | Outbound text/rich-post/card send/status and official custom-bot HMAC signing |
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
@@ -44,6 +45,14 @@ Google Chat is also outbound-only and keeps its operations adapter and existing
 network/credential/memory grants. The webhook fixes the space; `recipient` is
 informational and never retargets a request. Thread keys retain the existing
 reply-or-create behavior. No local state or notification delivery service is added.
+
+Lark/Feishu retains send/status, optional signing, card-over-post precedence and
+the existing grants. Its migration corrects the old signing algorithm:
+HMAC-SHA256 uses `timestamp + "\n" + secret` as the key and an empty message,
+then base64-encodes the result; timestamps are seconds. See the
+[official custom-bot guide](https://open.larksuite.com/document/client-docs/bot-v3/add-custom-bot).
+Known-answer tests cover the signer and all three message shapes through MCP.
+Unsigned mode remains available as before; no credential or state migration occurs.
 
 ```bash
 python3 tools/test.py messaging-channels
