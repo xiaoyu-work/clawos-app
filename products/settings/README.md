@@ -26,6 +26,11 @@ OS-owned.
 restarting windows. Restart requires window control plus exact AppID launch
 authority and uses the OS window service, not another App's MCP interface.
 
+`location-manager` exposes location and timezone-suggestion tools with five
+accuracy levels and a city-level default. The existing location grant remains
+required; the OS owns GeoClue access and offline timezone suggestions, without
+changing the system timezone.
+
 Wayland, AT-SPI and PipeWire/WirePlumber execution and user-session validation remain behind
 the Claw OS broker. The native `cosmic-settings` UI and other system-management
 Apps are still pending; this product must not become a super-privileged

@@ -80,7 +80,7 @@ def test_terminal_stage_preserves_exec_without_process_services(tmp_path):
     ("store", ["pkg"]),
     ("diagnostics", ["hardware-center", "crash-doctor", "netdiag"]),
     ("storage", ["storage-manager"]),
-    ("settings", ["accessibility-manager", "audio-manager", "bluetooth-manager", "camera-manager", "display-manager", "desktop-manager"]),
+    ("settings", ["accessibility-manager", "audio-manager", "bluetooth-manager", "camera-manager", "display-manager", "desktop-manager", "location-manager"]),
 ])
 def test_broker_products_stage_without_os_services(tmp_path, product, app_ids):
     assert product in stage.products()

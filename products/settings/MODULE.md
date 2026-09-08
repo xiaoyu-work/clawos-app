@@ -3,7 +3,8 @@
 Own `accessibility-manager`'s five MCP tools, `audio-manager`'s ten audio tools,
 `bluetooth-manager`'s twelve device-lifecycle tools, `camera-manager`'s
 two discovery/capture tools, `display-manager`'s ten output/backlight tools
-and `desktop-manager`'s four window-management tools.
+`desktop-manager`'s four window-management tools and `location-manager`'s
+two location/timezone tools.
 Native `cosmic-settings` and other system-management Apps await their
 individual migrations.
 
@@ -28,6 +29,9 @@ individual migrations.
 | `apps/desktop-manager/app.json` | Separate desktop observation, window control and exact AppID launch grants |
 | `apps/desktop-manager/main.py`, `server.py` | Validated `cos __desktop` window requests and direct SDK handlers |
 | `apps/desktop-manager/test_main.py` | All direct/SDK routes, exact scopes/argv, identifier validation and broker failures |
+| `apps/location-manager/app.json` | Existing location grant, five accuracy choices and city default |
+| `apps/location-manager/main.py`, `server.py` | Validated `cos __location` requests and direct SDK handlers |
+| `apps/location-manager/test_main.py` | Both direct/SDK routes across every accuracy/default and pre-policy validation |
 | `package.json` | Product-owned staging and test inputs |
 
 Preserve the installed App identity. Status requires `sys.observe` scope
@@ -66,6 +70,12 @@ OS-owned; source relocation does not change the current display layout.
 window identity checks, close completion and native relaunch. This uses a typed
 OS service, not another App's business/MCP interface; the App cannot invoke the
 separate `launcher`-owned generic launch route.
+
+`location-manager` keeps the existing `device.location` Wild-scope grant for
+both queries, its five accuracy choices and the `city` default. GeoClue access
+runs under the requesting desktop user through the OS helper; offline timezone
+suggestions stay OS-owned and do not change the system timezone. Relocation
+does not add permissions, perform location requests or move location data.
 
 Settings organizes interfaces, not a union of authority. Each provider must
 retain its own App identity, scope checks and consent boundary. Apps do not
