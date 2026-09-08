@@ -129,6 +129,18 @@ def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
         stage.stage("mail", tmp_path)
 
 
+def test_home_integration_stages_only_adapter_payload(tmp_path):
+    assert stage.stage("home-integration", tmp_path) == ["gateway-homeassistant"]
+    source = ROOT / "products/home-integration/apps/gateway/homeassistant"
+    installed = tmp_path / "usr/lib/cos/apps/gateway/homeassistant"
+    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
+    for filename in ("app.json", "main.py", "server.py"):
+        assert (installed / filename).read_bytes() == (source / filename).read_bytes()
+    assert not (tmp_path / "usr/lib/cos/apps/gateway-homeassistant").exists()
+    assert not (tmp_path / "usr/lib/cos/apps/gateway/_shared").exists()
+    assert not (tmp_path / "var/lib").exists()
+
+
 def test_notification_delivery_stages_only_product_payload(tmp_path):
     assert stage.stage("notification-delivery", tmp_path) == ["gateway-ntfy", "gateway-pushover", "gateway-webhook"]
     for channel in ("ntfy", "pushover", "webhook"):

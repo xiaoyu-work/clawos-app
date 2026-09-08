@@ -33,6 +33,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/clipboard/` | Selection App contract with separate read/write grants; Wayland execution and source descriptors stay OS-owned; native history panel remains pending |
 | `products/notification-delivery/` | One-shot ntfy/Pushover/Webhook App sources; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
+| `products/home-integration/` | Home Assistant REST adapter source; external server, accounts, devices and automation state are not imported; OS credentials and egress authority remain separate |
 | `products/messaging-channels/` | Discord/Telegram and outbound-only DingTalk/Google Chat/Lark/Matrix/Mattermost/Rocket.Chat/Signal/Slack/SMS/Teams/Webex/WhatsApp/Zulip connector sources; authenticated inbound owner/sender admission, lifecycle and durable replay handling remain pending |
 | `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
 | `tools/test.py` | Product-scoped tests using the locked runtime |
