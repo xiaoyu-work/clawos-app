@@ -32,6 +32,9 @@ retarget messages. No automatic fallback or inbound service is added.
 with repeatable message text, allowlist/rate limiting and offset/PID state.
 Account credentials and installed state are not copied; OS partition migration
 remains responsible for existing data.
+`gateway-webex` sends Markdown/plain text to a person email or room. The
+implementation does not distinguish person IDs from room IDs despite older
+descriptions; this source move preserves routing and adds no inbound service.
 
 This is a source move, not completion of the connector lifecycle redesign.
 Authenticated owner/sender admission and durable replay handling still need
