@@ -17,6 +17,7 @@ remain in Claw OS.
 | Containers | [products/containers](products/containers/README.md) | `container-manager` CLI/MCP source has moved; backend execution and authority remain OS-owned |
 | Backup and Recovery | [products/backup-recovery](products/backup-recovery/README.md) | `backup-center` and `system-snapshot` have moved with separate permissions; execution, credentials and snapshot state remain OS-owned |
 | Store | [products/store](products/store/README.md) | `pkg` CLI/MCP source has moved; package transactions remain OS-owned; native Store UI and service integration remain pending |
+| Diagnostics | [products/diagnostics](products/diagnostics/README.md) | `hardware-center` has moved; privileged collection stays OS-owned; crash and network diagnostic Apps are pending |
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 On Linux/WSL, run Mail contracts with `python3 tools/test.py mail`.

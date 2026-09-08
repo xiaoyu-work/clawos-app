@@ -23,6 +23,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/containers/` | Container-management App contract and typed broker client; privileged backend remains OS-owned |
 | `products/backup-recovery/` | Data-backup and whole-system recovery App contracts; backend execution, credentials, mount authorization and snapshot index remain OS-owned |
 | `products/store/` | Package catalog queries and package-management App contract; privileged transactions and installed state remain OS-owned |
+| `products/diagnostics/` | Hardware diagnostic App contract; privileged collectors and exact per-domain authority remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
 | `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
 | `tools/test.py` | Product-scoped tests using the locked runtime |
