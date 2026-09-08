@@ -15,7 +15,7 @@ points without duplicating its account state or inheriting a union of grants.
 
 | Surface | Owner |
 | --- | --- |
-| `products/mail/` | Thunderbird source, Mail AI, legacy email transport, extension UI and product packaging |
+| `products/mail/` | Thunderbird source, Mail AI, legacy email and restricted delivery, extension UI and product packaging |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
 | `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
 | `tools/test.py` | Product-scoped tests using the locked runtime |
@@ -28,7 +28,7 @@ Git branch or silently substitutes an unverified App.
 
 Mail preserves `mail-ai` and its six AI operations, plus the existing `email`
 SMTP/Gmail/Outlook implementation. Native Thunderbird source is also owned
-here. `gateway-email` has not moved yet. These source moves do not merge
+here, along with the restricted `gateway-email` delivery adapter. These source moves do not merge
 legacy identities or account state; completing that product cutover requires
 explicit account, consent and installation changes.
 
@@ -40,4 +40,7 @@ product interface. The legacy email transport also uses the pinned
 `apps/_shared` package and the sibling `canonical_argv.py` shared module
 (included by the sparse checkout's parent directory). No other App's
 implementation is checked out. OS package assembly already owns these
-installed libraries.
+installed libraries. Delivery imports the distinct `gateway._shared` namespace
+from its pinned shared library, rather than colliding with email's `_shared`.
+Staging preserves nested App paths; joining their components with `-` must
+produce the manifest ID, matching OS discovery.

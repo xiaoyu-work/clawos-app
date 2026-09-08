@@ -20,6 +20,7 @@ def main():
     tests = [
         product / "apps" / "mail-ai" / "test_main.py",
         product / "apps" / "email" / "test_main.py",
+        product / "apps" / "gateway" / "email" / "test_main.py",
         product / "extension" / "test_contract.py",
         product / "test_build.py",
         product / "test_extension_package.py",

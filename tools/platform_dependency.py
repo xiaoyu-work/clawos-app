@@ -18,8 +18,8 @@ def prepare():
     if sources != ["claw-os-sdk/python/src", "cos-runtime/python/src"]:
         raise ValueError("Platform dependency may contain only the SDK and first-party runtime")
     packages = lock["python_packages"]
-    if packages != ["apps/_shared"]:
-        raise ValueError("Platform packages may contain only the shared App library")
+    if packages != ["apps/_shared", "apps/gateway/_shared"]:
+        raise ValueError("Platform packages may contain only the shared App and gateway libraries")
     destination = ROOT / "build" / "platform" / revision
     if not destination.exists():
         destination.mkdir(parents=True)
@@ -46,7 +46,7 @@ def prepare():
         destination / "apps/canonical_argv.py"
     ).is_file():
         raise RuntimeError("Cached platform dependency is incomplete")
-    return [*paths, *(path.parent for path in package_paths)]
+    return [*paths, destination / "apps"]
 
 
 if __name__ == "__main__":

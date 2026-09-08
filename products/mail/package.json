@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/mail-ai", "apps/email"],
+  "apps": ["apps/mail-ai", "apps/email", "apps/gateway/email"],
   "extension": "extension"
 }

@@ -3,7 +3,7 @@
 This product owns the complete Thunderbird **153.2.0esr** source at `comm/`,
 the existing shared Mail AI business implementation at `apps/mail-ai/`,
 its Thunderbird UI at `extension/`, and the legacy SMTP/Gmail/Outlook
-transport at `apps/email/`.
+transport at `apps/email/`, plus restricted delivery at `apps/gateway/email/`.
 
 The source moved from Claw OS commit
 `0492ea6c13cca3213b1b1bafabeed5e6074ebb44`. See
@@ -17,6 +17,8 @@ Their installed identity remains `mail-ai`; moving repositories does not
 change user consent, accounts, installed paths or native-host authority.
 The legacy transport retains the separate installed `email` identity and
 provider-specific grants until the explicit product cutover.
+Delivery keeps `gateway-email` at `/usr/lib/cos/apps/gateway/email` and uses
+the required OS runtime, with no unguarded SMTP fallback when it is missing.
 Native mailbox/MCP integration, product branding and the later consolidation
 of the old `email` and `gateway-email` identities are not complete.
 

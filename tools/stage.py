@@ -4,6 +4,7 @@ import argparse
 import importlib.util
 import json
 from pathlib import Path
+import re
 import shutil
 
 
@@ -15,12 +16,17 @@ def stage(product: str, destination: Path) -> list[str]:
     package = json.loads((source / "package.json").read_text())
     installed = []
     for relative in package["apps"]:
+        layout = Path(relative).relative_to("apps")
+        if not layout.parts or any(
+            not re.fullmatch(r"[a-z][a-z0-9-]*", part) for part in layout.parts
+        ):
+            raise ValueError("Invalid installed App layout")
         app = source / relative
         manifest = json.loads((app / "app.json").read_text())
         app_id = manifest["id"]
-        if not app_id or any(char not in "abcdefghijklmnopqrstuvwxyz0123456789-" for char in app_id):
-            raise ValueError("Invalid installed App identity")
-        target = destination / "usr/lib/cos/apps" / app_id
+        if app_id != "-".join(layout.parts):
+            raise ValueError("Installed App identity does not match its layout")
+        target = destination / "usr/lib/cos/apps" / layout
         shutil.copytree(app, target, symlinks=True,
                         ignore=shutil.ignore_patterns("__pycache__", "test_*.py", ".pytest_cache"))
         installed.append(app_id)

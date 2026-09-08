@@ -2,7 +2,11 @@
 
 import importlib.util
 import json
+import os
 from pathlib import Path
+import shutil
+import subprocess
+import sys
 import zipfile
 
 import pytest
@@ -15,7 +19,7 @@ SPEC.loader.exec_module(stage)
 
 
 def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
-    assert stage.stage("mail", tmp_path) == ["mail-ai", "email"]
+    assert stage.stage("mail", tmp_path) == ["mail-ai", "email", "gateway-email"]
     app = tmp_path / "usr/lib/cos/apps/mail-ai"
     assert (app / "server.py").is_file()
     assert (app / "native_host.py").is_file()
@@ -25,6 +29,12 @@ def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
     assert (email / "server.py").is_file()
     assert not (email / "test_main.py").exists()
     assert not (tmp_path / "usr/lib/cos/apps/_shared").exists()
+    gateway = tmp_path / "usr/lib/cos/apps/gateway/email"
+    assert (gateway / "main.py").is_file()
+    assert (gateway / "server.py").is_file()
+    assert not (gateway / "test_main.py").exists()
+    assert not (tmp_path / "usr/lib/cos/apps/gateway-email").exists()
+    assert not (tmp_path / "usr/lib/cos/apps/gateway/_shared").exists()
     assert not (tmp_path / "usr/lib/cos/python").exists()
     assert not (tmp_path / "usr/lib/cos/claw-mail-ai-host").exists()
     manifest = json.loads((app / "app.json").read_text())
@@ -34,3 +44,51 @@ def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
         assert "test_contract.py" not in archive.namelist()
     with pytest.raises(FileExistsError):
         stage.stage("mail", tmp_path)
+
+
+@pytest.mark.parametrize("layout,app_id", [
+    ("apps/gateway/email", "email"),
+    ("apps/../outside", "outside"),
+    ("apps", "mail"),
+])
+def test_stage_rejects_identity_or_layout_drift(tmp_path, monkeypatch, layout, app_id):
+    source = tmp_path / "source"
+    product = source / "products/mail"
+    product.mkdir(parents=True)
+    (product / "package.json").write_text(json.dumps({"apps": [layout]}))
+    if layout == "apps/gateway/email":
+        app = product / layout
+        app.mkdir(parents=True)
+        (app / "app.json").write_text(json.dumps({"id": app_id}))
+    monkeypatch.setattr(stage, "ROOT", source)
+    target = tmp_path / "stage"
+    with pytest.raises(ValueError, match="layout"):
+        stage.stage("mail", target)
+    assert not target.exists()
+
+
+def test_packaged_gateway_runs_with_only_installed_libraries(tmp_path):
+    stage.stage("mail", tmp_path)
+    lock = json.loads((ROOT / "platform.lock.json").read_text())
+    platform = ROOT / "build/platform" / lock["revision"]
+    python = tmp_path / "usr/lib/cos/python"
+    python.mkdir()
+    for source in lock["python_sources"]:
+        shutil.copytree(platform / source, python, dirs_exist_ok=True)
+    shutil.copy2(platform / "apps/canonical_argv.py", python / "canonical_argv.py")
+    apps = tmp_path / "usr/lib/cos/apps"
+    shutil.copytree(platform / "apps/gateway/_shared", apps / "gateway/_shared")
+    result = subprocess.run(
+        [sys.executable, str(apps / "gateway/email/main.py"), "status"],
+        cwd=tmp_path, capture_output=True, text=True, check=True, timeout=20,
+        env={
+            "PATH": os.defpath, "PYTHONPATH": str(python),
+            "COS_SMTP_HOST": "smtp.example.invalid", "COS_SMTP_PORT": "587",
+            "COS_SMTP_USER": "fixture@example.invalid", "COS_SMTP_PASSWORD": "fixture",
+            "COS_SMTP_FROM": "fixture@example.invalid",
+        },
+    )
+    status = json.loads(result.stdout)
+    assert status["configured"] is True
+    assert status["platform"] == "email"
+    assert status["tls"] == "starttls"

@@ -24,8 +24,9 @@ def dependency(tmp_path, monkeypatch):
     subprocess.run([*git, "init", "--quiet"], check=True)
     subprocess.run([*git, "config", "user.name", "Fixture"], check=True)
     subprocess.run([*git, "config", "user.email", "fixture@example.invalid"], check=True)
-    libraries = ["claw-os-sdk/python/src", "cos-runtime/python/src", "apps/_shared"]
-    for relative in [*libraries, "apps/other-product"]:
+    libraries = ["claw-os-sdk/python/src", "cos-runtime/python/src",
+                 "apps/_shared", "apps/gateway/_shared"]
+    for relative in [*libraries, "apps/other-product", "apps/gateway/other-product"]:
         path = upstream / relative / "fixture.py"
         path.parent.mkdir(parents=True)
         path.write_text("VALUE = 1\n")
@@ -48,8 +49,10 @@ def test_only_locked_libraries_are_checked_out(dependency):
     cached = root / "build/platform" / lock["revision"]
     assert paths == [cached / source for source in lock["python_sources"]] + [cached / "apps"]
     assert (paths[-1] / "_shared/fixture.py").is_file()
+    assert (paths[-1] / "gateway/_shared/fixture.py").is_file()
     assert (paths[-1] / "canonical_argv.py").is_file()
     assert not (cached / "apps/other-product").exists()
+    assert not (cached / "apps/gateway/other-product").exists()
     assert platform.prepare() == paths
 
 
