@@ -83,7 +83,7 @@ def test_terminal_stage_preserves_exec_without_process_services(tmp_path):
     ("security", ["security-center", "firewall-manager", "usb-guard"]),
     ("maintenance", ["config-editor", "systemd"]),
     ("events-audit", ["event-center", "log"]),
-    ("launcher", ["launcher"]),
+    ("launcher", ["launcher", "cosmic-launcher"]),
     ("clipboard", ["clipboard-manager", "panel-clipboard"]),
     ("settings", ["accessibility-manager", "audio-manager", "bluetooth-manager", "camera-manager", "display-manager", "desktop-manager", "location-manager", "network-manager", "power-manager", "printer-manager", "user-manager"]),
 ])
@@ -93,7 +93,9 @@ def test_broker_products_stage_without_os_services(tmp_path, product, app_ids):
     for app_id in app_ids:
         app = tmp_path / "usr/lib/cos/apps" / app_id
         source = ROOT / "products" / product / "apps" / app_id
-        filenames = ("app.json", "main.sh") if app_id == "panel-clipboard" else ("app.json", "main.py", "server.py")
+        filenames = (("app.json",) if app_id == "cosmic-launcher" else
+                     ("app.json", "main.sh") if app_id == "panel-clipboard" else
+                     ("app.json", "main.py", "server.py"))
         for filename in filenames:
             assert (app / filename).read_bytes() == (source / filename).read_bytes()
         assert not (app / "test_main.py").exists()

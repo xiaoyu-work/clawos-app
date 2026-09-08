@@ -54,8 +54,11 @@ def prepare_native():
     revision = lock["revision"]
     if not re.fullmatch(r"[0-9a-f]{40}", revision):
         raise ValueError("Native platform dependency requires a full immutable Git revision")
-    if lock.get("native_sources") != ["desktop/toolkit"]:
-        raise ValueError("Native platform dependency may contain only the shared UI toolkit")
+    allowed = {"desktop/toolkit", "desktop/launcher-backend",
+               "cos-runtime/rust", "claw-os-sdk/rust"}
+    sources = lock.get("native_sources", [])
+    if not sources or "desktop/toolkit" not in sources or not set(sources) <= allowed:
+        raise ValueError("Native platform dependency may contain only the shared UI toolkit, backend and SDK/runtime")
     destination = ROOT / "build" / "native-platform" / revision
     git = ["git", "-C", str(destination)]
     if not destination.exists():
@@ -73,8 +76,9 @@ def prepare_native():
         [*git, "status", "--porcelain", "--untracked-files=normal"], text=True
     ):
         raise RuntimeError("Cached native platform dependency is modified")
+    subprocess.run([*git, "sparse-checkout", "set", *sources], check=True)
     toolkit = destination / "desktop/toolkit"
-    if not (toolkit / "Cargo.toml").is_file():
+    if not all((destination / source / "Cargo.toml").is_file() for source in sources):
         raise RuntimeError("Cached native platform dependency is incomplete")
     return toolkit
 

@@ -610,6 +610,30 @@ def open_app(
 ) -> dict[str, object]:
     app_id = _validate_app_id(app_id)
     uris, paths = _validate_launch_targets(uri, path)
+    return _open_validated(app_id, uris, paths)
+
+
+def open_extras(app_id: str, extras: list[str] | None = None) -> dict[str, object]:
+    """Native ordered targets use the same validation and broker as the Python UI."""
+    app_id = _validate_app_id(app_id)
+    extras = _validate_string_list(extras, "extras")
+    if len(extras) > MAX_URI_COUNT:
+        raise ValueError(f"extras accepts at most {MAX_URI_COUNT} values")
+    uris: list[str] = []
+    paths: list[str] = []
+    for extra in extras:
+        local = os.path.isabs(extra)
+        target_uris, target_paths = _validate_launch_targets(
+            None if local else [extra], [extra] if local else None,
+        )
+        uris.extend(target_uris)
+        paths.extend(target_paths)
+    return _open_validated(app_id, uris, paths)
+
+
+def _open_validated(
+    app_id: str, uris: list[str], paths: list[str],
+) -> dict[str, object]:
 
     entry = _find_entry(app_id)
     if entry is None:

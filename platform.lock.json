@@ -6,5 +6,5 @@
     "cos-runtime/python/src"
   ],
   "python_packages": ["apps/_shared", "apps/gateway/_shared"],
-  "native_sources": ["desktop/toolkit"]
+  "native_sources": ["desktop/toolkit", "desktop/launcher-backend", "cos-runtime/rust", "claw-os-sdk/rust"]
 }

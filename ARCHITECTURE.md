@@ -29,7 +29,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/security/` | Security inspection, firewall and USB App contracts with separate grants; collectors, nftables/sysfs/udev/UDisks2 execution, durable rules and owner-bound rollback remain OS-owned |
 | `products/maintenance/` | Exact-path configuration and exact-unit service App contracts; validators, atomic writes, systemctl execution, mutation records and rollback remain OS-owned |
 | `products/events-audit/` | Event service client and legacy JSONL activity App; event/audit authority remains OS-owned; `log` still needs typed audit-service integration rather than direct system-audit access |
-| `products/launcher/` | Python catalog/search/recent and typed launch App; desktop execution stays OS-owned; native Launcher and shared catalog/history integration remain pending |
+| `products/launcher/` | Complete native Launcher UI and Python/native MCP surfaces sharing product catalog/search/recent and typed launch logic; desktop execution and native UI backend service stay OS-owned |
 | `products/clipboard/` | Selection App contract and complete native CopyQ history panel; separate selection/history grants, with policy and Wayland authority OS-owned |
 | `products/notification-delivery/` | One-shot ntfy/Pushover/Webhook App sources; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
@@ -92,7 +92,14 @@ does not integrate the two backends or move user history.
 `tools/native_build.py <product> test` is the shared native development/CI runner.
 It uses each product's checked-in lock and the common toolkit patch mapping,
 with generated inputs under `build/<product>-native` and a shared native target
-cache. CI compiles and tests Calendar, Clipboard and Desktop Widgets libraries.
+cache. CI compiles and tests Calendar, Clipboard and Desktop Widgets libraries
+and the complete Launcher binary. Launcher additionally uses immutable
+OS SDK/runtime and launcher-backend library/service sources. Its native MCP
+embeds the canonical Python product implementation and SDK adapter at compile
+time, then replaces its process with isolated system Python; no mutable App
+script or App intercall is involved. The OS-supplied SDK authenticates native
+calls and the runtime checks exact scopes before the typed launch service.
+The native UI service's catalog/history and per-App MCP data remain separate.
 
 Desktop Widgets uses typed `Providers` callbacks for Calendar, read-only Agent
 tasks and telemetry. OS shared services retain exact policy checks, data paths,

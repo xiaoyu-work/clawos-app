@@ -26,13 +26,16 @@ def dependency(tmp_path, monkeypatch):
     subprocess.run([*git, "config", "user.email", "fixture@example.invalid"], check=True)
     libraries = ["claw-os-sdk/python/src", "cos-runtime/python/src",
                  "apps/_shared", "apps/gateway/_shared"]
-    for relative in [*libraries, "desktop/toolkit", "desktop/other-app",
+    native = ["desktop/toolkit", "desktop/launcher-backend",
+              "cos-runtime/rust", "claw-os-sdk/rust"]
+    for relative in [*libraries, *native, "desktop/other-app",
                      "apps/other-product", "apps/gateway/other-product"]:
         path = upstream / relative / "fixture.py"
         path.parent.mkdir(parents=True)
         path.write_text("VALUE = 1\n")
     (upstream / "apps/canonical_argv.py").write_text("VALUE = 1\n")
-    (upstream / "desktop/toolkit/Cargo.toml").write_text("[workspace]\n")
+    for relative in native:
+        (upstream / relative / "Cargo.toml").write_text("[workspace]\n")
     subprocess.run([*git, "add", "."], check=True)
     subprocess.run([*git, "commit", "--quiet", "-m", "fixture"], check=True)
     revision = subprocess.check_output([*git, "rev-parse", "HEAD"], text=True).strip()
@@ -84,6 +87,20 @@ def test_native_dependency_rejects_app_implementation(dependency):
     (root / "platform.lock.json").write_text(json.dumps(lock))
     with pytest.raises(ValueError, match="shared UI toolkit"):
         platform.prepare_native()
+
+
+def test_native_cache_can_add_only_locked_runtime_and_backend(dependency):
+    root, lock = dependency
+    toolkit = platform.prepare_native()
+    lock["native_sources"] += [
+        "desktop/launcher-backend", "cos-runtime/rust", "claw-os-sdk/rust",
+    ]
+    (root / "platform.lock.json").write_text(json.dumps(lock))
+    assert platform.prepare_native() == toolkit
+    for relative in lock["native_sources"]:
+        assert (toolkit.parents[1] / relative / "Cargo.toml").is_file()
+    assert not (toolkit.parent / "other-app").exists()
+    assert not (toolkit.parents[1] / "core").exists()
 
 
 @pytest.mark.parametrize("field,value", [

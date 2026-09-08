@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+from stage_native import stage_assets
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,19 +16,32 @@ def prepare(product: str, toolkit: Path, destination: Path):
     package = json.loads((source / "package.json").read_text())
     components = package["native"]
     if len(components) != 1:
-        raise ValueError("Native development builds require one library per product")
-    relative = next(iter(components.values()))
+        raise ValueError("Native development builds require one component per product")
+    name, relative = next(iter(components.items()))
     component = (source / relative).resolve()
     if not component.is_relative_to(source.resolve()):
         raise ValueError("Native source must belong to the product")
     if destination.exists():
         shutil.rmtree(destination)
     shutil.copytree(component, destination, symlinks=True)
-    shutil.copy2(source / "native/Cargo.lock", destination / "Cargo.lock")
-    patches = (ROOT / "tools/native-patches.toml").read_text()
-    patches = patches.replace('"../toolkit', '"' + toolkit.as_posix())
-    with (destination / "Cargo.toml").open("a") as manifest:
-        manifest.write("\n" + patches)
+    stage_assets(source, package, name, destination)
+    if package.get("native_kind") == "binary":
+        manifest = destination / "Cargo.toml"
+        content = manifest.read_text().replace(
+            '"../../../desktop/', '"' + toolkit.parent.as_posix() + "/"
+        )
+        for library in ("cos-runtime", "claw-os-sdk"):
+            content = content.replace(
+                f'"../../../{library}/',
+                '"' + (toolkit.parents[1] / library).as_posix() + "/",
+            )
+        manifest.write_text(content)
+    else:
+        shutil.copy2(source / "native/Cargo.lock", destination / "Cargo.lock")
+        patches = (ROOT / "tools/native-patches.toml").read_text()
+        patches = patches.replace('"../toolkit', '"' + toolkit.as_posix())
+        with (destination / "Cargo.toml").open("a") as manifest:
+            manifest.write("\n" + patches)
 
 
 def main(product=None):
@@ -48,9 +62,11 @@ def main(product=None):
     toolkit = platform.prepare_native()
     destination = ROOT / "build" / f"{product}-native"
     prepare(product, toolkit, destination)
+    package = json.loads((ROOT / "products" / product / "package.json").read_text())
+    targets = [] if package.get("native_kind") == "binary" else ["--lib"]
     subprocess.run(
         ["cargo", options.command, "--locked", "--manifest-path", str(destination / "Cargo.toml"),
-         "--target-dir", str(ROOT / "build/native-target"), "--lib"],
+         "--target-dir", str(ROOT / "build/native-target"), *targets],
         check=True, cwd=ROOT,
     )
 

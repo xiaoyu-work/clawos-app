@@ -8,6 +8,11 @@ the OS package builder without installing them on the host.
 Native builds remain owned by each product. These scripts must not download
 mutable branches at runtime, change App permissions, or overwrite an existing
 installed App. Test staging through `tests/test_stage.py`.
+`native_build.py` supports libraries and standalone binaries without changing
+their upstream workspaces. `stage_native.py` copies declared native assets
+from the same product (including Launcher's compiled-in shared Python backend).
+Native dependency allowlisting includes the shared toolkit, launcher backend
+and Rust SDK/runtime, never core authority or another App implementation.
 Nested App layout is preserved and checked against the manifest identity.
 Products are discovered from `products/*/package.json`. The test runner selects
 each declared App's unit module plus explicit product tests and shared build

@@ -1,4 +1,9 @@
 {
-  "apps": ["apps/launcher"],
-  "tests": []
+  "apps": ["apps/launcher", "apps/cosmic-launcher"],
+  "tests": [],
+  "native": {"cosmic-launcher": "native/cosmic-launcher"},
+  "native_kind": "binary",
+  "native_assets": {
+    "cosmic-launcher": {"mcp_backend.py": "apps/launcher/main.py"}
+  }
 }

@@ -9,6 +9,18 @@ import shutil
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def stage_assets(source: Path, package: dict, name: str, destination: Path):
+    for target, relative in package.get("native_assets", {}).get(name, {}).items():
+        asset = source / relative
+        output = destination / target
+        if not asset.resolve().is_relative_to(source.resolve()) or not (
+            output.resolve().is_relative_to(destination.resolve())
+        ):
+            raise ValueError("Native asset must belong to the product and destination")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(asset, output)
+
+
 def stage(product: str, destination: Path) -> list[str]:
     source = ROOT / "products" / product
     package = json.loads((source / "package.json").read_text())
@@ -22,6 +34,7 @@ def stage(product: str, destination: Path) -> list[str]:
         shutil.copytree(component, destination / name, symlinks=True,
                         ignore=shutil.ignore_patterns("target", "__pycache__", ".pytest_cache"))
         shutil.copy2(source / "native/LICENSE", destination / name / "LICENSE")
+        stage_assets(source, package, name, destination / name)
         installed.append(name)
     return installed
 
