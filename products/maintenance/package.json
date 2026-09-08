@@ -1,0 +1,4 @@
+{
+  "apps": ["apps/config-editor"],
+  "tests": []
+}

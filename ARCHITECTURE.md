@@ -27,6 +27,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/storage/` | Storage-management App contract; device validation, UDisks2 execution and read-only filesystem checkers remain OS-owned |
 | `products/settings/` | Eleven management App contracts including user-manager; system execution, credentials, account/queue state and independent provider authority remain OS-owned; native Settings is pending |
 | `products/security/` | Security inspection, firewall and USB App contracts with separate grants; collectors, nftables/sysfs/udev/UDisks2 execution, durable rules and owner-bound rollback remain OS-owned |
+| `products/maintenance/` | Exact-path configuration App contract; validators, atomic writes and durable rollback remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
 | `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
 | `tools/test.py` | Product-scoped tests using the locked runtime |
