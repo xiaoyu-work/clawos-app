@@ -74,18 +74,19 @@ def test_terminal_stage_preserves_exec_without_process_services(tmp_path):
     assert not (tmp_path / "var/lib/cos").exists()
 
 
-@pytest.mark.parametrize(("product", "app_id"), [
-    ("containers", "container-manager"),
-    ("backup-recovery", "backup-center"),
+@pytest.mark.parametrize(("product", "app_ids"), [
+    ("containers", ["container-manager"]),
+    ("backup-recovery", ["backup-center", "system-snapshot"]),
 ])
-def test_broker_products_stage_without_os_services(tmp_path, product, app_id):
+def test_broker_products_stage_without_os_services(tmp_path, product, app_ids):
     assert product in stage.products()
-    assert stage.stage(product, tmp_path) == [app_id]
-    app = tmp_path / "usr/lib/cos/apps" / app_id
-    source = ROOT / "products" / product / "apps" / app_id
-    for filename in ("app.json", "main.py", "server.py"):
-        assert (app / filename).read_bytes() == (source / filename).read_bytes()
-    assert not (app / "test_main.py").exists()
+    assert stage.stage(product, tmp_path) == app_ids
+    for app_id in app_ids:
+        app = tmp_path / "usr/lib/cos/apps" / app_id
+        source = ROOT / "products" / product / "apps" / app_id
+        for filename in ("app.json", "main.py", "server.py"):
+            assert (app / filename).read_bytes() == (source / filename).read_bytes()
+        assert not (app / "test_main.py").exists()
     assert not (tmp_path / "usr/lib/cos/python").exists()
     assert not (tmp_path / "usr/bin").exists()
     assert not (tmp_path / "var/lib").exists()

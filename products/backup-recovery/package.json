@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/backup-center"],
+  "apps": ["apps/backup-center", "apps/system-snapshot"],
   "tests": []
 }
