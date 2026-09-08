@@ -1,0 +1,4 @@
+{
+  "apps": ["apps/storage-manager"],
+  "tests": []
+}

@@ -79,6 +79,7 @@ def test_terminal_stage_preserves_exec_without_process_services(tmp_path):
     ("backup-recovery", ["backup-center", "system-snapshot"]),
     ("store", ["pkg"]),
     ("diagnostics", ["hardware-center", "crash-doctor", "netdiag"]),
+    ("storage", ["storage-manager"]),
 ])
 def test_broker_products_stage_without_os_services(tmp_path, product, app_ids):
     assert product in stage.products()
