@@ -61,9 +61,7 @@ def main():
             "bwrap", "--die-with-parent", "--unshare-net", "--ro-bind", "/", "/",
             "--dev", "/dev",
             "--tmpfs", "/usr/lib", "--tmpfs", "/run",
-            "--tmpfs", "/usr/bin",
-            "--ro-bind", "/usr/bin/python3", "/usr/bin/python3",
-            "--ro-bind", "/usr/bin/sh", "/usr/bin/sh",
+            "--tmpfs", "/usr/local/bin",
         ]
         for library in Path("/usr/lib").iterdir():
             if library.name != "cos":
@@ -71,7 +69,7 @@ def main():
         command += [
             "--bind", str(fixture), "/fixture",
             "--ro-bind", str(installed / "usr/lib/cos"), "/usr/lib/cos",
-            "--ro-bind", str(broker), "/usr/bin/cos",
+            "--ro-bind", str(broker), "/usr/local/bin/cos",
             "--setenv", "COS_MCP_SERVER", "1",
             "--setenv", "COS_APP_MANIFEST", "/usr/lib/cos/apps/cosmic-launcher/app.json",
             "--setenv", "COS_DATA_DIR", "/fixture/data",
