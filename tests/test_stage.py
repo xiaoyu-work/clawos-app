@@ -79,7 +79,7 @@ def test_terminal_stage_preserves_exec_without_process_services(tmp_path):
 @pytest.mark.parametrize(("product", "app_ids"), [
     ("containers", ["container-manager"]),
     ("backup-recovery", ["backup-center", "system-snapshot"]),
-    ("store", ["pkg"]),
+    ("store", ["pkg", "cosmic-store"]),
     ("diagnostics", ["hardware-center", "crash-doctor", "netdiag"]),
     ("storage", ["storage-manager"]),
     ("security", ["security-center", "firewall-manager", "usb-guard"]),
@@ -95,7 +95,7 @@ def test_broker_products_stage_without_os_services(tmp_path, product, app_ids):
     for app_id in app_ids:
         app = tmp_path / "usr/lib/cos/apps" / app_id
         source = ROOT / "products" / product / "apps" / app_id
-        filenames = (("app.json",) if app_id == "cosmic-launcher" else
+        filenames = (("app.json",) if app_id in ("cosmic-launcher", "cosmic-store") else
                      ("app.json", "main.sh") if app_id == "panel-clipboard" else
                      ("app.json", "main.py", "server.py"))
         for filename in filenames:

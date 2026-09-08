@@ -1,4 +1,13 @@
 {
-  "apps": ["apps/pkg"],
-  "tests": []
+  "apps": ["apps/pkg", "apps/cosmic-store"],
+  "tests": ["native/test_build.py"],
+  "native": {"cosmic-store": "native/cosmic-store"},
+  "native_kind": "binary",
+  "native_packages": ["cosmic-store", "flathub-stats"],
+  "native_assets": {
+    "cosmic-store": {
+      "app.json": "apps/cosmic-store/app.json",
+      "catalog_backend.py": "apps/pkg/main.py"
+    }
+  }
 }

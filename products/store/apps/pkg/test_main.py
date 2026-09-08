@@ -205,7 +205,14 @@ class CmdSearchTests(unittest.TestCase):
         runner.assert_called_once()
         args = runner.call_args[0][0]
         self.assertEqual(args[:3], ["apt-cache", "search", "--names-only"])
-        self.assertEqual(args[3], "pdf viewer")
+        self.assertEqual(args[3:], ["--", "pdf viewer"])
+
+    def test_option_like_query_is_data_not_apt_configuration(self):
+        with _allow_policy(), mock.patch.object(
+            main.subprocess, "run", return_value=_fake_completed(stdout="")
+        ) as runner:
+            cmd_search(["--", "-oAPT::Update::Pre-Invoke=id"])
+        self.assertEqual(runner.call_args[0][0][3:], ["--", "-oAPT::Update::Pre-Invoke=id"])
 
 
 # ---------------------------------------------------------------------------

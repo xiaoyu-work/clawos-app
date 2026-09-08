@@ -234,7 +234,7 @@ def cmd_search(args):
 
     try:
         result = subprocess.run(
-            ["apt-cache", "search", "--names-only", query],
+            ["apt-cache", "search", "--names-only", "--", query],
             capture_output=True,
             text=True,
             timeout=QUERY_TIMEOUT_SECS,

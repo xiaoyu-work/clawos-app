@@ -22,7 +22,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/terminal/` | Complete native Terminal UI/MCP/resources and command/script/background App operations; sandbox, snapshots and process authority remain OS-owned |
 | `products/containers/` | Container-management App contract and typed broker client; privileged backend remains OS-owned |
 | `products/backup-recovery/` | Data-backup and whole-system recovery App contracts; backend execution, credentials, mount authorization and snapshot index remain OS-owned |
-| `products/store/` | Package catalog queries and package-management App contract; privileged transactions and installed state remain OS-owned |
+| `products/store/` | Complete native Store UI/MCP/resources, shared package catalog and pkg contract; privileged transactions and installed state remain OS-owned |
 | `products/diagnostics/` | Hardware, crash and network diagnostic App contracts; privileged collectors, crash data, DNS-pinned probes and per-domain authority remain OS-owned |
 | `products/storage/` | Storage-management App contract; device validation, UDisks2 execution and read-only filesystem checkers remain OS-owned |
 | `products/settings/` | Eleven management App contracts including user-manager; system execution, credentials, account/queue state and independent provider authority remain OS-owned; native Settings is pending |
@@ -94,7 +94,14 @@ does not integrate the two backends or move user history.
 It uses each product's checked-in lock and the common toolkit patch mapping,
 with generated inputs under `build/<product>-native` and a shared native target
 cache. CI compiles and tests Calendar, Clipboard and Desktop Widgets libraries
-and the complete Launcher, Editor, Files and Terminal binaries. Terminal retains
+and the complete Launcher, Editor, Files, Terminal and Store binaries. Store
+preserves its standalone default-feature graph and nested flathub-stats helper.
+Its native queries embed the canonical product catalog library, never the pkg
+App entrypoint or transaction identity. Native UI ref reads/data cleanup use
+OS policy and snapshots; fixed Store activation uses its existing proc.spawn
+grant. Interactive Flatpak/PackageKit backends and human policies are unchanged;
+their catalogs/data are not consolidated with MCP by this source relocation.
+Terminal retains
 its original upstream toolkit/file-chooser and renderer graph. Native MCP
 embeds the canonical Terminal command library for bounded run/PATH lookup;
 native launch and UI snapshots go through controlled OS services, not Apps.

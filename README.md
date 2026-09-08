@@ -16,7 +16,7 @@ remain in Claw OS.
 | Terminal | [products/terminal](products/terminal/README.md) | `exec` operations have moved; native UI and shared terminal-session integration remain pending |
 | Containers | [products/containers](products/containers/README.md) | `container-manager` CLI/MCP source has moved; backend execution and authority remain OS-owned |
 | Backup and Recovery | [products/backup-recovery](products/backup-recovery/README.md) | `backup-center` and `system-snapshot` have moved with separate permissions; execution, credentials and snapshot state remain OS-owned |
-| Store | [products/store](products/store/README.md) | `pkg` CLI/MCP source has moved; package transactions remain OS-owned; native Store UI and service integration remain pending |
+| Store | [products/store](products/store/README.md) | Complete native Store UI/MCP/resources and shared pkg catalog source; OS transactions and native grants stay separate; UI/backend data consolidation remains pending |
 | Diagnostics | [products/diagnostics](products/diagnostics/README.md) | `hardware-center`, `crash-doctor` and `netdiag` have moved with separate permissions; privileged collection and network probes stay OS-owned |
 | Storage | [products/storage](products/storage/README.md) | `storage-manager` has moved; UDisks2 execution and block-device checks stay OS-owned; existing data is unchanged |
 | Settings | [products/settings](products/settings/README.md) | All eleven assigned management App sources have moved, including user-manager; native Settings remains pending and provider authority stays separate |
