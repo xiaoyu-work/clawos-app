@@ -1,8 +1,8 @@
 # Settings Product
 
-Own `accessibility-manager`'s five MCP tools for status, screen reader,
-magnifier, inversion and color filters. Native `cosmic-settings` and other
-system-management Apps await their individual migrations.
+Own `accessibility-manager`'s five MCP tools and `audio-manager`'s ten
+audio-control tools. Native `cosmic-settings` and other system-management Apps
+await their individual migrations.
 
 | Path | Responsibility |
 | --- | --- |
@@ -10,12 +10,22 @@ system-management Apps await their individual migrations.
 | `apps/accessibility-manager/main.py` | Validated `cos __accessibility` requests |
 | `apps/accessibility-manager/server.py` | Direct SDK MCP handlers |
 | `apps/accessibility-manager/test_main.py` | All SDK routes/choices, exact scopes and pre-policy validation |
+| `apps/audio-manager/app.json` | Separate audio observation, output, microphone and media-route scopes |
+| `apps/audio-manager/main.py`, `server.py` | Validated `cos __audio` requests and direct SDK MCP handlers |
+| `apps/audio-manager/test_main.py` | Direct/SDK routes, exact scopes/argv, numeric bounds and broker errors |
 | `package.json` | Product-owned staging and test inputs |
 
 Preserve the installed App identity. Status requires `sys.observe` scope
 `accessibility`; mutations require `ui.accessibility` scope `control`.
 The OS owns user-session validation, Wayland helper execution, AT-SPI state
 changes and serialization. Existing accessibility state does not move.
+
+`audio-manager` keeps its separate installed identity. Status uses
+`sys.observe:audio`, output controls use `device.audio:output`, input controls
+use `device.microphone:input`, and defaults/routes/profiles use
+`device.media-route:pipewire`. The OS owns user-session validation, PipeWire
+and WirePlumber execution, and mutation serialization. Source relocation does
+not change live volume, mute, routing or profile state.
 
 Settings organizes interfaces, not a union of authority. Each provider must
 retain its own App identity, scope checks and consent boundary. Apps do not
@@ -26,4 +36,4 @@ python3 tools/test.py settings
 python3 tools/stage.py settings --root build/settings-stage
 ```
 
-Tests use synthetic broker responses and do not change desktop accessibility.
+Tests use synthetic broker responses and do not change desktop or audio state.
