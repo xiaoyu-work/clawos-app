@@ -19,6 +19,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/calendar/` | Local events, Google/Outlook integration and Calendar MCP |
 | `products/files/` | Filesystem MCP operations, metadata, bounded IO and owner-scoped Recoll document search |
 | `products/browser/` | Search, headless browsing and attached-browser Apps, MV3 extension and Native Host; privileged provider and native engine remain OS-owned |
+| `products/terminal/` | Command/script and background process App operations; sandbox and process authority remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
 | `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
 | `tools/test.py` | Product-scoped tests using the locked runtime |
