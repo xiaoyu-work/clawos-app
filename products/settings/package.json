@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/accessibility-manager", "apps/audio-manager", "apps/bluetooth-manager", "apps/camera-manager", "apps/display-manager", "apps/desktop-manager", "apps/location-manager", "apps/network-manager", "apps/power-manager"],
+  "apps": ["apps/accessibility-manager", "apps/audio-manager", "apps/bluetooth-manager", "apps/camera-manager", "apps/display-manager", "apps/desktop-manager", "apps/location-manager", "apps/network-manager", "apps/power-manager", "apps/printer-manager"],
   "tests": []
 }

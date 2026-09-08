@@ -4,8 +4,9 @@ Own `accessibility-manager`'s five MCP tools, `audio-manager`'s ten audio tools,
 `bluetooth-manager`'s twelve device-lifecycle tools, `camera-manager`'s
 two discovery/capture tools, `display-manager`'s ten output/backlight tools,
 `desktop-manager`'s four window-management tools and `location-manager`'s
-two location/timezone tools, plus `network-manager`'s eleven network tools
-and `power-manager`'s seven status/power tools.
+two location/timezone tools, plus `network-manager`'s eleven network tools,
+`power-manager`'s seven status/power tools and `printer-manager`'s five
+discovery/queue/printing tools.
 Native `cosmic-settings` and other system-management Apps await their
 individual migrations.
 
@@ -39,6 +40,9 @@ individual migrations.
 | `apps/power-manager/app.json` | Separate power observation and critical system power grant; explicit true confirmation |
 | `apps/power-manager/main.py`, `server.py` | Validated `cos __power` requests and direct SDK handlers |
 | `apps/power-manager/test_main.py` | All direct/SDK routes, strict confirmation for all six mutations and broker errors |
+| `apps/printer-manager/app.json` | Separate discovery/queue/print/control grants and exact source-file read scope |
+| `apps/printer-manager/main.py`, `server.py` | Validated `cos __printer` requests and SDK handlers with bounded print options |
+| `apps/printer-manager/test_main.py` | Direct/SDK routes, optional printer, all duplex choices, print defaults and strict cancel confirmation |
 | `package.json` | Product-owned staging and test inputs |
 
 Preserve the installed App identity. Status requires `sys.observe` scope
@@ -96,6 +100,13 @@ state move, and the App does not execute `nmcli` directly.
 the exact boolean `confirm=true` before policy. UPower/logind access, capability
 checks, mutation serialization and power execution remain OS-owned. Neither
 source relocation nor product tests issue real sleep, reboot or shutdown calls.
+
+`printer-manager` retains `sys.observe:printing` for discovery/capabilities
+and separate `device.printer` scopes for queue observation, printing and
+control. Printing also requires `fs.read` on the exact canonical source;
+cancellation requires explicit confirmation. CUPS execution, pinned source-file
+descriptors, job-owner checks and mutation serialization remain OS-owned.
+Existing queues/documents stay in place; tests do not submit or cancel real jobs.
 
 Settings organizes interfaces, not a union of authority. Each provider must
 retain its own App identity, scope checks and consent boundary. Apps do not

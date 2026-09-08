@@ -41,6 +41,11 @@ observation grant stays separate from critical `sys.power` authority; each
 power action requires explicit `confirm=true`. UPower/logind execution remains
 in the OS, and product tests never perform real power actions.
 
+`printer-manager` exposes five tools for discovery, capabilities, queues,
+printing and cancellation. Printing keeps exact source-file read authority;
+cancellation keeps explicit confirmation and OS job-owner checks. CUPS and
+existing print queues remain OS-owned.
+
 Wayland, AT-SPI and PipeWire/WirePlumber execution and user-session validation remain behind
 the Claw OS broker. The native `cosmic-settings` UI and other system-management
 Apps are still pending; this product must not become a super-privileged
