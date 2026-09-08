@@ -1,4 +1,5 @@
 {
   "apps": ["apps/mail-ai", "apps/email", "apps/gateway/email"],
-  "extension": "extension"
+  "extension": "extension",
+  "tests": ["extension/test_contract.py", "test_build.py", "test_extension_package.py"]
 }

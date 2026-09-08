@@ -18,6 +18,18 @@ stage = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(stage)
 
 
+def test_calendar_stage_is_separate_and_preserves_its_manifest(tmp_path):
+    assert {"mail", "calendar"} <= set(stage.products())
+    assert stage.stage("calendar", tmp_path) == ["calendar"]
+    app = tmp_path / "usr/lib/cos/apps/calendar"
+    source = ROOT / "products/calendar/apps/calendar"
+    assert (app / "app.json").read_bytes() == (source / "app.json").read_bytes()
+    assert (app / "main.py").read_bytes() == (source / "main.py").read_bytes()
+    assert (app / "server.py").is_file()
+    assert not (app / "test_main.py").exists()
+    assert not (tmp_path / "usr/lib/cos/apps/mail-ai").exists()
+
+
 def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
     assert stage.stage("mail", tmp_path) == ["mail-ai", "email", "gateway-email"]
     app = tmp_path / "usr/lib/cos/apps/mail-ai"

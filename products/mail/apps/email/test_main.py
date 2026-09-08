@@ -9,10 +9,8 @@ import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 sys.path.insert(0, os.path.dirname(__file__))
-from test_support import load_local_module
+from test_support import load_local_module, unit_policy_bridge
 
 email_main = load_local_module(
     pathlib.Path(__file__).with_name("main.py"),
@@ -23,26 +21,6 @@ _gmail_token = email_main._gmail_token
 _parse_gmail_message = email_main._parse_gmail_message
 _parse_outlook_message = email_main._parse_outlook_message
 run = email_main.run
-
-
-@pytest.fixture(autouse=True)
-def _unit_policy_bridge(tmp_path, monkeypatch):
-    """Retain the original OS App-unit fixture's wire-level allow response."""
-    if os.environ.get("CLAW_COS_BIN"):
-        return
-    stub = tmp_path / "cos"
-    stub.write_text(
-        '#!/bin/sh\n'
-        'case "$1:$2:$3" in\n'
-        '  --wire=1:__policy:check)\n'
-        '    echo \'{"ok":true,"wire_version":1,"data":{"decision":"allow"}}\'\n'
-        '    exit 0;;\n'
-        'esac\n'
-        'echo "unsupported unit-test cos command" >&2\n'
-        'exit 99\n'
-    )
-    stub.chmod(0o755)
-    monkeypatch.setenv("CLAW_COS_BIN", str(stub))
 
 
 # ---------------------------------------------------------------------------

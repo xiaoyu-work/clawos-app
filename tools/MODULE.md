@@ -9,5 +9,8 @@ Native builds remain owned by each product. These scripts must not download
 mutable branches at runtime, change App permissions, or overwrite an existing
 installed App. Test staging through `tests/test_stage.py`.
 Nested App layout is preserved and checked against the manifest identity.
+Products are discovered from `products/*/package.json`. The test runner selects
+each declared App's unit module plus explicit product tests and shared build
+contracts; multiple requested products run in one pytest invocation.
 `tests/test_platform_dependency.py` covers immutable pins, sparse library-only
 checkout and refusal of modified caches or product-source dependencies.

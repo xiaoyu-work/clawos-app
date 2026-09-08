@@ -10,8 +10,11 @@ permissions:
   contents: read
 
 jobs:
-  mail:
+  products:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        product: [mail, calendar]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
@@ -21,4 +24,4 @@ jobs:
         with:
           node-version: "22"
       - run: python3 -m pip install -r requirements-dev.txt
-      - run: python3 tools/test.py mail
+      - run: python3 tools/test.py ${{ matrix.product }}

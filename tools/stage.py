@@ -11,6 +11,10 @@ import shutil
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def products() -> list[str]:
+    return sorted(path.parent.name for path in (ROOT / "products").glob("*/package.json"))
+
+
 def stage(product: str, destination: Path) -> list[str]:
     source = ROOT / "products" / product
     package = json.loads((source / "package.json").read_text())
@@ -49,7 +53,7 @@ def stage(product: str, destination: Path) -> list[str]:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("product", choices=["mail"])
+    parser.add_argument("product", choices=products())
     parser.add_argument("--root", required=True, type=Path)
     args = parser.parse_args()
     print(json.dumps(stage(args.product, args.root)))

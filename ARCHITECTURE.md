@@ -16,6 +16,7 @@ points without duplicating its account state or inheriting a union of grants.
 | Surface | Owner |
 | --- | --- |
 | `products/mail/` | Thunderbird source, Mail AI, legacy email and restricted delivery, extension UI and product packaging |
+| `products/calendar/` | Local events, Google/Outlook integration and Calendar MCP |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
 | `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
 | `tools/test.py` | Product-scoped tests using the locked runtime |
@@ -44,3 +45,10 @@ installed libraries. Delivery imports the distinct `gateway._shared` namespace
 from its pinned shared library, rather than colliding with email's `_shared`.
 Staging preserves nested App paths; joining their components with `-` must
 produce the manifest ID, matching OS discovery.
+
+Each product's `package.json` selects its installed Apps and additional tests.
+The test runner includes each declared App's `test_main.py`, then only the
+explicit extra tests; it never recursively collects a vendored source tree.
+Calendar's event database and provider authority are unchanged by relocation.
+OS integration tests consume the pinned product source to retain coverage of
+real Calendar code crossing the broker and sandbox boundaries.

@@ -1,7 +1,30 @@
 """Isolated loading for product modules that are executable entry points."""
 
 import importlib.util
+import os
 import sys
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def unit_policy_bridge(tmp_path, monkeypatch):
+    """Imported only by App unit modules that use the original OS policy stub."""
+    if os.environ.get("CLAW_COS_BIN"):
+        return
+    stub = tmp_path / "cos"
+    stub.write_text(
+        '#!/bin/sh\n'
+        'case "$1:$2:$3" in\n'
+        '  --wire=1:__policy:check)\n'
+        '    echo \'{"ok":true,"wire_version":1,"data":{"decision":"allow"}}\'\n'
+        '    exit 0;;\n'
+        'esac\n'
+        'echo "unsupported unit-test cos command" >&2\n'
+        'exit 99\n'
+    )
+    stub.chmod(0o755)
+    monkeypatch.setenv("CLAW_COS_BIN", str(stub))
 
 
 def load_local_module(path, name, *, clear_modules=()):

@@ -19,9 +19,12 @@ Read `ARCHITECTURE.md` and the product's `MODULE.md` before changing its boundar
   migration with its matching OS consumption/removal commit.
 - Use existing pytest, Node and upstream native test runners. Do not run the
   entire vendored source tree as a generic Python test suite.
+- Declare product Apps and extra tests in `package.json`; add each new product
+  to the CI matrix. The test runner accepts one or more product names.
 
 ```bash
 python3 tools/test.py mail
+python3 tools/test.py mail calendar
 python3 tools/stage.py mail --root build/stage
 ```
 

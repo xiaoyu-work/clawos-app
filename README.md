@@ -10,9 +10,12 @@ remain in Claw OS.
 | Product | Source | Migration state |
 | --- | --- | --- |
 | Mail | [products/mail](products/mail/README.md) | Native Thunderbird source, Mail AI/UI, legacy email and restricted delivery have moved; product consolidation remains pending |
+| Calendar | [products/calendar](products/calendar/README.md) | Event operations and provider integration have moved; panel presentation remains pending |
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 On Linux/WSL, run Mail contracts with `python3 tools/test.py mail`.
+Run Calendar contracts with `python3 tools/test.py calendar`, or select both
+products in one invocation: `python3 tools/test.py mail calendar`.
 Native Mail uses `python3 products/mail/build.py build -j 8` after the
 preparation described in its README.
 
