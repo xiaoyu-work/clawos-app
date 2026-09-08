@@ -43,6 +43,18 @@ def test_files_stage_preserves_the_direct_mcp_contract(tmp_path):
     assert not (tmp_path / "usr/lib/systemd").exists()
 
 
+def test_browser_stage_preserves_search_without_os_services(tmp_path):
+    assert "browser" in stage.products()
+    assert stage.stage("browser", tmp_path) == ["search"]
+    app = tmp_path / "usr/lib/cos/apps/search"
+    source = ROOT / "products/browser/apps/search"
+    for filename in ("app.json", "main.py", "server.py"):
+        assert (app / filename).read_bytes() == (source / filename).read_bytes()
+    assert not (app / "test_main.py").exists()
+    assert not (tmp_path / "usr/lib/cos/apps/_shared").exists()
+    assert not (tmp_path / "usr/lib/cos/python").exists()
+
+
 def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
     assert stage.stage("mail", tmp_path) == ["mail-ai", "email", "gateway-email"]
     app = tmp_path / "usr/lib/cos/apps/mail-ai"

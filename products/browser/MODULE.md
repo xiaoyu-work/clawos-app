@@ -1,0 +1,27 @@
+# Browser Product
+
+Own the Browser product's search implementation and MCP contract. Native
+browser presentation and the headless/attached browser entry points have not
+yet moved from the OS repository.
+
+| Path | Responsibility |
+| --- | --- |
+| `apps/search/app.json` | Two search tools with explicit provider and exact host/credential scopes |
+| `apps/search/main.py` | Google/Brave web and image requests, bounded responses and App memory records |
+| `apps/search/server.py` | Direct SDK MCP handlers |
+| `apps/search/test_main.py` | Validation, provider isolation, result parsing and failure regressions |
+| `package.json` | Product-owned staging and test inputs |
+
+Use the immutable platform dependency for SDK/runtime, credentials and safe
+HTTP helpers. The OS retains secret storage, memory, network authority and
+the broker. No App invokes another App; searches never silently switch
+provider or borrow an attached browser's login state.
+
+```bash
+python3 tools/test.py browser
+python3 tools/stage.py browser --root build/browser-stage
+```
+
+Product unit tests use synthetic provider responses without live API keys.
+OS integration tests exercise the published source through the real worker
+sandbox and broker.
