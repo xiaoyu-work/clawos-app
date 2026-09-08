@@ -16,6 +16,7 @@ path. Shared helpers come from the immutable platform library dependency.
 No App-to-App calls or duplicated OS services are introduced. The native
 Files UI and document operations remain in the OS repository until their own
 complete source/build migrations.
+The search implementation and its tests require the system `ripgrep` package.
 
 ```bash
 python3 tools/test.py files

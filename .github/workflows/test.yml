@@ -24,4 +24,7 @@ jobs:
         with:
           node-version: "22"
       - run: python3 -m pip install -r requirements-dev.txt
+      - name: Install Files search dependency
+        if: matrix.product == 'files'
+        run: sudo apt-get update -qq && sudo apt-get install -y ripgrep
       - run: python3 tools/test.py ${{ matrix.product }}
