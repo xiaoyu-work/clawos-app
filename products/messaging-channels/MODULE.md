@@ -3,7 +3,7 @@
 Own optional messaging connector sources: `gateway-discord`, `gateway-dingtalk`,
 `gateway-googlechat`, `gateway-larksuite`, `gateway-matrix`, `gateway-mattermost`,
 `gateway-rocketchat`, `gateway-signal`, `gateway-slack`, `gateway-sms`, `gateway-teams`,
-`gateway-telegram` and `gateway-webex`.
+`gateway-telegram`, `gateway-webex` and `gateway-whatsapp`.
 This is a connector ownership group, not another workflow Agent or shared
 super-privileged App identity.
 
@@ -25,6 +25,7 @@ super-privileged App identity.
 | `apps/gateway/teams/` | Fixed-destination webhook, Adaptive Card and explicit legacy MessageCard send/status |
 | `apps/gateway/telegram/` | Bot API send/status/start/stop, legacy polling, offset/PID state and allowlist/rate-limit tests |
 | `apps/gateway/webex/` | REST send/status, email/room routing and Markdown/plain-text payloads |
+| `apps/gateway/whatsapp/` | Cloud API send/status, sender phone-number ID and recipient normalization |
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
@@ -120,6 +121,12 @@ Webex preserves email-to-`toPersonEmail` routing and sends other recipients as
 Despite its legacy manifest/docstring wording, person-ID autodetection is not
 implemented. Source relocation does not add it, inbound webhooks or local state.
 Existing Webex-host, exact credential and self-memory grants remain unchanged.
+
+WhatsApp preserves Graph API v21.0, separate sender phone-number ID and token,
+recipient digit normalization, text truncation and disabled URL previews.
+Its existing Graph-host, exact credential and self-memory grants are unchanged;
+status reads no credentials and performs no network request. Webhook reception
+and delivery confirmation remain unimplemented; a message ID is not a receipt.
 
 ```bash
 python3 tools/test.py messaging-channels

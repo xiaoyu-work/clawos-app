@@ -35,6 +35,9 @@ remains responsible for existing data.
 `gateway-webex` sends Markdown/plain text to a person email or room. The
 implementation does not distinguish person IDs from room IDs despite older
 descriptions; this source move preserves routing and adds no inbound service.
+`gateway-whatsapp` keeps Cloud API text send/status, using the Meta sender
+phone-number ID separately from the normalized recipient number. Existing API
+version and grants remain unchanged; no webhook or delivery confirmation is added.
 
 This is a source move, not completion of the connector lifecycle redesign.
 Authenticated owner/sender admission and durable replay handling still need
