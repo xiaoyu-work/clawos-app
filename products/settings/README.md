@@ -8,6 +8,11 @@ toggle/filter choices and separate observation/control scopes are preserved.
 default nodes, routes and device profiles. Observation, speaker, microphone
 and media-route permissions stay separate, with existing input/output limits.
 
+`bluetooth-manager` exposes twelve tools for status, power, bounded discovery,
+pairing prompts and device lifecycle control. MAC/pairing-ID normalization and
+stdin-only pairing responses are preserved; BlueZ and owner-bound pairing
+sessions remain OS-owned.
+
 Wayland, AT-SPI and PipeWire/WirePlumber execution and user-session validation remain behind
 the Claw OS broker. The native `cosmic-settings` UI and other system-management
 Apps are still pending; this product must not become a super-privileged

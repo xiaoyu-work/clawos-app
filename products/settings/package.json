@@ -1,4 +1,4 @@
 {
-  "apps": ["apps/accessibility-manager", "apps/audio-manager"],
+  "apps": ["apps/accessibility-manager", "apps/audio-manager", "apps/bluetooth-manager"],
   "tests": []
 }
