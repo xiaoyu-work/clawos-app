@@ -36,6 +36,20 @@ jobs:
           fi
       - run: python3 tools/test.py ${{ matrix.product }}
 
+  capabilities:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        capability: [document-engine]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install contract and declared document parser dependencies
+        run: python3 -m pip install -r requirements-dev.txt pymupdf python-docx openpyxl python-pptx
+      - run: python3 tools/test.py --capability ${{ matrix.capability }}
+
   native:
     runs-on: ubuntu-latest
     strategy:

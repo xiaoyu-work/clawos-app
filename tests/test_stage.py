@@ -45,6 +45,216 @@ def test_files_stage_preserves_the_direct_mcp_contract(tmp_path):
     assert not (tmp_path / "usr/lib/systemd").exists()
 
 
+def test_document_engine_is_a_capability_not_a_business_product(tmp_path):
+    assert len(stage.products()) == 24
+    assert stage.sources("capability") == ["document-engine"]
+    assert "document-engine" not in stage.products()
+    assert stage.stage("document-engine", tmp_path, kind="capability") == ["doc"]
+    source = ROOT / "capabilities/document-engine/apps/doc"
+    installed = tmp_path / "usr/lib/cos/apps/doc"
+    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
+    for name in ("app.json", "main.py", "server.py"):
+        assert (installed / name).read_bytes() == (source / name).read_bytes()
+        assert (installed / name).stat().st_mode == (source / name).stat().st_mode
+    library = tmp_path / "usr/lib/cos/python/claw_files"
+    assert (library / "document.py").read_bytes() == (
+        ROOT / "products/files/python/claw_files/document.py"
+    ).read_bytes()
+    assert not (tmp_path / "usr/lib/cos/apps/fs").exists()
+    assert not (tmp_path / "usr/lib/cos/apps/docs").exists()
+    assert not (tmp_path / "usr/bin").exists()
+    assert not (tmp_path / "var").exists()
+    with pytest.raises(ValueError, match="Unknown product source"):
+        stage.stage("document-engine", tmp_path / "wrong-kind")
+
+
+@pytest.mark.parametrize("order", [("files", "document-engine"), ("document-engine", "files")])
+def test_shared_library_costages_once_without_merging_trees(tmp_path, order):
+    for name in order:
+        stage.stage(name, tmp_path, kind="capability" if name == "document-engine" else "product")
+    assert sorted(path.name for path in (tmp_path / "usr/lib/cos/python").iterdir()) == ["claw_files"]
+    assert sorted(path.name for path in (tmp_path / "usr/lib/cos/apps").iterdir()) == [
+        "cosmic-files", "doc", "docs", "fs",
+    ]
+
+
+@pytest.mark.parametrize("change", ["content", "mode", "extra", "symlink"])
+def test_conflicting_shared_library_is_never_overwritten_or_merged(tmp_path, change):
+    stage.stage("files", tmp_path)
+    library = tmp_path / "usr/lib/cos/python/claw_files"
+    document = library / "document.py"
+    if change == "content":
+        document.write_text("different source")
+    elif change == "mode":
+        document.chmod(0o755)
+    elif change == "extra":
+        (library / "unrelated.py").write_text("unrelated source")
+    else:
+        document.unlink()
+        document.symlink_to("missing.py")
+    before = stage._library_tree(library)
+    with pytest.raises(ValueError, match="Conflicting staged Python library"):
+        stage.stage("document-engine", tmp_path, kind="capability")
+    assert stage._library_tree(library) == before
+    assert not (tmp_path / "usr/lib/cos/apps/doc").exists()
+
+
+def test_filtered_capability_does_not_stage_unused_library(tmp_path):
+    assert stage.stage("document-engine", tmp_path, [], kind="capability") == []
+    assert not tmp_path.joinpath("usr").exists()
+
+
+@pytest.fixture
+def capability_package(tmp_path, monkeypatch):
+    source = tmp_path / "source"
+    group = source / "capabilities/document-engine"
+    app = group / "apps/doc"
+    app.mkdir(parents=True)
+    (app / "app.json").write_text('{"id":"doc"}')
+    package = {"kind": "shared-capability-client", "apps": ["apps/doc"]}
+    (group / "package.json").write_text(json.dumps(package))
+    monkeypatch.setattr(stage, "ROOT", source)
+    return source, group, package
+
+
+@pytest.mark.parametrize("kind", [None, [], "unknown", "../products"])
+def test_unknown_source_kind_is_rejected(capability_package, kind):
+    with pytest.raises(ValueError, match="source kind"):
+        stage.load_package("document-engine", kind)
+
+
+@pytest.mark.parametrize("declared", [None, "product", "capability"])
+def test_capability_metadata_requires_explicit_client_kind(capability_package, declared):
+    _, group, package = capability_package
+    if declared is None:
+        package.pop("kind")
+    else:
+        package["kind"] = declared
+    (group / "package.json").write_text(json.dumps(package))
+    with pytest.raises(ValueError, match="Package kind"):
+        stage.load_package("document-engine", "capability")
+
+
+def test_duplicate_source_names_across_kinds_are_rejected(capability_package):
+    source, _, _ = capability_package
+    duplicate = source / "products/document-engine"
+    duplicate.mkdir(parents=True)
+    (duplicate / "package.json").write_text('{"apps":["apps/doc"]}')
+    with pytest.raises(ValueError, match="Duplicate App source"):
+        stage.sources()
+
+
+@pytest.mark.parametrize("name", ["../document-engine", "/document-engine", "missing"])
+def test_capability_source_never_falls_back_to_another_root(capability_package, name):
+    with pytest.raises(ValueError, match="Unknown capability source"):
+        stage.load_package(name, "capability")
+
+
+@pytest.mark.parametrize("field", ["native", "native_libraries", "extension"])
+def test_capability_cannot_invent_native_product_assets(capability_package, field):
+    _, group, package = capability_package
+    package[field] = {}
+    (group / "package.json").write_text(json.dumps(package))
+    with pytest.raises(ValueError, match="native product assets"):
+        stage.load_package("document-engine", "capability")
+
+
+@pytest.mark.parametrize("apps", [["apps/doc", "apps/doc"], ["apps/../doc"]])
+def test_capability_duplicate_or_traversing_apps_are_rejected(capability_package, apps, tmp_path):
+    _, group, package = capability_package
+    package["apps"] = apps
+    (group / "package.json").write_text(json.dumps(package))
+    with pytest.raises(ValueError, match="Duplicate|layout"):
+        stage.stage("document-engine", tmp_path / "stage", kind="capability")
+
+
+def test_capability_source_symlink_escape_is_rejected(capability_package, tmp_path):
+    source, group, _ = capability_package
+    outside = tmp_path / "outside"
+    group.rename(outside)
+    group.symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ValueError, match="declared kind"):
+        stage.load_package("document-engine", "capability")
+    assert not (source / "products/document-engine").exists()
+
+
+@pytest.mark.parametrize("dependency", [
+    {"kind": "product", "name": "../files", "library": "claw_files", "apps": ["doc"]},
+    {"kind": "product", "name": "missing", "library": "claw_files", "apps": ["doc"]},
+    {"kind": "unknown", "name": "files", "library": "claw_files", "apps": ["doc"]},
+    {"path": "../files/python"},
+])
+def test_library_dependencies_require_declared_sources(capability_package, dependency, tmp_path):
+    _, group, package = capability_package
+    package["python_dependencies"] = [dependency]
+    (group / "package.json").write_text(json.dumps(package))
+    with pytest.raises(ValueError, match="source|dependency"):
+        stage.stage("document-engine", tmp_path / "stage", kind="capability")
+    assert not (tmp_path / "stage").exists()
+
+
+@pytest.mark.parametrize("change", ["missing", "name", "path", "duplicate", "consumer"])
+def test_library_dependency_must_match_one_owned_export(capability_package, change, tmp_path):
+    source, group, package = capability_package
+    owner = source / "products/files"
+    (owner / "apps/fs").mkdir(parents=True)
+    (owner / "apps/fs/app.json").write_text('{"id":"fs"}')
+    library = owner / "python/claw_files"
+    library.mkdir(parents=True)
+    (library / "__init__.py").write_text("")
+    export = {"name": "claw_files", "path": "python/claw_files", "apps": ["fs"]}
+    owner_package = {"apps": ["apps/fs"], "python_library": export}
+    dependency = {"kind": "product", "name": "files", "library": "claw_files", "apps": ["doc"]}
+    package["python_dependencies"] = [dependency]
+    if change == "missing":
+        owner_package.pop("python_library")
+    elif change == "name":
+        dependency["library"] = "undeclared"
+    elif change == "path":
+        export["path"] = "../outside"
+    elif change == "duplicate":
+        package["python_dependencies"].append(dependency.copy())
+    else:
+        dependency["apps"] = ["another-app"]
+    (owner / "package.json").write_text(json.dumps(owner_package))
+    (group / "package.json").write_text(json.dumps(package))
+    with pytest.raises(ValueError, match="library"):
+        stage.stage("document-engine", tmp_path / "stage", kind="capability")
+    assert not (tmp_path / "stage").exists()
+
+
+def test_document_runs_with_only_the_actual_staged_library_and_platform(tmp_path):
+    stage.stage("document-engine", tmp_path, kind="capability")
+    lock = json.loads((ROOT / "platform.lock.json").read_text())
+    platform = ROOT / "build/platform" / lock["revision"]
+    python = tmp_path / "usr/lib/cos/python"
+    for source in lock["python_sources"]:
+        shutil.copytree(platform / source, python, dirs_exist_ok=True)
+    shutil.copy2(platform / "apps/canonical_argv.py", python / "canonical_argv.py")
+    document = tmp_path / "synthetic.txt"
+    document.write_text("installed shared document parser")
+    policy = tmp_path / "cos"
+    policy.write_text(
+        '#!/bin/sh\n'
+        'test "$1:$2:$3" = "--wire=1:__policy:check" || exit 99\n'
+        'printf \'%s\\n\' \'{"ok":true,"wire_version":1,"data":{"decision":"allow"}}\'\n'
+    )
+    policy.chmod(0o755)
+    app = tmp_path / "usr/lib/cos/apps/doc"
+    result = subprocess.run(
+        [sys.executable, "-c",
+         "import json; import claw_files.document as library; import main; "
+         "print(json.dumps({'library':library.__file__, 'result':main.run('read', "
+         f"[{str(document)!r}])}}))"],
+        cwd=app, capture_output=True, text=True, check=True, timeout=20,
+        env={"PATH": os.defpath, "PYTHONPATH": str(python),
+             "PYTHONDONTWRITEBYTECODE": "1", "CLAW_COS_BIN": str(policy)},
+    )
+    payload = json.loads(result.stdout)
+    assert payload["library"] == str(python / "claw_files/document.py")
+    assert payload["result"]["content"] == "installed shared document parser"
+
+
 def test_browser_stage_preserves_search_without_os_services(tmp_path):
     assert "browser" in stage.products()
     assert stage.stage("browser", tmp_path) == ["search", "web", "browser-attached"]

@@ -4,7 +4,7 @@
   "native": {"cosmic-files": "native/cosmic-files"},
   "native_kind": "binary",
   "native_packages": ["cosmic-files", "cosmic-files-applet"],
-  "python_library": {"path": "python/claw_files", "apps": ["fs", "docs"]},
+  "python_library": {"name": "claw_files", "path": "python/claw_files", "apps": ["fs", "docs"]},
   "native_assets": {
     "cosmic-files": {
       "app.json": "apps/cosmic-files/app.json",

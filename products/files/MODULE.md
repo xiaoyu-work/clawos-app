@@ -17,7 +17,7 @@ product tests. The OS owns filesystem authority, sandbox mounts and snapshots.
 | `native/cosmic-files/` | Complete native UI/library and companion executable, original toolkit graph and resources |
 | `native/cosmic-files/src/claw_glue/` | Shared product bridge, SDK AI and fixed OS reveal |
 | `native/cosmic-files/product_bridge.py` | Private compiled-in adapter over canonical filesystem/Recoll/parser libraries |
-| `python/claw_files/document.py` | Shared descriptor-safe parsing/conversion, also used by the OS Document App |
+| `python/claw_files/document.py` | Named shared descriptor-safe parsing/conversion export, also consumed by the Document Engine capability client |
 | `native/test_process.py` | Authenticated real-binary fixture against synthetic OS/model/Recoll services |
 
 The source move preserves `fs` and `docs`, their manifests, runtime behavior
@@ -31,6 +31,11 @@ Filesystem search and its tests require the system `ripgrep` package.
 Document search uses the fixed system `recollq` and `recollindex` executables;
 its unit tests substitute explicit local executable fixtures. The OS still
 owns the background index service and supplies canonical `COS_OWNER_HOME`.
+[`Document Engine`](../../capabilities/document-engine/MODULE.md) declares
+`claw_files` as a library dependency, not an App call. Doc-only staging includes
+the export without installing Files Apps; combined staging checks identical
+library content instead of copying conflicting trees. Native Files continues
+embedding this same source through its existing native asset declaration.
 
 ```bash
 python3 tools/test.py files

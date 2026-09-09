@@ -7,6 +7,14 @@ Each product owns its UI, business implementation, Agent MCP surface,
 manifests, resources, tests and build inputs. System services and authority
 remain in Claw OS.
 
+Shared capability clients are explicitly separate from business products:
+[`capabilities/document-engine`](capabilities/document-engine/MODULE.md) owns
+the legacy `doc` source and consumes Files' declared parsing library. This
+brings source ownership to 71/75 original identities in 24 business product
+groups plus one shared-capability group (59 Agent, 12 desktop), without
+renaming identities, merging grants/state, or migrating `db`, `kv`, `net` or
+`summarize`.
+
 | Product | Source | Migration state |
 | --- | --- | --- |
 | Mail | [products/mail](products/mail/README.md) | Native Thunderbird source, Mail AI/UI, legacy email and restricted delivery have moved; product consolidation remains pending |
@@ -43,6 +51,9 @@ authenticated inbound admission.
 On Linux/WSL, run Mail contracts with `python3 tools/test.py mail`.
 Run Calendar contracts with `python3 tools/test.py calendar`, or select both
 products in one invocation: `python3 tools/test.py mail calendar`.
+Run Doc and its shared Files consumers together with
+`python3 tools/test.py files --capability document-engine`; stage only Doc with
+`python3 tools/stage.py document-engine --kind capability --root build/doc-stage`.
 Native Mail uses `python3 products/mail/build.py build -j 8` after the
 preparation described in its README.
 

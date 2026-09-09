@@ -1,0 +1,8 @@
+{
+  "kind": "shared-capability-client",
+  "apps": ["apps/doc"],
+  "tests": [],
+  "python_dependencies": [
+    {"kind": "product", "name": "files", "library": "claw_files", "apps": ["doc"]}
+  ]
+}

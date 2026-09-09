@@ -1,7 +1,8 @@
 # Application Architecture
 
-`clawos-app` owns independently developed application products. `claw-os`
-owns the system Agent, privileged broker, runtime authority, SDK and OS image.
+`clawos-app` owns independently developed application products and explicitly
+declared shared-capability client source groups. `claw-os` owns the system
+Agent, privileged broker, runtime authority, SDK and OS image.
 
 ```text
 Product UI ----+
@@ -18,6 +19,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/mail/` | Thunderbird source, Mail AI, legacy email and restricted delivery, extension UI and product packaging |
 | `products/calendar/` | Local events, Google/Outlook integration, Calendar MCP and the complete native panel UI library/assets |
 | `products/files/` | Complete native Files UI/library/companion, filesystem MCP, owner-scoped Recoll, shared document parsing and SDK AI |
+| `capabilities/document-engine/` | Legacy `doc` facade, manifest, owning-client MCP bridge and tests; explicitly not another business product |
 | `products/browser/` | Search, headless browsing and attached-browser Apps, MV3 extension and Native Host; privileged provider and native engine remain OS-owned |
 | `products/terminal/` | Complete native Terminal UI/MCP/resources and command/script/background App operations; sandbox, snapshots and process authority remain OS-owned |
 | `products/containers/` | Container-management App contract and typed broker client; privileged backend remains OS-owned |
@@ -36,12 +38,12 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/notifications/` | Complete native Layer Shell UI/MCP/config/util libraries and original build; owner/source-bound durable notification state and the single delivery consumer stay OS-owned |
 | `products/clipboard/` | Selection App contract and complete native CopyQ history panel; separate selection/history grants, with policy and Wayland authority OS-owned |
 | `products/notification-delivery/` | One-shot ntfy/Pushover/Webhook App sources; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
-| `tools/stage.py` | Deterministic assembly of product-owned installed assets |
+| `tools/stage.py` | Kind-aware assembly of declared App assets and named shared Python library dependencies |
 | `products/desktop-widgets/` | Complete Widget Rail native presentation and assets; Calendar/task/telemetry access and authority remain OS-provided |
 | `products/home-integration/` | Home Assistant REST adapter source; external server, accounts, devices and automation state are not imported; OS credentials and egress authority remain separate |
 | `products/messaging-channels/` | Discord/Telegram and outbound-only DingTalk/Google Chat/Lark/Matrix/Mattermost/Rocket.Chat/Signal/Slack/SMS/Teams/Webex/WhatsApp/Zulip connector sources; authenticated inbound owner/sender admission, lifecycle and durable replay handling remain pending |
 | `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
-| `tools/test.py` | Product-scoped tests using the locked runtime |
+| `tools/test.py` | Product/capability-scoped tests using the locked runtime and declared library exports |
 | `claw-os` | Native authority launcher, package signing, installation, core services and system integration |
 
 OS builds pin a commit of this repository and invoke the product asset builder.
@@ -74,6 +76,27 @@ explicit extra tests; it never recursively collects a vendored source tree.
 Calendar's event database and provider authority are unchanged by relocation.
 OS integration tests consume the pinned product source to retain coverage of
 real Calendar code crossing the broker and sandbox boundaries.
+
+Source composition distinguishes `products/<name>` (business products) from
+`capabilities/<name>` (`kind: "shared-capability-client"`). Existing product
+commands retain their meaning; capability selection is explicit, never a
+filesystem fallback. Names cannot collide across kinds. The first capability
+group, Document Engine, moves only `doc`: 71 of the original 75 identities now
+belong to 24 business product groups plus one shared-capability group, partitioned
+as 59 Agent and 12 desktop identities. `db`, `kv`, `net` and `summarize` have
+not moved. Native preparation remains product-only.
+
+Document Engine declares a `python_dependencies` entry for the Files product's
+named `claw_files` export, scoped to `doc`. The same resolver supplies test
+imports and stages that exact library into `/usr/lib/cos/python`, even when
+staging only Doc. Files/Doc co-staging accepts an identical library tree and
+rejects conflicting bytes, modes, symlinks or extra installed files; it never
+merges library trees. The OS supplies the SDK/runtime and canonical argument
+module. No other App implementation or mutable runtime loader is imported.
+Doc's six operations, CLI bindings, signed schema, AI budget/safety/origin,
+existing grants, document outputs and `doc` memory identity are unchanged.
+This is source ownership, not identity retirement, a grant union, new backend
+authority, user-data relocation or completion of the broader product redesign.
 
 The native Calendar library accepts an `AgendaProvider` callback rather than
 depending on another App. The OS shell links the library and injects its
@@ -174,7 +197,7 @@ original locked toolkit patches and workspace, including the applet executable.
 Its private native bridge embeds the canonical product filesystem/Recoll and
 document parsing sources, calling only system-installed SDK/runtime authority.
 The pure document parsing/conversion library also ships in the Agent package
-for the remaining Document App; native builds embed the same source rather
+for the Document Engine capability client; native builds embed the same source rather
 than loading mutable App scripts. Summary memory belongs to `cosmic-files`,
 metadata's tag sidecar needs an exact parent read, and reveal is the fixed OS
 Files target. Existing UI hot-path/cache/backend consolidation is separate.
