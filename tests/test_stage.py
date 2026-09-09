@@ -12,7 +12,7 @@ import zipfile
 
 import pytest
 
-from test_support import authenticated_mcp_params
+from test_support import authenticated_mcp_params, mcp_process
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -92,7 +92,8 @@ def test_storage_sdk_stages_only_db_without_copying_sdk_providers_or_state(tmp_p
     assert not (tmp_path / "filtered").exists()
 
 
-def test_staged_db_dispatches_with_real_sdk_and_preserves_its_data_namespace(tmp_path):
+@pytest.mark.parametrize("refactor", ["none", "private-module", "declared-entrypoint"])
+def test_staged_db_dispatches_with_real_sdk_and_preserves_its_data_namespace(tmp_path, refactor):
     stage.stage("storage-sdk", tmp_path, kind="capability")
     lock = json.loads((ROOT / "platform.lock.json").read_text())
     platform = ROOT / "build/platform" / lock["revision"]
@@ -134,35 +135,29 @@ def test_staged_db_dispatches_with_real_sdk_and_preserves_its_data_namespace(tmp
         ("databases", {}),
     ]
     app = tmp_path / "usr/lib/cos/apps/db"
-    result = subprocess.run(
-        [sys.executable, "-c", """
-import json, sys
-import claw_os_sdk.mcp as sdk
-import cos_runtime.policy as policy
-import main, server
-results = [server.app._handle_request("tools/call", call, True) for call in json.load(sys.stdin)]
-print(json.dumps({"sdk": sdk.__file__, "policy": policy.__file__, "app": server.__file__,
-                  "db_dir": main.DB_DIR, "results": results}))
-"""],
-        input=json.dumps([
-            authenticated_mcp_params({"name": f"db.{command}", "arguments": arguments})
+    if refactor == "private-module":
+        (app / "main.py").rename(app / "database_client.py")
+        entry = app / json.loads((app / "app.json").read_text())["mcp"]["entry"]
+        entry.write_text(entry.read_text().replace("from main import ", "from database_client import "))
+    elif refactor == "declared-entrypoint":
+        manifest = json.loads((app / "app.json").read_text())
+        (app / manifest["mcp"]["entry"]).rename(app / "db_mcp.py")
+        manifest["mcp"]["entry"] = "db_mcp.py"
+        (app / "app.json").write_text(json.dumps(manifest))
+    with mcp_process(app, env={
+        "PATH": os.defpath, "PYTHONPATH": str(python), "COS_DATA_DIR": str(data),
+        "CLAW_COS_BIN": str(policy),
+    }) as request:
+        results = [
+            request("tools/call", authenticated_mcp_params({
+                "name": f"db.{command}", "arguments": arguments,
+            }))
             for command, arguments in calls
-        ]),
-        cwd=app, capture_output=True, text=True, check=True, timeout=20,
-        env={"PATH": os.defpath, "PYTHONPATH": str(python), "COS_DATA_DIR": str(data),
-             "COS_APP_MANIFEST": str(app / "app.json"), "COS_APP_ID": "db",
-             "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1",
-             "CLAW_COS_BIN": str(policy)},
-    )
-    payload = json.loads(result.stdout)
-    assert payload["sdk"] == str(python / "claw_os_sdk/mcp.py")
-    assert payload["policy"] == str(python / "cos_runtime/policy.py")
-    assert payload["app"] == str(app / "server.py")
-    assert payload["db_dir"] == str(data / "db")
-    assert payload["results"][0]["structuredContent"]["rows"] == [["existing state"]]
-    assert payload["results"][1]["structuredContent"]["rows_affected"] == 1
-    assert payload["results"][2]["structuredContent"]["rows"] == [["updated state"]]
-    for denied in payload["results"][3:]:
+        ]
+    assert results[0]["structuredContent"]["rows"] == [["existing state"]]
+    assert results[1]["structuredContent"]["rows_affected"] == 1
+    assert results[2]["structuredContent"]["rows"] == [["updated state"]]
+    for denied in results[3:]:
         assert denied["isError"] is True
         assert "PermissionDenied" in denied["content"][0]["text"]
     assert (database.stat().st_dev, database.stat().st_ino) == identity

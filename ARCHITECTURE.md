@@ -108,6 +108,18 @@ memory. No privileged SQLite provider, SDK implementation, account/state import
 or App-to-App call moves with it. The existing Storage business product remains
 separate; the capability group installs only `db` and no native assets.
 
+DB's cross-repository tests use the manifest-declared MCP stdio interface,
+not private SDK dispatch methods or OS imports of DB implementation modules.
+Compatible business changes and internal OS refactors should preserve these
+exports without requiring changes to the other implementation. The exact
+dependency pin establishes reproducibility, not complete decoupling: current
+development tooling knows the OS library source-directory exports,
+`cos_runtime.policy` remains bundled-only, and distribution still consumes
+the source-package/staging contract through an OS pin and signed package
+release. Independent runtime artifacts and release compatibility coverage are
+not established by source relocation. See
+[Storage SDK's dependency contract](capabilities/storage-sdk/MODULE.md#dependency-contracts-and-independent-evolution).
+
 The native Calendar library accepts an `AgendaProvider` callback rather than
 depending on another App. The OS shell links the library and injects its
 shared read-only Calendar provider; policy checks remain before database

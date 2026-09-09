@@ -9,9 +9,9 @@ installed App, or a copy of an OS SDK/provider. `kv` has not moved.
 | `apps/db/app.json` | Unchanged `db` identity, five MCP/CLI tools and independent database read/write needs |
 | `apps/db/main.py` | Existing scoped SQLite CRUD, schema/query, name validation, authorizers and bounded results |
 | `apps/db/server.py` | Direct manifest-bound handlers through the immutable OS SDK |
-| `apps/db/test_main.py` | SQL/path/policy boundaries, real SDK dispatch, transactions, connection lifetime and concurrency |
+| `apps/db/test_main.py` | SQL/path/policy boundaries, public MCP stdio with the real SDK, transactions, connection lifetime and concurrency |
 | `package.json` | Explicit source kind, installed App and test selection; no native assets or library exports |
-| `../../tests/test_stage.py` | Exact staged payload and real SDK execution using only installed platform libraries |
+| `../../tests/test_stage.py` | Exact staged payload, public MCP execution and App-internal refactor cases using only installed platform libraries |
 
 `COS_DATA_DIR` remains the OS-provided owner/App partition. DB files stay at
 `$COS_DATA_DIR/db/<database>.db` (normally
@@ -28,6 +28,31 @@ or perform writes, and SQL authorizers refuse cross-database attachment.
 Execution remains one statement per committed connection. Queries return at
 most 1,000 rows, reporting the full count when truncated. Errors remain
 explicit; no source fallback or broader grant is introduced.
+
+## Dependency contracts and independent evolution
+
+The runtime imports only Python's standard library, the SDK's
+`claw_os_sdk.mcp.App` (`from_manifest`, `tool`, `serve`), and the OS-bundled
+`cos_runtime.policy.require` export. DB uses exact-name and wildcard policy
+scopes through the wire-v1 decision transport; it neither implements policy nor
+imports the SDK's private dispatcher or any core provider. `cos_runtime` is a
+first-party bundled interface, not an independently published third-party SDK.
+
+App-owned unit tests may inspect DB internals. Cross-repository runtime checks
+instead start the manifest-declared MCP entrypoint and exchange JSON-RPC over
+stdio. The staged tests also rename the private implementation module or the
+declared entrypoint in a temporary App payload, preserving tool/grant/data
+contracts without changing OS code. SDK internals are not test entrypoints.
+
+A compatible DB implementation change needs no OS core rewrite, and an OS
+internal refactor preserving these exports/protocols needs no DB rewrite.
+This is not complete source-build or release independence: development still
+selects SDK/runtime source directories at the exact `platform.lock.json`
+revision; composition consumes `package.json` and `tools/stage.py`; installed
+delivery still requires an OS App-pin/package update. Independent runtime
+artifacts and a broader compatibility matrix remain outside this migration.
+Paired source-cutover commits are migration choreography, not a requirement
+to edit both implementations for every future feature.
 
 The four original files came from
 [`xiaoyu-work/claw-os` at `7f0e53fa62cbdf46db22ced8747fa04d79081732`](https://github.com/xiaoyu-work/claw-os/tree/7f0e53fa62cbdf46db22ced8747fa04d79081732/apps/db).

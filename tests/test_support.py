@@ -1,8 +1,14 @@
-"""Isolated loading for product modules that are executable entry points."""
+"""App-owned module loading and public MCP stdio contract fixtures."""
 
+from contextlib import contextmanager
 import importlib.util
+import json
 import os
+from pathlib import Path
+import selectors
+import subprocess
 import sys
+import tempfile
 
 import pytest
 
@@ -25,6 +31,67 @@ def authenticated_mcp_params(params, *, call_id="test-call"):
     }
     value["_meta"] = meta
     return value
+
+
+@contextmanager
+def mcp_process(app_dir, *, env):
+    """Run a Python App through its declared entrypoint and public MCP wire."""
+    app_dir = Path(app_dir).resolve()
+    manifest = json.loads((app_dir / "app.json").read_text())
+    assert manifest["runtime"] == "python"
+    entry = manifest["mcp"].get("entry", "server.py")
+    environment = {
+        **env, "COS_APP_ID": manifest["id"],
+        "COS_APP_MANIFEST": str(app_dir / "app.json"),
+        "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1",
+    }
+    with tempfile.TemporaryFile(mode="w+t") as errors:
+        process = subprocess.Popen(
+            [sys.executable, str(app_dir / entry)], cwd=app_dir, env=environment,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=errors, text=True,
+        )
+        counter = 0
+
+        def request(method, params):
+            nonlocal counter
+            counter += 1
+            process.stdin.write(json.dumps({
+                "jsonrpc": "2.0", "id": counter, "method": method, "params": params,
+            }) + "\n")
+            process.stdin.flush()
+            with selectors.DefaultSelector() as selector:
+                selector.register(process.stdout, selectors.EVENT_READ)
+                if not selector.select(20):
+                    raise TimeoutError(f"MCP fixture timed out: {method}")
+                line = process.stdout.readline()
+            if not line:
+                errors.seek(0)
+                raise AssertionError(f"MCP fixture exited: {errors.read()}")
+            response = json.loads(line)
+            assert response["jsonrpc"] == "2.0" and response["id"] == counter, response
+            assert "result" in response, response
+            return response["result"]
+
+        try:
+            request("initialize", {
+                "protocolVersion": "2025-06-18", "capabilities": {},
+                "clientInfo": {"name": "app-contract-fixture", "version": "1"},
+            })
+            process.stdin.write('{"jsonrpc":"2.0","method":"notifications/initialized"}\n')
+            process.stdin.flush()
+            yield request
+        finally:
+            process.stdin.close()
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=10)
+                raise
+            finally:
+                process.stdout.close()
+        errors.seek(0)
+        assert process.returncode == 0, errors.read()
 
 
 @pytest.fixture(autouse=True)

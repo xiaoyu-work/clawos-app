@@ -1,14 +1,16 @@
 import ast
 from concurrent.futures import ThreadPoolExecutor
 import json
+import os
 import pathlib
 import sqlite3
 import sys
+from types import SimpleNamespace
 from unittest import mock
 
 import pytest
 
-from test_support import authenticated_mcp_params, load_local_module
+from test_support import authenticated_mcp_params, load_local_module, mcp_process
 
 
 APP_DIR = pathlib.Path(__file__).parent
@@ -316,26 +318,45 @@ def test_valid_database_name_resolves_under_database_directory():
 
 
 @pytest.fixture
-def sdk_app(monkeypatch):
-    monkeypatch.setenv("COS_APP_MANIFEST", str(MANIFEST_PATH))
-    monkeypatch.setenv("COS_APP_ID", "db")
-    with mock.patch.dict(sys.modules, {"main": main}):
-        return load_local_module(SERVER_PATH, "claw_test_db_server").app
+def sdk_app(tmp_path):
+    log = tmp_path / "policy.jsonl"
+    decision = tmp_path / "decision.json"
+    decision.write_text('{"decision":"allow"}')
+    policy = tmp_path / "cos"
+    policy.write_text(
+        f"#!{sys.executable}\n"
+        "import json, pathlib, sys\n"
+        "assert sys.argv[1:4] == ['--wire=1', '__policy', 'check']\n"
+        f"with open({str(log)!r}, 'a') as log:\n"
+        "    log.write(json.dumps(sys.argv[4:]) + '\\n')\n"
+        f"decision = json.loads(pathlib.Path({str(decision)!r}).read_text())\n"
+        "print(json.dumps({'ok': True, 'wire_version': 1, 'data': decision}))\n"
+    )
+    policy.chmod(0o755)
+    with mcp_process(APP_DIR, env={
+        **os.environ, "COS_DATA_DIR": str(tmp_path), "CLAW_COS_BIN": str(policy),
+    }) as request:
+        yield SimpleNamespace(request=request, log=log, decision=decision)
+
+
+def _policy_calls(app):
+    if not app.log.exists():
+        return []
+    return [json.loads(line) for line in app.log.read_text().splitlines()]
 
 
 def _call(app, command, arguments):
-    return app._handle_request(
+    return app.request(
         "tools/call",
         authenticated_mcp_params({"name": f"db.{command}", "arguments": arguments}),
-        True,
     )
 
 
-def test_sdk_catalog_preserves_all_five_manifest_schemas(sdk_app, isolated_database):
+def test_sdk_catalog_preserves_all_five_manifest_schemas(sdk_app):
     manifest = json.loads(MANIFEST_PATH.read_text())
     assert manifest["id"] == "db"
     assert manifest["mcp"]["access"] == {"system_agent": True}
-    catalog = sdk_app._handle_request("tools/list", {}, True)["tools"]
+    catalog = sdk_app.request("tools/list", {})["tools"]
     assert [tool["name"] for tool in catalog] == TOOL_NAMES
     for declared, tool in zip(manifest["mcp"]["tools"], catalog, strict=True):
         args = declared.get("args", [])
@@ -347,12 +368,12 @@ def test_sdk_catalog_preserves_all_five_manifest_schemas(sdk_app, isolated_datab
         if args:
             expected["required"] = [arg["name"] for arg in args]
         assert tool["inputSchema"] == expected
-    isolated_database.assert_not_called()
+    assert _policy_calls(sdk_app) == []
     assert not pathlib.Path(main.DB_DIR).exists()
 
 
 def test_sdk_dispatches_crud_schema_and_enumeration_with_separate_scopes(
-    sdk_app, isolated_database,
+    sdk_app,
 ):
     create = "CREATE TABLE items (id INTEGER PRIMARY KEY, value TEXT)"
     assert _call(sdk_app, "exec", {"database": "inventory", "sql": create})[
@@ -388,11 +409,11 @@ def test_sdk_dispatches_crud_schema_and_enumeration_with_separate_scopes(
     })["structuredContent"]["rows_affected"] == 1
     with sqlite3.connect(database) as connection:
         assert connection.execute("SELECT * FROM items").fetchall() == []
-    assert isolated_database.call_args_list == [
-        *[mock.call("data.db.write", name="inventory")] * 3,
-        *[mock.call("data.db.read", name="inventory")] * 3,
-        mock.call("data.db.read", wild=True),
-        mock.call("data.db.write", name="inventory"),
+    assert _policy_calls(sdk_app) == [
+        *[["data.db.write", "--name", "inventory"]] * 3,
+        *[["data.db.read", "--name", "inventory"]] * 3,
+        ["data.db.read", "--wild"],
+        ["data.db.write", "--name", "inventory"],
     ]
 
 
@@ -408,29 +429,29 @@ def test_sdk_dispatches_crud_schema_and_enumeration_with_separate_scopes(
     ("databases", {"database": "safe"}),
 ])
 def test_sdk_rejects_invalid_arguments_before_policy_or_io(
-    sdk_app, isolated_database, command, arguments,
+    sdk_app, command, arguments,
 ):
     assert _call(sdk_app, command, arguments)["isError"] is True
-    isolated_database.assert_not_called()
+    assert _policy_calls(sdk_app) == []
     assert not pathlib.Path(main.DB_DIR).exists()
 
 
 @pytest.mark.parametrize(("command", "arguments", "scope"), [
-    ("query", {"database": "safe", "sql": "SELECT 1"}, {"name": "safe"}),
-    ("exec", {"database": "safe", "sql": "CREATE TABLE items (id)"}, {"name": "safe"}),
-    ("tables", {"database": "safe"}, {"name": "safe"}),
-    ("schema", {"database": "safe", "table": "items"}, {"name": "safe"}),
-    ("databases", {}, {"wild": True}),
+    ("query", {"database": "safe", "sql": "SELECT 1"}, ["--name", "safe"]),
+    ("exec", {"database": "safe", "sql": "CREATE TABLE items (id)"}, ["--name", "safe"]),
+    ("tables", {"database": "safe"}, ["--name", "safe"]),
+    ("schema", {"database": "safe", "table": "items"}, ["--name", "safe"]),
+    ("databases", {}, ["--wild"]),
 ])
 def test_sdk_policy_denial_is_explicit_before_database_creation(
-    sdk_app, isolated_database, command, arguments, scope,
+    sdk_app, command, arguments, scope,
 ):
-    isolated_database.side_effect = main.policy.PermissionDenied({"summary": "fixture denied"})
+    sdk_app.decision.write_text('{"decision":"deny","summary":"fixture denied"}')
     result = _call(sdk_app, command, arguments)
     assert result["isError"] is True
     assert "PermissionDenied: fixture denied" in result["content"][0]["text"]
     verb = "data.db.write" if command == "exec" else "data.db.read"
-    isolated_database.assert_called_once_with(verb, **scope)
+    assert _policy_calls(sdk_app) == [[verb, *scope]]
     assert not pathlib.Path(main.DB_DIR).exists()
 
 
