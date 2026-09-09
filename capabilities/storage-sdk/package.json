@@ -1,0 +1,5 @@
+{
+  "kind": "shared-capability-client",
+  "apps": ["apps/db"],
+  "tests": []
+}

@@ -5,11 +5,14 @@ import json
 import os
 from pathlib import Path
 import shutil
+import sqlite3
 import subprocess
 import sys
 import zipfile
 
 import pytest
+
+from test_support import authenticated_mcp_params
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,7 +50,7 @@ def test_files_stage_preserves_the_direct_mcp_contract(tmp_path):
 
 def test_document_engine_is_a_capability_not_a_business_product(tmp_path):
     assert len(stage.products()) == 24
-    assert stage.sources("capability") == ["document-engine"]
+    assert stage.sources("capability") == ["document-engine", "storage-sdk"]
     assert "document-engine" not in stage.products()
     assert stage.stage("document-engine", tmp_path, kind="capability") == ["doc"]
     source = ROOT / "capabilities/document-engine/apps/doc"
@@ -66,6 +69,106 @@ def test_document_engine_is_a_capability_not_a_business_product(tmp_path):
     assert not (tmp_path / "var").exists()
     with pytest.raises(ValueError, match="Unknown product source"):
         stage.stage("document-engine", tmp_path / "wrong-kind")
+
+
+def test_storage_sdk_stages_only_db_without_copying_sdk_providers_or_state(tmp_path):
+    assert len(stage.products()) == 24
+    assert "storage" in stage.products()
+    assert "storage-sdk" not in stage.products()
+    assert stage.stage("storage-sdk", tmp_path, kind="capability") == ["db"]
+    source = ROOT / "capabilities/storage-sdk/apps/db"
+    installed = tmp_path / "usr/lib/cos/apps/db"
+    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
+    for name in ("app.json", "main.py", "server.py"):
+        assert (installed / name).read_bytes() == (source / name).read_bytes()
+        assert (installed / name).stat().st_mode == (source / name).stat().st_mode
+    assert [path.name for path in installed.parent.iterdir()] == ["db"]
+    assert not (tmp_path / "usr/lib/cos/python").exists()
+    assert not (tmp_path / "usr/bin").exists()
+    assert not (tmp_path / "var").exists()
+    with pytest.raises(ValueError, match="Unknown product source"):
+        stage.stage("storage-sdk", tmp_path / "wrong-kind")
+    assert stage.stage("storage-sdk", tmp_path / "filtered", [], kind="capability") == []
+    assert not (tmp_path / "filtered").exists()
+
+
+def test_staged_db_dispatches_with_real_sdk_and_preserves_its_data_namespace(tmp_path):
+    stage.stage("storage-sdk", tmp_path, kind="capability")
+    lock = json.loads((ROOT / "platform.lock.json").read_text())
+    platform = ROOT / "build/platform" / lock["revision"]
+    python = tmp_path / "usr/lib/cos/python"
+    for source in lock["python_sources"]:
+        shutil.copytree(platform / source, python, dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns("__pycache__", "test_*.py"))
+    data = tmp_path / "owner-data/apps/db"
+    database = data / "db/existing.db"
+    database.parent.mkdir(parents=True)
+    with sqlite3.connect(database) as connection:
+        connection.execute("CREATE TABLE items (value TEXT)")
+        connection.execute("INSERT INTO items VALUES ('existing state')")
+    identity = (database.stat().st_dev, database.stat().st_ino)
+    siblings = [
+        tmp_path / "owner-data/apps/kv/kv.json",
+        tmp_path / "owner-data/agent/memory.db",
+        tmp_path / "other-owner/apps/db/db/existing.db",
+    ]
+    for sibling in siblings:
+        sibling.parent.mkdir(parents=True, exist_ok=True)
+        sibling.write_bytes(b"unrelated private state")
+    policy = tmp_path / "cos"
+    policy.write_text(
+        '#!/bin/sh\n'
+        'test "$1:$2:$3" = "--wire=1:__policy:check" || exit 99\n'
+        'case "$4:$5:$6" in\n'
+        '  data.db.read:--name:existing|data.db.write:--name:existing) decision=allow;;\n'
+        '  *) decision=deny;;\n'
+        'esac\n'
+        'printf \'{"ok":true,"wire_version":1,"data":{"decision":"%s"}}\\n\' "$decision"\n'
+    )
+    policy.chmod(0o755)
+    calls = [
+        ("query", {"database": "existing", "sql": "SELECT value FROM items"}),
+        ("exec", {"database": "existing", "sql": "UPDATE items SET value = 'updated state'"}),
+        ("query", {"database": "existing", "sql": "SELECT value FROM items"}),
+        ("query", {"database": "other", "sql": "SELECT 1"}),
+        ("databases", {}),
+    ]
+    app = tmp_path / "usr/lib/cos/apps/db"
+    result = subprocess.run(
+        [sys.executable, "-c", """
+import json, sys
+import claw_os_sdk.mcp as sdk
+import cos_runtime.policy as policy
+import main, server
+results = [server.app._handle_request("tools/call", call, True) for call in json.load(sys.stdin)]
+print(json.dumps({"sdk": sdk.__file__, "policy": policy.__file__, "app": server.__file__,
+                  "db_dir": main.DB_DIR, "results": results}))
+"""],
+        input=json.dumps([
+            authenticated_mcp_params({"name": f"db.{command}", "arguments": arguments})
+            for command, arguments in calls
+        ]),
+        cwd=app, capture_output=True, text=True, check=True, timeout=20,
+        env={"PATH": os.defpath, "PYTHONPATH": str(python), "COS_DATA_DIR": str(data),
+             "COS_APP_MANIFEST": str(app / "app.json"), "COS_APP_ID": "db",
+             "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1",
+             "CLAW_COS_BIN": str(policy)},
+    )
+    payload = json.loads(result.stdout)
+    assert payload["sdk"] == str(python / "claw_os_sdk/mcp.py")
+    assert payload["policy"] == str(python / "cos_runtime/policy.py")
+    assert payload["app"] == str(app / "server.py")
+    assert payload["db_dir"] == str(data / "db")
+    assert payload["results"][0]["structuredContent"]["rows"] == [["existing state"]]
+    assert payload["results"][1]["structuredContent"]["rows_affected"] == 1
+    assert payload["results"][2]["structuredContent"]["rows"] == [["updated state"]]
+    for denied in payload["results"][3:]:
+        assert denied["isError"] is True
+        assert "PermissionDenied" in denied["content"][0]["text"]
+    assert (database.stat().st_dev, database.stat().st_ino) == identity
+    assert [path.name for path in database.parent.iterdir()] == ["existing.db"]
+    assert all(sibling.read_bytes() == b"unrelated private state" for sibling in siblings)
+    assert not (data.parent / "storage-sdk").exists()
 
 
 @pytest.mark.parametrize("order", [("files", "document-engine"), ("document-engine", "files")])

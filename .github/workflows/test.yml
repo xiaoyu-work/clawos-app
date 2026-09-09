@@ -40,14 +40,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        capability: [document-engine]
+        capability: [document-engine, storage-sdk]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install contract and declared document parser dependencies
-        run: python3 -m pip install -r requirements-dev.txt pymupdf python-docx openpyxl python-pptx
+      - run: python3 -m pip install -r requirements-dev.txt
+      - name: Install declared document parser dependencies
+        if: matrix.capability == 'document-engine'
+        run: python3 -m pip install pymupdf python-docx openpyxl python-pptx
       - run: python3 tools/test.py --capability ${{ matrix.capability }}
 
   native:

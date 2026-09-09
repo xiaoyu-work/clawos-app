@@ -20,6 +20,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/calendar/` | Local events, Google/Outlook integration, Calendar MCP and the complete native panel UI library/assets |
 | `products/files/` | Complete native Files UI/library/companion, filesystem MCP, owner-scoped Recoll, shared document parsing and SDK AI |
 | `capabilities/document-engine/` | Legacy `doc` facade, manifest, owning-client MCP bridge and tests; explicitly not another business product |
+| `capabilities/storage-sdk/` | Legacy `db` SQLite client, unchanged MCP/CLI contract and tests; separate from the Storage business product and OS SDK/providers |
 | `products/browser/` | Search, headless browsing and attached-browser Apps, MV3 extension and Native Host; privileged provider and native engine remain OS-owned |
 | `products/terminal/` | Complete native Terminal UI/MCP/resources and command/script/background App operations; sandbox, snapshots and process authority remain OS-owned |
 | `products/containers/` | Container-management App contract and typed broker client; privileged backend remains OS-owned |
@@ -80,11 +81,11 @@ real Calendar code crossing the broker and sandbox boundaries.
 Source composition distinguishes `products/<name>` (business products) from
 `capabilities/<name>` (`kind: "shared-capability-client"`). Existing product
 commands retain their meaning; capability selection is explicit, never a
-filesystem fallback. Names cannot collide across kinds. The first capability
-group, Document Engine, moves only `doc`: 71 of the original 75 identities now
-belong to 24 business product groups plus one shared-capability group, partitioned
-as 59 Agent and 12 desktop identities. `db`, `kv`, `net` and `summarize` have
-not moved. Native preparation remains product-only.
+filesystem fallback. Names cannot collide across kinds. Document Engine owns
+`doc`; Storage SDK owns only `db`: 72 of the original 75 identities now
+belong to 24 business product groups plus two shared-capability groups, partitioned
+as 60 Agent and 12 desktop identities. `kv`, `net` and `summarize` have not
+moved. Native preparation remains product-only.
 
 Document Engine declares a `python_dependencies` entry for the Files product's
 named `claw_files` export, scoped to `doc`. The same resolver supplies test
@@ -97,6 +98,15 @@ Doc's six operations, CLI bindings, signed schema, AI budget/safety/origin,
 existing grants, document outputs and `doc` memory identity are unchanged.
 This is source ownership, not identity retirement, a grant union, new backend
 authority, user-data relocation or completion of the broader product redesign.
+
+Storage SDK preserves DB's five direct manifest-bound MCP tools and matching
+human CLI commands. The unchanged SQLite client keeps exact database read/write
+scopes, safe names, read-only connections, cross-database SQL authorizers,
+single-statement commits and the 1,000-returned-row bound. Its files stay at
+`$COS_DATA_DIR/db/<name>.db` inside the same owner/App partition, not KV or Agent
+memory. No privileged SQLite provider, SDK implementation, account/state import
+or App-to-App call moves with it. The existing Storage business product remains
+separate; the capability group installs only `db` and no native assets.
 
 The native Calendar library accepts an `AgendaProvider` callback rather than
 depending on another App. The OS shell links the library and injects its
