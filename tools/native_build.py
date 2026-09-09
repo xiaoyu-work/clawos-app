@@ -18,6 +18,7 @@ STAGE_SPEC.loader.exec_module(stage_native)
 def prepare(product: str, toolkit: Path, destination: Path):
     source = ROOT / "products" / product
     package = json.loads((source / "package.json").read_text())
+    stage_native.library_paths(source, package)
     components = package["native"]
     if len(components) != 1:
         raise ValueError("Native development builds require one component per product")

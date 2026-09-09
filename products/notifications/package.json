@@ -1,0 +1,16 @@
+{
+  "apps": ["apps/cosmic-notifications"],
+  "tests": [],
+  "native": {"cosmic-notifications": "native/cosmic-notifications"},
+  "native_kind": "binary",
+  "native_packages": ["cosmic-notifications", "cosmic-notifications-config", "cosmic-notifications-util"],
+  "native_libraries": {
+    "cosmic-notifications-config": {"component": "cosmic-notifications", "path": "cosmic-notifications-config"},
+    "cosmic-notifications-util": {"component": "cosmic-notifications", "path": "cosmic-notifications-util"}
+  },
+  "native_examples": ["notification-presentation-fixture"],
+  "native_process_test": "native/test_process.py",
+  "native_assets": {
+    "cosmic-notifications": {"app.json": "apps/cosmic-notifications/app.json"}
+  }
+}

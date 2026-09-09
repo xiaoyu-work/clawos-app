@@ -26,3 +26,10 @@ script against the built binary, original installer and an isolated fake portal.
 Media Player uses the same runner with its original standalone renderer graph,
 installed resource checks, isolated MCP and a private MPRIS fixture built from
 the actual native backend. Fixtures never connect to the user's desktop bus.
+Notifications retains its original standalone graph and separately tests/builds
+the daemon, configuration and util crates. `native_libraries` explicitly exports
+product-owned crates by component-relative path and Cargo identity; staging and
+development preparation refuse path escapes or identity mismatches before
+copying. OS consumers link the same immutable staged libraries, not App handlers.
+Its process fixture covers installed no-bus MCP and typed canned wire responses;
+the OS owns real authority/SQLite/delivery/presentation integration tests.

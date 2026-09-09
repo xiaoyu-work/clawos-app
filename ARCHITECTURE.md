@@ -33,6 +33,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/editor/` | Complete native Text Editor UI, seven MCP handlers and shared SDK AI presentation; controlled filesystem/snapshot, desktop and model-provider authority remain OS-owned |
 | `products/capture/` | Complete native screenshot portal client, MCP and resources; interactive portal UI, session/capture authority and durable output remain OS-owned |
 | `products/media-player/` | Complete native GStreamer UI/MPRIS/MCP/resources; live playback stays product-owned, and owner-bound observation/control authority stays OS-owned |
+| `products/notifications/` | Complete native Layer Shell UI/MCP/config/util libraries and original build; owner/source-bound durable notification state and the single delivery consumer stay OS-owned |
 | `products/clipboard/` | Selection App contract and complete native CopyQ history panel; separate selection/history grants, with policy and Wayland authority OS-owned |
 | `products/notification-delivery/` | One-shot ntfy/Pushover/Webhook App sources; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
@@ -96,7 +97,24 @@ does not integrate the two backends or move user history.
 It uses each product's checked-in lock and the common toolkit patch mapping,
 with generated inputs under `build/<product>-native` and a shared native target
 cache. CI compiles and tests Calendar, Clipboard and Desktop Widgets libraries
-and the complete Launcher, Editor, Files, Terminal, Store, Settings and Capture binaries.
+and the complete Launcher, Editor, Files, Terminal, Store, Settings, Capture,
+Media Player and Notifications binaries.
+Notifications keeps its original git toolkit/panel graph, config/util crates
+and optional systemd feature. `native_libraries` explicitly exports those two
+shared presentation crates by component-relative path and exact Cargo identity;
+OS consumers link them from the same immutable native source composition.
+MCP submits bounded intent through the SDK's fixed-binary cancellable stdin
+transport and the OS `system.notification.control` route. The OS derives
+owner/source/session authority, durably publishes before delivery, and retains
+SQLite, DND/preferences, retention, credentials, audit and retry/lease ownership.
+Its existing Agent bridge is the only desktop queue consumer. The native
+daemon preserves freedesktop interoperability with sender-bound numeric
+handles; external labels/hints cannot mutate other core records. Durable
+string IDs replace MCP desktop integers explicitly, without an alias store.
+Popup expiry/transient flags affect presentation, never durable acknowledgement
+or retention. Native settings and the legacy `notify` JSON state remain
+unchanged; no user data, identities or grants are merged by relocation.
+Headless acceptance does not establish interactive visual/full-image readiness.
 Capture preserves the independent ashpd/zbus/Tokio graph, original interactive
 portal experience, notifications, 72 locales and all icons/build inputs. It has
 no libcosmic renderer or file-chooser dependency to replace. Non-interactive

@@ -31,6 +31,7 @@ remain in Claw OS.
 | Editor | [products/editor](products/editor/README.md) | Complete native UI, MCP, AI presentation, resources and build; filesystem/snapshot authority and AI providers remain OS-owned |
 | Capture | [products/capture](products/capture/README.md) | Complete native portal client, MCP, translations/resources and original build; interactive UI stays in the OS portal, and non-interactive capture uses scoped OS authority |
 | Media Player | [products/media-player](products/media-player/README.md) | Complete native video/audio UI, MPRIS/MCP, resources and original build; UI/MCP share live playback under separate owner-bound OS grants |
+| Notifications | [products/notifications](products/notifications/README.md) | Complete native Layer Shell UI, MCP, shared config/util crates and build; authoritative durable state/delivery remain OS-owned; legacy `notify` JSON transition is pending |
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 Messaging connector sources are grouped under
