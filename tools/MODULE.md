@@ -8,6 +8,10 @@ the OS package builder without installing them on the host.
 Native builds remain owned by each product. These scripts must not download
 mutable branches at runtime, change App permissions, or overwrite an existing
 installed App. Test staging through `tests/test_stage.py`.
+CI refreshes the Ubuntu runner's declared distribution sources only, not
+unrelated preconfigured third-party repositories. A missing source definition
+or failed refresh stops dependency installation; APT signature and hash checks
+remain enabled.
 `native_build.py` supports libraries and standalone binaries without changing
 their upstream workspaces. `stage_native.py` copies declared native assets
 from the same product (including Launcher's compiled-in shared Python backend).
