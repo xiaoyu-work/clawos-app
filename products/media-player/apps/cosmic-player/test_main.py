@@ -27,6 +27,10 @@ def test_seven_tools_keep_identity_and_separate_observation_from_control():
         assert tool["needs"] == [{
             "verb": "desktop.media.observe" if name == "player.status" else "desktop.media.control",
             "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}},
+            "why": {"en": (
+                "Read playback status and track metadata from this owner's native Media Player."
+                if name == "player.status" else "Control playback in this owner's native Media Player."
+            )},
         }]
     assert "whichever" not in MANIFEST.read_text()
     assert "active MPRIS" not in MANIFEST.read_text()

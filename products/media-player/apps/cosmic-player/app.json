@@ -21,7 +21,7 @@
           "en": "Resume playback in Media Player."
         },
         "args": [],
-        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}, "why": {"en": "Control playback in this owner's native Media Player."}}]
       },
       {
         "name": "player.pause",
@@ -29,15 +29,15 @@
           "en": "Pause playback in Media Player."
         },
         "args": [],
-        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}, "why": {"en": "Control playback in this owner's native Media Player."}}]
       },
       {
         "name": "player.stop",
         "summary": {
-          "en": "Stop Media Player playback and reset the current track."
+          "en": "Stop Media Player playback and reset seekable tracks."
         },
         "args": [],
-        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}, "why": {"en": "Control playback in this owner's native Media Player."}}]
       },
       {
         "name": "player.next",
@@ -45,7 +45,7 @@
           "en": "Skip to the next track in Media Player."
         },
         "args": [],
-        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}, "why": {"en": "Control playback in this owner's native Media Player."}}]
       },
       {
         "name": "player.previous",
@@ -53,7 +53,7 @@
           "en": "Return to the previous track in Media Player."
         },
         "args": [],
-        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}, "why": {"en": "Control playback in this owner's native Media Player."}}]
       },
       {
         "name": "player.toggle",
@@ -61,7 +61,7 @@
           "en": "Toggle play and pause in Media Player."
         },
         "args": [],
-        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}, "why": {"en": "Control playback in this owner's native Media Player."}}]
       },
       {
         "name": "player.status",
@@ -69,7 +69,7 @@
           "en": "Read live Media Player playback status and current track metadata."
         },
         "args": [],
-        "needs": [{"verb": "desktop.media.observe", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+        "needs": [{"verb": "desktop.media.observe", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}, "why": {"en": "Read playback status and track metadata from this owner's native Media Player."}}]
       }
     ]
   }
