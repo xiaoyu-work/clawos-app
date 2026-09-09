@@ -1,5 +1,5 @@
 {
   "kind": "shared-capability-client",
-  "apps": ["apps/db"],
-  "tests": []
+  "apps": ["apps/db", "apps/kv"],
+  "tests": ["apps/kv/test_server.py"]
 }

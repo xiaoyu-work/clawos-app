@@ -9,6 +9,18 @@ from platform_dependency import ROOT, prepare
 from stage import app_entries, load_package, python_libraries
 
 
+def source_tests(source, package):
+    declared = [source / path for path in package["tests"]]
+    automatic = []
+    for app in app_entries(source, package).values():
+        default = app / "test_main.py"
+        if default.is_file():
+            automatic.append(default)
+        elif not any(path.is_file() and path.resolve().is_relative_to(app.resolve()) for path in declared):
+            raise ValueError(f"App without test_main.py requires an explicit test file: {app}")
+    return list(dict.fromkeys([*automatic, *declared]))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("product", nargs="*")
@@ -27,8 +39,7 @@ def main():
     for product, package in packages:
         apps = app_entries(product, package)
         paths.extend(path.parent for path in python_libraries(product, package, list(apps)).values())
-        tests.extend(app / "test_main.py" for app in apps.values())
-        tests.extend(product / test for test in package["tests"])
+        tests.extend(source_tests(product, package))
     env["PYTHONPATH"] = os.pathsep.join(map(str, dict.fromkeys([ROOT / "tests", *paths])))
     tests.extend([
         ROOT / "tests" / "test_stage.py",

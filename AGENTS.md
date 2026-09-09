@@ -29,6 +29,9 @@ source group's `MODULE.md` before changing its boundary.
 - Declare product Apps and extra tests in `package.json`; add each new product
   to the product CI matrix. Shared capability groups use the separate capability
   matrix and explicit `--capability` test / `--kind capability` stage selection.
+  Apps without the default `test_main.py` must explicitly declare an App-local
+  test file (for example KV's `apps/kv/test_server.py`). Do not invent a
+  production `main.py` or empty test just to satisfy a filename convention.
 - Declare shared Python dependencies by source kind, source name, exported
   library name and consuming App IDs. Tests and staging resolve the same export;
   do not add sibling-source imports or copy another parser into an App.

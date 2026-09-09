@@ -10,11 +10,12 @@ remain in Claw OS.
 Shared capability clients are explicitly separate from business products:
 [`capabilities/document-engine`](capabilities/document-engine/MODULE.md) owns
 the legacy `doc` source and consumes Files' declared parsing library.
-[`capabilities/storage-sdk`](capabilities/storage-sdk/MODULE.md) owns only
-`db`, preserving its scoped SQLite tools and existing data partition. This
-brings source ownership to 72/75 original identities in 24 business product
-groups plus two shared-capability groups (60 Agent, 12 desktop), without
-renaming identities, merging grants/state, or migrating `kv`, `net` or
+[`capabilities/storage-sdk`](capabilities/storage-sdk/MODULE.md) owns
+`db` and `kv`, preserving their independent SQLite/JSON contracts and data
+partitions. KV is not Agent memory. This brings source ownership to 73/75
+original identities in 24 business product groups plus two shared-capability
+groups (61 Agent, 12 desktop), without
+renaming identities, merging grants/state, or migrating `net` or
 `summarize`.
 
 | Product | Source | Migration state |
@@ -56,8 +57,9 @@ products in one invocation: `python3 tools/test.py mail calendar`.
 Run Doc and its shared Files consumers together with
 `python3 tools/test.py files --capability document-engine`; stage only Doc with
 `python3 tools/stage.py document-engine --kind capability --root build/doc-stage`.
-Run DB contracts with `python3 tools/test.py --capability storage-sdk`; stage
-only DB with `python3 tools/stage.py storage-sdk --kind capability --root build/db-stage`.
+Run DB and KV contracts with `python3 tools/test.py --capability storage-sdk`;
+stage only DB with `python3 tools/stage.py storage-sdk --kind capability --apps db --root build/db-stage`,
+or only KV with `python3 tools/stage.py storage-sdk --kind capability --apps kv --root build/kv-stage`.
 Native Mail uses `python3 products/mail/build.py build -j 8` after the
 preparation described in its README.
 

@@ -20,7 +20,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/calendar/` | Local events, Google/Outlook integration, Calendar MCP and the complete native panel UI library/assets |
 | `products/files/` | Complete native Files UI/library/companion, filesystem MCP, owner-scoped Recoll, shared document parsing and SDK AI |
 | `capabilities/document-engine/` | Legacy `doc` facade, manifest, owning-client MCP bridge and tests; explicitly not another business product |
-| `capabilities/storage-sdk/` | Legacy `db` SQLite client, unchanged MCP/CLI contract and tests; separate from the Storage business product and OS SDK/providers |
+| `capabilities/storage-sdk/` | Legacy `db` SQLite and `kv` JSON clients, independent MCP/CLI contracts and state; separate from the Storage business product and OS SDK/providers |
 | `products/browser/` | Search, headless browsing and attached-browser Apps, MV3 extension and Native Host; privileged provider and native engine remain OS-owned |
 | `products/terminal/` | Complete native Terminal UI/MCP/resources and command/script/background App operations; sandbox, snapshots and process authority remain OS-owned |
 | `products/containers/` | Container-management App contract and typed broker client; privileged backend remains OS-owned |
@@ -73,7 +73,9 @@ produce the manifest ID, matching OS discovery.
 
 Each product's `package.json` selects its installed Apps and additional tests.
 The test runner includes each declared App's `test_main.py`, then only the
-explicit extra tests; it never recursively collects a vendored source tree.
+explicit extra tests. An App without that default must explicitly select an
+App-local test file, as KV does with `test_server.py`; missing coverage fails.
+The runner never recursively collects a vendored source tree.
 Calendar's event database and provider authority are unchanged by relocation.
 OS integration tests consume the pinned product source to retain coverage of
 real Calendar code crossing the broker and sandbox boundaries.
@@ -82,9 +84,9 @@ Source composition distinguishes `products/<name>` (business products) from
 `capabilities/<name>` (`kind: "shared-capability-client"`). Existing product
 commands retain their meaning; capability selection is explicit, never a
 filesystem fallback. Names cannot collide across kinds. Document Engine owns
-`doc`; Storage SDK owns only `db`: 72 of the original 75 identities now
+`doc`; Storage SDK owns `db` and `kv`: 73 of the original 75 identities now
 belong to 24 business product groups plus two shared-capability groups, partitioned
-as 60 Agent and 12 desktop identities. `kv`, `net` and `summarize` have not
+as 61 Agent and 12 desktop identities. `net` and `summarize` have not
 moved. Native preparation remains product-only.
 
 Document Engine declares a `python_dependencies` entry for the Files product's
@@ -106,9 +108,23 @@ single-statement commits and the 1,000-returned-row bound. Its files stay at
 `$COS_DATA_DIR/db/<name>.db` inside the same owner/App partition, not KV or Agent
 memory. No privileged SQLite provider, SDK implementation, account/state import
 or App-to-App call moves with it. The existing Storage business product remains
-separate; the capability group installs only `db` and no native assets.
+separate; the capability group installs only `db` and `kv`, with no native assets.
 
-DB's cross-repository tests use the manifest-declared MCP stdio interface,
+KV owns its complete `server.py`, manifest and `test_server.py`; it has no
+`main.py`. Its UTF-8 string map remains at `$COS_DATA_DIR/kv.json` inside the
+distinct `kv` owner/App partition, never Agent memory or DB. The OS still
+authorizes exact-key read/write/delete and full-store read for list/dump before
+dispatch. Those two operations use a fixed wildcard need, not wildcard
+borrowing: the latter could authorize an unfiltered scan using only a
+caller's named-key grants. No stored grant is changed or unioned.
+The existing `_shared.atomic` library comes from the locked platform in
+development and the OS-provided MCP Python path in installed execution, not a
+private sibling-source lookup. Persistence fixes keep cache snapshots coherent
+with file contents, serialize read-modify-replace under flock, publish cache
+only after commit, and explicitly use private file modes. Corruption is an
+error, not an empty-store or repair fallback; installed state is not migrated.
+
+DB and KV cross-repository tests use the manifest-declared MCP stdio interface,
 not private SDK dispatch methods or OS imports of DB implementation modules.
 Compatible business changes and internal OS refactors should preserve these
 exports without requiring changes to the other implementation. The exact

@@ -12,7 +12,7 @@ import zipfile
 
 import pytest
 
-from test_support import authenticated_mcp_params, mcp_process
+from test_support import authenticated_mcp_params, load_local_module, mcp_process
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,7 +75,7 @@ def test_storage_sdk_stages_only_db_without_copying_sdk_providers_or_state(tmp_p
     assert len(stage.products()) == 24
     assert "storage" in stage.products()
     assert "storage-sdk" not in stage.products()
-    assert stage.stage("storage-sdk", tmp_path, kind="capability") == ["db"]
+    assert stage.stage("storage-sdk", tmp_path, ["db"], kind="capability") == ["db"]
     source = ROOT / "capabilities/storage-sdk/apps/db"
     installed = tmp_path / "usr/lib/cos/apps/db"
     assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
@@ -90,6 +90,111 @@ def test_storage_sdk_stages_only_db_without_copying_sdk_providers_or_state(tmp_p
         stage.stage("storage-sdk", tmp_path / "wrong-kind")
     assert stage.stage("storage-sdk", tmp_path / "filtered", [], kind="capability") == []
     assert not (tmp_path / "filtered").exists()
+
+
+def test_storage_sdk_stages_independent_db_and_kv_without_platform_code(tmp_path):
+    assert stage.stage("storage-sdk", tmp_path, kind="capability") == ["db", "kv"]
+    apps = tmp_path / "usr/lib/cos/apps"
+    assert sorted(path.name for path in apps.iterdir()) == ["db", "kv"]
+    kv = apps / "kv"
+    original = ROOT / "capabilities/storage-sdk/apps/kv"
+    assert {path.name for path in kv.iterdir()} == {"app.json", "server.py"}
+    for name in ("app.json", "server.py"):
+        assert (kv / name).read_bytes() == (original / name).read_bytes()
+        assert (kv / name).stat().st_mode == (original / name).stat().st_mode
+    assert not (tmp_path / "usr/lib/cos/python").exists()
+    assert not (tmp_path / "var").exists()
+    assert stage.stage("storage-sdk", tmp_path / "kv-only", ["kv"], kind="capability") == ["kv"]
+    assert not (tmp_path / "kv-only/usr/lib/cos/apps/db").exists()
+
+
+def test_mcp_only_app_uses_explicit_tests_without_a_main_module(tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(ROOT / "tools"))
+    runner = load_local_module(ROOT / "tools/test.py", "claw_test_app_runner")
+    app = tmp_path / "apps/kv"
+    app.mkdir(parents=True)
+    (app / "app.json").write_text('{"id":"kv"}')
+    (app / "test_server.py").write_text("def test_service(): pass\n")
+    package = {"apps": ["apps/kv"], "tests": ["apps/kv/test_server.py"]}
+    assert runner.source_tests(tmp_path, package) == [app / "test_server.py"]
+    with pytest.raises(ValueError, match="requires an explicit test file"):
+        runner.source_tests(tmp_path, {**package, "tests": []})
+    (app / "test_server.py").unlink()
+    with pytest.raises(ValueError, match="requires an explicit test file"):
+        runner.source_tests(tmp_path, package)
+
+
+@pytest.mark.parametrize("refactor", ["none", "private-module", "declared-entrypoint"])
+def test_staged_kv_uses_public_mcp_and_preserves_its_independent_namespace(tmp_path, refactor):
+    stage.stage("storage-sdk", tmp_path, ["kv"], kind="capability")
+    lock = json.loads((ROOT / "platform.lock.json").read_text())
+    platform = ROOT / "build/platform" / lock["revision"]
+    python = tmp_path / "usr/lib/cos/python"
+    for source in lock["python_sources"]:
+        shutil.copytree(platform / source, python, dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns("__pycache__", "test_*.py"))
+    apps = tmp_path / "usr/lib/cos/apps"
+    shutil.copytree(platform / "apps/_shared", apps / "_shared",
+                    ignore=shutil.ignore_patterns("__pycache__", "test_*.py"))
+    app = apps / "kv"
+    manifest = json.loads((app / "app.json").read_text())
+    if refactor == "private-module":
+        (app / manifest["mcp"]["entry"]).rename(app / "kv_service.py")
+        (app / manifest["mcp"]["entry"]).write_text("from kv_service import app\napp.serve()\n")
+    elif refactor == "declared-entrypoint":
+        (app / manifest["mcp"]["entry"]).rename(app / "kv_mcp.py")
+        manifest["mcp"]["entry"] = "kv_mcp.py"
+        (app / "app.json").write_text(json.dumps(manifest))
+    data = tmp_path / "owner-data/apps/kv"
+    data.mkdir(parents=True)
+    store = data / "kv.json"
+    original = b'{\n  "kept": "existing state",\n  "empty": ""\n}\n'
+    store.write_bytes(original)
+    identity = store.stat().st_ino
+    neighbours = [
+        tmp_path / "owner-data/apps/db/db/existing.db",
+        tmp_path / "owner-data/apps/storage-manager/state",
+        tmp_path / "owner-data/agent/memory.db",
+        tmp_path / "other-owner/apps/kv/kv.json",
+    ]
+    for path in neighbours:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"unrelated private state")
+    environment = {
+        "PATH": os.defpath, "PYTHONPATH": os.pathsep.join([str(python), str(apps)]),
+        "COS_DATA_DIR": str(data),
+    }
+    with mcp_process(app, env=environment) as request:
+        def call(command, arguments):
+            result = request("tools/call", authenticated_mcp_params({
+                "name": f"kv.{command}", "arguments": arguments,
+            }))
+            assert not result.get("isError"), result
+            return result
+
+        assert call("get", {"key": "kept"})["content"] == [
+            {"type": "text", "text": "existing state"},
+        ]
+        assert store.read_bytes() == original
+        assert store.stat().st_ino == identity
+        assert call("set", {"key": "new", "value": "next"})["structuredContent"] == {
+            "key": "new", "value": "next",
+        }
+        assert call("list", {})["structuredContent"] == {
+            "pattern": "*", "keys": ["empty", "kept", "new"],
+        }
+    with mcp_process(app, env=environment) as request:
+        result = request("tools/call", authenticated_mcp_params({"name": "kv.dump", "arguments": {}}))
+        assert result["structuredContent"] == {
+            "count": 3, "data": {"kept": "existing state", "empty": "", "new": "next"},
+        }
+    assert json.loads(store.read_bytes()) == {"kept": "existing state", "empty": "", "new": "next"}
+    assert store.stat().st_mode & 0o777 == 0o600
+    assert store.stat().st_ino != identity
+    assert {path.name for path in data.iterdir()} == {"kv.json", "kv.json.lock"}
+    assert all(path.read_bytes() == b"unrelated private state" for path in neighbours)
+    assert not (data.parent / "storage-sdk").exists()
+    assert not (app / "main.py").exists()
 
 
 @pytest.mark.parametrize("refactor", ["none", "private-module", "declared-entrypoint"])
