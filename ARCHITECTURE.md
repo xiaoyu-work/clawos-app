@@ -21,6 +21,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/files/` | Complete native Files UI/library/companion, filesystem MCP, owner-scoped Recoll, shared document parsing and SDK AI |
 | `capabilities/document-engine/` | Legacy `doc` facade, manifest, owning-client MCP bridge and tests; explicitly not another business product |
 | `capabilities/storage-sdk/` | Legacy `db` SQLite and `kv` JSON clients, independent MCP/CLI contracts and state; separate from the Storage business product and OS SDK/providers |
+| `capabilities/http/` | Complete `net` HTTP client and MCP contract; shared transport, egress authority, SDK/runtime and installation remain OS-owned |
 | `products/browser/` | Search, headless browsing and attached-browser Apps, MV3 extension and Native Host; privileged provider and native engine remain OS-owned |
 | `products/terminal/` | Complete native Terminal UI/MCP/resources and command/script/background App operations; sandbox, snapshots and process authority remain OS-owned |
 | `products/containers/` | Container-management App contract and typed broker client; privileged backend remains OS-owned |
@@ -84,10 +85,10 @@ Source composition distinguishes `products/<name>` (business products) from
 `capabilities/<name>` (`kind: "shared-capability-client"`). Existing product
 commands retain their meaning; capability selection is explicit, never a
 filesystem fallback. Names cannot collide across kinds. Document Engine owns
-`doc`; Storage SDK owns `db` and `kv`: 73 of the original 75 identities now
-belong to 24 business product groups plus two shared-capability groups, partitioned
-as 61 Agent and 12 desktop identities. `net` and `summarize` have not
-moved. Native preparation remains product-only.
+`doc`; Storage SDK owns `db` and `kv`; HTTP owns `net`: 74 of the original 75
+identities now belong to 24 business product groups plus three shared-capability
+groups, partitioned as 62 Agent and 12 desktop identities. Only `summarize`
+has not moved. Native preparation remains product-only.
 
 Document Engine declares a `python_dependencies` entry for the Files product's
 named `claw_files` export, scoped to `doc`. The same resolver supplies test
@@ -100,6 +101,16 @@ Doc's six operations, CLI bindings, signed schema, AI budget/safety/origin,
 existing grants, document outputs and `doc` memory identity are unchanged.
 This is source ownership, not identity retirement, a grant union, new backend
 authority, user-data relocation or completion of the broader product redesign.
+
+HTTP preserves `net.fetch` and `net.download`, their CLI argument bindings,
+bounded requests/responses, private atomic downloads and existing exact grants.
+It consumes the OS `_shared.safe_http` export for URL/IDNA handling,
+per-redirect host/port authorization and brokered transport; no provider,
+credential store or other App implementation is copied. Staged public MCP
+fixtures exercise the declared entrypoint and CONNECT wire, including compatible
+private-module/entrypoint changes, denials and output preservation. The OS
+still owns SDK/runtime, actual network/filesystem authority and signed delivery;
+this is not an independent network service or a new business product.
 
 Storage SDK preserves DB's five direct manifest-bound MCP tools and matching
 human CLI commands. The unchanged SQLite client keeps exact database read/write

@@ -12,11 +12,13 @@ Shared capability clients are explicitly separate from business products:
 the legacy `doc` source and consumes Files' declared parsing library.
 [`capabilities/storage-sdk`](capabilities/storage-sdk/MODULE.md) owns
 `db` and `kv`, preserving their independent SQLite/JSON contracts and data
-partitions. KV is not Agent memory. This brings source ownership to 73/75
-original identities in 24 business product groups plus two shared-capability
-groups (61 Agent, 12 desktop), without
-renaming identities, merging grants/state, or migrating `net` or
-`summarize`.
+partitions. KV is not Agent memory.
+[`capabilities/http`](capabilities/http/MODULE.md) owns the `net` HTTP client;
+SDK/runtime, network authority and the shared transport remain OS-owned.
+This brings source ownership to 74/75 original identities in 24 business
+product groups plus three shared-capability groups (62 Agent, 12 desktop),
+without renaming identities or merging grants/state. Only `summarize` has
+not moved.
 
 | Product | Source | Migration state |
 | --- | --- | --- |
@@ -60,6 +62,8 @@ Run Doc and its shared Files consumers together with
 Run DB and KV contracts with `python3 tools/test.py --capability storage-sdk`;
 stage only DB with `python3 tools/stage.py storage-sdk --kind capability --apps db --root build/db-stage`,
 or only KV with `python3 tools/stage.py storage-sdk --kind capability --apps kv --root build/kv-stage`.
+Run HTTP contracts with `python3 tools/test.py --capability http`; stage its
+client with `python3 tools/stage.py http --kind capability --root build/http-stage`.
 Native Mail uses `python3 products/mail/build.py build -j 8` after the
 preparation described in its README.
 

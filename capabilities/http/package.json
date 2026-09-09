@@ -1,0 +1,5 @@
+{
+  "kind": "shared-capability-client",
+  "apps": ["apps/net"],
+  "tests": ["apps/net/test_mcp.py"]
+}
