@@ -16,7 +16,8 @@ repository diff checks; its content is unchanged.
 
 Claw-specific changes replace isolated MCP's unusable direct session bus with
 bounded OS notification intent, bind native desktop handles to their senders,
-correct close signals/replacement timers, and expose real headless native
+correct close signals/replacement timers, reclaim retired presentation handles,
+support sender-local connection lifetime, and expose real headless native
 presentation for OS integration tests. The original libcosmic Layer Shell UI,
 settings and freedesktop daemon are not replaced by a launcher or applet stub.
 No OS provider implementation or user notification data is copied.

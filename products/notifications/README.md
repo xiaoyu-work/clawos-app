@@ -32,6 +32,12 @@ The OS desktop bridge verifies the installed presenter's owner/executable and
 unique connection, renders model content as plain text, and reflects durable
 close/acknowledgement. Existing native DND remains an additional presentation
 mute; core DND/delivery preferences remain authoritative.
+Retired popup-history entries release their numeric handles without
+acknowledgement. The bridge opts its own presentations into connection-bound
+lifetime, so disconnect/crash closes orphaned popups without altering durable
+state. Ordinary freedesktop clients do not opt in and keep their original
+lifetime. The hint affects only its authenticated sender's presentations,
+never another sender or any core record.
 
 The full original 40-file fork plus the new presentation/tests is retained:
 standalone lock, nested crates, `.cargo`, Debian/Nix/hook/just/build metadata,

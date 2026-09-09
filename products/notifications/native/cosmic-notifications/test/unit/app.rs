@@ -58,4 +58,18 @@ async fn visible_model_keeps_presentation_and_distinguishes_expiry_from_dismissa
         rx.try_recv().is_err(),
         "close emits one reason, not a second user dismissal"
     );
+    for id in 2..=202 {
+        let mut item = notification.clone();
+        item.id = id;
+        drop(ui.push_notification(item));
+        ui.expire(id);
+    }
+    assert_eq!(ui.hidden.len(), 200);
+    assert!(
+        matches!(
+            rx.recv().await,
+            Some(notifications::Input::Closed(2, CloseReason::Expired))
+        ),
+        "history eviction releases a handle without acknowledging durable activity"
+    );
 }

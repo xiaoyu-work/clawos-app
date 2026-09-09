@@ -6,7 +6,7 @@ use cosmic::iced::{
 };
 use cosmic_notifications_util::{ActionId, CloseReason, Notification};
 use futures::channel::mpsc;
-use std::{collections::HashMap, fmt::Debug, num::NonZeroU32};
+use std::{collections::{HashMap, HashSet}, fmt::Debug, num::NonZeroU32};
 use tokio::{
     sync::mpsc::{Receiver, Sender, channel},
     task::JoinHandle,
@@ -22,6 +22,7 @@ use super::applet::NotificationsApplet;
 #[derive(Debug)]
 pub struct Conns {
     notifications: Connection,
+    owner_changes: zbus::proxy::SignalStream<'static>,
     pub tx: Sender<Input>,
     rx: Receiver<Input>,
     _panel: Option<Connection>,
@@ -41,7 +42,6 @@ impl Conns {
         for _ in 0..5 {
             if let Some(conn) = ConnectionBuilder::session()
                 .ok()
-                .and_then(|conn| conn.name("org.freedesktop.Notifications").ok())
                 .and_then(|conn| {
                     conn.serve_at(
                         "/org/freedesktop/Notifications",
@@ -52,9 +52,14 @@ impl Conns {
                 .map(ConnectionBuilder::build)
             {
                 if let Ok(conn) = conn.await {
+                    let bus = zbus::fdo::DBusProxy::new(&conn).await?;
+                    // Subscribe before publishing the name so no opted-in sender loss is missed.
+                    let owner_changes = bus.inner().receive_signal("NameOwnerChanged").await?;
+                    conn.request_name("org.freedesktop.Notifications").await?;
                     return Ok(Self {
                         tx,
                         notifications: conn,
+                        owner_changes,
                         rx,
                         _panel: panel,
                     });
@@ -124,8 +129,22 @@ impl Machine<Start> {
 
 impl Machine<Waiting> {
     pub async fn exec(mut self, mut conns: Conns) {
+        use cosmic::iced::futures::StreamExt;
         loop {
-            if let Some(next) = conns.rx.recv().await {
+            let next = tokio::select! {
+                next = conns.rx.recv() => next,
+                change = conns.owner_changes.next() => {
+                    let Some(change) = change else { return };
+                    let Ok((name, _old, new)) = change.body().deserialize::<(String, String, String)>() else {
+                        continue;
+                    };
+                    if !name.starts_with(':') || !new.is_empty() {
+                        continue;
+                    }
+                    Some(Input::SenderGone(name))
+                }
+            };
+            if let Some(next) = next {
                 match next {
                     Input::Activated { token, id, action } => {
                         let object_server = conns.notifications.object_server();
@@ -157,7 +176,7 @@ impl Machine<Waiting> {
                             .interface::<_, Notifications>("/org/freedesktop/Notifications")
                             .await
                         {
-                            if iface_ref.get_mut().await.owners.remove(&id).is_some() {
+                            if iface_ref.get_mut().await.retire(id) {
                                 _ = Notifications::notification_closed(
                                     iface_ref.signal_emitter(), id, reason as u32,
                                 ).await;
@@ -181,13 +200,26 @@ impl Machine<Waiting> {
                         else {
                             continue;
                         };
-                        if iface_ref.get_mut().await.owners.remove(&id).is_some() {
+                        if iface_ref.get_mut().await.retire(id) {
                             _ = self.output.send(Event::CloseNotification(id)).await;
                             if let Err(err) = Notifications::notification_closed(
                                 iface_ref.signal_emitter(), id, 2,
                             ).await {
                                 error!("Failed to signal dismissed notification {}", err);
                             }
+                        }
+                    }
+                    Input::SenderGone(sender) => {
+                        let object_server = conns.notifications.object_server();
+                        let Ok(iface_ref) = object_server
+                            .interface::<_, Notifications>("/org/freedesktop/Notifications").await
+                        else { continue };
+                        let retired = iface_ref.get_mut().await.retire_sender(&sender);
+                        for id in retired {
+                            _ = self.output.send(Event::CloseNotification(id)).await;
+                            _ = Notifications::notification_closed(
+                                iface_ref.signal_emitter(), id, CloseReason::CloseNotification as u32,
+                            ).await;
                         }
                     }
                     Input::AppletConn(c) => {
@@ -223,6 +255,7 @@ impl Machine<Waiting> {
 
 #[derive(Debug, Clone)]
 pub enum Input {
+    SenderGone(String),
     Activated {
         token: String,
         id: u32,
@@ -275,11 +308,26 @@ pub struct Notifications {
     next: NonZeroU32,
     applets: Vec<Connection>,
     owners: HashMap<u32, String>,
+    connection_bound: HashSet<u32>,
 }
 
 impl Notifications {
     pub fn new(tx: Sender<Input>) -> Self {
-        Self { tx, next: NonZeroU32::new(1).unwrap(), applets: Vec::new(), owners: HashMap::new() }
+        Self { tx, next: NonZeroU32::new(1).unwrap(), applets: Vec::new(), owners: HashMap::new(), connection_bound: HashSet::new() }
+    }
+
+    fn retire(&mut self, id: u32) -> bool {
+        self.connection_bound.remove(&id);
+        self.owners.remove(&id).is_some()
+    }
+
+    fn retire_sender(&mut self, sender: &str) -> Vec<u32> {
+        let ids: Vec<_> = self.connection_bound.iter().copied()
+            .filter(|id| self.owners.get(id).is_some_and(|owner| owner == sender)).collect();
+        for id in &ids {
+            self.retire(*id);
+        }
+        ids
     }
 
     fn allocate(&mut self, sender: &str, replaces: u32) -> zbus::fdo::Result<(u32, bool)> {
@@ -372,12 +420,15 @@ impl Notifications {
         summary: &str,
         body: &str,
         actions: Vec<&str>,
-        hints: HashMap<&str, zbus::zvariant::Value<'_>>,
+        mut hints: HashMap<&str, zbus::zvariant::Value<'_>>,
         expire_timeout: i32,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<u32> {
         let sender = header.sender().ok_or_else(|| zbus::fdo::Error::AccessDenied("missing sender".into()))?;
         let (id, replacing) = self.allocate(sender.as_str(), replaces_id)?;
+        let connection_bound = matches!(
+            hints.remove("x-claw-connection-bound"), Some(zbus::zvariant::Value::Bool(true)),
+        );
         let hints_clone = hints
             .iter()
             .filter_map(|(k, v)| Some((*k, v.try_clone().ok()?)))
@@ -445,10 +496,15 @@ impl Notifications {
             .await
         {
             tracing::error!("Failed to send notification: {}", err);
-            self.owners.remove(&id);
+            self.retire(id);
             return Err(zbus::fdo::Error::Failed("notification UI is unavailable".into()));
         }
 
+        if connection_bound {
+            self.connection_bound.insert(id);
+        } else {
+            self.connection_bound.remove(&id);
+        }
         Ok(id)
     }
 

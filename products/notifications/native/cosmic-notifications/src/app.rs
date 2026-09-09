@@ -85,7 +85,20 @@ impl CosmicNotifications {
         self.sort_notifications();
         self.group_notifications();
         self.hidden.push_front(notification);
-        self.hidden.truncate(200);
+        while self.hidden.len() > 200 {
+            if let Some(retired) = self.hidden.pop_back() {
+                self.signal_closed(retired.id, CloseReason::Expired);
+            }
+        }
+    }
+
+    fn signal_closed(&self, id: u32, reason: CloseReason) {
+        if let Some(sender) = &self.notifications_tx {
+            let sender = sender.clone();
+            tokio::spawn(async move {
+                _ = sender.send(notifications::Input::Closed(id, reason)).await;
+            });
+        }
     }
 
     fn close(&mut self, i: u32, reason: CloseReason) -> Option<Task<Message>> {
@@ -103,13 +116,7 @@ impl CosmicNotifications {
 
         self.sort_notifications();
         self.group_notifications();
-        if let Some(sender) = &self.notifications_tx {
-            let id = notification.id;
-            let sender = sender.clone();
-            tokio::spawn(async move {
-                _ = sender.send(notifications::Input::Closed(id, reason)).await;
-            });
-        }
+        self.signal_closed(notification.id, reason);
 
         if self.cards.is_empty() && self.active_surface {
             self.active_surface = false;
