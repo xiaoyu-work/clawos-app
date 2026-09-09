@@ -57,7 +57,7 @@ def main():
     calls, failures = [], []
     try:
         installed = fixture / "installed"
-        stage("notifications", installed)
+        stage("notifications", installed, ["cosmic-notifications"])
         native = options.source.resolve()
         installation = subprocess.run([
             "just", "--justfile", str(native / "justfile"), f"rootdir={installed}",

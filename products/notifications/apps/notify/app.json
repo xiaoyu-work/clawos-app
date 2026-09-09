@@ -1,0 +1,81 @@
+{
+  "id": "notify",
+  "version": "0.2.0",
+  "name": {
+    "en": "Notifications"
+  },
+  "summary": {
+    "en": "Send and list your new OS notifications; historical JSON is preserved but not imported"
+  },
+  "icon": "🔔",
+  "runtime": "python",
+  "schema_version": 2,
+  "mcp": {
+    "entry": "server.py",
+    "transport": "stdio",
+    "lifecycle": "lazy",
+    "access": {
+      "system_agent": true
+    },
+    "tools": [
+      {
+        "name": "notify.send",
+        "summary": {
+          "en": "Send 1..4000 plain-text characters through the OS Notification Service. Returns a durable notif- ID and UTC timestamp. Urgent uses warning severity and respects DND; old JSON is untouched."
+        },
+        "args": [
+          {
+            "name": "message",
+            "kind": "text",
+            "binding": "positional",
+            "required": true
+          },
+          {
+            "name": "urgent",
+            "kind": "bool",
+            "binding": "flag",
+            "required": false,
+            "default": false
+          }
+        ],
+        "needs": [
+          {
+            "verb": "ui.notify",
+            "scope": {
+              "kind": "wild"
+            },
+            "why": {
+              "en": "Publish a new OS notification for you, delivered only through your enabled channels and DND policy."
+            }
+          }
+        ]
+      },
+      {
+        "name": "notify.list",
+        "summary": {
+          "en": "List your notify-produced OS records, newest publication first, limit 1..100. Total counts all retained unexpired records in this scope. Rows include durable id, message, urgent, UTC timestamp, read and state. Historical JSON, native and other-App/task records are excluded; unavailable service is an error."
+        },
+        "args": [
+          {
+            "name": "limit",
+            "kind": "integer",
+            "required": false,
+            "binding": "flag",
+            "default": 20
+          }
+        ],
+        "needs": [
+          {
+            "verb": "data.inbox.read",
+            "scope": {
+              "kind": "wild"
+            },
+            "why": {
+              "en": "Read only your OS notifications sent by notify; this does not read historical JSON or other producers' records."
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

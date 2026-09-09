@@ -3,6 +3,8 @@
 | Path | Responsibility |
 | --- | --- |
 | `apps/cosmic-notifications/app.json` | Two MCP tools, preserved identity/`ui.notify` grant and explicit durable-ID compatibility |
+| `apps/notify/` | Complete Python send/list facade, bounded validation, shared SDK client, separate grants and manifest-dispatch/history-preservation tests |
+| `test_notify_process.py` | Installed Python MCP in an empty-root/no-bus sandbox, actual SDK wire decoding, explicit errors and cancellation (canned responses only) |
 | `native/cosmic-notifications/src/app.rs` | Complete original Layer Shell UI, popup timers, configuration and presentation |
 | `native/cosmic-notifications/src/mcp.rs` | Bounded post/close intent via the fixed installed SDK CLI; no session bus |
 | `native/cosmic-notifications/src/subscriptions/` | Freedesktop server, sender-bound numeric handles and private human panel interaction |
@@ -25,7 +27,11 @@ remain in `claw-os`. Its existing desktop bridge is the single delivery
 consumer; this product never claims that queue, reads the core database, or
 duplicates durable state. External freedesktop presentations remain untrusted
 and do not gain authority from hints or display labels. Native/local settings
-remain unchanged. Legacy `notify` JSON migration is explicitly pending.
+remain unchanged. Legacy `notify` JSON is explicitly preserved in place and
+excluded from new service lists, not imported or replayed. New sends/lists use
+only the owner's distinct `app:notify` OS producer; native close stays
+native-source-only. See [README.md](README.md) for response/state compatibility
+and the actual legacy data namespace.
 
 Run on Linux/WSL from the repository root:
 
@@ -42,5 +48,8 @@ uses a fixture-only wire CLI and canned broker responses, not an OS provider
 copy. Real strict-worker/authority/SQLite/delivery/native-subscription acceptance
 is owned by the OS's
 `notifications_actual_native_worker_durable_delivery_and_owner_bound_ui` test.
+The paired OS Notify fixture additionally signs/stages the real Python App,
+checks broker scope/owner isolation and durable restart behavior, and drives
+the same native presentation pipeline.
 Neither fixture connects to user services, reads user history or sends remote
 notifications. Headless coverage is not visual/full-image acceptance.

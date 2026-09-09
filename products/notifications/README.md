@@ -1,7 +1,8 @@
 # Notifications
 
 This product owns the complete native `cosmic-notifications` Layer Shell
-daemon, MCP, configuration/util libraries and original build/provenance inputs.
+daemon, MCP, configuration/util libraries and original build/provenance inputs,
+plus the complete Python `notify` facade and its tests.
 The installed binary remains `/usr/bin/cosmic-notifications` in
 `claw-os-desktop`, with identity `com.clawos.Notifications`.
 
@@ -10,7 +11,7 @@ through its single desktop delivery consumer. MCP submits bounded intent using
 the versioned SDK and fixed `/usr/local/bin/cos`; it does not open a session bus,
 call another App or maintain a second notification store.
 
-## MCP 0.2 compatibility
+## Native MCP 0.2 compatibility
 
 - `notify.post` retains summary/body, sender label, theme icon, timeout and
   transient fields, and adds optional owner/source-scoped `dedupe_key`.
@@ -46,8 +47,49 @@ directory. Cross-shell session startup and panel resources remain OS-owned.
 `native_libraries` explicitly exports the two shared presentation crates for
 immutable OS consumers; no duplicate vendored library is maintained.
 
+## Legacy `notify` 0.2 compatibility
+
+`apps/notify` now owns both MCP-only commands and the same human CLI aliases:
+`cos app notify send MESSAGE [--urgent]` and `cos app notify list [--limit N]`.
+They use the shared SDK's fixed installed-binary, cancellable stdin transport.
+The App does not open a bus/database, invoke the native App, claim deliveries,
+or maintain a JSON/SQLite/ID-alias store.
+
+- `notify.send(message, urgent=false)` requires the existing `ui.notify` Wild
+  grant. Message is 1..4000 plain-text Unicode characters; unsupported controls
+  are rejected (newline/CR/tab remain allowed). There is no truncation.
+  Urgent maps to warning severity; both modes use normal Immediate delivery
+  subject to DND/channel preferences, never the critical DND bypass.
+- Send still returns `{id,message,urgent,timestamp}`. The ID is now a durable
+  `notif-...` string, not eight characters. Timestamp is UTC creation time to
+  seconds, without a suffix. Source is authenticated `app:notify`, never text
+  supplied by the model; owner/task/session come from broker authority.
+- `notify.list(limit=20)` independently requires `data.inbox.read` Wild.
+  Limit is integer 1..100, never a boolean. It exposes only the same owner's
+  `app:notify` records, not native, task or other-App producers.
+  `{notifications,total}` is newest publication first, with the complete
+  retained, unexpired source total even when the returned batch is limited.
+  Rows retain `read` and add `state`; read means the state is not unread
+  (read/acknowledged/dismissed). Delivery alone leaves it false.
+- Native post/close remain native-only; neither identity gains the other's
+  actions or grants. The native App cannot close a guessed notify-produced ID.
+
+**Historical JSON is preserved in place, not imported.** The old
+`notifications.json` is not read, rewritten, deleted, moved, re-owned, chmodded,
+dual-written, backfilled or replayed, even if malformed or obsolete.
+It is explicitly excluded from new lists. No archive browser or importer is
+added, and service failure is an MCP error, never JSON or empty-list fallback.
+Only new OS-service records persist across App/service restart.
+
+The old filename was relative to the actual launcher `COS_DATA_DIR`, not
+universally `/var/lib/cos`: a worker gets `<data-root>/apps/notify`, ordinarily
+under `~/.local/share/cos` or a configured owner root; an App service Host uses
+its private `<host-control>/data` root before partitioning. Older unpartitioned
+files may remain directly under their original root. The OS no longer
+automatically moves notify's old file at launch. This transition never searches
+these locations or extends the ordinary lifetime of ephemeral Host namespaces.
+
 See [MODULE.md](MODULE.md) for exact tests and [PROVENANCE.md](PROVENANCE.md) for
-origins. **Legacy `notify` remains in `claw-os` with its existing JSON history.**
-Its explicit state transition is the next identity, not part of this source
-move. No user data, settings, identities or grants are consolidated here, and
-headless tests do not establish interactive visual/full-image acceptance.
+origins. Source ownership and new service persistence do not merge old history,
+identities, settings or grants. Headless tests do not establish interactive
+visual/full-image acceptance.

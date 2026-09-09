@@ -37,7 +37,7 @@ def test_manifest_retains_identity_and_grant_with_explicit_durable_id_compatibil
 def test_staging_preserves_complete_native_tree_license_modes_and_library_identity(tmp_path):
     stage = load_local_module(ROOT / "tools/stage.py", "notifications_stage")
     native = load_local_module(ROOT / "tools/stage_native.py", "notifications_native")
-    assert stage.stage("notifications", tmp_path / "installed") == ["cosmic-notifications"]
+    assert stage.stage("notifications", tmp_path / "installed") == ["cosmic-notifications", "notify"]
     installed = tmp_path / "installed/usr/lib/cos/apps/cosmic-notifications"
     assert (installed / "app.json").read_bytes() == MANIFEST.read_bytes()
     assert not (installed / "test_main.py").exists()
@@ -111,7 +111,7 @@ def test_mcp_is_fixed_os_intent_and_never_an_authoritative_state_or_bus_owner():
     for forbidden in ("Connection::session", "notifications.json", "rusqlite", "COS_DATA_DIR", "cos app"):
         assert forbidden not in mcp
     package = json.loads((PRODUCT / "package.json").read_text())
-    assert package["apps"] == ["apps/cosmic-notifications"]
+    assert package["apps"] == ["apps/cosmic-notifications", "apps/notify"]
     assert package["native_kind"] == "binary"
     assert package["native_process_test"] == "native/test_process.py"
     assert (PRODUCT / "native/test_process.py").is_file()

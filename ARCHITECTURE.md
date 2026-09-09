@@ -112,8 +112,16 @@ daemon preserves freedesktop interoperability with sender-bound numeric
 handles; external labels/hints cannot mutate other core records. Durable
 string IDs replace MCP desktop integers explicitly, without an alias store.
 Popup expiry/transient flags affect presentation, never durable acknowledgement
-or retention. Native settings and the legacy `notify` JSON state remain
-unchanged; no user data, identities or grants are merged by relocation.
+or retention. The Python `notify` facade now belongs to the same product and
+uses the shared Python SDK's explicit installed-binary/cancellable stdin
+transport. Exact native post/close and notify send/list actions remain bound
+to their separate identities. Notify list uses `data.inbox.read` independently
+of send's `ui.notify`, projects only that owner's `app:notify` records, and
+returns a stable publication order plus full source total. Urgent is warning
+severity, still subject to DND. New records live only in the OS service;
+historical JSON stays untouched in its prior namespace and is excluded from
+new lists, never imported/replayed or used as a failure fallback. Native
+settings, identities and grants are not merged by relocation.
 Headless acceptance does not establish interactive visual/full-image readiness.
 Capture preserves the independent ashpd/zbus/Tokio graph, original interactive
 portal experience, notifications, 72 locales and all icons/build inputs. It has

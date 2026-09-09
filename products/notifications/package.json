@@ -1,6 +1,6 @@
 {
-  "apps": ["apps/cosmic-notifications"],
-  "tests": [],
+  "apps": ["apps/cosmic-notifications", "apps/notify"],
+  "tests": ["test_notify_process.py"],
   "native": {"cosmic-notifications": "native/cosmic-notifications"},
   "native_kind": "binary",
   "native_packages": ["cosmic-notifications", "cosmic-notifications-config", "cosmic-notifications-util"],
