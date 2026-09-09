@@ -50,7 +50,7 @@ def test_files_stage_preserves_the_direct_mcp_contract(tmp_path):
 
 def test_document_engine_is_a_capability_not_a_business_product(tmp_path):
     assert len(stage.products()) == 24
-    assert stage.sources("capability") == ["document-engine", "http", "storage-sdk"]
+    assert stage.sources("capability") == ["ai-helpers", "document-engine", "http", "storage-sdk"]
     assert "document-engine" not in stage.products()
     assert stage.stage("document-engine", tmp_path, kind="capability") == ["doc"]
     source = ROOT / "capabilities/document-engine/apps/doc"
@@ -69,6 +69,34 @@ def test_document_engine_is_a_capability_not_a_business_product(tmp_path):
     assert not (tmp_path / "var").exists()
     with pytest.raises(ValueError, match="Unknown product source"):
         stage.stage("document-engine", tmp_path / "wrong-kind")
+
+
+def test_ai_helpers_complete_original_source_ownership_without_provider_or_state(tmp_path):
+    products = stage.products()
+    capabilities = stage.sources("capability")
+    assert len(products) == 24
+    assert len(capabilities) == 4
+    identities = []
+    for kind, names in [("product", products), ("capability", capabilities)]:
+        for name in names:
+            source, package = stage.load_package(name, kind)
+            identities.extend(stage.app_entries(source, package))
+    assert len(identities) == len(set(identities)) == 75
+    assert stage.stage("ai-helpers", tmp_path, kind="capability") == ["summarize"]
+    original = ROOT / "capabilities/ai-helpers/apps/summarize"
+    installed = tmp_path / "usr/lib/cos/apps/summarize"
+    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
+    for name in ("app.json", "main.py", "server.py"):
+        assert (installed / name).read_bytes() == (original / name).read_bytes()
+        assert (installed / name).stat().st_mode == (original / name).stat().st_mode
+    assert [path.name for path in installed.parent.iterdir()] == ["summarize"]
+    assert not (tmp_path / "usr/lib/cos/python").exists()
+    assert not (tmp_path / "usr/bin").exists()
+    assert not (tmp_path / "var").exists()
+    with pytest.raises(ValueError, match="Unknown product source"):
+        stage.stage("ai-helpers", tmp_path / "wrong-kind")
+    assert stage.stage("ai-helpers", tmp_path / "filtered", [], kind="capability") == []
+    assert not (tmp_path / "filtered").exists()
 
 
 def test_http_stages_the_complete_client_without_an_os_provider_or_product(tmp_path):

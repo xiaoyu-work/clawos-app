@@ -22,6 +22,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `capabilities/document-engine/` | Legacy `doc` facade, manifest, owning-client MCP bridge and tests; explicitly not another business product |
 | `capabilities/storage-sdk/` | Legacy `db` SQLite and `kv` JSON clients, independent MCP/CLI contracts and state; separate from the Storage business product and OS SDK/providers |
 | `capabilities/http/` | Complete `net` HTTP client and MCP contract; shared transport, egress authority, SDK/runtime and installation remain OS-owned |
+| `capabilities/ai-helpers/` | Complete `summarize` presentation/MCP client and tests; Agent, AI/provider/consent/budget/safety/audit and memory authority remain OS-owned |
 | `products/browser/` | Search, headless browsing and attached-browser Apps, MV3 extension and Native Host; privileged provider and native engine remain OS-owned |
 | `products/terminal/` | Complete native Terminal UI/MCP/resources and command/script/background App operations; sandbox, snapshots and process authority remain OS-owned |
 | `products/containers/` | Container-management App contract and typed broker client; privileged backend remains OS-owned |
@@ -85,10 +86,12 @@ Source composition distinguishes `products/<name>` (business products) from
 `capabilities/<name>` (`kind: "shared-capability-client"`). Existing product
 commands retain their meaning; capability selection is explicit, never a
 filesystem fallback. Names cannot collide across kinds. Document Engine owns
-`doc`; Storage SDK owns `db` and `kv`; HTTP owns `net`: 74 of the original 75
-identities now belong to 24 business product groups plus three shared-capability
-groups, partitioned as 62 Agent and 12 desktop identities. Only `summarize`
-has not moved. Native preparation remains product-only.
+`doc`; Storage SDK owns `db` and `kv`; HTTP owns `net`; AI Helpers owns
+`summarize`. All 75 original identities now belong to 24 business product groups
+plus four shared-capability groups, partitioned as 63 Agent and 12 desktop
+identities. Native preparation remains product-only. Source completion does not
+complete shared-state/backend or identity cutovers, new UI work, or installed
+visual/hardware acceptance.
 
 Document Engine declares a `python_dependencies` entry for the Files product's
 named `claw_files` export, scoped to `doc`. The same resolver supplies test
@@ -135,8 +138,19 @@ with file contents, serialize read-modify-replace under flock, publish cache
 only after commit, and explicitly use private file modes. Corruption is an
 error, not an empty-store or repair fallback; installed state is not migrated.
 
-DB and KV cross-repository tests use the manifest-declared MCP stdio interface,
-not private SDK dispatch methods or OS imports of DB implementation modules.
+Summarize retains explicit text input, the strict external-content AI policy,
+100,000 monthly units and the 4,000-unit request cap. Its public SDK call does
+not select a provider/model or call the Agent. It returns the same summary,
+usage/budget/review fields and asks the OS memory export to record a bounded
+first line under `self:summarize`; no local store or other product consent is
+borrowed. The AI need now uses fixed wildcard binding to match its unchanged
+runtime check rather than borrowing incompatible named-model grants. Consent's
+AI snapshot and stored grants remain unchanged; see
+[AI Helpers](capabilities/ai-helpers/MODULE.md). Other products use SDK AI directly,
+not this App.
+
+DB, KV, Net and Summarize cross-repository tests use manifest-declared MCP stdio,
+not private SDK dispatch methods or OS imports of client implementation modules.
 Compatible business changes and internal OS refactors should preserve these
 exports without requiring changes to the other implementation. The exact
 dependency pin establishes reproducibility, not complete decoupling: current

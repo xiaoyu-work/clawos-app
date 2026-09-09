@@ -45,3 +45,10 @@ python3 tools/stage.py document-engine --kind capability --root build/doc-stage
 ```
 
 These tests do not replace the native product's build or UI acceptance.
+
+All 75 original App identities are source-owned here (24 business products,
+four capability groups; 63 Agent and 12 desktop identities). Keep source
+completion separate from pending backend/state/identity consolidation or new
+UI work. AI Helpers owns only the `summarize` client; other products use SDK AI
+directly. Its tests must use isolated synthetic public AI/policy/memory wire
+fixtures, never paid/live models or another product's consent/budget.

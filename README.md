@@ -15,10 +15,12 @@ the legacy `doc` source and consumes Files' declared parsing library.
 partitions. KV is not Agent memory.
 [`capabilities/http`](capabilities/http/MODULE.md) owns the `net` HTTP client;
 SDK/runtime, network authority and the shared transport remain OS-owned.
-This brings source ownership to 74/75 original identities in 24 business
-product groups plus three shared-capability groups (62 Agent, 12 desktop),
-without renaming identities or merging grants/state. Only `summarize` has
-not moved.
+[`capabilities/ai-helpers`](capabilities/ai-helpers/MODULE.md) owns `summarize`,
+an explicit-text AI client, not a provider or another product's AI gateway.
+All **75/75 original identities** now have source here: **24 business product
+groups plus four shared-capability groups (63 Agent, 12 desktop)**. Installed
+identities, consent and user namespaces are not merged. This completes original
+source relocation, not backend/state/identity consolidation or visual acceptance.
 
 | Product | Source | Migration state |
 | --- | --- | --- |
@@ -26,7 +28,7 @@ not moved.
 | Calendar | [products/calendar](products/calendar/README.md) | Event operations, provider integration and complete native panel UI/build have moved; OS policy and data paths remain unchanged |
 | Files | [products/files](products/files/README.md) | Complete native UI/library/companion, filesystem and Recoll MCP, shared document parsing and SDK AI; source moved, identities/data remain separate |
 | Browser | [products/browser](products/browser/README.md) | `search`, `web`, `browser-attached`, Native Host and MV3 extension have moved; native browser UI remains pending |
-| Terminal | [products/terminal](products/terminal/README.md) | `exec` operations have moved; native UI and shared terminal-session integration remain pending |
+| Terminal | [products/terminal](products/terminal/README.md) | Complete native UI/MCP/resources and `exec` operations have moved; interactive PTYs and the background-process registry remain separate, with shared-session integration pending |
 | Containers | [products/containers](products/containers/README.md) | `container-manager` CLI/MCP source has moved; backend execution and authority remain OS-owned |
 | Backup and Recovery | [products/backup-recovery](products/backup-recovery/README.md) | `backup-center` and `system-snapshot` have moved with separate permissions; execution, credentials and snapshot state remain OS-owned |
 | Store | [products/store](products/store/README.md) | Complete native Store UI/MCP/resources and shared pkg catalog source; OS transactions and native grants stay separate; UI/backend data consolidation remains pending |
@@ -36,8 +38,8 @@ not moved.
 | Security | [products/security](products/security/README.md) | `security-center`, `firewall-manager` and `usb-guard` have moved with separate grants; inspection, nftables/USB execution and durable state remain OS-owned |
 | Maintenance | [products/maintenance](products/maintenance/README.md) | `config-editor` and `systemd` have moved with separate exact-path/unit grants; configuration/service execution, state and rollback remain OS-owned |
 | Events and Audit | [products/events-audit](products/events-audit/README.md) | `event-center` and legacy `log` have moved; OS event/audit authority stays separate; typed audit-service integration remains pending |
-| Launcher | [products/launcher](products/launcher/README.md) | Python `launcher` has moved; native UI/build, legacy forwarding replacement and shared catalog/history integration remain pending |
-| Clipboard | [products/clipboard](products/clipboard/README.md) | `clipboard-manager` has moved; Wayland execution stays OS-owned; native panel and CopyQ history integration remain pending |
+| Launcher | [products/launcher](products/launcher/README.md) | Python/native MCP and complete native UI/build have moved and share product logic without App calls; OS shell catalog/history integration remains pending |
+| Clipboard | [products/clipboard](products/clipboard/README.md) | Selection client and complete native CopyQ history panel have moved; Wayland authority stays OS-owned, and selection/history backend integration remains pending |
 | Notification Delivery | [products/notification-delivery](products/notification-delivery/README.md) | One-shot `gateway-ntfy`, `gateway-pushover` and `gateway-webhook` have moved; durable notification service and Rust ntfy dispatcher stay OS-owned; service integration remains separate |
 | Home Integration | [products/home-integration](products/home-integration/README.md) | `gateway-homeassistant` REST adapter has moved; external server/device state, OS egress and credentials remain separate; no new UI |
 | Desktop Widgets | [products/desktop-widgets](products/desktop-widgets/README.md) | Complete native Widget Rail UI/build/resources; independently authorized Calendar/task/telemetry providers remain OS-owned |
@@ -64,6 +66,9 @@ stage only DB with `python3 tools/stage.py storage-sdk --kind capability --apps 
 or only KV with `python3 tools/stage.py storage-sdk --kind capability --apps kv --root build/kv-stage`.
 Run HTTP contracts with `python3 tools/test.py --capability http`; stage its
 client with `python3 tools/stage.py http --kind capability --root build/http-stage`.
+Run Summarize contracts without live models with
+`python3 tools/test.py --capability ai-helpers`; stage its client with
+`python3 tools/stage.py ai-helpers --kind capability --root build/ai-helpers-stage`.
 Native Mail uses `python3 products/mail/build.py build -j 8` after the
 preparation described in its README.
 
