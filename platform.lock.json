@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/xiaoyu-work/claw-os.git",
-  "revision": "525ccc2fd524fed80364f9e3ed1fcc7ed8d1a121",
+  "revision": "e72baca2fa2d391358eef08d297e9cef22e30ff4",
   "python_sources": [
     "claw-os-sdk/python/src",
     "cos-runtime/python/src"

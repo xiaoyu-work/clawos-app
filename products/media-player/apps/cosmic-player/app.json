@@ -1,0 +1,76 @@
+{
+  "id": "cosmic-player",
+  "version": "0.1.0",
+  "schema_version": 2,
+  "name": {
+    "en": "Media Player"
+  },
+  "summary": {
+    "en": "Read and control this owner's running Media Player through the OS playback service."
+  },
+  "icon": "🎵",
+  "runtime": "binary",
+  "mcp": {
+    "entry": "/usr/bin/cosmic-player",
+    "transport": "stdio",
+    "lifecycle": "lazy",
+    "tools": [
+      {
+        "name": "player.play",
+        "summary": {
+          "en": "Resume playback in Media Player."
+        },
+        "args": [],
+        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+      },
+      {
+        "name": "player.pause",
+        "summary": {
+          "en": "Pause playback in Media Player."
+        },
+        "args": [],
+        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+      },
+      {
+        "name": "player.stop",
+        "summary": {
+          "en": "Stop Media Player playback and reset the current track."
+        },
+        "args": [],
+        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+      },
+      {
+        "name": "player.next",
+        "summary": {
+          "en": "Skip to the next track in Media Player."
+        },
+        "args": [],
+        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+      },
+      {
+        "name": "player.previous",
+        "summary": {
+          "en": "Return to the previous track in Media Player."
+        },
+        "args": [],
+        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+      },
+      {
+        "name": "player.toggle",
+        "summary": {
+          "en": "Toggle play and pause in Media Player."
+        },
+        "args": [],
+        "needs": [{"verb": "desktop.media.control", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+      },
+      {
+        "name": "player.status",
+        "summary": {
+          "en": "Read live Media Player playback status and current track metadata."
+        },
+        "args": [],
+        "needs": [{"verb": "desktop.media.observe", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "cosmic-player"}}}]
+      }
+    ]
+  }
+}

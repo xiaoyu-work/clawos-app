@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: [mail, calendar, files, browser, terminal, containers, backup-recovery, store, diagnostics, storage, settings, security, maintenance, events-audit, launcher, clipboard, messaging-channels, notification-delivery, home-integration, desktop-widgets, editor, capture]
+        product: [mail, calendar, files, browser, terminal, containers, backup-recovery, store, diagnostics, storage, settings, security, maintenance, events-audit, launcher, clipboard, messaging-channels, notification-delivery, home-integration, desktop-widgets, editor, capture, media-player]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: [calendar, clipboard, desktop-widgets, launcher, editor, files, terminal, store, settings, capture]
+        product: [calendar, clipboard, desktop-widgets, launcher, editor, files, terminal, store, settings, capture, media-player]
     env:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
@@ -55,10 +55,23 @@ jobs:
       - name: Install Store native backend dependencies
         if: matrix.product == 'store'
         run: sudo apt-get install -y libflatpak-dev
+      - name: Install Media Player native backend dependencies
+        if: matrix.product == 'media-player'
+        run: sudo apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libglib2.0-dev
       - name: Install Settings native backend dependencies
         if: matrix.product == 'settings'
         run: sudo apt-get install -y libpipewire-0.3-dev libpulse-dev libxkbregistry-dev libclang-dev gettext libglib2.0-dev
       - run: python3 tools/native_build.py ${{ matrix.product }} test
+      - name: Build and exercise native Media Player executable
+        if: matrix.product == 'media-player'
+        run: |
+          sudo apt-get install -y bubblewrap dbus-daemon
+          cargo install just --locked
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+          python3 tools/native_build.py media-player build
+          python3 products/media-player/native/test_process.py
       - name: Build and exercise native Capture executable
         if: matrix.product == 'capture'
         run: |

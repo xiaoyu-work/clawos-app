@@ -32,6 +32,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/launcher/` | Complete native Launcher UI and Python/native MCP surfaces sharing product catalog/search/recent and typed launch logic; desktop execution and native UI backend service stay OS-owned |
 | `products/editor/` | Complete native Text Editor UI, seven MCP handlers and shared SDK AI presentation; controlled filesystem/snapshot, desktop and model-provider authority remain OS-owned |
 | `products/capture/` | Complete native screenshot portal client, MCP and resources; interactive portal UI, session/capture authority and durable output remain OS-owned |
+| `products/media-player/` | Complete native GStreamer UI/MPRIS/MCP/resources; live playback stays product-owned, and owner-bound observation/control authority stays OS-owned |
 | `products/clipboard/` | Selection App contract and complete native CopyQ history panel; separate selection/history grants, with policy and Wayland authority OS-owned |
 | `products/notification-delivery/` | One-shot ntfy/Pushover/Webhook App sources; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
 | `tools/stage.py` | Deterministic assembly of product-owned installed assets |
@@ -171,3 +172,14 @@ stays process-local in the host, while the complete original rail UI, refresh
 guards, suggestions, resources and tests are product-owned. The descriptor and
 linked shell remain desktop-package assets. This move does not introduce a new
 Agent executor, data owner or visual redesign.
+
+Media Player preserves the full standalone native video/audio UI, renderer
+and optional dependency graph, thumbnailer and 72 locales. Its MPRIS backend
+publishes the native UI's state and routes controls through the same UI event
+loop, including a working Stop/reset action. MCP holds no bus and no second
+playback cache. The fixed OS adapter verifies owner, installed native process
+and unique MPRIS connection, with independent exact observation/control
+consent and a fresh dispatch gate. Missing, spoofed or ambiguous instances
+fail instead of selecting another player. No App calls, arbitrary launch or
+open-media route are exposed. Installed identity, data and configuration
+remain unchanged; private-bus fixtures are not interactive playback acceptance.

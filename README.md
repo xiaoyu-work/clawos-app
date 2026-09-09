@@ -30,6 +30,7 @@ remain in Claw OS.
 | Desktop Widgets | [products/desktop-widgets](products/desktop-widgets/README.md) | Complete native Widget Rail UI/build/resources; independently authorized Calendar/task/telemetry providers remain OS-owned |
 | Editor | [products/editor](products/editor/README.md) | Complete native UI, MCP, AI presentation, resources and build; filesystem/snapshot authority and AI providers remain OS-owned |
 | Capture | [products/capture](products/capture/README.md) | Complete native portal client, MCP, translations/resources and original build; interactive UI stays in the OS portal, and non-interactive capture uses scoped OS authority |
+| Media Player | [products/media-player](products/media-player/README.md) | Complete native video/audio UI, MPRIS/MCP, resources and original build; UI/MCP share live playback under separate owner-bound OS grants |
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 Messaging connector sources are grouped under

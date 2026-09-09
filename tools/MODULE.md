@@ -23,3 +23,6 @@ Binary products may declare `native_examples` for fixture-only executables;
 `native_build.py <product> build` builds them separately with the same lock.
 Capture declares its `native_process_test` beside these inputs; CI runs that
 script against the built binary, original installer and an isolated fake portal.
+Media Player uses the same runner with its original standalone renderer graph,
+installed resource checks, isolated MCP and a private MPRIS fixture built from
+the actual native backend. Fixtures never connect to the user's desktop bus.

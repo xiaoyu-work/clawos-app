@@ -1,0 +1,11 @@
+{
+  "apps": ["apps/cosmic-player"],
+  "tests": [],
+  "native": {"cosmic-player": "native/cosmic-player"},
+  "native_kind": "binary",
+  "native_examples": ["media-player-mpris-fixture"],
+  "native_process_test": "native/test_process.py",
+  "native_assets": {
+    "cosmic-player": {"app.json": "apps/cosmic-player/app.json"}
+  }
+}
