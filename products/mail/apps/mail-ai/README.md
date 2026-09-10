@@ -16,7 +16,9 @@ a UI dependency, not a dependency of the headless business implementation.
 ## Business contract
 
 [`app.json`](app.json) is the sole MCP schema. Optional CLI `binding` metadata
-stays on its MCP arguments; there is no separate `operations` table.
+stays on its MCP arguments. The sole ordinary `operations` entry,
+`native-host`, is an argument-free `stdin: true` transport selector, not a
+second copy of the six business schemas.
 
 | Function / MCP suffix | Required arguments | Optional arguments |
 | --- | --- | --- |
@@ -70,8 +72,31 @@ do not expose tracebacks or message bodies.
 
 ## Authority and deployment
 
-The root-owned `claw-mail-ai-host` launcher is responsible for verifying the
-Thunderbird parent and registering the provenance-checked `mail-ai` App session.
+The primary manifest entry is `native_host.py`; `mcp.entry` remains `server.py`.
+The generic human/host frontend is:
+
+```bash
+cos app stdio mail-ai native-host
+```
+
+It binds the verified App and ordinary operation before releasing incremental
+stdin to the sandbox. Stdout remains the raw Native Messaging stream;
+diagnostics and OS review presentation use stderr. The transport is not
+model-callable, does not accept an arbitrary program and is incompatible with
+`--wire=1`. The six business CLI names still select their exact MCP tools:
+adding the independent host operation does not redirect them to Python's
+one-shot `main.py` wrapper.
+
+Ordinary Python operations whose primary entry is not `main.py` remain
+unsupported outside this stdio contract. In particular, use the command above,
+not `cos app mail-ai native-host`; no fallback rewrite or `run` wrapper is
+installed.
+
+The OS `claw-mail-ai-host` compatibility launcher selects this same verified
+App/operation and accepts Thunderbird's existing extension argument. That
+argument and the launcher name confer no privilege. The ordinary host owns
+provenance, Root-peer registration, owner review, App deny policy and sandbox
+enforcement; developer-only trust cannot admit the long-lived channel.
 The canonical installed App directory is `/usr/lib/cos/apps/mail-ai`; there is
 no separate executable App copy at `/usr/lib/cos/mail-ai`.
 
@@ -89,16 +114,23 @@ credentials, owner identity, consent, budgets, safety, and audit. The manifest
 retains strict safety and a 500,000-unit monthly budget. Only summaries and the
 existing notable-triage cases write memory under the `mail-ai` self scope;
 only `memory.MemoryError` is ignored for that optional write.
+The `native-host` operation explicitly declares the wildcard AI check performed
+by `_ai_call` and the exact `memory.write:self:mail-ai` used by those two memory
+helpers. These declarations are requests, not automatic grants or a union
+inferred from `mcp.tools`. They grant no mailbox, credential, other-App memory,
+network or provider access.
 
-The installed `claw-os-agent` package supplies the canonical App, shared Python
-SDK/runtime, root-owned launcher, and protocol-matched Thunderbird XPI at
+The App-owned Mail package supplies the canonical App and protocol-matched XPI at
 `/usr/lib/thunderbird/distribution/extensions/claw-mail-ai@claw.os.xpi`.
-Packaging both protocol peers together keeps their argument contracts aligned
-on APT upgrades without making Thunderbird a headless App dependency.
+The OS separately supplies the SDK/runtime, ordinary App host and compatibility
+launcher. Keeping the two App protocol peers together preserves their argument
+contracts on App package upgrades without making Thunderbird a headless
+business dependency.
 The canonical-argument transition advances both manifests to `0.2.0` while
 retaining their identities, so Thunderbird recognizes the packaged XPI update.
-Build and install the matching package
-through the normal [OS packaging workflow](https://github.com/xiaoyu-work/claw-os/blob/main/packaging/README.md) first.
+Build and install matching signed OS and App packages through their coordinated
+release workflows. The stdio cutover does not authorize publication or complete
+the broader Host/resource contract.
 Neither the OS `claw-mail-ai` rootfs feature
 nor its `tools/install-mail-ai.sh` copies or
 overwrites those package-owned files; preserving their package provenance is

@@ -8,9 +8,14 @@ running App code.
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import re
-from pathlib import Path
+import subprocess
+import sys
+from pathlib import Path, PurePosixPath
+
+import pytest
 
 from test_support import load_local_module, platform_dependency
 
@@ -437,12 +442,85 @@ def _argparse_contract(
     return arguments
 
 
+def _source_entry_path(manifest_path, entry):
+    assert (
+        isinstance(entry, str) and entry and "\\" not in entry
+    ), f"Noncanonical source entry: {manifest_path}: {entry}"
+    relative = PurePosixPath(entry)
+    assert (
+        not relative.is_absolute()
+        and relative.as_posix() == entry
+        and ".." not in relative.parts
+    ), f"Noncanonical source entry: {manifest_path}: {entry}"
+    path = manifest_path.parent / entry
+    assert (
+        not path.is_symlink()
+        and path.resolve().is_relative_to(manifest_path.parent.resolve())
+    ), f"Escaping source entry: {path}"
+    return path
+
+
 def _sources():
     for manifest_path in _manifests():
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         if manifest.get("operations") and manifest.get("runtime", "python") == "python":
-            path = manifest_path.with_name("main.py")
-            yield path, ast.parse(path.read_text(encoding="utf-8")), manifest
+            entry = manifest.get("entry", "main.py")
+            path = _source_entry_path(manifest_path, entry)
+            assert path.is_file(), f"Missing Python entry: {path}"
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            if entry != "main.py":
+                assert all(
+                    operation.get("stdin") is True
+                    for operation in manifest["operations"].values()
+                ), f"Captured Python operations still require main.py: {manifest_path}"
+                continue
+            yield path, tree, manifest
+
+
+def _python_source_fixture(tmp_path, monkeypatch, entry, operations):
+    manifest = tmp_path / "app.json"
+    manifest.write_text(json.dumps({
+        "id": "stdio-fixture", "runtime": "python", "entry": entry,
+        "operations": operations,
+    }))
+    monkeypatch.setitem(globals(), "_manifests", lambda: [manifest])
+    return manifest
+
+
+def test_non_main_declared_stdio_entry_is_not_a_captured_dispatcher(tmp_path, monkeypatch):
+    path = tmp_path / "transport/stream.py"
+    path.parent.mkdir()
+    path.write_text("raise RuntimeError('source inspection must not execute this')\n")
+    _python_source_fixture(tmp_path, monkeypatch, "transport/stream.py", {"stream": {"stdin": True}})
+    assert list(_sources()) == []
+
+
+def test_non_main_captured_operations_do_not_gain_a_stdio_fallback(tmp_path, monkeypatch):
+    (tmp_path / "stream.py").write_text("pass\n")
+    _python_source_fixture(
+        tmp_path, monkeypatch, "stream.py",
+        {"stream": {"stdin": True}, "captured": {"stdin": False}},
+    )
+    with pytest.raises(AssertionError, match="Captured Python operations"):
+        list(_sources())
+
+
+def test_declared_stdio_entry_must_exist_inside_the_app(tmp_path, monkeypatch):
+    _python_source_fixture(tmp_path, monkeypatch, "missing.py", {"stream": {"stdin": True}})
+    with pytest.raises(AssertionError, match="Missing Python entry"):
+        list(_sources())
+    _python_source_fixture(tmp_path, monkeypatch, "../outside.py", {"stream": {"stdin": True}})
+    with pytest.raises(AssertionError, match="Noncanonical source entry"):
+        list(_sources())
+
+
+def test_main_dispatchers_keep_stdin_operations_in_static_coverage(tmp_path, monkeypatch):
+    (tmp_path / "main.py").write_text("def run(command, args):\n    return command\n")
+    manifest = _python_source_fixture(tmp_path, monkeypatch, "main.py", {"read": {"stdin": True}})
+    sources = list(_sources())
+    assert len(sources) == 1
+    assert sources[0][0] == manifest.with_name("main.py")
+    assert sources[0][2]["operations"]["read"]["stdin"] is True
 
 
 def _mcp_tool_bindings(tree: ast.Module) -> list[str]:
@@ -1004,6 +1082,19 @@ def test_bundled_apps_have_an_explicit_agent_surface() -> None:
         manifest["id"] for _path, manifest in manifests if "mcp" not in manifest
     }
     assert missing_mcp == human_only
+    native_plans = {}
+    for name in stage.sources("product"):
+        _source, package = stage.load_package(name, "product")
+        if "native_payload" not in package:
+            continue
+        result = subprocess.run(
+            [sys.executable, str(APPS_ROOT / "tools/native_payload.py"), name, "--plan"],
+            check=True, capture_output=True, text=True, timeout=10,
+        )
+        planned = json.loads(result.stdout)
+        assert planned["app_id"] not in native_plans
+        assert planned["unsigned_preparation_only"] is True
+        native_plans[planned["app_id"]] = planned
 
     for path, manifest in manifests:
         if manifest["id"] in human_only:
@@ -1014,7 +1105,26 @@ def test_bundled_apps_have_an_explicit_agent_surface() -> None:
         assert manifest["mcp"]["tools"]
         entry = manifest["mcp"].get("entry")
         if entry and not Path(entry).is_absolute():
-            assert path.with_name(entry).is_file()
+            source_entry = _source_entry_path(path, entry)
+            if manifest["id"] in native_plans:
+                planned = native_plans[manifest["id"]]
+                assert manifest["runtime"] == "binary"
+                assert planned["entrypoints"] == [entry]
+                assert planned["manifest_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
+            else:
+                assert source_entry.is_file(), f"Missing MCP source entry: {source_entry}"
+
+
+def test_nested_source_entry_paths_remain_bound_to_existing_app_files(tmp_path):
+    manifest = tmp_path / "app.json"
+    nested = tmp_path / "server/main.py"
+    nested.parent.mkdir()
+    nested.write_text("pass\n")
+    assert _source_entry_path(manifest, "server/main.py").is_file()
+    assert not _source_entry_path(manifest, "server/missing.py").is_file()
+    for invalid in ["/server/main.py", "../main.py", "server/../main.py", "server\\main.py"]:
+        with pytest.raises(AssertionError, match="Noncanonical source entry|Escaping source entry"):
+            _source_entry_path(manifest, invalid)
 
 
 def test_manifest_bound_mcp_tools_match_operations() -> None:

@@ -214,7 +214,17 @@ def test_prompt_limits_and_quoted_text(effects):
 
 def test_manifest_is_single_schema_and_headless():
     assert MANIFEST["id"] == "mail-ai"
-    assert "operations" not in MANIFEST
+    assert MANIFEST["entry"] == "native_host.py"
+    assert MANIFEST["mcp"]["entry"] == "server.py"
+    assert set(MANIFEST["operations"]) == {"native-host"}
+    native_host = MANIFEST["operations"]["native-host"]
+    assert native_host["stdin"] is True
+    assert native_host["args"] == []
+    assert [(need["verb"], need["scope"]) for need in native_host["needs"]] == [
+        ("ai.chat.untrusted", {"kind": "fixed", "scope": {"kind": "wild"}}),
+        ("memory.write", {"kind": "fixed", "scope": {"kind": "self-ref", "value": "mail-ai"}}),
+    ]
+    assert all(need["why"]["en"].strip() for need in native_host["needs"])
     assert "thunderbird" not in MANIFEST.get("dependencies", {}).get("binaries", [])
     assert MANIFEST["ai"] == {
         "budget": {"monthly_units": 500000}, "safety": "strict", "origins": ["external-content"],
@@ -496,3 +506,65 @@ def test_sdk_tools_list_matches_business_arguments():
         schema = tool["inputSchema"]
         assert schema["additionalProperties"] is False
         assert set(schema["properties"]) == set(inspect.signature(main.HANDLERS[verb]).parameters)
+
+
+def test_native_host_operation_does_not_add_a_seventh_business_action():
+    status, replies, effects, diagnostics = drive(
+        "native", [native_request("native-host", {}, "transport-is-not-business")],
+    )
+    assert status == 0 and diagnostics == ""
+    assert effects == []
+    assert replies[0]["ok"] is False
+    assert replies[0]["error"] == "unknown Mail AI verb"
+
+
+def test_declared_native_host_answers_fragmented_frames_before_input_eof():
+    import select
+    import time
+
+    process = subprocess.Popen(
+        [sys.executable, "-I", "-c", DRIVER, str(HERE.resolve()), "native", "Hello", ""],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        bufsize=0,
+        env={key: value for key, value in os.environ.items() if key not in ("COS_APP_MANIFEST", "COS_SESSION")},
+    )
+
+    def read_output(length):
+        deadline = time.monotonic() + 10
+        result = b""
+        while len(result) < length:
+            timeout = deadline - time.monotonic()
+            assert timeout > 0, "incomplete native reply before input EOF"
+            assert select.select([process.stdout], [], [], timeout)[0], "no reply before input EOF"
+            chunk = os.read(process.stdout.fileno(), length - len(result))
+            assert chunk, "native host exited before completing its reply"
+            result += chunk
+        return result
+
+    try:
+        for rid in ("first", "second"):
+            payload = frame(native_request("translate", {"text": "Bonjour", "target": "English"}, rid))
+            for chunk in (payload[:2], payload[2:4], payload[4:9], payload[9:]):
+                process.stdin.write(chunk)
+                process.stdin.flush()
+            header = read_output(4)
+            length, = struct.unpack("<I", header)
+            assert 0 < length <= 8 * 1024 * 1024
+            reply = json.loads(read_output(length))
+            assert reply["id"] == rid and reply["ok"] is True
+            assert reply["result"]["translation"] == "Hello"
+            assert process.poll() is None
+        process.stdin.close()
+        process.wait(timeout=10)
+        assert process.returncode == 0
+        assert process.stdout.read() == b""
+        stderr = process.stderr.read().decode()
+        assert stderr.startswith("TEST_EFFECTS=")
+        effects = json.loads(stderr.removeprefix("TEST_EFFECTS="))
+        assert [effect[0] for effect in effects] == ["policy", "ai", "policy", "ai"]
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=10)
+        for stream in (process.stdin, process.stdout, process.stderr):
+            stream.close()

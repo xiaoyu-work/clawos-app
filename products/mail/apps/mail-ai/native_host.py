@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Native Messaging transport for the shared Mail AI business functions.
 
-The root-owned claw-mail-ai-host launcher verifies Thunderbird and registers
-the App session before launching this script with Python's isolated mode.
+The ordinary App stdio host authenticates the declared native-host operation
+and registers its App session before launching this primary entry in isolated Python.
 This transport neither creates an MCP caller nor invokes another App.
 """
 

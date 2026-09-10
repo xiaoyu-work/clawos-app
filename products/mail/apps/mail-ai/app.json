@@ -11,6 +11,46 @@
   },
   "icon": "🦅",
   "runtime": "python",
+  "entry": "native_host.py",
+  "operations": {
+    "native-host": {
+      "label": {
+        "en": "Mail Native Messaging"
+      },
+      "summary": {
+        "en": "Serve the six Mail AI actions over an opaque Native Messaging stream."
+      },
+      "stdin": true,
+      "args": [],
+      "needs": [
+        {
+          "verb": "ai.chat.untrusted",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "wild"
+            }
+          },
+          "why": {
+            "en": "Process explicitly supplied email content through the OS AI consent, safety and budget gate."
+          }
+        },
+        {
+          "verb": "memory.write",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "self-ref",
+              "value": "mail-ai"
+            }
+          },
+          "why": {
+            "en": "Remember summaries and notable triage results only in Mail AI's own memory scope."
+          }
+        }
+      ]
+    }
+  },
   "ai": {
     "budget": {
       "monthly_units": 500000
