@@ -2,6 +2,7 @@ mod app;
 mod config;
 mod glass;
 mod mcp;
+mod presentation;
 mod subscriptions;
 
 use config::APP_ID;

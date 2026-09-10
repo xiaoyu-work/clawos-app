@@ -2,6 +2,8 @@
 //! It never opens Wayland or reads/writes notification state.
 #[path = "../src/config.rs"]
 mod config;
+#[path = "../src/presentation.rs"]
+mod presentation;
 mod subscriptions {
     pub mod applet {
         include!("../src/subscriptions/applet.rs");

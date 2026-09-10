@@ -1,4 +1,4 @@
-"""Complete native source, explicit shared libraries and durable OS intent."""
+"""Complete native source, private product libraries and durable OS intent."""
 
 import json
 from pathlib import Path
@@ -59,10 +59,11 @@ def test_staging_preserves_complete_native_tree_license_modes_and_library_identi
     ):
         assert (target / relative).is_file(), relative
     package = json.loads((PRODUCT / "package.json").read_text())
-    assert native.library_paths(PRODUCT, package) == {
-        name: Path("cosmic-notifications") / name
-        for name in ("cosmic-notifications-config", "cosmic-notifications-util")
-    }
+    assert "native_libraries" not in package
+    assert native.library_paths(PRODUCT, package) == {}
+    for name in ("cosmic-notifications-config", "cosmic-notifications-util"):
+        cargo = tomllib.loads((target / name / "Cargo.toml").read_text())
+        assert cargo["package"]["name"] == name
     assert package["native_packages"] == [
         "cosmic-notifications", "cosmic-notifications-config", "cosmic-notifications-util",
     ]
@@ -90,6 +91,9 @@ def test_original_default_and_optional_graph_remain_separate_from_os_applet_rend
     build.prepare("notifications", tmp_path / "platform/desktop/toolkit", tmp_path / "prepared")
     cargo = tomllib.loads((tmp_path / "prepared/Cargo.toml").read_text())
     assert cargo["dependencies"]["claw-os-sdk"]["path"] == str(tmp_path / "platform/claw-os-sdk/rust")
+    assert cargo["dependencies"]["claw-notification-presentation"]["path"] == str(
+        tmp_path / "platform/claw-os-sdk/rust/notification-presentation"
+    )
     assert cargo["dependencies"]["libcosmic"]["git"] == "https://github.com/pop-os/libcosmic"
     assert cargo["dependencies"]["libcosmic"]["default-features"] is False
     assert {"autosize", "dbus-config", "a11y", "winit", "multi-window", "wayland", "tokio"} <= set(

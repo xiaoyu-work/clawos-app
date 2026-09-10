@@ -3,8 +3,9 @@
 This product owns the complete native `cosmic-notifications` Layer Shell
 daemon, MCP, configuration/util libraries and original build/provenance inputs,
 plus the complete Python `notify` facade and its tests.
-The installed binary remains `/usr/bin/cosmic-notifications` in
-`claw-os-desktop`, with identity `com.clawos.Notifications`.
+The installed binary remains `/usr/bin/cosmic-notifications`, with identity
+`com.clawos.Notifications`; the independent native package is
+`claw-app-notifications-desktop`.
 
 Normal UI and MCP share the existing **OS durable Notification Service**
 through its single desktop delivery consumer. MCP submits bounded intent using
@@ -44,8 +45,19 @@ The full original 40-file fork plus the new presentation/tests is retained:
 standalone lock, nested crates, `.cargo`, Debian/Nix/hook/just/build metadata,
 upstream files and GPL license. This fork had no standalone icon or locale
 directory. Cross-shell session startup and panel resources remain OS-owned.
-`native_libraries` explicitly exports the two shared presentation crates for
-immutable OS consumers; no duplicate vendored library is maintained.
+The two configuration/util crates remain private product implementation.
+The OS shell instead consumes its own generic presentation/preferences
+contract; it does not compile either App crate. The App prepares bounded
+text runs and decoded RGBA8 pixels/symbolic alpha masks, with no encoded
+image, theme lookup request or host file path in the new records. Image
+preparation and theme-resource selection remain App-owned. The panel's
+512-per-dimension/1-MiB decoded limit is independent of compressed input size;
+external SVG resources and excessive source geometry are explicit errors.
+The same existing presentation-mute preference is exposed over the private
+connection without moving its stored value or changing OS DND policy.
+The legacy private interface remains available to older hosts. New hosts
+require presentation v1 and surface missing/incompatible or excessive
+projections as errors, rather than reading App configuration as a fallback.
 
 ## Legacy `notify` 0.2 compatibility
 

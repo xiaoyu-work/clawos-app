@@ -6,7 +6,11 @@ use cosmic::iced::{
 };
 use cosmic_notifications_util::{ActionId, CloseReason, Notification};
 use futures::channel::mpsc;
-use std::{collections::{HashMap, HashSet}, fmt::Debug, num::NonZeroU32};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Debug,
+    num::NonZeroU32,
+};
 use tokio::{
     sync::mpsc::{Receiver, Sender, channel},
     task::JoinHandle,
@@ -17,7 +21,7 @@ use zbus::{
     Connection, connection::Builder as ConnectionBuilder, interface, object_server::SignalEmitter,
 };
 
-use super::applet::NotificationsApplet;
+use super::applet::{NotificationsApplet, Presentation};
 
 #[derive(Debug)]
 pub struct Conns {
@@ -178,8 +182,11 @@ impl Machine<Waiting> {
                         {
                             if iface_ref.get_mut().await.retire(id) {
                                 _ = Notifications::notification_closed(
-                                    iface_ref.signal_emitter(), id, reason as u32,
-                                ).await;
+                                    iface_ref.signal_emitter(),
+                                    id,
+                                    reason as u32,
+                                )
+                                .await;
                             }
                         }
                     }
@@ -203,8 +210,12 @@ impl Machine<Waiting> {
                         if iface_ref.get_mut().await.retire(id) {
                             _ = self.output.send(Event::CloseNotification(id)).await;
                             if let Err(err) = Notifications::notification_closed(
-                                iface_ref.signal_emitter(), id, 2,
-                            ).await {
+                                iface_ref.signal_emitter(),
+                                id,
+                                2,
+                            )
+                            .await
+                            {
                                 error!("Failed to signal dismissed notification {}", err);
                             }
                         }
@@ -212,14 +223,20 @@ impl Machine<Waiting> {
                     Input::SenderGone(sender) => {
                         let object_server = conns.notifications.object_server();
                         let Ok(iface_ref) = object_server
-                            .interface::<_, Notifications>("/org/freedesktop/Notifications").await
-                        else { continue };
+                            .interface::<_, Notifications>("/org/freedesktop/Notifications")
+                            .await
+                        else {
+                            continue;
+                        };
                         let retired = iface_ref.get_mut().await.retire_sender(&sender);
                         for id in retired {
                             _ = self.output.send(Event::CloseNotification(id)).await;
                             _ = Notifications::notification_closed(
-                                iface_ref.signal_emitter(), id, CloseReason::CloseNotification as u32,
-                            ).await;
+                                iface_ref.signal_emitter(),
+                                id,
+                                CloseReason::CloseNotification as u32,
+                            )
+                            .await;
                         }
                     }
                     Input::AppletConn(c) => {
@@ -232,6 +249,51 @@ impl Machine<Waiting> {
                         };
                         let mut iface = iface_ref.get_mut().await;
                         iface.applets.push(c);
+                    }
+                    Input::PresentationPreferencesChanged(preferences) => {
+                        let payload = match preferences.to_json() {
+                            Ok(value) => value,
+                            Err(error) => {
+                                error!("Invalid presentation preferences: {error}");
+                                continue;
+                            }
+                        };
+                        let object_server = conns.notifications.object_server();
+                        let Ok(iface_ref) = object_server
+                            .interface::<_, Notifications>("/org/freedesktop/Notifications")
+                            .await
+                        else {
+                            error!("Notification presentation server is unavailable");
+                            continue;
+                        };
+                        for connection in &iface_ref.get().await.applets {
+                            let server = connection.object_server();
+                            if let Ok(presentation) = server
+                                .interface::<_, Presentation>(
+                                    claw_notification_presentation::OBJECT_PATH,
+                                )
+                                .await
+                                .inspect_err(|error| {
+                                    error!(
+                                        "Presentation preference interface is unavailable: {error}"
+                                    );
+                                })
+                            {
+                                if let Err(error) = tokio::time::timeout(
+                                    std::time::Duration::from_millis(500),
+                                    Presentation::preferences_changed(
+                                        presentation.signal_emitter(),
+                                        &payload,
+                                    ),
+                                )
+                                .await
+                                .map_err(|error| error.to_string())
+                                .and_then(|result| result.map_err(|error| error.to_string()))
+                                {
+                                    error!("Failed to publish presentation preferences: {error}");
+                                }
+                            }
+                        }
                     }
                     Input::AppletActivated { id, action } => {
                         if let Err(err) = self
@@ -271,6 +333,7 @@ pub enum Input {
     Closed(u32, CloseReason),
     AppletDismissed(u32),
     AppletConn(Connection),
+    PresentationPreferencesChanged(claw_notification_presentation::Preferences),
 }
 
 #[derive(Debug, Clone)]
@@ -300,7 +363,10 @@ pub fn notifications() -> Subscription<Event> {
 
 #[cfg(test)]
 mod tests {
-    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/unit/subscriptions/notifications.rs"));
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/unit/subscriptions/notifications.rs"
+    ));
 }
 
 pub struct Notifications {
@@ -313,7 +379,13 @@ pub struct Notifications {
 
 impl Notifications {
     pub fn new(tx: Sender<Input>) -> Self {
-        Self { tx, next: NonZeroU32::new(1).unwrap(), applets: Vec::new(), owners: HashMap::new(), connection_bound: HashSet::new() }
+        Self {
+            tx,
+            next: NonZeroU32::new(1).unwrap(),
+            applets: Vec::new(),
+            owners: HashMap::new(),
+            connection_bound: HashSet::new(),
+        }
     }
 
     fn retire(&mut self, id: u32) -> bool {
@@ -322,8 +394,12 @@ impl Notifications {
     }
 
     fn retire_sender(&mut self, sender: &str) -> Vec<u32> {
-        let ids: Vec<_> = self.connection_bound.iter().copied()
-            .filter(|id| self.owners.get(id).is_some_and(|owner| owner == sender)).collect();
+        let ids: Vec<_> = self
+            .connection_bound
+            .iter()
+            .copied()
+            .filter(|id| self.owners.get(id).is_some_and(|owner| owner == sender))
+            .collect();
         for id in &ids {
             self.retire(*id);
         }
@@ -333,16 +409,23 @@ impl Notifications {
     fn allocate(&mut self, sender: &str, replaces: u32) -> zbus::fdo::Result<(u32, bool)> {
         if let Some(owner) = self.owners.get(&replaces) {
             if owner != sender {
-                return Err(zbus::fdo::Error::AccessDenied("notification belongs to another sender".into()));
+                return Err(zbus::fdo::Error::AccessDenied(
+                    "notification belongs to another sender".into(),
+                ));
             }
             return Ok((replaces, true));
         }
         if self.owners.len() >= 4096 {
-            return Err(zbus::fdo::Error::LimitsExceeded("too many active notifications".into()));
+            return Err(zbus::fdo::Error::LimitsExceeded(
+                "too many active notifications".into(),
+            ));
         }
         loop {
             let id = self.next.get();
-            self.next = self.next.checked_add(1).unwrap_or(NonZeroU32::new(1).unwrap());
+            self.next = self
+                .next
+                .checked_add(1)
+                .unwrap_or(NonZeroU32::new(1).unwrap());
             if let std::collections::hash_map::Entry::Vacant(entry) = self.owners.entry(id) {
                 entry.insert(sender.into());
                 return Ok((id, false));
@@ -353,12 +436,26 @@ impl Notifications {
 
 #[interface(name = "org.freedesktop.Notifications")]
 impl Notifications {
-    async fn close_notification(&self, id: u32, #[zbus(header)] header: zbus::message::Header<'_>) -> zbus::fdo::Result<()> {
-        let sender = header.sender().ok_or_else(|| zbus::fdo::Error::AccessDenied("missing sender".into()))?;
-        if self.owners.get(&id).is_some_and(|owner| owner != sender.as_str()) {
-            return Err(zbus::fdo::Error::AccessDenied("notification belongs to another sender".into()));
+    async fn close_notification(
+        &self,
+        id: u32,
+        #[zbus(header)] header: zbus::message::Header<'_>,
+    ) -> zbus::fdo::Result<()> {
+        let sender = header
+            .sender()
+            .ok_or_else(|| zbus::fdo::Error::AccessDenied("missing sender".into()))?;
+        if self
+            .owners
+            .get(&id)
+            .is_some_and(|owner| owner != sender.as_str())
+        {
+            return Err(zbus::fdo::Error::AccessDenied(
+                "notification belongs to another sender".into(),
+            ));
         }
-        self.tx.send(Input::CloseNotification(id)).await
+        self.tx
+            .send(Input::CloseNotification(id))
+            .await
             .map_err(|_| zbus::fdo::Error::Failed("notification UI is unavailable".into()))
     }
 
@@ -424,10 +521,13 @@ impl Notifications {
         expire_timeout: i32,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<u32> {
-        let sender = header.sender().ok_or_else(|| zbus::fdo::Error::AccessDenied("missing sender".into()))?;
+        let sender = header
+            .sender()
+            .ok_or_else(|| zbus::fdo::Error::AccessDenied("missing sender".into()))?;
         let (id, replacing) = self.allocate(sender.as_str(), replaces_id)?;
         let connection_bound = matches!(
-            hints.remove("x-claw-connection-bound"), Some(zbus::zvariant::Value::Bool(true)),
+            hints.remove("x-claw-connection-bound"),
+            Some(zbus::zvariant::Value::Bool(true)),
         );
         let hints_clone = hints
             .iter()
@@ -445,6 +545,12 @@ impl Notifications {
         );
 
         if !n.transient() {
+            let presentation = crate::presentation::card(&n)
+                .and_then(|value| Ok(value.to_json()?))
+                .map_err(|error| error.to_string());
+            if let Err(error) = &presentation {
+                error!("Notification presentation could not be projected: {error}");
+            }
             let mut new_conns = Vec::with_capacity(self.applets.len());
             for c in self.applets.drain(..) {
                 let object_server = c.object_server();
@@ -481,6 +587,32 @@ impl Notifications {
                     Err(err) => error!("Failed to notify applet of notification {}", err),
                     Ok(_) => {}
                 }
+                if let Ok(interface) = object_server
+                    .interface::<_, Presentation>(claw_notification_presentation::OBJECT_PATH)
+                    .await
+                    .inspect_err(|error| {
+                        error!("Notification presentation interface is unavailable: {error}");
+                    })
+                {
+                    let emission = async {
+                        match &presentation {
+                            Ok(payload) => {
+                                Presentation::card(interface.signal_emitter(), payload).await
+                            }
+                            Err(error) => {
+                                Presentation::failure(interface.signal_emitter(), error).await
+                            }
+                        }
+                    };
+                    if let Err(error) =
+                        tokio::time::timeout(std::time::Duration::from_millis(500), emission)
+                            .await
+                            .map_err(|error| error.to_string())
+                            .and_then(|result| result.map_err(|error| error.to_string()))
+                    {
+                        error!("Failed to publish versioned notification presentation: {error}");
+                    }
+                }
                 new_conns.push(c);
             }
             self.applets = new_conns;
@@ -497,7 +629,9 @@ impl Notifications {
         {
             tracing::error!("Failed to send notification: {}", err);
             self.retire(id);
-            return Err(zbus::fdo::Error::Failed("notification UI is unavailable".into()));
+            return Err(zbus::fdo::Error::Failed(
+                "notification UI is unavailable".into(),
+            ));
         }
 
         if connection_bound {

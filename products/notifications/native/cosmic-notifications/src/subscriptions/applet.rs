@@ -12,11 +12,13 @@ use zbus::{
 use super::notifications::Input;
 
 use anyhow::{Result, bail};
-use cosmic_notifications_config::DAEMON_NOTIFICATIONS_FD;
+use claw_notification_presentation::{PRESENTER_FD_ENV as DAEMON_NOTIFICATIONS_FD, Preferences};
+use cosmic::cosmic_config::Config;
 use std::os::unix::io::FromRawFd;
 
 pub async fn setup_panel_conn(tx: Sender<Input>) -> Result<Connection> {
     let socket = setup_panel_socket()?;
+    let config = crate::presentation::config()?;
     let guid = Guid::generate();
     let conn = tokio::time::timeout(
         tokio::time::Duration::from_secs(1),
@@ -26,7 +28,7 @@ pub async fn setup_panel_conn(tx: Sender<Input>) -> Result<Connection> {
             .unwrap()
             .serve_at(
                 "/com/clawos/NotificationsSocket",
-                NotificationsSocket { tx },
+                NotificationsSocket { tx, config },
             )?
             .build(),
     )
@@ -65,6 +67,7 @@ pub fn setup_panel_socket() -> Result<UnixStream> {
 
 pub struct NotificationsSocket {
     pub tx: Sender<Input>,
+    config: Config,
 }
 
 #[interface(name = "com.clawos.NotificationsSocket")]
@@ -84,13 +87,27 @@ impl NotificationsSocket {
         let guid = Guid::generate();
 
         let tx_clone = self.tx.clone();
+        let config = self.config.clone();
         tokio::spawn(async move {
-            let conn = match Builder::socket(mine).p2p().server(guid).unwrap().serve_at(
-                "/com/clawos/NotificationsApplet",
-                NotificationsApplet {
-                    tx: tx_clone.clone(),
-                },
-            ) {
+            let conn = match Builder::socket(mine)
+                .p2p()
+                .server(guid)
+                .unwrap()
+                .serve_at(
+                    "/com/clawos/NotificationsApplet",
+                    NotificationsApplet {
+                        tx: tx_clone.clone(),
+                    },
+                )
+                .and_then(|builder| {
+                    builder.serve_at(
+                        claw_notification_presentation::OBJECT_PATH,
+                        Presentation {
+                            tx: tx_clone.clone(),
+                            config,
+                        },
+                    )
+                }) {
                 Ok(conn) => conn,
                 Err(err) => {
                     error!("Failed to create applet connection {}", err);
@@ -129,7 +146,9 @@ pub struct NotificationsApplet {
 #[interface(name = "com.clawos.NotificationsApplet")]
 impl NotificationsApplet {
     pub async fn dismiss(&self, id: u32) -> zbus::fdo::Result<()> {
-        self.tx.send(Input::AppletDismissed(id)).await
+        self.tx
+            .send(Input::AppletDismissed(id))
+            .await
             .map_err(|_| zbus::fdo::Error::Failed("notification UI is unavailable".into()))
     }
 
@@ -161,4 +180,83 @@ impl NotificationsApplet {
         }
         Ok(())
     }
+}
+
+pub(super) struct Presentation {
+    tx: Sender<Input>,
+    config: Config,
+}
+
+#[interface(name = "com.clawos.NotificationPresentation1")]
+impl Presentation {
+    fn version(&self) -> u32 {
+        claw_notification_presentation::VERSION
+    }
+
+    fn preferences(&self) -> zbus::fdo::Result<String> {
+        crate::presentation::preferences(&self.config)
+            .and_then(|value| Ok(value.to_json()?))
+            .map_err(|error| zbus::fdo::Error::Failed(error.to_string()))
+    }
+
+    async fn set_preferences(&self, payload: &str) -> zbus::fdo::Result<String> {
+        Preferences::from_json(payload)
+            .map_err(|error| zbus::fdo::Error::InvalidArgs(error.to_string()))?;
+        let value = crate::presentation::set_preferences(&self.config, payload)
+            .map_err(|error| zbus::fdo::Error::Failed(error.to_string()))?;
+        self.send(Input::PresentationPreferencesChanged(value.clone()))
+            .await?;
+        value
+            .to_json()
+            .map_err(|error| zbus::fdo::Error::Failed(error.to_string()))
+    }
+
+    async fn dismiss(&self, id: u32) -> zbus::fdo::Result<()> {
+        claw_notification_presentation::validate_handle(id)
+            .map_err(|error| zbus::fdo::Error::InvalidArgs(error.to_string()))?;
+        self.send(Input::AppletDismissed(id)).await
+    }
+
+    async fn invoke_action(&self, id: u32, action: &str) -> zbus::fdo::Result<()> {
+        claw_notification_presentation::validate_action(id, action)
+            .map_err(|error| zbus::fdo::Error::InvalidArgs(error.to_string()))?;
+        self.send(Input::AppletActivated {
+            id,
+            action: action.parse().unwrap(),
+        })
+        .await
+    }
+
+    #[zbus(signal)]
+    pub async fn card(signal_ctxt: &SignalEmitter<'_>, payload: &str) -> zbus::Result<()>;
+
+    #[zbus(signal)]
+    pub async fn preferences_changed(
+        signal_ctxt: &SignalEmitter<'_>,
+        payload: &str,
+    ) -> zbus::Result<()>;
+
+    #[zbus(signal)]
+    pub async fn failure(signal_ctxt: &SignalEmitter<'_>, message: &str) -> zbus::Result<()>;
+}
+
+impl Presentation {
+    async fn send(&self, input: Input) -> zbus::fdo::Result<()> {
+        tokio::time::timeout(std::time::Duration::from_secs(1), self.tx.send(input))
+            .await
+            .map_err(|_| {
+                zbus::fdo::Error::Failed("notification presentation channel timed out".into())
+            })?
+            .map_err(|_| {
+                zbus::fdo::Error::Failed("notification presentation is unavailable".into())
+            })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/unit/subscriptions/applet.rs"
+    ));
 }

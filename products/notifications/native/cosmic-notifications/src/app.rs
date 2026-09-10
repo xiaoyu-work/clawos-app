@@ -547,9 +547,26 @@ impl cosmic::Application for CosmicNotifications {
                     self.active_surface = false;
                     return destroy_layer_surface(self.window_id);
                 }
-
             }
             Message::Config(config) => {
+                if self.config.do_not_disturb != config.do_not_disturb {
+                    if let Some(tx) = self.notifications_tx.clone() {
+                        let preferences =
+                            claw_notification_presentation::Preferences::new(config.do_not_disturb);
+                        tokio::spawn(async move {
+                            if let Err(error) = tx
+                                .send(notifications::Input::PresentationPreferencesChanged(
+                                    preferences,
+                                ))
+                                .await
+                            {
+                                tracing::error!(
+                                    "Failed to publish changed presentation preferences: {error}"
+                                );
+                            }
+                        });
+                    }
+                }
                 self.config = config;
             }
             Message::PanelConfig(c) => {
@@ -626,8 +643,7 @@ impl cosmic::Application for CosmicNotifications {
 
                 // Content: prominent semibold title (summary) over muted body.
                 let content = column![
-                    text::heading(n.summary.lines().next().unwrap_or_default())
-                        .width(Length::Fill),
+                    text::heading(n.summary.lines().next().unwrap_or_default()).width(Length::Fill),
                     Element::from(rich_text(html_to_spans(&n.body)).size(12.0))
                         .map(|_: ()| Message::Ignore)
                 ]
@@ -687,30 +703,26 @@ impl cosmic::Application for CosmicNotifications {
                     }
                     Message::Config(u.config)
                 }),
-            self.core
-                .watch_config("com.clawos.Panel.Panel")
-                .map(|u| {
-                    for why in u
-                        .errors
-                        .into_iter()
-                        .filter(cosmic::cosmic_config::Error::is_err)
-                    {
-                        tracing::error!(?why, "panel config load error");
-                    }
-                    Message::PanelConfig(u.config)
-                }),
-            self.core
-                .watch_config("com.clawos.Panel.Dock")
-                .map(|u| {
-                    for why in u
-                        .errors
-                        .into_iter()
-                        .filter(cosmic::cosmic_config::Error::is_err)
-                    {
-                        tracing::error!(?why, "dock config load error");
-                    }
-                    Message::DockConfig(u.config)
-                }),
+            self.core.watch_config("com.clawos.Panel.Panel").map(|u| {
+                for why in u
+                    .errors
+                    .into_iter()
+                    .filter(cosmic::cosmic_config::Error::is_err)
+                {
+                    tracing::error!(?why, "panel config load error");
+                }
+                Message::PanelConfig(u.config)
+            }),
+            self.core.watch_config("com.clawos.Panel.Dock").map(|u| {
+                for why in u
+                    .errors
+                    .into_iter()
+                    .filter(cosmic::cosmic_config::Error::is_err)
+                {
+                    tracing::error!(?why, "dock config load error");
+                }
+                Message::DockConfig(u.config)
+            }),
             notifications::notifications().map(Message::Notification),
         ])
     }
