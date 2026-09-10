@@ -17,7 +17,8 @@ def test_manifest_keeps_identity_and_separates_capture_write_and_clipboard():
     assert (manifest["id"], manifest["runtime"], manifest["schema_version"]) == (
         "cosmic-screenshot", "binary", 2,
     )
-    assert manifest["mcp"]["entry"] == "/usr/bin/cosmic-screenshot"
+    assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-screenshot"
+    assert manifest["desktop"]["exec"] == "--gui"
     tool, = manifest["mcp"]["tools"]
     assert tool["name"] == "screenshot.capture"
     args = {arg["name"]: arg for arg in tool["args"]}

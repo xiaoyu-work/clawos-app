@@ -16,7 +16,8 @@ def test_manifest_preserves_exact_authority_and_ai_identity():
     assert (manifest["id"], manifest["runtime"], manifest["schema_version"]) == (
         "cosmic-edit", "binary", 2,
     )
-    assert manifest["mcp"]["entry"] == "/usr/bin/cosmic-edit"
+    assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-edit"
+    assert manifest["desktop"]["exec"] == "--gui"
     assert manifest["ai"] == {
         "budget": {"monthly_units": 200000},
         "safety": "strict", "origins": ["external-content"],

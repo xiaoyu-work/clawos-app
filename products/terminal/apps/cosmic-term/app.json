@@ -9,8 +9,10 @@
     "en": "Run audited commands, resolve programs, and open the native terminal."
   },
   "runtime": "binary",
+  "entry": "bin/cosmic-term",
+  "desktop": {"exec": "--gui"},
   "mcp": {
-    "entry": "/usr/bin/cosmic-term",
+    "entry": "bin/cosmic-term",
     "transport": "stdio",
     "lifecycle": "lazy",
     "tools": [

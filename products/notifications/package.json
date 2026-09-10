@@ -3,6 +3,7 @@
   "tests": ["test_notify_process.py"],
   "native": {"cosmic-notifications": "native/cosmic-notifications"},
   "native_kind": "binary",
+  "native_payload": {"app": "cosmic-notifications", "program": "cosmic-notifications"},
   "native_packages": ["cosmic-notifications", "cosmic-notifications-config", "cosmic-notifications-util"],
   "native_examples": ["notification-presentation-fixture"],
   "native_process_test": "native/test_process.py",

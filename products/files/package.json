@@ -3,6 +3,7 @@
   "tests": [],
   "native": {"cosmic-files": "native/cosmic-files"},
   "native_kind": "binary",
+  "native_payload": {"app": "cosmic-files", "program": "cosmic-files", "auxiliary_programs": ["cosmic-files-applet"]},
   "native_packages": ["cosmic-files", "cosmic-files-applet"],
   "python_library": {"name": "claw_files", "path": "python/claw_files", "apps": ["fs", "docs"]},
   "native_assets": {

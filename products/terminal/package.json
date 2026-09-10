@@ -3,6 +3,7 @@
   "tests": ["native/test_build.py"],
   "native": {"cosmic-term": "native/cosmic-term"},
   "native_kind": "binary",
+  "native_payload": {"app": "cosmic-term", "program": "cosmic-term"},
   "native_assets": {
     "cosmic-term": {
       "app.json": "apps/cosmic-term/app.json",

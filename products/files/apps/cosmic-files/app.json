@@ -9,6 +9,8 @@
     "en": "Inspect, search, reveal, and understand files through the native file manager."
   },
   "runtime": "binary",
+  "entry": "bin/cosmic-files",
+  "desktop": {"exec": "--gui"},
   "ai": {
     "budget": {
       "monthly_units": 200000
@@ -19,7 +21,7 @@
     ]
   },
   "mcp": {
-    "entry": "/usr/bin/cosmic-files",
+    "entry": "bin/cosmic-files",
     "transport": "stdio",
     "lifecycle": "lazy",
     "tools": [

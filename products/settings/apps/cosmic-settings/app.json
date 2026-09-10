@@ -9,8 +9,10 @@
     "en": "Discover and open Settings pages and manage owner-scoped App permission requests and revocations through the OS."
   },
   "runtime": "binary",
+  "entry": "bin/cosmic-settings",
+  "desktop": {"exec": "--gui"},
   "mcp": {
-    "entry": "/usr/bin/cosmic-settings",
+    "entry": "bin/cosmic-settings",
     "transport": "stdio",
     "lifecycle": "lazy",
     "tools": [

@@ -1,0 +1,191 @@
+name: Release selected applications
+
+on:
+  workflow_dispatch:
+    inputs:
+      select:
+        description: "Comma-separated products, capability:<name>, support, sets; or all"
+        required: true
+        type: string
+      version:
+        description: "MAJOR.MINOR.PATCH[~rcN][-REVISION]; independently versioned selection"
+        required: true
+        type: string
+      initialize:
+        description: "First publication only; refuses an existing or lost APT channel"
+        default: false
+        type: boolean
+      fixtures:
+        description: "Also publish optional complete source/staging fixture archives"
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      select:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      initialize:
+        default: false
+        type: boolean
+      fixtures:
+        default: false
+        type: boolean
+    secrets:
+      CLAW_APPS_APT_SIGNING_PRIVATE_KEY:
+        required: true
+      CLAW_APPS_APT_SIGNING_PASSPHRASE:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-apt-publication
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: plan
+        env:
+          SELECTION: ${{ inputs.select }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          INCLUDE_FIXTURES: ${{ inputs.fixtures }}
+        run: |
+          args=()
+          if [ "$INCLUDE_FIXTURES" = true ]; then args+=(--fixtures); fi
+          matrix=$(python3 tools/release.py plan --select "$SELECTION" --version "$RELEASE_VERSION" "${args[@]}")
+          printf 'matrix=%s\n' "$matrix" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-plan
+          path: build/release-plan.json
+          if-no-files-found: error
+
+  contracts:
+    needs: plan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-release-plan
+          path: build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: python3 tools/release_ci.py test --plan build/release-plan.json
+      - name: Test selected App contracts and isolated release transactions
+        run: |
+          export TMPDIR="$PWD/build/ci-work"
+          python3 tools/release.py test --plan build/release-plan.json --architecture all
+          python3 -m pytest -q tests/release --basetemp=build/release-tests
+
+  build:
+    needs: [plan, contracts]
+    runs-on: ${{ matrix.runner }}
+    container: debian:trixie
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      CARGO_BUILD_JOBS: "2"
+      CARGO_PROFILE_DEV_DEBUG: "0"
+    steps:
+      - name: Bootstrap the declared Debian build container
+        run: apt-get update -qq && apt-get install --no-install-recommends -y git ca-certificates python3
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-release-plan
+          path: build
+      - env:
+          ARCHITECTURE: ${{ matrix.architecture }}
+        run: python3 tools/release_ci.py build --plan build/release-plan.json --architecture "$ARCHITECTURE"
+      - if: matrix.architecture != 'all'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.toolchain }}
+      - name: Test the selected native products
+        if: matrix.architecture != 'all'
+        env:
+          ARCHITECTURE: ${{ matrix.architecture }}
+        run: |
+          export TMPDIR="$PWD/build/ci-work"
+          python3 tools/release.py test --plan build/release-plan.json --architecture "$ARCHITECTURE"
+      - name: Build real installable App payloads
+        env:
+          ARCHITECTURE: ${{ matrix.architecture }}
+        run: |
+          export TMPDIR="$PWD/build/ci-work"
+          python3 tools/release.py build --plan build/release-plan.json --architecture "$ARCHITECTURE"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-debs-${{ matrix.architecture }}
+          path: |
+            build/release/*.deb
+            build/release/claw-app-development-*.tar.xz
+            build/release/claw-app-interfaces-*.tar.gz
+            build/release/build-record-*.json
+          if-no-files-found: error
+
+  publish:
+    needs: [plan, contracts, build]
+    runs-on: ubuntu-24.04
+    environment: app-release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-release-plan
+          path: build
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: app-debs-*
+          path: build/release
+          merge-multiple: true
+      - name: Configure authenticated Git transport
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh auth setup-git --hostname github.com
+      - name: Publish immutable assets and verify the retained App APT snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLAW_APPS_APT_SIGNING_PRIVATE_KEY: ${{ secrets.CLAW_APPS_APT_SIGNING_PRIVATE_KEY }}
+          CLAW_APPS_APT_SIGNING_PASSPHRASE: ${{ secrets.CLAW_APPS_APT_SIGNING_PASSPHRASE }}
+          INITIALIZE: ${{ inputs.initialize }}
+        run: |
+          args=()
+          if [ "$INITIALIZE" = true ]; then args+=(--initialize); fi
+          python3 tools/release_publish.py publish --plan build/release-plan.json \
+            --artifacts build/release "${args[@]}"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/apt-publication
+
+  deploy:
+    needs: publish
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy the verified APT snapshot
+        id: deployment
+        uses: actions/deploy-pages@v4

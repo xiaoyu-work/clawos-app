@@ -17,7 +17,8 @@ def test_seven_tools_keep_identity_and_separate_observation_from_control():
     assert (manifest["id"], manifest["runtime"], manifest["schema_version"]) == (
         "cosmic-player", "binary", 2,
     )
-    assert manifest["mcp"]["entry"] == "/usr/bin/cosmic-player"
+    assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-player"
+    assert manifest["desktop"]["exec"] == "--gui"
     tools = {tool["name"]: tool for tool in manifest["mcp"]["tools"]}
     assert set(tools) == {f"player.{name}" for name in (
         "play", "pause", "stop", "next", "previous", "toggle", "status",

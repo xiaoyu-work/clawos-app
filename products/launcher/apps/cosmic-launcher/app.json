@@ -9,8 +9,10 @@
     "en": "Search and launch installed desktop applications through the native launcher."
   },
   "runtime": "binary",
+  "entry": "bin/cosmic-launcher",
+  "desktop": {"exec": "--gui"},
   "mcp": {
-    "entry": "/usr/bin/cosmic-launcher",
+    "entry": "bin/cosmic-launcher",
     "transport": "stdio",
     "lifecycle": "lazy",
     "tools": [

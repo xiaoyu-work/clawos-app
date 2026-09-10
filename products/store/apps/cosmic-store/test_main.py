@@ -11,7 +11,8 @@ ROOT = PRODUCT.parents[1]
 def test_native_identity_and_grants():
     manifest = json.loads(Path(__file__).with_name("app.json").read_text())
     assert (manifest["id"], manifest["runtime"], manifest["schema_version"]) == ("cosmic-store", "binary", 2)
-    assert manifest["mcp"]["entry"] == "/usr/bin/cosmic-store"
+    assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-store"
+    assert manifest["desktop"]["exec"] == "--gui"
     tools = {tool["name"]: tool for tool in manifest["mcp"]["tools"]}
     assert set(tools) == {"store.search", "store.installed", "store.show", "store.open"}
     for name in ("store.search", "store.installed", "store.show"):

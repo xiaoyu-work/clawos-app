@@ -3,9 +3,12 @@
 import argparse
 import importlib.util
 import json
+import os
 from pathlib import Path
+from platform import machine
 import shutil
 import subprocess
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGE_SPEC = importlib.util.spec_from_file_location(
@@ -51,6 +54,36 @@ def prepare(product: str, toolkit: Path, destination: Path):
             manifest.write("\n" + patches)
 
 
+def install_payload(product, package, prepared, output, environment, *, app_only=False):
+    if "native_payload" not in package:
+        if app_only:
+            raise ValueError("App-only native preparation requires a native_payload declaration")
+        subprocess.run(
+            ["just", "--justfile", str(prepared / "justfile"),
+             f"rootdir={output}", "prefix=/usr", "install"],
+            check=True, cwd=prepared, env=environment,
+        )
+        return
+    import native_payload
+
+    selected = native_payload.plan(product)
+    architecture = {"x86_64": "amd64", "aarch64": "arm64"}.get(machine())
+    if architecture is None:
+        raise ValueError("Native payload installation requires an amd64 or arm64 Linux host")
+    with tempfile.TemporaryDirectory(prefix=f"{product}-installer-", dir=ROOT / "build") as temporary:
+        installed = Path(temporary)
+        subprocess.run(
+            ["just", "--justfile", str(prepared / "justfile"),
+             f"rootdir={installed}", "prefix=/usr", "install"],
+            check=True, cwd=prepared, env=environment,
+        )
+        if app_only:
+            result = native_payload.prepare(selected, installed, output, architecture)
+            print(json.dumps({**selected.record(), "root": str(result.root)}))
+        else:
+            native_payload.install(selected, installed, output, architecture)
+
+
 def main(product=None):
     parser = argparse.ArgumentParser(description=__doc__)
     if product is None:
@@ -59,8 +92,28 @@ def main(product=None):
             if json.loads(path.read_text()).get("native")
         ])
     parser.add_argument("command", choices=["test", "check", "build"], default="test", nargs="?")
+    parser.add_argument("--release", action="store_true", help="Use Cargo's real release profile")
+    parser.add_argument("--target-dir", type=Path, default=ROOT / "build/native-target")
+    parser.add_argument("--install-root", type=Path,
+                        help="Stage a release App payload and common-Host compatibility launchers")
+    parser.add_argument("--app-root", type=Path,
+                        help="Prepare a release App directory for the existing provenance signer")
     options = parser.parse_args()
+    if options.install_root and (options.command != "build" or not options.release):
+        parser.error("--install-root requires build --release")
+    if options.app_root and (options.command != "build" or not options.release):
+        parser.error("--app-root requires build --release")
+    if options.install_root and options.app_root:
+        parser.error("--install-root and --app-root are separate staging outputs")
     product = product or options.product
+    package = json.loads((ROOT / "products" / product / "package.json").read_text())
+    output = options.install_root or options.app_root
+    if output:
+        if package.get("native_kind") != "binary":
+            raise ValueError("A native library is not a runnable release payload")
+        install_root = output.resolve()
+        if install_root == ROOT / "build" or not install_root.is_relative_to(ROOT / "build"):
+            raise ValueError("Native install root must be an explicit directory under build/")
     specification = importlib.util.spec_from_file_location(
         "platform_dependency", ROOT / "tools/platform_dependency.py"
     )
@@ -69,25 +122,34 @@ def main(product=None):
     toolkit = platform.prepare_native()
     destination = ROOT / "build" / f"{product}-native"
     prepare(product, toolkit, destination)
-    package = json.loads((ROOT / "products" / product / "package.json").read_text())
     targets = [] if package.get("native_kind") == "binary" else ["--lib"]
     arguments = ["--", "--test-threads=1"] if options.command == "test" else []
+    profile = ["--release"] if options.release else []
+    target_dir = options.target_dir.resolve()
+    environment = dict(os.environ)
+    environment["CARGO_TARGET_DIR"] = str(target_dir)
+    if output:
+        # Build-time resource paths must describe the installed system, not staging.
+        environment["INSTALL_DIR"] = "/usr/share"
     # Match workspaces whose upstream justfile builds binaries separately:
     # combining packages would incorrectly unify renderer/applet features.
     for member in package.get("native_packages", [None]):
         selection = ["--package", member] if member else []
         subprocess.run(
             ["cargo", options.command, "--locked", "--manifest-path", str(destination / "Cargo.toml"),
-             "--target-dir", str(ROOT / "build/native-target"), *targets, *selection, *arguments],
-            check=True, cwd=ROOT,
+             "--target-dir", str(target_dir), *profile, *targets, *selection, *arguments],
+            check=True, cwd=ROOT, env=environment,
         )
-    if options.command == "build":
+    if options.command == "build" and not options.release:
         for example in package.get("native_examples", []):
             subprocess.run(
                 ["cargo", "build", "--locked", "--manifest-path", str(destination / "Cargo.toml"),
-                 "--target-dir", str(ROOT / "build/native-target"), "--example", example],
+                 "--target-dir", str(target_dir), "--example", example],
                 check=True, cwd=ROOT,
             )
+    if output:
+        install_payload(product, package, destination, install_root, environment,
+                        app_only=bool(options.app_root))
 
 
 if __name__ == "__main__":

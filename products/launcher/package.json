@@ -3,6 +3,7 @@
   "tests": [],
   "native": {"cosmic-launcher": "native/cosmic-launcher"},
   "native_kind": "binary",
+  "native_payload": {"app": "cosmic-launcher", "program": "cosmic-launcher"},
   "native_assets": {
     "cosmic-launcher": {"mcp_backend.py": "apps/launcher/main.py"}
   }

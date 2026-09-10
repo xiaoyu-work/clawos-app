@@ -14,7 +14,8 @@ def test_native_identity_keeps_three_exact_independent_grants():
     assert (manifest["id"], manifest["runtime"], manifest["schema_version"]) == (
         "cosmic-term", "binary", 2,
     )
-    assert manifest["mcp"]["entry"] == "/usr/bin/cosmic-term"
+    assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-term"
+    assert manifest["desktop"]["exec"] == "--gui"
     tools = {tool["name"]: tool for tool in manifest["mcp"]["tools"]}
     assert set(tools) == {"term.run", "term.which", "term.open"}
     assert [(tool, [(need["verb"], need["scope"]) for need in tools[tool]["needs"]])

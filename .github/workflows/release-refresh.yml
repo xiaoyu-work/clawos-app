@@ -1,0 +1,49 @@
+name: Refresh authenticated App APT metadata
+
+on:
+  schedule:
+    - cron: "23 6 * * 1,4"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-apt-publication
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: app-release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure authenticated Git transport
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh auth setup-git --hostname github.com
+      - name: Verify retained content and renew its bounded signed metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLAW_APPS_APT_SIGNING_PRIVATE_KEY: ${{ secrets.CLAW_APPS_APT_SIGNING_PRIVATE_KEY }}
+          CLAW_APPS_APT_SIGNING_PASSPHRASE: ${{ secrets.CLAW_APPS_APT_SIGNING_PASSPHRASE }}
+        run: python3 tools/release_publish.py refresh
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/apt-publication
+
+  deploy:
+    needs: refresh
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -39,7 +39,8 @@ def test_preserves_native_catalog_and_exact_authority():
     manifest = json.loads(Path(__file__).with_name("app.json").read_text())
     assert manifest["id"] == "cosmic-files"
     assert manifest["runtime"] == "binary"
-    assert manifest["mcp"]["entry"] == "/usr/bin/cosmic-files"
+    assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-files"
+    assert manifest["desktop"]["exec"] == "--gui"
     assert manifest["ai"] == {
         "budget": {"monthly_units": 200000}, "safety": "strict",
         "origins": ["external-content"],

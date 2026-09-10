@@ -3,6 +3,7 @@
   "tests": [],
   "native": {"cosmic-player": "native/cosmic-player"},
   "native_kind": "binary",
+  "native_payload": {"app": "cosmic-player", "program": "cosmic-player"},
   "native_examples": ["media-player-mpris-fixture"],
   "native_process_test": "native/test_process.py",
   "native_assets": {

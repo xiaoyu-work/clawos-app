@@ -19,7 +19,8 @@ def test_manifest_retains_identity_and_grant_with_explicit_durable_id_compatibil
     assert (manifest["id"], manifest["runtime"], manifest["version"]) == (
         "cosmic-notifications", "binary", "0.2.0",
     )
-    assert manifest["mcp"]["entry"] == "/usr/bin/cosmic-notifications"
+    assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-notifications"
+    assert manifest["desktop"]["exec"] == "--gui"
     tools = {tool["name"]: tool for tool in manifest["mcp"]["tools"]}
     assert set(tools) == {"notify.post", "notify.close"}
     for tool in tools.values():

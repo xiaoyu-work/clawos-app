@@ -3,6 +3,7 @@
   "tests": [],
   "native": {"cosmic-screenshot": "native/cosmic-screenshot"},
   "native_kind": "binary",
+  "native_payload": {"app": "cosmic-screenshot", "program": "cosmic-screenshot"},
   "native_examples": ["capture-portal-fixture"],
   "native_process_test": "native/test_process.py",
   "native_assets": {

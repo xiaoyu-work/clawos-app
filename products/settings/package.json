@@ -3,6 +3,7 @@
   "tests": ["native/test_build.py"],
   "native": {"cosmic-settings": "native/cosmic-settings"},
   "native_kind": "binary",
+  "native_payload": {"app": "cosmic-settings", "program": "cosmic-settings"},
   "native_assets": {
     "cosmic-settings": {"app.json": "apps/cosmic-settings/app.json"}
   }

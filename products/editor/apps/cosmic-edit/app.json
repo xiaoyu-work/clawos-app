@@ -9,6 +9,8 @@
     "en": "Read, edit, open, summarize, explain, and rewrite text files."
   },
   "runtime": "binary",
+  "entry": "bin/cosmic-edit",
+  "desktop": {"exec": "--gui"},
   "ai": {
     "budget": {
       "monthly_units": 200000
@@ -19,7 +21,7 @@
     ]
   },
   "mcp": {
-    "entry": "/usr/bin/cosmic-edit",
+    "entry": "bin/cosmic-edit",
     "transport": "stdio",
     "lifecycle": "lazy",
     "tools": [

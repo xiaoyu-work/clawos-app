@@ -1,0 +1,37 @@
+name: App release contracts
+
+on:
+  pull_request:
+    paths:
+      - "tools/release*.py"
+      - "tools/native_build.py"
+      - "tools/stage.py"
+      - "tools/package_assets.py"
+      - "tools/platform_dependency.py"
+      - "platform.lock.json"
+      - "shared/python/**"
+      - "products/*/package.json"
+      - "products/browser/extension/**"
+      - "products/browser/packaging/**"
+      - "products/browser/apps/browser-attached/**"
+      - "capabilities/*/package.json"
+      - "tests/release/**"
+      - "packaging/**"
+      - ".github/workflows/release*.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python3 tools/release_ci.py test
+      - run: |
+          export TMPDIR="$PWD/build/ci-work"
+          python3 -m pytest -q tests/release --basetemp=build/release-tests

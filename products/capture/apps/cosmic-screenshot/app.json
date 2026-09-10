@@ -10,8 +10,10 @@
   },
   "icon": "📸",
   "runtime": "binary",
+  "entry": "bin/cosmic-screenshot",
+  "desktop": {"exec": "--gui"},
   "mcp": {
-    "entry": "/usr/bin/cosmic-screenshot",
+    "entry": "bin/cosmic-screenshot",
     "transport": "stdio",
     "lifecycle": "lazy",
     "tools": [

@@ -1,0 +1,53 @@
+{
+  "format": "claw.app-release/v1",
+  "integration_contract": "pending-origin-neutral-app-host",
+  "repository": "xiaoyu-work/clawos-app",
+  "apt_url": "https://xiaoyu-work.github.io/clawos-app/",
+  "suite": "trixie",
+  "component": "main",
+  "architectures": ["amd64", "arm64"],
+  "rust_toolchain": "1.98.0",
+  "state_branch": "app-apt",
+  "validity_days": 14,
+  "signing_fingerprint": "ADBA1957E712B6C80B4CC8736C044D6F411416AF",
+  "signing_key": "packaging/apt/archive-key.asc",
+  "migration_before": "1:0.3.0",
+  "runtime_dependency": "claw-os-app-runtime-v1",
+  "support_abi": 1,
+  "python_library_abi": 1,
+  "headless_set": "claw-apps-agent",
+  "desktop_set": "claw-apps-desktop",
+  "dependencies": {
+    "files": ["coreutils", "ripgrep", "recollcmd", "python3-fitz", "python3-docx", "python3-openpyxl", "python3-lxml", "python3-pil", "python3-xlsxwriter", "python3-typing-extensions (>= 4.9)"],
+    "terminal": ["bash"],
+    "notifications": ["claw-os-notifications-v1"],
+    "document-engine": [],
+    "http": ["curl", "ca-certificates"]
+  },
+  "desktop_dependencies": {
+    "mail": ["thunderbird"],
+    "calendar": ["claw-os-applet-services-v1 (= 1)"],
+    "clipboard": ["copyq", "claw-os-applet-services-v1 (= 1)"],
+    "desktop-widgets": ["claw-os-applet-services-v1 (= 1)"],
+    "capture": ["claw-os-capture-v1", "xdg-desktop-portal"],
+    "media-player": ["claw-os-media-player-v1", "gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good", "gstreamer1.0-libav"],
+    "notifications": ["claw-os-notifications-v1"],
+    "store": ["flatpak", "packagekit"],
+    "settings": ["claw-os-app-permissions-v1", "xkb-data"]
+  },
+  "desktop_assets": {
+    "mail": {}
+  },
+  "python_wheels": {
+    "files": [
+      {
+        "distribution": "python-pptx",
+        "version": "1.0.2",
+        "url": "https://files.pythonhosted.org/packages/d9/4f/00be2196329ebbff56ce564aa94efb0fbc828d00de250b1980de1a34ab49/python_pptx-1.0.2-py3-none-any.whl",
+        "sha256": "160838e0b8565a8b1f67947675886e9fea18aa5e795db7ae531606d68e785cba",
+        "size": 472788,
+        "import": "pptx"
+      }
+    ]
+  }
+}

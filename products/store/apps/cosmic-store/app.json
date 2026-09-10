@@ -9,8 +9,10 @@
     "en": "Search installed and available packages and open the native App Store."
   },
   "runtime": "binary",
+  "entry": "bin/cosmic-store",
+  "desktop": {"exec": "--gui"},
   "mcp": {
-    "entry": "/usr/bin/cosmic-store",
+    "entry": "bin/cosmic-store",
     "transport": "stdio",
     "lifecycle": "lazy",
     "tools": [

@@ -3,6 +3,7 @@
   "tests": ["native/test_build.py"],
   "native": {"cosmic-store": "native/cosmic-store"},
   "native_kind": "binary",
+  "native_payload": {"app": "cosmic-store", "program": "cosmic-store"},
   "native_packages": ["cosmic-store", "flathub-stats"],
   "native_assets": {
     "cosmic-store": {
