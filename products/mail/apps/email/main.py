@@ -16,7 +16,6 @@ import urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _shared.credentials import load_credential  # noqa: E402
 from _shared.safe_http import open_url  # noqa: E402
 from claw_os_sdk import ai  # noqa: E402

@@ -9,8 +9,6 @@ import tempfile
 import unicodedata
 import urllib.request
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from _shared import safe_http  # noqa: E402
 from cos_runtime import policy  # noqa: E402
 

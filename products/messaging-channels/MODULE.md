@@ -30,10 +30,11 @@ super-privileged App identity.
 | `package.json` | Product-owned nested staging and tests |
 
 Preserve connector IDs and installed `apps/gateway/<channel>` layouts.
-Import the pinned `gateway._shared` namespace, not the unrelated App `_shared`
-package or a sibling OS checkout. Shared egress, WebSocket, memory and process
-helpers remain platform dependencies. Credential and network authority remain
-OS-owned; moving code grants nothing new.
+Import the App-owned `gateway._shared` namespace from
+[`shared/python`](../../shared/MODULE.md), not the unrelated `_shared` namespace
+or a sibling OS checkout. Shared egress, WebSocket, memory and process helpers
+ship once in the App common runtime at `/usr/lib/cos/python`. Credential and
+network authority remain OS-owned; moving code grants nothing new.
 
 Source relocation preserves the legacy operations adapter, environment/config
 precedence, Discord API/resume restrictions and App-scoped

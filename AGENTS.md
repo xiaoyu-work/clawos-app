@@ -11,10 +11,17 @@ source group's `MODULE.md` before changing its boundary.
   products, new installed identities, or privileged SDK/provider implementations.
 - Apps never invoke other Apps. The system Agent orchestrates cross-product
   work. Use the versioned SDK/runtime for controlled OS and AI access.
+- Every App uses one authenticated manifest/Host/capability/sandbox model.
+  Origin, language, UI and delivery format never confer runtime privilege.
+  Identity binds authenticated ownership/session/audit, not business-name
+  entitlements. Preserve existing protections until generic replacements and
+  regressions are verified; unresolved special integration blocks publication.
 - Keep authority, credentials, consent, audit, App Host and system services in
   `xiaoyu-work/claw-os`. Do not copy their implementations here.
-- `platform.lock.json` pins development SDK/runtime and shared App libraries. Fetch them
-  through `tools/platform_dependency.py`; never import from a sibling OS checkout.
+- `platform.lock.json` pins a published SDK/runtime/toolkit artifact by version,
+  HTTPS URL, SHA-256 and runtime ABI. Fetch it through
+  `tools/platform_dependency.py`; never import from a sibling OS checkout.
+  Common App libraries belong to local `shared/python`, not the OS artifact.
   Native products use `prepare_native()` for allowlisted shared toolkit,
   launcher backend and SDK/runtime libraries only; run
   `python3 tools/native_build.py <product> test` for actual native coverage.
@@ -35,6 +42,10 @@ source group's `MODULE.md` before changing its boundary.
 - Declare shared Python dependencies by source kind, source name, exported
   library name and consuming App IDs. Tests and staging resolve the same export;
   do not add sibling-source imports or copy another parser into an App.
+- Declare extra package payloads with product-owned `installed_assets` and
+  consuming App IDs. Canonical staging invokes `tools/package_assets.py` once;
+  release and fixture builders must not repeat it. Common support remains
+  separately staged and separately owned.
 
 ```bash
 python3 tools/test.py mail

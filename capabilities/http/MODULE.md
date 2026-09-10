@@ -21,7 +21,8 @@ requires an explicit canonical output path, retains its 512 MiB default limit
 The old destination survives network, size-limit, flush and replacement
 failures. Existing CLI bindings, response shapes and grants are unchanged.
 
-The App consumes the declared OS `_shared.safe_http` export. That library owns
+The App consumes the App-owned [`_shared.safe_http`](../../shared/MODULE.md)
+export. That library owns
 URL/IDNA normalization, exact host-and-port authorization on every redirect,
 DNS screening, brokered transport and TLS peer verification. The App separately
 requests `fs.write` for the exact download output. SDK/runtime, worker isolation,
@@ -29,10 +30,11 @@ privileged egress enforcement, credentials, audit, signing and installation
 remain in `claw-os`. No provider implementation, other App handler, local
 database or user state is copied into this group.
 
-Development resolves SDK/runtime and `_shared` only through `platform.lock.json`
-and `tools/platform_dependency.py`. Installed execution receives those libraries
-from the OS Python environment. The client's parent import path does not select
-a sibling OS checkout. There are no runtime source downloads or alternate App
+Development resolves SDK/runtime through `platform.lock.json` and
+`tools/platform_dependency.py`, and `_shared` from local `shared/python`.
+Installed execution uses `/usr/lib/cos/python`: the common App runtime owns
+the helper, separately from OS SDK/runtime. The client has no parent-directory
+import shim. There are no runtime source downloads or alternate App
 implementations when the declared dependency is unavailable.
 
 Cross-repository consumers use MCP stdio and the manifest's entrypoint, not

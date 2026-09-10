@@ -16,7 +16,6 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import TypeVar
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _shared.atomic import atomic_write_bytes  # noqa: E402
 from _shared.env_scrub import scrub_env  # noqa: E402
 

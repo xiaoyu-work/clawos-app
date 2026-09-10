@@ -33,7 +33,8 @@ python3 products/store/native/test_process.py
 Tests mock package queries and mutations; they do not install or remove software.
 Native MCP embeds `apps/pkg/main.py` at compilation but invokes only its three
 catalog functions, never the App entrypoint or transaction functions. Isolated
-system Python imports only installed OS SDK/runtime/shared support. The worker's
+system Python imports installed OS SDK/runtime and App-owned common support
+from `/usr/lib/cos/python`. The worker's
 authenticated session stays intact; call metadata does not grant pkg authority.
 Human-only Flatpak data cleanup checks `fs.delete` and snapshots before removal;
 ref-file reads check `fs.read`. Both adapters reject MCP use. New Window and

@@ -1,10 +1,7 @@
 {
-  "repository": "https://github.com/xiaoyu-work/claw-os.git",
-  "revision": "dd3adac3f80fe38a5cb68a88b52d46f2c4d92265",
-  "python_sources": [
-    "claw-os-sdk/python/src",
-    "cos-runtime/python/src"
-  ],
-  "python_packages": ["apps/_shared", "apps/gateway/_shared"],
-  "native_sources": ["desktop/toolkit", "desktop/launcher-backend", "cos-runtime/rust", "claw-os-sdk/rust"]
+  "schema": "claw.app-platform/v1",
+  "version": "1.0.0",
+  "url": "https://github.com/xiaoyu-work/claw-os/releases/download/app-platform-v1.0.0/claw-os-app-platform-1.0.0.tar.gz",
+  "sha256": "5225640b647f3eeb234ec002f7b170a9c4d420ba2a6caf2e748e7a8ca8a913aa",
+  "runtime_abi": 1
 }

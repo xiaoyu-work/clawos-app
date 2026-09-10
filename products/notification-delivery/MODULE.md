@@ -17,8 +17,9 @@ Preserve App identities, nested installed paths and separate grants.
 
 ## Boundaries
 
-Import `gateway._shared` from the pinned platform dependency, never a sibling
-OS checkout or the unrelated App `_shared` package. Credentials, host-gated
+Import `gateway._shared` from App-owned [`shared/python`](../../shared/MODULE.md),
+staged once in the common runtime, never a sibling OS checkout or the unrelated
+`_shared` namespace. Credentials, host-gated
 egress, package signing and installed authority stay OS-owned.
 
 The ntfy manifest requires a server for send/status. Do not infer that its old

@@ -26,7 +26,6 @@ import urllib.request
 
 # Shared env scrubbing — drop OPENAI_API_KEY / GITHUB_TOKEN / etc. out
 # of the cos-browser child's environment.
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _shared.env_scrub import scrub_env  # noqa: E402
 from _shared.safe_http import canonical_url, host_scope, open_url, parse_url  # noqa: E402
 

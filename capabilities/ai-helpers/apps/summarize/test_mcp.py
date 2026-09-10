@@ -3,14 +3,13 @@
 import json
 import os
 from pathlib import Path
-import shutil
 from types import SimpleNamespace
 import sys
 import textwrap
 
 import pytest
 
-from test_support import authenticated_mcp_params, load_local_module, mcp_process
+from test_support import authenticated_mcp_params, load_local_module, mcp_process, stage_platform_python
 
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -36,11 +35,7 @@ def client(tmp_path, request):
     stage = load_local_module(ROOT / "tools/stage.py", "claw_summary_test_stage")
     assert stage.stage("ai-helpers", tmp_path / "stage", kind="capability") == ["summarize"]
     python = tmp_path / "stage/usr/lib/cos/python"
-    lock = json.loads((ROOT / "platform.lock.json").read_text())
-    platform = ROOT / "build/platform" / lock["revision"]
-    for source in lock["python_sources"]:
-        shutil.copytree(platform / source, python, dirs_exist_ok=True,
-                        ignore=shutil.ignore_patterns("__pycache__", "test_*.py"))
+    stage_platform_python(python)
     app = tmp_path / "stage/usr/lib/cos/apps/summarize"
     manifest = json.loads((app / "app.json").read_text())
     if request.param == "private-module":

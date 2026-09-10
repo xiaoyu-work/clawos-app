@@ -1,4 +1,16 @@
 {
   "apps": ["apps/search", "apps/web", "apps/browser-attached"],
+  "installed_assets": [
+    {
+      "source": "extension",
+      "destination": "usr/share/claw/extensions/claw-agent-browser",
+      "apps": ["browser-attached"]
+    },
+    {
+      "source": "packaging/claw-browser-host",
+      "destination": "usr/lib/cos/claw-browser-host",
+      "apps": ["browser-attached"]
+    }
+  ],
   "tests": ["extension/test_contract.py"]
 }

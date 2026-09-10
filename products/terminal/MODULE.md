@@ -19,7 +19,8 @@ registry remain separate; this source move does not consolidate sessions.
 
 The source move preserves identity, capability declarations, output shapes
 and `COS_DATA_DIR/proc` state. Shared environment scrubbing and atomic writes
-come from the pinned OS libraries. No App-to-App invocation is introduced.
+come from App-owned [`shared/python`](../../shared/MODULE.md), staged separately
+from the pinned OS SDK/runtime. No App-to-App invocation is introduced.
 Native MCP embeds the canonical `exec` command implementation as a private
 library, not an App call; it uses only bounded run and PATH lookup, never the
 background registry. The worker's authenticated broker session stays intact:

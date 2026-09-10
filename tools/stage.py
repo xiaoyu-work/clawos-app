@@ -1,7 +1,6 @@
 """Stage explicitly kinded App sources and their declared shared libraries."""
 
 import argparse
-import fnmatch
 import importlib.util
 import json
 import os
@@ -14,7 +13,33 @@ import stat
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOTS = {"product": "products", "capability": "capabilities"}
 PACKAGE_KINDS = {"product": "product", "capability": "shared-capability-client"}
-IGNORE = shutil.ignore_patterns("__pycache__", "test_*.py", ".pytest_cache")
+SHARED_LIBRARIES = ("_shared", "gateway", "canonical_argv.py")
+IGNORE = shutil.ignore_patterns(
+    "__pycache__", ".pytest_cache", "test", "tests", "conftest.py",
+    "test_*.py", "*_test.py", "*.pyc", "*.pyo",
+)
+
+
+def shared_python_root(repository: Path | None = None) -> Path:
+    """Resolve the App-owned common import root without any OS source fallback."""
+    repository = ROOT if repository is None else repository
+    root = repository / "shared/python"
+    packages = [root / "_shared", root / "gateway", root / "gateway/_shared"]
+    if (
+        root.is_symlink()
+        or not root.is_dir()
+        or not root.resolve().is_relative_to(repository.resolve())
+        or any(
+            path.is_symlink() or not path.is_dir()
+            or (path / "__init__.py").is_symlink()
+            or not (path / "__init__.py").is_file()
+            for path in packages
+        )
+        or (root / "canonical_argv.py").is_symlink()
+        or not (root / "canonical_argv.py").is_file()
+    ):
+        raise ValueError("Missing or invalid App shared Python libraries under shared/python")
+    return root
 
 
 def sources(kind: str = "product") -> list[str]:
@@ -82,6 +107,8 @@ def _library_export(source: Path, library: dict) -> Path:
     name, relative = library["name"], library["path"]
     if not isinstance(name, str) or not re.fullmatch(r"[a-z_][a-z0-9_]*", name):
         raise ValueError("Invalid Python library name")
+    if name in {Path(entry).stem for entry in SHARED_LIBRARIES}:
+        raise ValueError("Common Python library names are owned by shared/python")
     if not isinstance(relative, str) or not re.fullmatch(r"python/[a-z_][a-z0-9_]*", relative):
         raise ValueError("Python library must be an explicit package under python/")
     path = source / relative
@@ -129,14 +156,11 @@ def python_libraries(source: Path, package: dict, installed: list[str]) -> dict[
     return libraries
 
 
-def _library_tree(root: Path) -> dict:
+def _library_tree(root: Path, *, payload: bool = False) -> dict:
     entries = {}
     for path in [root, *sorted(root.rglob("*"))]:
         relative = path.relative_to(root)
-        if any(
-            part in {"__pycache__", ".pytest_cache"} or fnmatch.fnmatch(part, "test_*.py")
-            for part in relative.parts
-        ):
+        if payload and any(IGNORE("", [part]) for part in relative.parts):
             continue
         mode = path.lstat().st_mode
         if stat.S_ISLNK(mode):
@@ -151,12 +175,40 @@ def _library_tree(root: Path) -> dict:
     return entries
 
 
-def stage_library(path: Path, destination: Path):
+def _library_target(path: Path, destination: Path) -> Path:
     target = destination / "usr/lib/cos/python" / path.name
-    if target.is_symlink() or (target.exists() and _library_tree(path) != _library_tree(target)):
+    parents = [destination, *(destination / part for part in (
+        "usr", "usr/lib", "usr/lib/cos", "usr/lib/cos/python",
+    ))]
+    expected = _library_tree(path, payload=True)
+    if (
+        any(parent.is_symlink() or (parent.exists() and not parent.is_dir()) for parent in parents)
+        or target.is_symlink()
+        or (target.exists() and expected != _library_tree(target))
+    ):
         raise ValueError(f"Conflicting staged Python library: {path.name}")
+    return target
+
+
+def stage_library(path: Path, destination: Path):
+    target = _library_target(path, destination)
     if not target.exists():
-        shutil.copytree(path, target, symlinks=True, ignore=IGNORE)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if path.is_dir():
+            shutil.copytree(path, target, symlinks=True, ignore=IGNORE)
+        else:
+            shutil.copy2(path, target)
+
+
+def stage_shared(destination: Path) -> Path:
+    """Stage only App support, separately owned from product and OS packages."""
+    source = shared_python_root()
+    libraries = [source / name for name in SHARED_LIBRARIES]
+    for path in libraries:
+        _library_target(path, destination)
+    for path in libraries:
+        stage_library(path, destination)
+    return destination / "usr/lib/cos/python"
 
 
 def stage(product: str, destination: Path, app_ids: list[str] | None = None,
@@ -165,6 +217,15 @@ def stage(product: str, destination: Path, app_ids: list[str] | None = None,
     apps = app_entries(source, package)
     installed = [app_id for app_id in apps if app_ids is None or app_id in app_ids]
     libraries = python_libraries(source, package, installed)
+    for path in libraries.values():
+        _library_target(path, destination)
+    if "installed_assets" in package:
+        specification = importlib.util.spec_from_file_location(
+            "product_installed_assets", Path(__file__).with_name("package_assets.py"),
+        )
+        asset_stager = importlib.util.module_from_spec(specification)
+        specification.loader.exec_module(asset_stager)
+        asset_stager.stage_assets(source, package, destination, installed, ignore=IGNORE)
     for path in libraries.values():
         stage_library(path, destination)
     for app_id in installed:
@@ -190,9 +251,17 @@ def stage(product: str, destination: Path, app_ids: list[str] | None = None,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("product")
+    parser.add_argument("product", nargs="?")
+    parser.add_argument("--shared", action="store_true", help="Stage the App-owned common runtime")
     parser.add_argument("--kind", choices=SOURCE_ROOTS, default="product")
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--apps", nargs="*", help="Stage only these installed identities")
     args = parser.parse_args()
-    print(json.dumps(stage(args.product, args.root, args.apps, kind=args.kind)))
+    if bool(args.product) == args.shared:
+        parser.error("select one source package or --shared")
+    if args.shared:
+        if args.apps is not None or args.kind != "product":
+            parser.error("--shared cannot select App identities or a source kind")
+        print(json.dumps(str(stage_shared(args.root))))
+    else:
+        print(json.dumps(stage(args.product, args.root, args.apps, kind=args.kind)))

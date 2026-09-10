@@ -22,11 +22,26 @@ provider credentials and authorization in the OS; importing source does not
 grant access to a user's profile. The repository move preserves installed
 `mail-ai`, `email` and `gateway-email` identities, paths, grants and protocols.
 All legacy identities still await product consolidation.
-Email's `_shared` dependency is a pinned shared library, not another App or a
-copied credential/HTTP implementation.
-The delivery adapter uses the separately named `gateway._shared` library and
-requires the OS policy/SMTP runtime; missing runtime cannot enable a direct
-SMTP fallback. Nested package paths must continue to derive the same App ID.
+Email's `_shared` dependency is an App-owned common library under
+[`shared/python`](../../shared/MODULE.md), not another App or an OS export.
+The delivery adapter uses the separately named `gateway._shared` library
+from the same common runtime and requires the OS policy/SMTP runtime;
+missing runtime cannot enable a direct SMTP fallback. Nested package paths
+must continue to derive the same App ID.
+Source-checkout Native Messaging resolves named SDK/runtime exports from the
+verified platform artifact cache, never a Git directory or sibling OS checkout.
+Prepare the pinned artifact explicitly with `tools/platform_dependency.py`;
+the isolated native host never downloads build dependencies at runtime and
+disables bytecode when importing from that cache. Installed execution retains
+the fixed `/usr/lib/cos/python` root and existing OS authority launcher.
+
+That current launcher is a remaining integration exception, not a privilege
+Mail should inherit: OS `TrustedNativeHost` admission is still tied to
+`mail-ai`, fixed paths and a Thunderbird parent, with a recorded sandbox
+exemption. Replacing it belongs to the generic App Host contract and must retain
+authenticated ownership/session/audit binding, provenance, capability checks
+and equivalent sandbox protections. Do not delete those checks or treat the
+source-bootstrap/protocol tests as proof of a completed unified integration.
 
 From the repository root, use `python3 tools/test.py mail`. For native tests,
 build first and use `python3 products/mail/build.py test comm/path/to/test.js`.

@@ -63,11 +63,12 @@ DB imports only Python's standard library, the SDK's
 scopes through the wire-v1 decision transport; it neither implements policy nor
 imports the SDK's private dispatcher or any core provider. `cos_runtime` is a
 first-party bundled interface, not an independently published third-party SDK.
-KV uses the existing OS-owned `_shared.atomic.atomic_write_bytes` export,
-already selected by `platform.lock.json` and placed on the installed MCP
-Python path by the OS. The server does not adjust `sys.path` or depend on a
-sibling source directory. No SDK/runtime or atomic helper is copied into the
-capability payload, and no platform-lock bump is needed.
+KV uses the App-owned `_shared.atomic.atomic_write_bytes` export from
+[`shared/python`](../../shared/MODULE.md). `stage_shared()` supplies the separate
+common runtime dependency at `/usr/lib/cos/python`; development uses the same
+imports from the local shared root. The server does not adjust `sys.path` or
+depend on a sibling source directory. No SDK/runtime or atomic helper is copied
+into the capability payload.
 
 App-owned unit tests may inspect their own client internals. Cross-repository runtime checks
 instead start the manifest-declared MCP entrypoint and exchange JSON-RPC over

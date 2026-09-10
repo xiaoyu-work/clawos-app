@@ -41,22 +41,29 @@ user-data import or new namespace is introduced.
 
 ## Ownership and dependency contracts
 
-The only nonstandard imports are public `claw_os_sdk.ai.chat`,
-`claw_os_sdk.mcp.App` and the existing bundled `cos_runtime.policy.require` /
-`cos_runtime.memory.remember` exports. The latter carry wire-v1 requests;
-they are not independently published third-party SDKs. Development resolves
-them through the unchanged immutable `platform.lock.json`, never a sibling OS
-checkout or copied SDK/provider implementation. Installed execution uses OS
-libraries. Source/package composition is build-time, not runtime Git download.
+The only nonstandard imports are `claw_os_sdk.ai.chat`, `claw_os_sdk.mcp.App`
+and the existing `cos_runtime.policy.require` / `cos_runtime.memory.remember`
+client adapters. These carry versioned App requests; OS implementation ownership
+does not make their interface an entitlement reserved for bundled clients.
+Every App requires the same authenticated Host, capability and sandbox contract,
+with identity used for ownership/session/audit binding, not business-name
+privilege. Development resolves
+them through the versioned HTTPS/SHA-256 artifact in `platform.lock.json`, never
+a sibling OS checkout or copied SDK/provider implementation. Staged MCP tests
+select its verified named exports cache-only. Installed execution uses OS
+libraries. Development artifact preparation is explicit, not a runtime download.
 
 The OS retains the Agent, AI and memory authority, App identity/capabilities,
 credentials, consent/budgets, safety/audit, sandbox and signing/install/update/
 image ownership. Cross-repository runtime fixtures use complete staged payloads,
 manifest-selected MCP entrypoints and public SDK wire, not private App modules
 or SDK dispatchers. Compatible implementation and entrypoint refactors are
-covered without OS changes. Source-directory exports, bundled runtime
-compatibility and pinned/signed OS-package delivery remain explicit build and
-release dependencies; this is not fully independent artifact distribution.
+covered without OS changes. Named artifact exports, versioned runtime
+compatibility and authenticated package delivery remain explicit dependencies,
+not permission grants. Older SDK documentation still labels the runtime adapters
+internal/bundled-only; its generic public-interface contract and existing
+OS admission exceptions require coordinated follow-up. These client tests do
+not establish that the entire unified integration is already implemented.
 
 All four original files came from
 [`xiaoyu-work/claw-os` at `de07416d4b8146d05354b8e80ed3e9f47794240e`](https://github.com/xiaoyu-work/claw-os/tree/de07416d4b8146d05354b8e80ed3e9f47794240e/apps/summarize).

@@ -15,7 +15,7 @@ pub fn command(operation: &str, arguments: Value) -> io::Result<Value> {
     let mut child = Command::new("/usr/bin/python3")
         .args(["-I", "-c", &format!(
             "import sys,os,json,types\n\
-             sys.path[:0] = ['/usr/lib/cos/python', '/usr/lib/cos/apps']\n\
+             sys.path[:0] = ['/usr/lib/cos/python']\n\
              os.environ['COS_BIN'] = '/usr/local/bin/cos'\n\
              os.environ['CLAW_COS_BIN'] = '/usr/local/bin/cos'\n\
              backend = types.ModuleType('terminal_commands')\n\

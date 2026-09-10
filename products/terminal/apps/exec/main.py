@@ -11,7 +11,6 @@ import uuid
 from datetime import datetime, timezone
 
 # Pull in the shared helpers (env scrub + atomic JSON write).
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _shared.atomic import atomic_write_json  # noqa: E402
 from _shared.env_scrub import scrub_env  # noqa: E402
 

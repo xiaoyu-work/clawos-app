@@ -1,4 +1,4 @@
-"""Run declared App source tests with their immutable platform and library dependencies."""
+"""Run declared App tests with verified platform artifact and local library exports."""
 
 import argparse
 import os
@@ -25,9 +25,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("product", nargs="*")
     parser.add_argument("--capability", nargs="+", default=[])
+    parser.add_argument("--shared", action="store_true", help="Run shared App library contracts")
     options = parser.parse_args()
-    if not options.product and not options.capability:
-        parser.error("select at least one product or --capability source group")
+    if not options.product and not options.capability and not options.shared:
+        parser.error("select a product, --capability source group, or --shared")
     packages = [
         *(load_package(name) for name in options.product),
         *(load_package(name, "capability") for name in options.capability),
@@ -42,6 +43,8 @@ def main():
         tests.extend(source_tests(product, package))
     env["PYTHONPATH"] = os.pathsep.join(map(str, dict.fromkeys([ROOT / "tests", *paths])))
     tests.extend([
+        ROOT / "tests" / "shared",
+        ROOT / "tests" / "test_manifest_contracts.py",
         ROOT / "tests" / "test_stage.py",
         ROOT / "tests" / "test_platform_dependency.py",
     ])

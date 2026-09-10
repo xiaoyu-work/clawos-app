@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import selectors
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -124,3 +125,19 @@ def load_local_module(path, name, *, clear_modules=()):
     sys.modules[name] = module
     specification.loader.exec_module(module)
     return module
+
+
+def platform_dependency():
+    root = Path(__file__).resolve().parents[1]
+    return load_local_module(root / "tools/platform_dependency.py", "_fixture_platform_dependency")
+
+
+def stage_platform_python(python):
+    """Compose verified SDK/runtime exports without fetching during a test."""
+    platform = platform_dependency()
+    exports = platform.prepare_exports(download=False)
+    for export, package in [("python-sdk", "claw_os_sdk"), ("python-runtime", "cos_runtime")]:
+        shutil.copytree(
+            exports[export] / package, python / package,
+            symlinks=True, ignore=platform.stage.IGNORE,
+        )

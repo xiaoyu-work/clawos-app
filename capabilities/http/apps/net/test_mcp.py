@@ -5,14 +5,13 @@ from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
-import shutil
 import socketserver
 import sys
 import tempfile
 
 import pytest
 
-from test_support import authenticated_mcp_params, load_local_module, mcp_process
+from test_support import authenticated_mcp_params, load_local_module, mcp_process, stage_platform_python
 
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -91,14 +90,8 @@ def client(tmp_path, request):
     stage = load_local_module(ROOT / "tools/stage.py", "claw_http_test_stage")
     stage.stage("http", tmp_path / "stage", kind="capability")
     apps = tmp_path / "stage/usr/lib/cos/apps"
-    python = tmp_path / "stage/usr/lib/cos/python"
-    lock = json.loads((ROOT / "platform.lock.json").read_text())
-    platform = ROOT / "build/platform" / lock["revision"]
-    for source in lock["python_sources"]:
-        shutil.copytree(platform / source, python, dirs_exist_ok=True,
-                        ignore=shutil.ignore_patterns("__pycache__", "test_*.py"))
-    shutil.copytree(platform / "apps/_shared", apps / "_shared",
-                    ignore=shutil.ignore_patterns("__pycache__", "test_*.py"))
+    python = stage.stage_shared(tmp_path / "stage")
+    stage_platform_python(python)
     app = apps / "net"
     manifest = json.loads((app / "app.json").read_text())
     if request.param == "private-module":
@@ -131,7 +124,7 @@ def client(tmp_path, request):
     )
     policy.chmod(0o755)
     with _http_broker() as (socket_path, transport), mcp_process(app, env={
-        "PATH": os.defpath, "PYTHONPATH": os.pathsep.join([str(python), str(apps)]),
+        "PATH": os.defpath, "PYTHONPATH": str(python),
         "COS_DATA_DIR": str(tmp_path / "data"), "COS_EGRESS_SOCKET": socket_path,
         "COS_NET_DOWNLOAD_MAX": "32", "CLAW_COS_BIN": str(policy),
         "TEST_POLICY_LOG": str(log), "TEST_WRITE_ROOT": str(downloads),

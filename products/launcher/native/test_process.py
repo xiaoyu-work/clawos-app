@@ -14,8 +14,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools"))
-from platform_dependency import prepare  # noqa: E402
-from stage import stage  # noqa: E402
+from platform_dependency import prepare_exports  # noqa: E402
+from stage import IGNORE, stage, stage_shared  # noqa: E402
 
 
 def main():
@@ -23,14 +23,12 @@ def main():
     fixture.mkdir()
     process = None
     try:
-        libraries = prepare()
+        libraries = prepare_exports(download=False)
         installed = fixture / "installed"
         stage("launcher", installed, ["cosmic-launcher"])
-        python = installed / "usr/lib/cos/python"
-        python.mkdir(parents=True)
-        shutil.copytree(libraries[0] / "claw_os_sdk", python / "claw_os_sdk")
-        shutil.copytree(libraries[1] / "cos_runtime", python / "cos_runtime")
-        shutil.copytree(libraries[2] / "_shared", installed / "usr/lib/cos/apps/_shared")
+        python = stage_shared(installed)
+        shutil.copytree(libraries["python-sdk"] / "claw_os_sdk", python / "claw_os_sdk", ignore=IGNORE)
+        shutil.copytree(libraries["python-runtime"] / "cos_runtime", python / "cos_runtime", ignore=IGNORE)
         applications = fixture / "applications"
         applications.mkdir()
         for name in ("Editor", "Other"):

@@ -12,7 +12,7 @@ import zipfile
 
 import pytest
 
-from test_support import authenticated_mcp_params, load_local_module, mcp_process
+from test_support import authenticated_mcp_params, load_local_module, mcp_process, stage_platform_python
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -155,6 +155,40 @@ def test_storage_sdk_stages_independent_db_and_kv_without_platform_code(tmp_path
     assert not (tmp_path / "kv-only/usr/lib/cos/apps/db").exists()
 
 
+def test_public_mcp_requires_common_runtime_and_never_imports_legacy_sibling_helpers(tmp_path):
+    root = tmp_path / "installed"
+    stage.stage("http", root, kind="capability")
+    app = root / "usr/lib/cos/apps/net"
+    python = root / "usr/lib/cos/python"
+    stage_platform_python(python)
+    legacy = app.parent / "_shared"
+    legacy.mkdir()
+    (legacy / "__init__.py").write_text("raise RuntimeError('legacy helper must not load')\n")
+    manifest = json.loads((app / "app.json").read_text())
+    environment = {
+        "PATH": os.defpath, "PYTHONPATH": str(python),
+        "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1",
+        "COS_APP_MANIFEST": str(app / "app.json"),
+    }
+    missing = subprocess.run(
+        [sys.executable, str(app / manifest["mcp"]["entry"])],
+        input="", cwd=app, env=environment, capture_output=True, text=True, timeout=20,
+    )
+    assert missing.returncode != 0
+    assert "No module named '_shared'" in missing.stderr
+    assert "legacy helper must not load" not in missing.stderr
+    stage.stage_shared(root)
+    with mcp_process(app, env=environment) as request:
+        tools = request("tools/list", {})["tools"]
+        assert {tool["name"] for tool in tools} == {"net.fetch", "net.download"}
+        invalid = request("tools/call", authenticated_mcp_params({
+            "name": "net.fetch", "arguments": {"url": "file:///not-accessed"},
+        }))
+        assert invalid["isError"] is True
+        assert "not allowed" in invalid["content"][0]["text"]
+    assert (legacy / "__init__.py").read_text() == "raise RuntimeError('legacy helper must not load')\n"
+
+
 def test_mcp_only_app_uses_explicit_tests_without_a_main_module(tmp_path, monkeypatch):
     monkeypatch.syspath_prepend(str(ROOT / "tools"))
     runner = load_local_module(ROOT / "tools/test.py", "claw_test_app_runner")
@@ -174,15 +208,9 @@ def test_mcp_only_app_uses_explicit_tests_without_a_main_module(tmp_path, monkey
 @pytest.mark.parametrize("refactor", ["none", "private-module", "declared-entrypoint"])
 def test_staged_kv_uses_public_mcp_and_preserves_its_independent_namespace(tmp_path, refactor):
     stage.stage("storage-sdk", tmp_path, ["kv"], kind="capability")
-    lock = json.loads((ROOT / "platform.lock.json").read_text())
-    platform = ROOT / "build/platform" / lock["revision"]
-    python = tmp_path / "usr/lib/cos/python"
-    for source in lock["python_sources"]:
-        shutil.copytree(platform / source, python, dirs_exist_ok=True,
-                        ignore=shutil.ignore_patterns("__pycache__", "test_*.py"))
+    python = stage.stage_shared(tmp_path)
+    stage_platform_python(python)
     apps = tmp_path / "usr/lib/cos/apps"
-    shutil.copytree(platform / "apps/_shared", apps / "_shared",
-                    ignore=shutil.ignore_patterns("__pycache__", "test_*.py"))
     app = apps / "kv"
     manifest = json.loads((app / "app.json").read_text())
     if refactor == "private-module":
@@ -208,7 +236,7 @@ def test_staged_kv_uses_public_mcp_and_preserves_its_independent_namespace(tmp_p
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(b"unrelated private state")
     environment = {
-        "PATH": os.defpath, "PYTHONPATH": os.pathsep.join([str(python), str(apps)]),
+        "PATH": os.defpath, "PYTHONPATH": str(python),
         "COS_DATA_DIR": str(data),
     }
     with mcp_process(app, env=environment) as request:
@@ -247,12 +275,8 @@ def test_staged_kv_uses_public_mcp_and_preserves_its_independent_namespace(tmp_p
 @pytest.mark.parametrize("refactor", ["none", "private-module", "declared-entrypoint"])
 def test_staged_db_dispatches_with_real_sdk_and_preserves_its_data_namespace(tmp_path, refactor):
     stage.stage("storage-sdk", tmp_path, kind="capability")
-    lock = json.loads((ROOT / "platform.lock.json").read_text())
-    platform = ROOT / "build/platform" / lock["revision"]
     python = tmp_path / "usr/lib/cos/python"
-    for source in lock["python_sources"]:
-        shutil.copytree(platform / source, python, dirs_exist_ok=True,
-                        ignore=shutil.ignore_patterns("__pycache__", "test_*.py"))
+    stage_platform_python(python)
     data = tmp_path / "owner-data/apps/db"
     database = data / "db/existing.db"
     database.parent.mkdir(parents=True)
@@ -475,12 +499,8 @@ def test_library_dependency_must_match_one_owned_export(capability_package, chan
 
 def test_document_runs_with_only_the_actual_staged_library_and_platform(tmp_path):
     stage.stage("document-engine", tmp_path, kind="capability")
-    lock = json.loads((ROOT / "platform.lock.json").read_text())
-    platform = ROOT / "build/platform" / lock["revision"]
-    python = tmp_path / "usr/lib/cos/python"
-    for source in lock["python_sources"]:
-        shutil.copytree(platform / source, python, dirs_exist_ok=True)
-    shutil.copy2(platform / "apps/canonical_argv.py", python / "canonical_argv.py")
+    python = stage.stage_shared(tmp_path)
+    stage_platform_python(python)
     document = tmp_path / "synthetic.txt"
     document.write_text("installed shared document parser")
     policy = tmp_path / "cos"
@@ -518,10 +538,80 @@ def test_browser_stage_preserves_search_without_os_services(tmp_path):
     assert (tmp_path / native_host).read_bytes() == (
         ROOT / "products/browser/apps/browser-attached/native_host.py"
     ).read_bytes()
+    extension = tmp_path / "usr/share/claw/extensions/claw-agent-browser"
+    assert stage._library_tree(extension) == stage._library_tree(
+        ROOT / "products/browser/extension", payload=True,
+    )
+    launcher = tmp_path / "usr/lib/cos/claw-browser-host"
+    source_launcher = ROOT / "products/browser/packaging/claw-browser-host"
+    assert launcher.read_bytes() == source_launcher.read_bytes()
+    assert launcher.stat().st_mode == source_launcher.stat().st_mode
+    assert launcher.stat().st_mode & 0o111
+    assert not (extension / "test_contract.py").exists()
+    assert not (tmp_path / "usr/lib/cos/browser-agent").exists()
     assert not (tmp_path / "usr/lib/cos/apps/_shared").exists()
     assert not (tmp_path / "usr/lib/cos/python").exists()
     assert not (tmp_path / "usr/bin/cos-browser").exists()
     assert not (tmp_path / "etc/chromium").exists()
+
+
+@pytest.mark.parametrize("selected", [
+    [], ["search"], ["web"], ["search", "web"],
+    ["browser-attached"], ["search", "browser-attached"],
+])
+def test_browser_assets_follow_declared_owner_selection(tmp_path, selected):
+    assert stage.stage("browser", tmp_path, selected) == selected
+    attached = "browser-attached" in selected
+    extension = tmp_path / "usr/share/claw/extensions/claw-agent-browser"
+    launcher = tmp_path / "usr/lib/cos/claw-browser-host"
+    assert extension.exists() is attached
+    assert launcher.exists() is attached
+    apps = tmp_path / "usr/lib/cos/apps"
+    if selected:
+        assert sorted(path.name for path in apps.iterdir()) == sorted(selected)
+    else:
+        assert not apps.exists()
+    assert not (tmp_path / "usr/lib/cos/python").exists()
+    assert not (tmp_path / "usr/lib/cos/browser-agent").exists()
+    assert not (tmp_path / "etc").exists()
+    assert not (tmp_path / "var").exists()
+
+
+def test_browser_cli_stage_includes_declared_assets_without_a_second_stager(tmp_path):
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "tools/stage.py"), "browser", "--root", str(tmp_path),
+         "--apps", "browser-attached"],
+        cwd=ROOT, capture_output=True, text=True, check=True, timeout=20,
+        env={"PATH": os.defpath, "PYTHONDONTWRITEBYTECODE": "1"},
+    )
+    assert json.loads(result.stdout) == ["browser-attached"]
+    assert (tmp_path / "usr/share/claw/extensions/claw-agent-browser/manifest.json").is_file()
+    assert (tmp_path / "usr/lib/cos/claw-browser-host").is_file()
+    assert (tmp_path / "usr/lib/cos/apps/browser-attached/native_host.py").is_file()
+    assert not (tmp_path / "usr/lib/cos/apps/search").exists()
+    assert not (tmp_path / "usr/lib/cos/apps/web").exists()
+    assert not (tmp_path / "usr/lib/cos/python").exists()
+
+
+def test_normal_staging_propagates_asset_validation_before_payload_writes(tmp_path, monkeypatch):
+    source, package = stage.load_package("browser")
+    monkeypatch.setattr(stage, "load_package", lambda *args, **kwargs: (
+        source, {**package, "installed_assets": None},
+    ))
+    with pytest.raises(ValueError, match="Installed assets"):
+        stage.stage("browser", tmp_path)
+    assert not (tmp_path / "usr").exists()
+
+
+def test_normal_staging_never_overwrites_a_conflicting_installed_asset(tmp_path):
+    launcher = tmp_path / "usr/lib/cos/claw-browser-host"
+    launcher.parent.mkdir(parents=True)
+    launcher.write_bytes(b"unrelated existing file")
+    with pytest.raises(ValueError, match="Conflicting staged installed asset"):
+        stage.stage("browser", tmp_path, ["browser-attached"])
+    assert launcher.read_bytes() == b"unrelated existing file"
+    assert not (tmp_path / "usr/share/claw/extensions/claw-agent-browser").exists()
+    assert not (tmp_path / "usr/lib/cos/apps").exists()
 
 
 def test_terminal_stage_preserves_exec_without_process_services(tmp_path):
@@ -656,15 +746,9 @@ def test_stage_rejects_identity_or_layout_drift(tmp_path, monkeypatch, layout, a
 
 def test_packaged_gateway_runs_with_only_installed_libraries(tmp_path):
     stage.stage("mail", tmp_path)
-    lock = json.loads((ROOT / "platform.lock.json").read_text())
-    platform = ROOT / "build/platform" / lock["revision"]
-    python = tmp_path / "usr/lib/cos/python"
-    python.mkdir()
-    for source in lock["python_sources"]:
-        shutil.copytree(platform / source, python, dirs_exist_ok=True)
-    shutil.copy2(platform / "apps/canonical_argv.py", python / "canonical_argv.py")
+    python = stage.stage_shared(tmp_path)
+    stage_platform_python(python)
     apps = tmp_path / "usr/lib/cos/apps"
-    shutil.copytree(platform / "apps/gateway/_shared", apps / "gateway/_shared")
     result = subprocess.run(
         [sys.executable, str(apps / "gateway/email/main.py"), "status"],
         cwd=tmp_path, capture_output=True, text=True, check=True, timeout=20,
@@ -679,3 +763,14 @@ def test_packaged_gateway_runs_with_only_installed_libraries(tmp_path):
     assert status["configured"] is True
     assert status["platform"] == "email"
     assert status["tls"] == "starttls"
+    with mcp_process(apps / "gateway/email", env={
+        "PATH": os.defpath, "PYTHONPATH": str(python),
+        "COS_SMTP_HOST": "smtp.example.invalid", "COS_SMTP_PORT": "587",
+        "COS_SMTP_USER": "fixture@example.invalid", "COS_SMTP_PASSWORD": "fixture",
+        "COS_SMTP_FROM": "fixture@example.invalid",
+    }) as request:
+        result = request("tools/call", authenticated_mcp_params({
+            "name": "gateway-email.status", "arguments": {},
+        }))
+        assert not result.get("isError"), result
+        assert result["structuredContent"] == status

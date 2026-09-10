@@ -8,7 +8,6 @@ import stat as file_stat
 import subprocess
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _shared.atomic import atomic_write_bytes, atomic_write_json  # noqa: E402
 from _shared.env_scrub import scrub_env  # noqa: E402
 from _shared.paths import safe_realpath  # noqa: E402

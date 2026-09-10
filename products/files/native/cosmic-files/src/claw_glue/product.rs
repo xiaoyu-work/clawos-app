@@ -18,7 +18,7 @@ fn command() -> Command {
     let mut command = Command::new("/usr/bin/python3");
     command.args(["-I", "-c", &format!(
         "import sys,os,types,json\n\
-         sys.path[:0] = ['/usr/lib/cos/python', '/usr/lib/cos/apps']\n\
+         sys.path[:0] = ['/usr/lib/cos/python']\n\
          os.environ['COS_BIN'] = '/usr/local/bin/cos'\n\
          os.environ['CLAW_COS_BIN'] = '/usr/local/bin/cos'\n\
          request = json.load(sys.stdin)\n\

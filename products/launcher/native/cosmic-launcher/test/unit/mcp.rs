@@ -11,6 +11,10 @@ fn embedded_backend_uses_isolated_interpreter_and_typed_broker() {
     assert!(!BACKEND.contains("\"app\", \"launcher\""));
     assert!(SERVER.contains("App.from_manifest(os.environ[\"COS_APP_MANIFEST\"])"));
     assert!(args[2].to_str().unwrap().contains("os.environ['COS_BIN'] = '/usr/local/bin/cos'"));
+    assert!(args[2]
+        .to_str()
+        .unwrap()
+        .contains("sys.path[:0] = ['/usr/lib/cos/python']"));
 }
 
 #[test]

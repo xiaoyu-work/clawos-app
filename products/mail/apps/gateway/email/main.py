@@ -35,9 +35,6 @@ from email import charset as email_charset
 from email.message import EmailMessage
 
 
-# The installed App root owns the shared gateway library.
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
 from gateway._shared import gateway_memory, safe_subprocess  # noqa: E402
 
 from cos_runtime import policy  # noqa: E402

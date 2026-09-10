@@ -17,7 +17,7 @@ fn command() -> Command {
         "-c",
         &format!(
             "import sys, os\n\
-             sys.path[:0] = ['/usr/lib/cos/python', '/usr/lib/cos/apps']\n\
+             sys.path[:0] = ['/usr/lib/cos/python']\n\
              __file__ = '/usr/lib/cos/apps/cosmic-launcher/embedded.py'\n\
              os.environ['COS_BIN'] = '/usr/local/bin/cos'\n\
              os.environ['CLAW_COS_BIN'] = '/usr/local/bin/cos'\n\

@@ -15,7 +15,6 @@ import subprocess
 import sys
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _shared.atomic import atomic_write_text  # noqa: E402
 from _shared.env_scrub import scrub_env  # noqa: E402
 

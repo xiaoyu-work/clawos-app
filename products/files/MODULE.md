@@ -21,7 +21,9 @@ product tests. The OS owns filesystem authority, sandbox mounts and snapshots.
 | `native/test_process.py` | Authenticated real-binary fixture against synthetic OS/model/Recoll services |
 
 The source move preserves `fs` and `docs`, their manifests, runtime behavior
-and installed paths. Shared helpers come from the immutable platform library dependency.
+and installed paths. Shared helpers come from App-owned
+[`shared/python`](../../shared/MODULE.md); SDK/runtime remain immutable platform
+dependencies.
 No App-to-App calls or duplicated OS services are introduced. Native source
 ownership is complete, but the existing UI hot paths, settings and metadata
 remain separate from MCP data. GUI mutations inherit their launch session;

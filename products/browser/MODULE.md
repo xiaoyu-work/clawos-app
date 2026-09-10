@@ -15,10 +15,12 @@ presentation and the reusable engine have not moved.
 | `apps/web/test_main.py` | URL canonicalization, MCP dispatch and existing engine/AI behavior |
 | `apps/browser-attached/` | Ten attached-browser MCP tools, Native Host and authority/framing regressions |
 | `extension/` | MV3 service worker, top-frame DOM helpers and toolbar popup |
+| `packaging/claw-browser-host` | Unprivileged executable selecting the canonical installed Native Host |
 | `package.json` | Product-owned staging and test inputs |
 
-Use the immutable platform dependency for SDK/runtime, credentials and safe
-HTTP helpers. The OS retains secret storage, memory, network authority and
+Use the immutable platform dependency for SDK/runtime and
+[`shared/python`](../../shared/MODULE.md) for credential-client and safe HTTP
+helpers. The OS retains secret storage, memory, network authority and
 the broker, and the reusable `cos-browser` engine. No App invokes another App; searches never silently switch
 provider or borrow an attached browser's login state.
 
@@ -36,9 +38,17 @@ read urllib degradation when the native engine is missing. It does not claim
 an MCP-only refactor or native engine migration. Its unit fixtures do not
 replace native browser build/rendering acceptance.
 
-The attached App payload is staged with the other Apps. Extension deployment
-remains an explicit OS `tools/install-browser-agent.sh` operation: it reads
-both extension and Native Host from the OS's immutable App source pin, retains
-the existing installed paths and configures the chosen extension ID.
-This move does not introduce automatic extension installation or APT updates.
-`clawd` still owns capabilities, origin injection and privileged socket access.
+`package.json` binds both `installed_assets` to `browser-attached`. The same
+canonical product staging contract installs the complete extension at `/usr/share/claw/extensions/claw-agent-browser`
+and the executable `/usr/lib/cos/claw-browser-host`. That launcher runs
+`/usr/bin/python3 /usr/lib/cos/apps/browser-attached/native_host.py`; only the
+canonical App payload owns the implementation. No duplicate is installed under
+`/usr/lib/cos/browser-agent`. Canonical `stage.py` invokes the asset helper once;
+other builders must not repeat it. Selecting only Search or Web does not add
+these attached-browser assets.
+
+Runtime registration, generic authenticated Host/session admission and installed
+file ownership remain coordinated OS/package integration work. Staged assets
+are not permission grants; `clawd` retains capability enforcement, origin
+injection and privileged socket access. No release or activation completion is
+implied by the product staging contract.

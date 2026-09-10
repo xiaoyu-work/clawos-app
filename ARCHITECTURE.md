@@ -45,7 +45,8 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/desktop-widgets/` | Complete Widget Rail native presentation and assets; Calendar/task/telemetry access and authority remain OS-provided |
 | `products/home-integration/` | Home Assistant REST adapter source; external server, accounts, devices and automation state are not imported; OS credentials and egress authority remain separate |
 | `products/messaging-channels/` | Discord/Telegram and outbound-only DingTalk/Google Chat/Lark/Matrix/Mattermost/Rocket.Chat/Signal/Slack/SMS/Teams/Webex/WhatsApp/Zulip connector sources; authenticated inbound owner/sender admission, lifecycle and durable replay handling remain pending |
-| `platform.lock.json`, `tools/platform_dependency.py` | Immutable development SDK/runtime dependency, not a second OS implementation |
+| `platform.lock.json`, `tools/platform_dependency.py` | Published, digest-pinned SDK/runtime/toolkit artifact, not an OS source checkout |
+| `shared/python/`, `shared/MODULE.md` | App-owned common client libraries, staged once through the common support package |
 | `tools/test.py` | Product/capability-scoped tests using the locked runtime and declared library exports |
 | `claw-os` | Native authority launcher, package signing, installation, core services and system integration |
 
@@ -60,18 +61,21 @@ here, along with the restricted `gateway-email` delivery adapter. These source m
 legacy identities or account state; completing that product cutover requires
 explicit account, consent and installation changes.
 
-SDK/runtime development dependencies are fetched by immutable commit into
-ignored build storage. Only those library source directories are checked out;
-product code does not import operating-system implementation files. Published
-runtime packages can replace this source dependency without changing the
-product interface. The legacy email transport also uses the pinned
-`apps/_shared` package and the sibling `canonical_argv.py` shared module
-(included by the sparse checkout's parent directory). No other App's
-implementation is checked out. OS package assembly already owns these
-installed libraries. Delivery imports the distinct `gateway._shared` namespace
-from its pinned shared library, rather than colliding with email's `_shared`.
-Staging preserves nested App paths; joining their components with `-` must
-produce the manifest ID, matching OS discovery.
+Development dependencies come from the public App platform release selected by
+`platform.lock.json`: explicit version, HTTPS URL, SHA-256 and runtime ABI.
+The consumer verifies the archive before extraction and rechecks its complete
+inventory on every cache use. It selects named SDK/runtime/toolkit exports;
+there is no Git, sibling-checkout or unverified-cache fallback. The SDK artifact
+contains OS libraries, not App helpers or private OS providers.
+
+Email, delivery and other products use the App-owned common libraries in
+`shared/python`: `_shared`, `gateway._shared` and `canonical_argv`. Development
+composes that local import root with the verified SDK/runtime roots; installed
+clients use `/usr/lib/cos/python`. `stage_shared` supplies a separate common
+payload, and individual product staging does not duplicate it. The installed
+file-ownership transition remains a coordinated package rollout, not a
+permission grant or user-data migration. See [shared support](shared/MODULE.md).
+Nested App paths still join with `-` to produce the declared manifest identity.
 
 Each product's `package.json` selects its installed Apps and additional tests.
 The test runner includes each declared App's `test_main.py`, then only the
@@ -98,8 +102,8 @@ named `claw_files` export, scoped to `doc`. The same resolver supplies test
 imports and stages that exact library into `/usr/lib/cos/python`, even when
 staging only Doc. Files/Doc co-staging accepts an identical library tree and
 rejects conflicting bytes, modes, symlinks or extra installed files; it never
-merges library trees. The OS supplies the SDK/runtime and canonical argument
-module. No other App implementation or mutable runtime loader is imported.
+merges library trees. The OS supplies the SDK/runtime; the common App support dependency supplies the
+canonical argument module. No other App implementation or mutable runtime loader is imported.
 Doc's six operations, CLI bindings, signed schema, AI budget/safety/origin,
 existing grants, document outputs and `doc` memory identity are unchanged.
 This is source ownership, not identity retirement, a grant union, new backend
@@ -107,7 +111,7 @@ authority, user-data relocation or completion of the broader product redesign.
 
 HTTP preserves `net.fetch` and `net.download`, their CLI argument bindings,
 bounded requests/responses, private atomic downloads and existing exact grants.
-It consumes the OS `_shared.safe_http` export for URL/IDNA handling,
+It consumes App-owned `_shared.safe_http` for URL/IDNA handling,
 per-redirect host/port authorization and brokered transport; no provider,
 credential store or other App implementation is copied. Staged public MCP
 fixtures exercise the declared entrypoint and CONNECT wire, including compatible
@@ -131,9 +135,9 @@ authorizes exact-key read/write/delete and full-store read for list/dump before
 dispatch. Those two operations use a fixed wildcard need, not wildcard
 borrowing: the latter could authorize an unfiltered scan using only a
 caller's named-key grants. No stored grant is changed or unioned.
-The existing `_shared.atomic` library comes from the locked platform in
-development and the OS-provided MCP Python path in installed execution, not a
-private sibling-source lookup. Persistence fixes keep cache snapshots coherent
+The `_shared.atomic` library comes from local App-owned `shared/python` in
+development and the common support package's installed Python path, not the
+OS artifact or a private sibling-source lookup. Persistence fixes keep cache snapshots coherent
 with file contents, serialize read-modify-replace under flock, publish cache
 only after commit, and explicitly use private file modes. Corruption is an
 error, not an empty-store or repair fallback; installed state is not migrated.

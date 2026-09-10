@@ -8,7 +8,6 @@ import shutil
 import subprocess
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _shared.env_scrub import scrub_env  # noqa: E402
 
 from cos_runtime import policy  # noqa: E402

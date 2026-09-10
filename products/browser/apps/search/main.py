@@ -10,7 +10,6 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _shared.credentials import load_credential  # noqa: E402
 from _shared.safe_http import open_url  # noqa: E402
 from cos_runtime import memory, policy  # noqa: E402

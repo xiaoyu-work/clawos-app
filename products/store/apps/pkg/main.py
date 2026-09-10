@@ -12,7 +12,6 @@ import sys
 
 # Pull in scrub_env so the apt-* / dpkg children we shell out to don't
 # inherit OPENAI_API_KEY / GITHUB_TOKEN / etc.
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _shared.env_scrub import scrub_env  # noqa: E402
 
 from cos_runtime import policy  # noqa: E402

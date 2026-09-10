@@ -31,7 +31,8 @@ mounts or additional grants are introduced.
 The native MCP process embeds the canonical product implementation
 (`apps/launcher/main.py`) at compile time and serves it through the Python SDK,
 not an App intercall or mutable helper script. Its fixed isolated interpreter
-imports only packaged OS SDK/runtime/shared libraries; the host's identity,
+imports packaged OS SDK/runtime and App-owned common libraries from
+`/usr/lib/cos/python`; the host's identity,
 authenticated transport and per-App data directory are preserved. Both MCP
 surfaces reuse catalog, launch validation and recent-file logic, without
 merging grants or data partitions. Native extras preserve order, accepting

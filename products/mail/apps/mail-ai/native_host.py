@@ -9,6 +9,7 @@ This transport neither creates an MCP caller nor invokes another App.
 from __future__ import annotations
 
 import inspect
+import importlib.util
 import json
 from pathlib import Path
 import struct
@@ -26,12 +27,15 @@ def _bootstrap_sdk_path() -> None:
     if _HERE == Path("/usr/lib/cos/apps/mail-ai"):
         paths = [Path("/usr/lib/cos/python")]
     else:
+        sys.dont_write_bytecode = True
         root = _HERE.parents[3]
-        lock = json.loads((root / "platform.lock.json").read_text())
-        dependency = root / "build" / "platform" / lock["revision"]
-        paths = [dependency / source for source in lock["python_sources"]]
-        if not all(path.is_dir() for path in paths):
-            raise ImportError("Run tools/platform_dependency.py before source-checkout execution")
+        spec = importlib.util.spec_from_file_location(
+            "mail_platform_dependency", root / "tools/platform_dependency.py",
+        )
+        platform = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(platform)
+        exports = platform.prepare_exports(download=False)
+        paths = [exports["python-sdk"], exports["python-runtime"]]
     sys.path[:0] = [str(_HERE), *(str(path) for path in paths)]
 
 

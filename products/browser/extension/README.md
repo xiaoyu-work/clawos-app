@@ -35,15 +35,22 @@ ordinary typed input values.
 
 The OS-owned
 [`tools/install-browser-agent.sh`](https://github.com/xiaoyu-work/claw-os/blob/main/tools/install-browser-agent.sh)
-loads this source and the Native Host from its immutable App repository pin.
-It installs the files and configures the extension allowlist and Native
-Messaging registration. This is a manual installer, not an automatic APT
-extension rollout or a force-install policy. During development you can load
-the extension unpacked:
+checks the installed `claw-app-browser` package assets and configures the
+extension allowlist and Native Messaging registration. The package owns this
+complete directory at `/usr/share/claw/extensions/claw-agent-browser` and
+`/usr/lib/cos/claw-browser-host`, which executes the single canonical host at
+`/usr/lib/cos/apps/browser-attached/native_host.py` with `/usr/bin/python3`.
+Independent Browser APT upgrades update these together; the OS registration
+command never clones App source or copies a second Native Host. It does not
+force-install an extension, kill a running browser, or modify browser profiles.
+Reload the extension/browser normally after an update.
+
+Load the installed directory unpacked, or this source directory during development:
 
 ```
 chromium --no-default-browser-check
-# chrome://extensions → Developer mode → Load unpacked → this directory
+# chrome://extensions → Developer mode → Load unpacked
+# Installed package: /usr/share/claw/extensions/claw-agent-browser
 ```
 
 Note the resulting extension ID and put it into
