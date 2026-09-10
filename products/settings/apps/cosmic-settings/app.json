@@ -28,7 +28,7 @@
       },
       {
         "name": "settings.permissions_request",
-        "summary": {"en": "Request restoration of a revoked, declared brokered permission. Returns pending, not granted. A human must use trusted Settings confirmation; manifest/caller ceilings remain unchanged."},
+        "summary": {"en": "Request restoration of a revoked, declared brokered permission. Returns pending, not granted. A human must use the OS approval gate or cos review; neither Settings GUI nor MCP can approve. Manifest/caller ceilings remain unchanged."},
         "args": [
           {"name": "app_id", "kind": "name", "required": true, "label": {"en": "Verified installed App id."}},
           {"name": "permission_id", "kind": "text", "required": true, "label": {"en": "Exact permission_id returned by permissions_show."}},

@@ -1,5 +1,6 @@
 """Exercise installed Settings resources and authenticated MCP without a desktop."""
 
+import argparse
 import json
 import os
 from pathlib import Path
@@ -14,6 +15,20 @@ from stage import stage
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--build-root", type=Path, default=ROOT / "build/settings-native",
+                        help="Explicit canonical prepared native source under build/")
+    parser.add_argument("--target-dir", type=Path, default=ROOT / "build/native-target",
+                        help="Cargo target containing the matching debug binary")
+    options = parser.parse_args()
+    build_root = options.build_root.resolve()
+    target_dir = options.target_dir.resolve()
+    for directory in (build_root, target_dir):
+        if directory == ROOT / "build" or not directory.is_relative_to(ROOT / "build"):
+            parser.error("Fixture build and target directories must be explicit paths under build/")
+    if not (build_root / "Cargo.toml").is_file() or not (target_dir / "debug/cosmic-settings").is_file():
+        parser.error("Build the prepared Settings candidate and its matching debug binary first")
+    environment = {**os.environ, "CARGO_TARGET_DIR": str(target_dir)}
     fixture = ROOT / "build/settings-process-fixture"
     fixture.mkdir()
     process = None
@@ -21,10 +36,10 @@ def main():
         installed = fixture / "installed"
         stage("settings", installed, ["cosmic-settings"])
         subprocess.run([
-            "just", "--justfile", str(ROOT / "build/settings-native/justfile"),
-            f"rootdir={installed}", f"bin-src={ROOT / 'build/native-target/debug/cosmic-settings'}",
+            "just", "--justfile", str(build_root / "justfile"),
+            f"rootdir={installed}", f"bin-src={target_dir / 'debug/cosmic-settings'}",
             "install",
-        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        ], check=True, env=environment, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         binary = installed / "usr/bin/cosmic-settings"
         assert binary.stat().st_mode & 0o777 == 0o755
         resources = installed / "usr/share"
@@ -33,7 +48,7 @@ def main():
         assert "Name[fr]=" in desktop.read_text()
         entries = list((resources / "applications").glob("com.clawos.Settings*.desktop"))
         assert len(entries) == 32
-        schemas = ROOT / "build/settings-native/resources/default_schema"
+        schemas = build_root / "resources/default_schema"
         for source in schemas.rglob("*"):
             if source.is_file():
                 assert (resources / "cosmic" / source.relative_to(schemas)).read_bytes() == source.read_bytes()
@@ -57,9 +72,12 @@ def main():
             "if args[1]=='__app-permissions':\n"
             " request=json.loads(args[2]);assert not {'owner_uid','session','confirm','approve'} & request.keys()\n"
             " action=request['action'];assert action in ['list','show','request','revoke']\n"
+            " if (root/'transport-failure').exists():\n"
+            "  print('synthetic permission transport failure',file=sys.stderr);sys.exit(75)\n"
             " if (root/'deny').exists():\n"
             "  print(json.dumps({'wire_version':1,'ok':False,'code':'PERMISSION_DENIED','error':'permission fixture denied'}));sys.exit(1)\n"
             " data={'list':{'apps':[{'app_id':'audio-manager'}]},'show':{'app_id':'audio-manager','permissions':[{'permission_id':'exact-id','enabled':False,'live_granted':False}]},'request':{'id':'ap-fixture','status':'pending','enabled':False},'revoke':{'revoked':True,'enabled':False,'restart_required':True}}[action]\n"
+            " if action=='show' and (root/'permission-state.json').exists():data=json.loads((root/'permission-state.json').read_text())\n"
             " print(json.dumps({'wire_version':1,'ok':True,'data':data}));sys.exit(0)\n"
             "assert args[1:5]==['__desktop','launch','--app-id','com.clawos.Settings'],args\n"
             "assert args[5:] in ([],['--uri','settings://wireless'],['--uri','settings://accessibility-magnifier'],['--uri','settings://dock-applet'],['--uri','settings://panel-applet']),args\n"
@@ -128,6 +146,24 @@ def main():
             assert "error" not in reply and not reply["result"].get("isError"), reply
             return json.loads(reply["result"]["content"][0]["text"])
 
+        def os_permission_state(enabled, *, pending=False, decision=None):
+            value = {
+                "app_id": "audio-manager", "trust": "verified",
+                "permissions": [{
+                    "permission_id": "exact-id", "declared": {"verb": "sys.observe"},
+                    "capability": None, "manageable": True, "enabled": enabled,
+                    "live_granted": False, "limitation": None,
+                }],
+                "pending": [{
+                    "id": "ap-fixture", "verb": "sys.observe",
+                    "scope": {"kind": "name", "value": "audio"}, "reason": "Synthetic restoration",
+                }] if pending else [],
+                "recent": [{"id": "ap-fixture", "state": decision}] if decision else [],
+                "semantics": "Enabled is not granted",
+            }
+            (fixture / "permission-state.json").write_text(json.dumps(value))
+            return value
+
         request("initialize", {"protocolVersion": "2024-11-05", "capabilities": {},
                               "clientInfo": {"name": "settings-fixture", "version": "1"}})
         process.stdin.write('{"jsonrpc":"2.0","method":"notifications/initialized"}\n')
@@ -166,14 +202,36 @@ def main():
             "app_id": "audio-manager", "permission_id": "exact-id", "reason": "Need audio status",
         }))
         assert pending["status"] == "pending" and pending["enabled"] is False
+        expected = os_permission_state(False, pending=True)
+        assert success(call("permissions_show", {"app_id": "audio-manager"})) == expected
+        # Cancelled OS authentication leaves the next authoritative query pending.
+        assert success(call("permissions_show", {"app_id": "audio-manager"})) == expected
+        for enabled, decision in [(False, "approved"), (True, "approved"), (False, "denied")]:
+            expected = os_permission_state(enabled, decision=decision)
+            observed = success(call("permissions_show", {"app_id": "audio-manager"}))
+            assert observed == expected
+            assert observed["permissions"][0]["enabled"] is enabled
+            assert observed["permissions"][0]["live_granted"] is False
+        before_policy = (fixture / "permission-state.json").read_bytes()
+        (fixture / "transport-failure").touch()
+        failed = call("permissions_request", {
+            "app_id": "audio-manager", "permission_id": "exact-id", "reason": "Transport failure",
+        })
+        assert failed["result"]["isError"], failed
+        assert (fixture / "permission-state.json").read_bytes() == before_policy
+        (fixture / "transport-failure").unlink()
+        assert success(call("permissions_show", {"app_id": "audio-manager"})) == expected
         assert success(call("permissions_revoke", {
             "app_id": "audio-manager", "permission_id": "exact-id",
         }))["revoked"]
         before = (fixture / "calls").read_bytes()
         for name, args in [
             ("permissions_approve", {"id": "ap-fixture", "confirm": True}),
+            ("permissions_decide", {"id": "ap-fixture", "decision": "approve"}),
             ("permissions_request", {"app_id": "audio-manager", "permission_id": "exact-id",
                                      "reason": "forged", "owner_uid": 0}),
+            ("permissions_request", {"app_id": "audio-manager", "permission_id": "exact-id",
+                                     "reason": "forged", "duration": "forever"}),
             ("permissions_show", {"app_id": "audio-manager", "session": "another-owner"}),
             ("permissions_revoke", {"app_id": "audio-manager"}),
         ]:
@@ -194,9 +252,9 @@ def main():
         # initializing a renderer or adding a fixture-only production CLI route.
         artifacts = subprocess.run([
             "cargo", "test", "--locked", "--no-run", "--message-format=json",
-            "--manifest-path", str(ROOT / "build/settings-native/Cargo.toml"),
-            "--target-dir", str(ROOT / "build/native-target"), "--package", "cosmic-settings",
-        ], check=True, stdout=subprocess.PIPE, text=True)
+            "--manifest-path", str(build_root / "Cargo.toml"),
+            "--target-dir", str(target_dir), "--package", "cosmic-settings",
+        ], check=True, env=environment, stdout=subprocess.PIPE, text=True)
         tests = [
             entry["executable"]
             for entry in map(json.loads, artifacts.stdout.splitlines())
@@ -217,7 +275,8 @@ def main():
         assert not (fixture / "config").exists()
         print("Settings installed binary/resources: 32 localized entries, schemas/polkit/icons; "
               "seven authenticated MCP tools, owner/session injection and self-approval rejection, "
-              "pending restoration and revocation responses; 31 pages, search clamps, fixed launch, denial, "
+              "pending/approved/denied restoration with OS query truth, cancelled-authentication pending "
+              "and failed-transport behavior, revocation responses; 31 pages, search clamps, fixed launch, denial, "
               "expiry and wrong-target rejection; human and MCP permission clients use sanitized PATH "
               "without CLAW_COS_BIN; no GUI/device/account access")
     finally:

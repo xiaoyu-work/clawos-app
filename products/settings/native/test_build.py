@@ -47,6 +47,49 @@ def test_original_nested_workspace_patches_and_full_default_graph(tmp_path):
         assert (output / path).exists(), path
 
 
+def test_permission_restoration_has_no_app_owned_approval_transport():
+    sources = [
+        NATIVE / "cosmic-settings/src/permissions.rs",
+        NATIVE / "cosmic-settings/src/pages/applications/permissions.rs",
+        NATIVE / "cosmic-settings/src/mcp.rs",
+    ]
+    for source in sources:
+        text = source.read_text()
+        for forbidden in ("pkexec", "claw-approval-helper", "permissions::decide",
+                          "Message::Decide", "SystemReview", "clawd_client"):
+            assert forbidden not in text, (source, forbidden)
+    client = sources[0].read_text()
+    assert "cos_call_json_with_binary" in client
+    assert '"/usr/local/bin/cos"' in client and '"__app-permissions"' in client
+    cargo = tomllib.loads((NATIVE / "cosmic-settings/Cargo.toml").read_text())
+    assert "clawd-client" not in cargo["dependencies"]
+    labels = (NATIVE / "i18n/en/cosmic_settings.ftl").read_text()
+    assert "app-permissions-approve =" not in labels
+    assert "app-permissions-deny =" not in labels
+    assert "app-permissions-review-in-os =" in labels
+    assert "cos review" in labels
+
+
+def test_permission_manifest_preserves_request_only_tools_and_signed_ceiling():
+    manifest = json.loads((PRODUCT / "apps/cosmic-settings/app.json").read_text())
+    tools = {tool["name"]: tool for tool in manifest["mcp"]["tools"]}
+    assert set(tools) == {
+        "settings.list_pages", "settings.search", "settings.open",
+        "settings.permissions_list", "settings.permissions_show",
+        "settings.permissions_request", "settings.permissions_revoke",
+    }
+    for action in ("list", "show", "request", "revoke"):
+        needs = tools[f"settings.permissions_{action}"]["needs"]
+        assert len(needs) == 1
+        assert needs[0]["verb"] == "sys.permissions"
+        assert needs[0]["scope"] == {
+            "kind": "fixed", "scope": {"kind": "name", "value": "manage"},
+        }
+    request = tools["settings.permissions_request"]
+    assert [arg["name"] for arg in request["args"]] == ["app_id", "permission_id", "reason"]
+    assert "OS approval gate or cos review" in request["summary"]["en"]
+
+
 @pytest.fixture
 def human(monkeypatch):
     monkeypatch.delenv("COS_MCP_SERVER", raising=False)

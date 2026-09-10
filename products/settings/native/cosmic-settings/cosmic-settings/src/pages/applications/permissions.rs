@@ -9,7 +9,6 @@ pub enum Message {
     Refresh,
     Select(usize),
     Change(String, bool),
-    Decide(String, bool),
     Cancel,
     Loaded(u64, String, Result<Value, String>),
 }
@@ -93,6 +92,7 @@ impl State {
     }
 
     fn reload_selected(&mut self) -> Task<Message> {
+        self.details = None;
         match self
             .selected
             .and_then(|index| self.apps.get(index))
@@ -130,29 +130,6 @@ impl State {
                     return self.start(action, request);
                 }
             }
-            Message::Decide(id, approve) if !self.busy => {
-                if !self
-                    .details
-                    .as_ref()
-                    .is_some_and(|details| details.pending.iter().any(|request| request.id == id))
-                {
-                    self.error = Some(crate::fl!("app-permissions-stale"));
-                    return Task::none();
-                }
-                self.cancel();
-                self.busy = true;
-                let epoch = self.epoch;
-                let (task, handle) = Task::future(async move {
-                    Message::Loaded(
-                        epoch,
-                        "decide".into(),
-                        crate::permissions::decide(id, approve).await,
-                    )
-                })
-                .abortable();
-                self.handle = Some(handle);
-                return task;
-            }
             Message::Loaded(epoch, action, result) if epoch == self.epoch => {
                 self.busy = false;
                 self.handle = None;
@@ -161,9 +138,15 @@ impl State {
                     Ok(value) if action == "list" => match serde_json::from_value::<Catalog>(value)
                     {
                         Ok(catalog) => {
+                            let selected = self
+                                .selected
+                                .and_then(|index| self.apps.get(index))
+                                .cloned();
                             self.apps = catalog.apps.into_iter().map(|app| app.app_id).collect();
                             self.quarantined = catalog.quarantined;
-                            self.selected = (!self.apps.is_empty()).then_some(0);
+                            self.selected = selected
+                                .and_then(|app| self.apps.iter().position(|id| *id == app))
+                                .or_else(|| (!self.apps.is_empty()).then_some(0));
                             self.details = None;
                             self.notice = catalog
                                 .truncated
@@ -174,20 +157,36 @@ impl State {
                             self.error = Some(format!("Invalid permission catalog: {error}"))
                         }
                     },
-                    Ok(value) if action == "show" => match serde_json::from_value::<Details>(value)
-                    {
-                        Ok(details) => self.details = Some(details),
-                        Err(error) => {
-                            self.error = Some(format!("Invalid permission state: {error}"))
+                    Ok(value) if action == "show" => {
+                        match serde_json::from_value::<Details>(value) {
+                            Ok(details)
+                                if self.selected.and_then(|index| self.apps.get(index))
+                                    == Some(&details.app_id) =>
+                            {
+                                self.details = Some(details);
+                            }
+                            Ok(_) => {
+                                self.details = None;
+                                self.error = Some("OS permission state belongs to a different App; refresh Settings.".into());
+                            }
+                            Err(error) => {
+                                self.details = None;
+                                self.error = Some(format!("Invalid permission state: {error}"))
+                            }
                         }
-                    },
-                    Ok(_) => {
+                    }
+                    Ok(_) if action == "request" || action == "revoke" => {
                         self.notice = Some(if action == "request" {
                             crate::fl!("app-permissions-pending")
                         } else {
                             crate::fl!("app-permissions-refresh-after-change")
                         });
                         return self.reload_selected();
+                    }
+                    Ok(_) => {
+                        self.error = Some(
+                            "Unexpected App permission service action; refresh Settings.".into(),
+                        );
                     }
                 }
             }
@@ -272,25 +271,14 @@ impl State {
                 }
             }
             content = content.push(text::title4(crate::fl!("app-permissions-pending-title")));
+            if !details.pending.is_empty() {
+                content = content.push(text::body(crate::fl!("app-permissions-review-in-os")));
+            }
             for request in &details.pending {
                 content = content.push(text::body(format!(
                     "{}: {} {} — {}",
                     request.id, request.verb, request.scope, request.reason
                 )));
-                if !self.busy {
-                    content = content.push(
-                        row::with_capacity(2)
-                            .spacing(12)
-                            .push(
-                                button::standard(crate::fl!("app-permissions-approve"))
-                                    .on_press(Message::Decide(request.id.clone(), true)),
-                            )
-                            .push(
-                                button::standard(crate::fl!("app-permissions-deny"))
-                                    .on_press(Message::Decide(request.id.clone(), false)),
-                            ),
-                    );
-                }
             }
             content = content.push(text::title4(crate::fl!("app-permissions-recent")));
             for recent in &details.recent {

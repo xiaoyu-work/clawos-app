@@ -50,7 +50,7 @@ here, retaining its separate twelfth identity and original default pages.
 | `package.json` | Product-owned staging and test inputs |
 | `native/cosmic-settings/` | Entire independent GPL workspace, lock, all page/subscription crates and resource/config/translation inputs |
 | `native/cosmic-settings/cosmic-settings/src/mcp.rs` | Static page catalog/search and fixed OS Settings activation |
-| `native/cosmic-settings/cosmic-settings/src/permissions.rs`, `src/pages/applications/permissions.rs` | Shared OS permission client, cancellable Applications UI, fixed trusted human confirmation |
+| `native/cosmic-settings/cosmic-settings/src/permissions.rs`, `src/pages/applications/permissions.rs` | Shared OS query/request/revoke client and cancellable Applications UI; human confirmation belongs to OS review |
 | `native/cosmic-settings/cosmic-settings/src/claw_glue.rs`, `src/human.rs`, `human_bridge.py` | Human-only controlled filesystem/process/policy/snapshot adapters and SDK Agent context; no App dispatch |
 | `native/test_build.py`, `native/test_process.py` | Workspace/default graph, synthetic human adapters, installed resources, authenticated stdio MCP and clean-environment native permission client |
 
@@ -141,7 +141,8 @@ Four new manifest-authoritative tools are `settings.permissions_list`,
 `settings.permissions_revoke`. They require only `sys.permissions:manage`.
 The Applications UI and MCP use the same typed OS route; identity comes from
 the authenticated broker session, never MCP metadata or user-provided owner
-fields. The UI's fixed polkit helper path is not an MCP operation.
+fields. Neither GUI nor MCP approves requests, invokes a privileged approval
+helper, offers grant durations or imports the OS review presenter/DTO.
 Permission and fixed-launch clients explicitly select `/usr/local/bin/cos`
 through the SDK's shared wire/error transport. A sanitized desktop PATH and absent `CLAW_COS_BIN` are
 supported without process-wide environment mutation or another subprocess
@@ -152,13 +153,19 @@ daemon grants, and shows quarantine/service errors plus pending/recent changes.
 Existing declarations default to enabled, not automatically granted. Revocation
 disables one brokered permission and invalidates that owner's target App grants;
 restart/retry the App afterward. Requesting restoration returns pending until
-a human confirms through the OS helper, with duration forever/until revoked.
+a human reviews it in the OS approval gate or with `cos review`. Settings shows
+the pending request and read-only recent decisions; Refresh queries the selected
+App again. Only that OS query's policy state can show restoration as enabled,
+never a request acknowledgement or an approved decision alone. Cancelling OS
+authentication leaves the request pending; transport errors do not enable it.
 The OS stores durable exact owner/App/capability-generation-bound policy
 receipts, separate from ordinary expiring execution grants. Existing approved
 Settings receipts retain this meaning across upgrades and restarts; a newer
 App, owner or approval-session revocation still invalidates them. Restoration
 has no execution expiry/use budget and cannot be redeemed as execution authority.
 This removes a deny gate, never expands signed manifest/trust/caller ceilings.
+The OS owns this non-execution policy consent; Settings does not choose or
+mint a duration, receipt or execution grant.
 Filesystem mounts, direct egress/native authority and argument-bound scopes
 remain visible but explicitly cannot be changed in this first version.
 Cancellation discards stale results; an in-flight mutation may still complete,
@@ -190,3 +197,8 @@ Tests use synthetic broker responses and do not change device state or capture i
 Native builds require the normal toolkit libraries plus PipeWire, PulseAudio,
 xkbregistry, libclang and gettext development inputs. Native process tests use
 `just` and Bubblewrap for scratch installation and an isolated synthetic broker.
+The process fixture accepts `--build-root` and `--target-dir` for an explicitly
+prepared native candidate and its matching isolated Cargo output under `build/`.
+These are fixture inputs only: they neither change the platform lock nor
+authorize an unpublished SDK for production release. Candidate process checks
+do not approve the existing polkit payload or establish live Wayland acceptance.

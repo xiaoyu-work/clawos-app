@@ -69,11 +69,16 @@ permission client; permission and fixed-launch calls explicitly use installed
 `/usr/local/bin/cos` even when
 PATH is sanitized and no override is set.
 
-Restoration stays pending until a human confirms through the fixed OS polkit
-helper. The OS persists until-revoked policy consent independently of its
+Restoration stays pending until a human reviews it in the OS approval gate or
+with `cos review`. Neither Settings GUI nor MCP can approve requests or launch
+the privileged approval helper. Pending requests and recent decisions are
+read-only; Refresh keeps the selected App and queries actual OS policy.
+An approved decision alone is not enabled policy, and enabled is not granted.
+Cancelling OS authentication leaves the request pending; failed queries never
+substitute success. The OS persists until-revoked policy consent independently of its
 30-day execution-grant ceiling, preserving earlier approved restorations but
-not overriding a newer owner/App/session revocation. Enabled is not granted;
-manifest/trust/caller ceilings and ordinary launch approvals still apply.
+not overriding a newer owner/App/session revocation. Manifest/trust/caller
+ceilings and ordinary launch approvals still apply.
 MCP cannot approve or forge an owner/session. Direct resources and dynamic
 argument scopes remain explicitly unsupported.
 
