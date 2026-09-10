@@ -35,3 +35,9 @@ for an immutable OS-composed build, and `--cos-binary <cos>` to exercise the
 actual installed-path CLI against its private broker fixture. The OS repository
 owns provider/authority and authenticated dispatch tests. Fixtures never
 open user files, start playback devices, or connect to a live desktop bus.
+
+`native_payload` selects the real `bin/cosmic-player` for GUI/MCP and preserves
+the original resources, thumbnailer metadata and licenses. The primary legacy
+command enters the common Host; it does not bypass admission for thumbnailing.
+URI/thumbnailer argv and existing OS playback executable/resource bindings
+remain explicit runtime gates; see [native payloads](../../docs/native-payloads.md).

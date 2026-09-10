@@ -42,3 +42,9 @@ ref-file reads check `fs.read`. Both adapters reject MCP use. New Window and
 The existing interactive PackageKit/Flatpak confirmation and provider policies
 remain unchanged. UI catalog/backend consolidation, installed-data migration,
 full-image integration and interactive/visual acceptance are separate work.
+
+The native payload binds GUI and MCP to the real `bin/cosmic-store`, preserving
+resources and licenses. Its compatibility command enters the existing common
+Host rather than invoking the relocated ELF directly. URI arguments are
+forwarded unchanged; OS argv/resource/provider integration stays gated. See
+[native payloads](../../docs/native-payloads.md).

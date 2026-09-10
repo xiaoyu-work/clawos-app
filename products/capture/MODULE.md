@@ -37,3 +37,10 @@ it installs only into an isolated build fixture and starts a private fake
 portal. No live desktop, user image or installed state is accessed.
 The process runner also accepts `--binary <built-binary> --source <native-inputs>`
 to exercise an OS-composed build from the same immutable source.
+
+The native payload binds both declared surfaces to real
+`bin/cosmic-screenshot`, retaining resources/licenses. Its compatibility
+command enters `cos app cosmic-screenshot --gui`, never the ELF directly.
+This does not establish the OS provider's `--portal-capture-stdout` contract or
+GUI argument/resource admission. Those paths remain gated rather than gain a
+special launcher exception; see [native payloads](../../docs/native-payloads.md).

@@ -122,9 +122,10 @@ PYTHONPATH=tests:shared/python python3 -m pytest -q --import-mode=importlib \
 The optional test fixture path is test-only; production always uses the lock's
 HTTPS URL and digest. These checks do not establish a native UI build or release
 acceptance before the final platform artifact is published.
-They also do not establish origin-independent OS Host admission: existing
-business-name executable bindings and native-host exemptions require generic
-replacements with equivalent provenance, ownership and sandbox protections.
+They also do not establish runtime resource/authority acceptance. The generic
+Host now binds signed package-relative entries without the former launch table
+or native-host exemption; provider identity and resource integration remain
+separate from source/artifact verification.
 Earlier Notifications config/util candidates were not generic runtime services.
 Native-owner source checks now report OS consumers use the public SDK
 presentation protocol without App libraries. Final SDK publication and runtime
@@ -143,3 +144,67 @@ Other declared data-only library fixtures retain path/identity checks; retired
 Notifications exports cannot re-enter release or development artifacts.
 Notifications process fixtures cover installed isolated MCP and actual private-FD
 old/new presentation handoff; real authority/SQLite/delivery ownership stays OS-side.
+
+Independent distribution is implemented by `release.py` (selection/real Debian
+payloads), `release_common.py` (validated package metadata), `release_signing.py`
+(isolated pinned-key signing), `release_apt.py` (authenticated retained indexes),
+`release_publish.py` (immutable assets/state publication) and `release_ci.py`
+(disposable CI provisioning). `native_build.py build --release` never includes
+fixture examples. For a product's explicit `native_payload` declaration,
+`--app-root` prepares a package-local App for the public provenance signer;
+`--install-root` additionally emits only common-Host compatibility exports.
+Both consume the real original installer through `native_payload.py`, preserve
+ELF/resource/license bytes and refuse links, placeholders, conflicts and
+authority files. Files' auxiliary applet lacks a separate declared Host entry
+and therefore blocks compatibility installation, without discarding its ELF
+from App-only preparation. Ordinary source staging remains source-only.
+See [native payloads and current runtime gates](../docs/native-payloads.md).
+`release_wheels.py` stages digest-pinned pure Python dependencies absent from
+Debian, preserving their licenses and one explicit product package owner.
+`release_interfaces.py` retains historical source only: active release builders
+and signing no longer import it, and its CLI refuses new output. Legacy
+interface records/archives and restored config/util declarations are rejected,
+including inside development fixtures. Retirement regressions replace positive
+publication expectations for those exports. `release_development.py` optionally
+emits content-addressed fixture source/staging archives
+and declared shared-crate compatibility exports. The all-architecture build
+records their digests; immutable Release assets/signatures cover them separately
+from the runtime `.deb` packages. Source fixtures are opt-in (`plan --fixtures`
+or workflow `fixtures=true`), never a distribution prerequisite.
+No native product implementation, OS source
+checkout, or installed-system archive dependency is introduced.
+The release layer delegates source staging but removes dependency-owned Python
+trees from consumer packages; `claw-app-support` and named library owners alone
+install those shared paths. Runtime dependencies are public versioned service/
+library ABIs, not an OS source revision. See
+[release commands and prerequisites](../docs/releases.md) and
+`tests/release/` for real dpkg, GnuPG, isolated APT and packaged MCP coverage.
+
+`release_payload.py` applies origin/language-neutral delivery checks to staging
+and every inspected `.deb`: no App root hooks, authority configuration, state
+or grant payloads, setuid/setgid, file capabilities or access ACLs. Build format
+does not select a trust tier. New publication is blocked by the checked-in
+integration-contract review state until generic Host/capability/resource-owner
+contracts replace the documented exceptions; authenticated metadata refresh
+retains its existing protection/freshness checks. Historical Notifications
+config/util exports are not release inputs; the replacement presentation
+protocol is OS-defined and part of the public Rust SDK artifact.
+
+`release_snapshots.py` accepts selected prepared, signed App directories rooted
+at `app.json` and `.provenance.json`, preserving all identities, binaries and
+resources. It invokes the digest-pinned public `cos provenance verify` command,
+not OS source, and emits deterministic App archives plus an OpenPGP-signed
+`claw.app-snapshot-catalog/v1` catalog/checksum set. Exact manifest/envelope bytes
+are bound to artifact digests and checked again from the completed archives.
+Operation/GUI and MCP/background entries use the public Linux runtime defaults
+or explicit package-local paths and must be declared signed regular files.
+MCP-only Apps need no invented main entry. Localized `needs[].why`, conditions,
+scopes and service/desktop metadata remain exact manifest data; catalog schemas
+reject permission choices, review receipts and first-review claims.
+No App entrypoint or root hook runs. Catalog data is never human approval or a
+permission grant; the OS's authenticated review/confirmation/update/activation
+contract remains mandatory. Tests in `tests/release/test_snapshots.py` use an
+explicit CLI fixture with isolated trust namespaces; no fixture becomes a
+production pin. Consistent terminal/desktop review and per-App scoped allow,
+ask, deny and real revocation are OS-owned, not App UI or publisher behavior.
+See [the producer/consumer contract](../docs/releases.md#verified-app-snapshot-producer).

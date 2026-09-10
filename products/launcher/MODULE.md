@@ -56,3 +56,9 @@ no GUI program is launched.
 The last command needs Linux bubblewrap and exercises the actual executable
 with installed-layout SDK imports, an authenticated fixture transport and fake
 policy/launch services. It never uses live desktop entries or user history.
+
+`native_payload` prepares the real `bin/cosmic-launcher` as the shared signed
+GUI/MCP entry, without moving the OS launcher backend or common Python support.
+The compatibility command enters `cos app cosmic-launcher --gui`; this does not
+grant desktop transport, catalog/history access or activate resources. See
+[native payloads](../../docs/native-payloads.md).

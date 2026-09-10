@@ -46,3 +46,10 @@ python3 tools/native_build.py files test
 python3 tools/native_build.py files build
 python3 products/files/native/test_process.py
 ```
+
+`native_payload` binds both primary GUI and MCP to the real
+`bin/cosmic-files`. App-only preparation also preserves `cosmic-files-applet`
+as a signed file; it is not a second declared Host entry. Compatibility
+installation therefore refuses that auxiliary surface instead of retaining
+an unsandboxed binary or choosing a new identity. See
+[native payloads](../../docs/native-payloads.md) for resource and argv gates.

@@ -39,16 +39,24 @@ an MCP-only refactor or native engine migration. Its unit fixtures do not
 replace native browser build/rendering acceptance.
 
 `package.json` binds both `installed_assets` to `browser-attached`. The same
-canonical product staging contract installs the complete extension at `/usr/share/claw/extensions/claw-agent-browser`
+staging contract used by the independent `claw-app-browser` Debian package
+installs the complete extension at `/usr/share/claw/extensions/claw-agent-browser`
 and the executable `/usr/lib/cos/claw-browser-host`. That launcher runs
 `/usr/bin/python3 /usr/lib/cos/apps/browser-attached/native_host.py`; only the
 canonical App payload owns the implementation. No duplicate is installed under
 `/usr/lib/cos/browser-agent`. Canonical `stage.py` invokes the asset helper once;
-other builders must not repeat it. Selecting only Search or Web does not add
-these attached-browser assets.
+release assembly does not repeat it. Selecting only Search or Web does not add these
+attached-browser assets.
 
-Runtime registration, generic authenticated Host/session admission and installed
-file ownership remain coordinated OS/package integration work. Staged assets
-are not permission grants; `clawd` retains capability enforcement, origin
-injection and privileged socket access. No release or activation completion is
-implied by the product staging contract.
+Updating Browser updates its extension, launcher and host together, without a
+separate desktop package or Chromium dependency. The OS
+`tools/install-browser-agent.sh` only validates installed files and configures
+the chosen extension ID, Native Messaging registration and policy. It does not
+clone App sources, copy package assets or alter browser profiles. Ordinary
+extension/browser reload remains explicit; package upgrades do not kill user
+processes or force-install an extension. See
+[release ownership and validation](../../docs/releases.md).
+`clawd` still owns capabilities, origin injection and privileged socket access.
+Package ownership is not a runtime privilege. The direct Native Messaging
+launcher/root-peer contract remains subject to the generic authenticated App
+Host/session review documented in the release integration blockers.

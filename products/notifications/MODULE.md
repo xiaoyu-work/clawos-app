@@ -87,3 +87,10 @@ public client over a private socket pair, unchanged product preference files,
 invalid authority/configuration fields, image snapshots and unavailable channels.
 Standard native builds require a declared SDK artifact containing the new
 companion crate; local candidate experiments are not production release pins.
+
+`native_payload` prepares the real `bin/cosmic-notifications` as the signed
+primary/MCP entry with original licenses and all installer resources.
+The legacy primary command enters the common Host; it does not choose a new
+presentation transport, grant, default provider or resource mount. Private
+descriptor/owner integration and live popup acceptance remain OS-coordinated;
+see [native payloads](../../docs/native-payloads.md).

@@ -4,6 +4,17 @@
 declared shared-capability client source groups. `claw-os` owns the system
 Agent, privileged broker, runtime authority, SDK and OS image.
 
+**Integration contract is not yet unified.** Every App, regardless of origin,
+language or UI, must use one authenticated manifest/Host/capability/resource-owner
+and sandbox model. Package authenticity and versioned interface availability
+are not grants. The generic Host now admits signed package-relative entries
+without the former fixed launch table or native-host exemption. Business-name
+provider gates, Browser/Mail integration, native GUI arguments and resource
+admission, and Settings' authority payload remain coordinated blockers, not
+approved architecture. Preserve existing protections until equivalent generic
+checks and regressions replace them. New release publication is gated; see
+[the current contract status](docs/releases.md#one-app-integration-contract-pending).
+
 ```text
 Product UI ----+
               +--> product business implementation --> versioned OS SDK/runtime
@@ -42,18 +53,46 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/clipboard/` | Selection App contract and complete native CopyQ history panel; separate selection/history grants, with policy and Wayland authority OS-owned |
 | `products/notification-delivery/` | One-shot ntfy/Pushover/Webhook App sources; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
 | `tools/stage.py` | Kind-aware assembly of declared App assets and named shared Python library dependencies |
+| `tools/package_assets.py` | Owner-scoped extra product assets invoked once by canonical staging, without changing common-library ownership |
+| `tools/native_payload.py` | Original-installer output to package-local ELF/resource/license preparation, explicit signer entries and common-Host compatibility launchers; no resource activation or authority |
 | `products/desktop-widgets/` | Complete Widget Rail native presentation and assets; Calendar/task/telemetry access and authority remain OS-provided |
 | `products/home-integration/` | Home Assistant REST adapter source; external server, accounts, devices and automation state are not imported; OS credentials and egress authority remain separate |
 | `products/messaging-channels/` | Discord/Telegram and outbound-only DingTalk/Google Chat/Lark/Matrix/Mattermost/Rocket.Chat/Signal/Slack/SMS/Teams/Webex/WhatsApp/Zulip connector sources; authenticated inbound owner/sender admission, lifecycle and durable replay handling remain pending |
 | `platform.lock.json`, `tools/platform_dependency.py` | Published, digest-pinned SDK/runtime/toolkit artifact, not an OS source checkout |
 | `shared/python/`, `shared/MODULE.md` | App-owned common client libraries, staged once through the common support package |
 | `tools/test.py` | Product/capability-scoped tests using the locked runtime and declared library exports |
+| `tools/release.py`, `tools/release_apt.py`, `tools/release_publish.py` | Independent product/capability Debian versions, real native payloads, immutable Release assets and separately signed retained App APT metadata |
 | `claw-os` | Native authority launcher, package signing, installation, core services and system integration |
 
-OS builds pin a commit of this repository and invoke the product asset builder.
-The resulting assets enter the existing signed OS package; installed paths and
-App provenance checks do not change. No installed system downloads a mutable
-Git branch or silently substitutes an unverified App.
+App release CI builds selected independently versioned Debian packages. OS
+images and installed systems consume named packages from the separately signed
+App APT channel, not product source copied into an OS package. Existing installed
+App paths, exact identities, grants and vendor provenance checks remain intact.
+The OS still owns privileged package transactions and its security-floor gates;
+there is no second privileged updater. Pinned product sources may still serve
+explicit cross-repository fixtures, never installed-system update code.
+Browser's base package owns its declared WebExtension and unprivileged
+canonical-host launcher together with its Apps. OS integration only configures
+Chromium Native Messaging/policy registration from those installed assets; it
+does not fetch product source or duplicate the Native Host. Updating Browser
+updates both halves through the same APT transaction, without moving profiles,
+grants or privileged browser authority.
+See [Independent App releases](docs/releases.md) for package ownership, public
+ABI dependencies, the bounded initial file transfer and publication prerequisites.
+The nine native MCP products declare a real `bin/<program>` shared by their
+primary GUI and MCP entries. Their builder preserves all installer resources
+inside the App and exports only the common Host at the legacy primary command.
+Signed inventory admission is separate from native argv, external resources,
+auxiliary executables and authority integration; see
+[native payloads](docs/native-payloads.md). No source-stage stub, App-specific
+Host exception or package-local dependency activation is introduced.
+Notifications metadata no longer declares config/util exports; release and
+fixture assembly emit no product-library interface archive. Earlier candidates
+included presentation implementation and are not approved generic UI-free
+interfaces. A selection can opt into a SHA256-addressed development archive
+with its declared App fixture sources/staging. OS production must consume
+general versioned service interfaces, not compile product UI/private business
+libraries. Fixture archives are not runtime download or update dependencies.
 
 Mail preserves `mail-ai` and its six AI operations, plus the existing `email`
 SMTP/Gmail/Outlook implementation. Native Thunderbird source is also owned
@@ -103,7 +142,8 @@ imports and stages that exact library into `/usr/lib/cos/python`, even when
 staging only Doc. Files/Doc co-staging accepts an identical library tree and
 rejects conflicting bytes, modes, symlinks or extra installed files; it never
 merges library trees. The OS supplies the SDK/runtime; the common App support dependency supplies the
-canonical argument module. No other App implementation or mutable runtime loader is imported.
+canonical argument module. No other App implementation or mutable runtime
+loader is imported.
 Doc's six operations, CLI bindings, signed schema, AI budget/safety/origin,
 existing grants, document outputs and `doc` memory identity are unchanged.
 This is source ownership, not identity retirement, a grant union, new backend
@@ -156,13 +196,14 @@ not this App.
 DB, KV, Net and Summarize cross-repository tests use manifest-declared MCP stdio,
 not private SDK dispatch methods or OS imports of client implementation modules.
 Compatible business changes and internal OS refactors should preserve these
-exports without requiring changes to the other implementation. The exact
-dependency pin establishes reproducibility, not complete decoupling: current
-development tooling knows the OS library source-directory exports,
-`cos_runtime.policy` remains bundled-only, and distribution still consumes
-the source-package/staging contract through an OS pin and signed package
-release. Independent runtime artifacts and release compatibility coverage are
-not established by source relocation. See
+exports without requiring changes to the other implementation. Independent
+release commands require the digest-pinned public development artifact and
+refuse the old OS-source transport. Installed updates use App-owned Debian
+packages and public runtime/service ABIs, not an OS commit or package-version
+lock. Publishing the development artifact, the App packages and the first
+split OS ownership boundary remains an explicit coordinated rollout;
+cross-repository fixtures alone are not production deployment or native
+interactive acceptance. See
 [Storage SDK's dependency contract](capabilities/storage-sdk/MODULE.md#dependency-contracts-and-independent-evolution).
 
 The native Calendar library accepts an `AgendaProvider` callback rather than
@@ -263,7 +304,7 @@ Files retains its
 original locked toolkit patches and workspace, including the applet executable.
 Its private native bridge embeds the canonical product filesystem/Recoll and
 document parsing sources, calling only system-installed SDK/runtime authority.
-The pure document parsing/conversion library also ships in the Agent package
+The pure document parsing/conversion library also ships in the headless Files package
 for the Document Engine capability client; native builds embed the same source rather
 than loading mutable App scripts. Summary memory belongs to `cosmic-files`,
 metadata's tag sidecar needs an exact parent read, and reveal is the fixed OS

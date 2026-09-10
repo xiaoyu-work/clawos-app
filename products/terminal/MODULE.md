@@ -49,3 +49,9 @@ Native process tests require bubblewrap and use synthetic broker/command
 executables, never an interactive shell, GUI or live keyring. `just install`
 in the generated native tree retains upstream desktop/icon/metainfo paths.
 Native builds require the paired OS's fixed Terminal desktop service at runtime.
+
+The native payload now selects one real `bin/cosmic-term` for primary GUI and
+MCP, with original resources/licenses in the App snapshot. Its legacy command
+routes through `cos app cosmic-term --gui`, preserving argument boundaries and
+Host errors. PTY, argument and resource acceptance remains separate; see
+[native payloads](../../docs/native-payloads.md).

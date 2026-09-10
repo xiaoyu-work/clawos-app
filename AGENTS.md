@@ -46,6 +46,11 @@ source group's `MODULE.md` before changing its boundary.
   consuming App IDs. Canonical staging invokes `tools/package_assets.py` once;
   release and fixture builders must not repeat it. Common support remains
   separately staged and separately owned.
+- Native App payload/launcher work starts at `tools/native_payload.py`, the
+  product's `native_payload` declaration, and `docs/native-payloads.md`.
+  Source staging is not a compiled App. Preserve real ELF/resource/license
+  bytes, use the existing signer and common Host, and keep unsupported
+  resource/argument/authority integration explicitly gated.
 
 ```bash
 python3 tools/test.py mail
@@ -63,3 +68,10 @@ completion separate from pending backend/state/identity consolidation or new
 UI work. AI Helpers owns only the `summarize` client; other products use SDK AI
 directly. Its tests must use isolated synthetic public AI/policy/memory wire
 fixtures, never paid/live models or another product's consent/budget.
+
+Independent release work starts at [`packaging/MODULE.md`](packaging/MODULE.md)
+and [`docs/releases.md`](docs/releases.md). `tools/release.py plan --select ...`
+defines the selected package/architecture matrix; release workflows build real
+Debian payloads and publish the separate signed App APT channel, never an OS
+checkout/build. Preserve one dpkg owner per shared library, the bounded OS
+ownership transfer, immutable versions and authenticated metadata freshness.

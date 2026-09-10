@@ -39,3 +39,9 @@ python3 products/editor/native/test_process.py
 
 Rust environment-mutating tests run serially. These fixture checks do not
 replace interactive Wayland acceptance.
+
+`native_payload` prepares the real `bin/cosmic-edit` for both signed primary
+and MCP entries, preserving resources/licenses. The legacy command enters
+`cos app cosmic-edit --gui`; file arguments remain forwarded, not silently
+discarded or executed outside the Host. Native argv/resource admission remains
+gated as described in [native payloads](../../docs/native-payloads.md).
