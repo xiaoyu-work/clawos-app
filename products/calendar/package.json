@@ -1,5 +1,9 @@
 {
   "apps": ["apps/calendar", "apps/panel-calendar"],
   "tests": ["native/test_build.py"],
-  "native": {"claw-applet-calendar": "native/claw-applet-calendar"}
+  "native": {"claw-applet-calendar": "native/claw-applet-calendar"},
+  "native_kind": "binary",
+  "native_assets": {"claw-applet-calendar": {
+    "Cargo.lock": "native/Cargo.lock", "LICENSE": "native/LICENSE"
+  }}
 }

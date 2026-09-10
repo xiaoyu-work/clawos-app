@@ -1,0 +1,21 @@
+name := 'claw-applet-widget-rail'
+appid := 'com.clawos.AppletWidgetRail'
+rootdir := ''
+prefix := '/usr'
+debug := '0'
+target := if debug == '1' { 'debug' } else { 'release' }
+targetdir := env('CARGO_TARGET_DIR', 'target')
+bindir := rootdir + prefix + '/bin'
+sharedir := rootdir + prefix + '/share'
+
+default: build-release
+
+build-debug *args:
+    cargo build --locked {{ args }}
+
+build-release *args: (build-debug '--release' args)
+
+install:
+    test -n "{{ rootdir }}" && stage="$(realpath -m -- "{{ rootdir }}")" && test "$stage" != /
+    install -Dm0755 {{ targetdir }}/{{ target }}/{{ name }} {{ bindir }}/{{ name }}
+    install -Dm0644 {{ targetdir }}/xdgen/{{ appid }}.desktop {{ sharedir }}/applications/{{ appid }}.desktop

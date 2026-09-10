@@ -9,11 +9,16 @@ The original GPL license is retained verbatim in [native/LICENSE](native/LICENSE
 and all source SPDX notices are preserved.
 
 Policy, Calendar access, read-only task collection, telemetry collection and
-their provider tests remain in the OS shared service library. Typed host
-callbacks replace imports of OS implementation and the Agent Activity App.
-The original unused standalone main is superseded by the existing OS host.
-No grants, installed paths or live user state change.
+their provider tests remain in the OS shared service library. The standalone
+main retains the original UI/callback seam and uses the public SDK's versioned
+fixed helper instead of a statically linked OS host. OS-side telemetry sampling
+state remains in a persistent helper; no provider, Agent Activity implementation
+or other App is imported. No grants, installed identities or live user state change.
 
 The native runner uses only the immutable shared toolkit from
 [platform.lock.json](../../platform.lock.json), preserving the existing fork
-and its licenses; see [tools/native_build.py](../../tools/native_build.py).
+and its licenses, plus the declared public SDK; see
+[tools/native_build.py](../../tools/native_build.py). The independent native App
+package ships its real ELF and original resources and requires
+`claw-os-applet-services-v1 (= 1)`. The OS shell neither links the UI nor reads
+its assets.

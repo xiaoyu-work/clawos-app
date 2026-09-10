@@ -6,13 +6,13 @@ import subprocess
 APP = Path(__file__).resolve().parent
 
 
-def test_launcher_preserves_native_dispatch(tmp_path):
-    binary = tmp_path / "cosmic-applets"
-    binary.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
+def test_launcher_executes_only_its_standalone_native_binary(tmp_path):
+    binary = tmp_path / "claw-applet-widget-rail"
+    binary.write_text("#!/bin/sh\nprintf '%s:%s\\n' \"${0##*/}\" \"$#\"\n")
     binary.chmod(0o755)
     result = subprocess.run([str(APP / "main.sh")], check=True, capture_output=True,
                             text=True, env={**os.environ, "PATH": str(tmp_path)})
-    assert result.stdout.splitlines() == ["claw-applet-widget-rail"]
+    assert result.stdout.splitlines() == ["claw-applet-widget-rail:0"]
 
 
 def test_identity_and_independent_original_grants():

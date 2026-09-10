@@ -1,2 +1,2 @@
 #!/bin/sh
-exec cosmic-applets claw-applet-widget-rail
+exec claw-applet-widget-rail

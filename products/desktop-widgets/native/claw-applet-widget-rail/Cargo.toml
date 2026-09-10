@@ -7,7 +7,15 @@ autobins = false
 
 [workspace]
 
+[[bin]]
+name = "claw-applet-widget-rail"
+path = "src/main.rs"
+
+[build-dependencies]
+xdgen = "0.1"
+
 [dependencies]
+claw-os-sdk = { path = "../../../claw-os-sdk/rust", version = "0.1" }
 i18n-embed-fl = "0.10"
 i18n-embed = { version = "0.16.0", features = ["fluent-system", "desktop-requester"] }
 jiff = "0.2"
@@ -18,3 +26,34 @@ libcosmic = { git = "https://github.com/pop-os/libcosmic", default-features = fa
 rust-embed = "8.11.0"
 tokio = { version = "1.49.0", features = ["full"] }
 tracing = "0.1"
+tracing-log = "0.2"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+
+[profile.release]
+opt-level = 1
+
+[patch."https://github.com/smithay/client-toolkit.git"]
+sctk = { package = "smithay-client-toolkit", version = "0.20.0" }
+
+[patch."https://github.com/pop-os/cosmic-protocols"]
+cosmic-protocols = { git = "https://github.com/pop-os/cosmic-protocols//", branch = "main" }
+cosmic-client-toolkit = { git = "https://github.com/pop-os/cosmic-protocols//", branch = "main" }
+
+[patch.'https://github.com/pop-os/libcosmic']
+cosmic-config = { path = "../../../desktop/toolkit/cosmic-config" }
+cosmic-config-derive = { path = "../../../desktop/toolkit/cosmic-config-derive" }
+cosmic-theme = { path = "../../../desktop/toolkit/cosmic-theme" }
+iced = { path = "../../../desktop/toolkit/iced" }
+iced_accessibility = { path = "../../../desktop/toolkit/iced/accessibility" }
+iced_core = { path = "../../../desktop/toolkit/iced/core" }
+iced_debug = { path = "../../../desktop/toolkit/iced/debug" }
+iced_futures = { path = "../../../desktop/toolkit/iced/futures" }
+iced_graphics = { path = "../../../desktop/toolkit/iced/graphics" }
+iced_program = { path = "../../../desktop/toolkit/iced/program" }
+iced_renderer = { path = "../../../desktop/toolkit/iced/renderer" }
+iced_runtime = { path = "../../../desktop/toolkit/iced/runtime" }
+iced_tiny_skia = { path = "../../../desktop/toolkit/iced/tiny_skia" }
+iced_wgpu = { path = "../../../desktop/toolkit/iced/wgpu" }
+iced_widget = { path = "../../../desktop/toolkit/iced/widget" }
+iced_winit = { path = "../../../desktop/toolkit/iced/winit" }
+libcosmic = { path = "../../../desktop/toolkit" }

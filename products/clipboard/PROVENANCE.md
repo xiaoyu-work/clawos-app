@@ -9,14 +9,17 @@ The original GPL license is preserved verbatim in [`native/LICENSE`](native/LICE
 along with source SPDX notices.
 
 This repository owns presentation, CopyQ scripts and bounded subprocess adapter,
-localization, desktop entry and tests. The unused standalone main is replaced
-by the existing OS `cosmic-applets` host, which injects the policy callback.
+localization, desktop entry, standalone main, installer and tests.
+`cosmic-applets` no longer links this UI or reads its resources. The original
+policy callback seam uses the public SDK and the fixed versioned OS helper.
 The shared OS policy implementation is not copied and no other App is imported.
 All original visual and CopyQ behavior is retained; this relocation does not
 merge selection/history state or broaden grants.
 
 Native development uses only the immutable shared toolkit source specified in
 [`platform.lock.json`](../../platform.lock.json), with its existing licenses,
-through [`tools/native_build.py`](../../tools/native_build.py) and the shared
-[toolkit patches](../../tools/native-patches.toml). Installed launch identity,
-desktop package ownership and signed OS updates remain unchanged.
+through [`tools/native_build.py`](../../tools/native_build.py) and the original
+[toolkit patches](../../tools/native-patches.toml), carried by the standalone
+manifest. Installed identity, data and grants remain unchanged. The independent
+native App package requires `claw-os-applet-services-v1 (= 1)` and contains its
+actual compiled binary and resources, not an OS shell symlink.

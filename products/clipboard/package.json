@@ -1,5 +1,9 @@
 {
   "apps": ["apps/clipboard-manager", "apps/panel-clipboard"],
   "tests": ["native/test_build.py"],
-  "native": {"claw-applet-clipboard": "native/claw-applet-clipboard"}
+  "native": {"claw-applet-clipboard": "native/claw-applet-clipboard"},
+  "native_kind": "binary",
+  "native_assets": {"claw-applet-clipboard": {
+    "Cargo.lock": "native/Cargo.lock", "LICENSE": "native/LICENSE"
+  }}
 }

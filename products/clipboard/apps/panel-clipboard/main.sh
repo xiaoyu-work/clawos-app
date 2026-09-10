@@ -1,2 +1,2 @@
 #!/bin/sh
-exec cosmic-applets claw-applet-clipboard
+exec claw-applet-clipboard

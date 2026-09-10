@@ -1,2 +1,2 @@
 #!/bin/sh
-exec cosmic-applets claw-applet-calendar
+exec claw-applet-calendar

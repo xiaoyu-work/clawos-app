@@ -2,6 +2,7 @@
 
 mod app;
 mod localize;
+mod service;
 
 use jiff::civil::Date;
 use std::{future::Future, pin::Pin};
@@ -18,7 +19,11 @@ pub struct CalendarEvent {
 pub type AgendaFuture = Pin<Box<dyn Future<Output = Result<Vec<CalendarEvent>, String>> + Send>>;
 pub type AgendaProvider = fn(Date) -> AgendaFuture;
 
-/// The shell supplies a policy-gated provider; presentation owns no authority.
+pub fn run_installed() -> cosmic::iced::Result {
+    run(service::agenda)
+}
+
+/// Presentation owns no authority; the standalone entry uses the OS SDK provider.
 pub fn run(provider: AgendaProvider) -> cosmic::iced::Result {
     localize::localize();
     cosmic::applet::run::<app::CalendarApplet>(provider)
