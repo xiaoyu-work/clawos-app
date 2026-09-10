@@ -5,18 +5,18 @@ use cosmic::iced::Alignment;
 use cosmic_settings_page::{self as page, Section, section};
 
 use super::info::Info;
+use crate::regional_settings::{self, Change, Failure, Pending};
 use cosmic::widget::{editable_input, list_column, settings, text};
 use cosmic::{Apply, Task};
 use slotmap::SlotMap;
 
 #[derive(Clone, Debug)]
 pub enum Message {
-    Error(String),
     HostnameEdit(bool),
     HostnameInput(String),
     HostnameSubmit,
-    HostnameSuccess(String),
-    Info(Box<Info>),
+    HostnameFinished(u64, String, Result<(), Failure>),
+    Info((u64, bool), Box<Info>),
 }
 
 impl From<Message> for crate::app::Message {
@@ -38,6 +38,8 @@ pub struct Page {
     hostname_input: String,
     info: Info,
     on_enter_handle: Option<cosmic::iced::task::Handle>,
+    pending: Pending,
+    notice: Option<String>,
 }
 
 impl page::AutoBind<crate::pages::Message> for Page {}
@@ -65,9 +67,10 @@ impl page::Page<crate::pages::Message> for Page {
     }
 
     fn on_enter(&mut self) -> Task<crate::pages::Message> {
+        let revision = self.pending.revision();
         let (task, handle) = Task::future(async move {
             let info = Info::load().await;
-            crate::pages::Message::About(Message::Info(Box::new(info)))
+            crate::pages::Message::About(Message::Info(revision, Box::new(info)))
         })
         .abortable();
 
@@ -88,78 +91,82 @@ impl Page {
     pub fn update(&mut self, message: Message) -> cosmic::app::Task<crate::Message> {
         match message {
             Message::HostnameEdit(editing) => {
-                self.editing_device_name = editing;
+                if !self.pending.busy() {
+                    self.editing_device_name = editing;
+                }
             }
 
             Message::HostnameInput(hostname) => {
-                self.hostname_input = hostname;
+                if !self.pending.busy() {
+                    self.hostname_input = hostname;
+                }
             }
 
             Message::HostnameSubmit => return self.hostname_submit(),
 
-            Message::Info(info) => {
+            Message::Info(revision, info) if revision == self.pending.revision() => {
+                let replace_input = !self.pending.busy()
+                    && !self.editing_device_name
+                    && self.hostname_input == self.info.device_name;
                 self.info = *info;
-                self.hostname_input = self.info.device_name.clone();
+                if replace_input {
+                    self.hostname_input = self.info.device_name.clone();
+                }
             }
 
-            Message::Error(_why) => {
-                self.hostname_input = self.info.device_name.clone();
-                // TODO: display errors
+            Message::HostnameFinished(generation, name, result)
+                if self.pending.complete(generation) =>
+            {
+                if result.is_ok() {
+                    self.info.device_name = name;
+                    self.editing_device_name = false;
+                } else {
+                    self.editing_device_name = true;
+                }
+                self.notice = Some(regional_settings::outcome(&result));
             }
-
-            Message::HostnameSuccess(name) => {
-                self.info.device_name = name;
-            }
+            Message::Info(..) | Message::HostnameFinished(..) => {}
         }
 
         Task::none()
     }
 
     fn hostname_submit(&mut self) -> cosmic::app::Task<crate::app::Message> {
-        if self.hostname_input == self.info.device_name {
+        if self.pending.busy() || self.hostname_input == self.info.device_name {
             return Task::none();
         }
 
-        if !hostname_validator::is_valid(&self.hostname_input) {
+        if self.hostname_input.len() > 64
+            || !self.hostname_input.is_ascii()
+            || self.hostname_input.ends_with('.')
+            || !hostname_validator::is_valid(&self.hostname_input)
+        {
+            self.notice = Some(fl!("regional-settings", "invalid-hostname"));
+            self.editing_device_name = true;
             return Task::none();
         }
 
+        let generation = match self.pending.begin() {
+            Ok(generation) => generation,
+            Err(error) => {
+                self.notice = Some(error.message());
+                return Task::none();
+            }
+        };
+        self.notice = Some(fl!("regional-settings", "working"));
         self.editing_device_name = false;
         let hostname = self.hostname_input.clone();
 
-        cosmic::Task::future(async move { set_hostname(hostname).await })
-            .map(crate::app::Message::from)
-            .map(Into::into)
+        cosmic::Task::future(async move {
+            let result = regional_settings::call(Change::StaticHostname {
+                hostname: hostname.clone(),
+            })
+            .await;
+            Message::HostnameFinished(generation, hostname, result)
+        })
+        .map(crate::app::Message::from)
+        .map(Into::into)
     }
-}
-
-/// Sets the system hostname via D-Bus.
-async fn set_hostname(hostname: String) -> Message {
-    match set_hostname_impl(&hostname).await {
-        Ok(()) => Message::HostnameSuccess(hostname),
-        Err(err) => {
-            tracing::error!("failed to set hostname: {}", err);
-            Message::Error(err)
-        }
-    }
-}
-
-/// Implementation of hostname setting that uses Result for cleaner error handling.
-async fn set_hostname_impl(hostname: &str) -> Result<(), String> {
-    let connection = zbus::Connection::system()
-        .await
-        .map_err(|e| format!("failed to establish connection to dbus: {}", e))?;
-
-    let hostname1 = hostname1_zbus::Hostname1Proxy::new(&connection)
-        .await
-        .map_err(|e| format!("failed to connect to org.freedesktop.hostname1: {}", e))?;
-
-    hostname1
-        .set_static_hostname(hostname, false)
-        .await
-        .map_err(|e| format!("failed to set static hostname: {}", e))?;
-
-    Ok(())
 }
 
 fn device() -> Section<crate::pages::Message> {
@@ -173,26 +180,42 @@ fn device() -> Section<crate::pages::Message> {
         .view::<Page>(move |_binder, page, section| {
             let desc = &section.descriptions;
 
-            let hostname_input = editable_input(
-                "",
-                &page.hostname_input,
-                page.editing_device_name,
-                Message::HostnameEdit,
-            )
-            .width(250.)
-            .on_input(Message::HostnameInput)
-            .on_unfocus(Message::HostnameSubmit)
-            .on_submit(|_| Message::HostnameSubmit);
+            let hostname_input: cosmic::Element<'_, Message> = if page.pending.busy() {
+                text::body(&page.hostname_input).into()
+            } else {
+                editable_input(
+                    "",
+                    &page.hostname_input,
+                    page.editing_device_name,
+                    Message::HostnameEdit,
+                )
+                .width(250.)
+                .on_input(Message::HostnameInput)
+                .on_unfocus(Message::HostnameSubmit)
+                .on_submit(|_| Message::HostnameSubmit)
+                .into()
+            };
 
             let device_name = settings::item::builder(&*desc[device])
                 .description(&*desc[device_desc])
                 .flex_control(hostname_input);
 
-            crate::widget::claw_list_column()
-                .add(device_name)
+            let mut content = crate::widget::claw_list_column().add(device_name);
+            if let Some(notice) = &page.notice {
+                content = content.add(text::body(notice));
+            }
+            content
                 .apply(cosmic::Element::from)
                 .map(crate::pages::Message::About)
         })
+}
+
+#[cfg(test)]
+mod tests {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/unit/pages/system/about.rs"
+    ));
 }
 
 fn hardware() -> Section<crate::pages::Message> {

@@ -924,6 +924,19 @@ time-format = Date & time format
 
 time-region = Region & language
 
+regional-settings = OS regional settings
+    .working = Waiting for the OS service. No change is confirmed yet.
+    .confirmed = The OS confirmed the requested change.
+    .denied = The OS did not authorize this change. { $detail }
+    .review = OS review is required ({ $review }). Use the OS approval gate or cos review; Settings cannot approve.
+    .unavailable = The OS service is unavailable; no change was dispatched. { $detail }
+    .unconfirmed = The result is not confirmed and the change may have applied. Refresh before retrying. { $detail }
+    .partial = System locale: { $system } Account language: { $owner } These are separate changes; no rollback is implied.
+    .local-error = Local preference settings could not all be saved. { $detail }
+    .local-only = The preference list was saved locally. No system or account-language change was requested.
+    .refresh-error = Current regional settings could not be refreshed. { $detail }
+    .invalid-hostname = Enter a hostname of at most 64 ASCII characters, with letter, digit or hyphen labels separated by dots.
+
 formatting = Formatting
     .dates = Dates
     .time = Time

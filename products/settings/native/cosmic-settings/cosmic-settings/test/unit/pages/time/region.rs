@@ -15,35 +15,100 @@ fn test_parse_locale_output_preserves_locale_strings() {
     assert!(result.contains(&"en_US.utf8".to_string()));
 }
 
-#[test]
-fn test_build_locale_settings_includes_all_lc_variables() {
-    let lang = "en_US.UTF-8";
-    let region = "de_DE.UTF-8";
-    let settings = build_locale_settings(lang, region);
+fn synthetic_locale(code: &str) -> SystemLocale {
+    SystemLocale {
+        lang_code: code.into(),
+        display_name: code.into(),
+        region_name: code.into(),
+    }
+}
 
-    assert_eq!(settings.len(), 10);
-    assert!(settings.contains(&format!("LANG={}", lang)));
-    assert!(settings.contains(&format!("LC_ADDRESS={}", region)));
-    assert!(settings.contains(&format!("LC_IDENTIFICATION={}", region)));
-    assert!(settings.contains(&format!("LC_MEASUREMENT={}", region)));
-    assert!(settings.contains(&format!("LC_MONETARY={}", region)));
-    assert!(settings.contains(&format!("LC_NAME={}", region)));
-    assert!(settings.contains(&format!("LC_NUMERIC={}", region)));
-    assert!(settings.contains(&format!("LC_PAPER={}", region)));
-    assert!(settings.contains(&format!("LC_TELEPHONE={}", region)));
-    assert!(settings.contains(&format!("LC_TIME={}", region)));
+fn regional_page() -> Page {
+    Page {
+        language: Some(synthetic_locale("en_US.UTF-8")),
+        region: Some(synthetic_locale("en_US.UTF-8")),
+        ..Page::default()
+    }
+}
+
+fn changed(
+    generation: u64,
+    system: Result<(), Failure>,
+    owner: Option<Result<(), Failure>>,
+) -> Message {
+    Message::Changed(Box::new(ChangeResult {
+        generation,
+        language: synthetic_locale("de_DE.UTF-8"),
+        region: synthetic_locale("de_DE.UTF-8"),
+        system,
+        owner,
+        time_preferences: None,
+    }))
 }
 
 #[test]
-fn test_build_locale_settings_uses_correct_values() {
-    let lang = "fr_FR.UTF-8";
-    let region = "en_GB.UTF-8";
-    let settings = build_locale_settings(lang, region);
+fn regional_failures_preserve_observed_state_without_hiding_partial_owner_success() {
+    for failure in [
+        Failure::Denied("missing system grant".into()),
+        Failure::Review("rv-pending".into()),
+        Failure::Unavailable("offline".into()),
+        Failure::Unconfirmed("lost acknowledgement".into()),
+    ] {
+        let mut page = regional_page();
+        let generation = page.pending.begin().unwrap();
+        let _task = page.update(changed(generation, Err(failure), Some(Ok(()))));
+        assert_eq!(page.language.as_ref().unwrap().lang_code, "en_US.UTF-8");
+        assert_eq!(page.region.as_ref().unwrap().lang_code, "en_US.UTF-8");
+        assert!(page.notice.is_some());
+        assert!(!page.pending.busy());
+    }
+}
 
-    // LANG should use the lang parameter
-    assert!(settings.iter().any(|s| s == "LANG=fr_FR.UTF-8"));
-    // LC_* variables should use the region parameter
-    assert!(settings.iter().any(|s| s == "LC_TIME=en_GB.UTF-8"));
+#[test]
+fn regional_system_success_is_not_rolled_back_when_owner_language_fails() {
+    let mut page = regional_page();
+    let generation = page.pending.begin().unwrap();
+    let _task = page.update(changed(
+        generation,
+        Ok(()),
+        Some(Err(Failure::Denied("owner grant missing".into()))),
+    ));
+    assert_eq!(page.language.as_ref().unwrap().lang_code, "de_DE.UTF-8");
+    assert_eq!(page.region.as_ref().unwrap().lang_code, "de_DE.UTF-8");
+    assert!(page.notice.is_some());
+}
+
+#[test]
+fn stale_regional_results_are_ignored_and_leaving_does_not_cancel_an_accepted_mutation() {
+    let mut page = regional_page();
+    let old_revision = page.pending.revision();
+    let generation = page.pending.begin().unwrap();
+    let _task = page.update(changed(generation + 1, Ok(()), None));
+    assert_eq!(page.language.as_ref().unwrap().lang_code, "en_US.UTF-8");
+    assert!(page.pending.busy());
+    let _task = page::Page::on_leave(&mut page);
+    assert!(page.pending.busy());
+    let _task = page.update(changed(generation, Ok(()), None));
+    let notice = page.notice.clone();
+    let _task = page.update(Message::Refresh(
+        old_revision,
+        Arc::new(Err(eyre::eyre!("stale read"))),
+    ));
+    assert_eq!(page.notice, notice);
+    assert_eq!(page.region.as_ref().unwrap().lang_code, "de_DE.UTF-8");
+}
+
+#[test]
+fn regional_mutation_source_has_no_direct_privileged_dbus_setter_or_detached_write() {
+    let source = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/pages/time/region.rs"
+    ));
+    assert!(!source.contains(".set_locale("));
+    assert!(!source.contains(".set_language("));
+    assert!(!source.contains("tokio::spawn("));
+    assert!(!source.contains("pkexec"));
+    assert!(!source.contains("approval-helper"));
 }
 
 #[test]
@@ -65,8 +130,7 @@ fn test_parse_locale_output_filters_pseudo_locales() {
 
 #[test]
 fn test_parse_locale_output_accepts_only_utf8_locales() {
-    let output =
-        "en_US\nen_US.utf8\nen_US.UTF-8\nar_IN\nar_IN.utf8\nde_DE.iso88591\nfr_FR.UTF-8\n";
+    let output = "en_US\nen_US.utf8\nen_US.UTF-8\nar_IN\nar_IN.utf8\nde_DE.iso88591\nfr_FR.UTF-8\n";
     let result = parse_locale_output(output);
 
     // Should accept UTF-8 variants

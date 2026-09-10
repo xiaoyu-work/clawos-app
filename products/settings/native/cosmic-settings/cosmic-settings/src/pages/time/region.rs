@@ -4,6 +4,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
+use crate::regional_settings::{self, Change, Failure, Pending};
 use crate::widget::selection_context_item;
 use cosmic::app::{ContextDrawer, context_drawer};
 use cosmic::iced::{Alignment, Length};
@@ -37,7 +38,8 @@ pub enum Message {
     InstallAdditionalLanguages,
     SelectRegion(DefaultKey),
     SourceContext(SourceContext),
-    Refresh(Arc<eyre::Result<PageRefresh>>),
+    Refresh((u64, bool), Arc<eyre::Result<PageRefresh>>),
+    Changed(Box<ChangeResult>),
     RegionContext,
     RemoveLanguage(DefaultKey),
 }
@@ -104,6 +106,16 @@ pub struct PageRefresh {
     language_selector_available: bool,
 }
 
+#[derive(Clone, Debug)]
+pub struct ChangeResult {
+    generation: u64,
+    language: SystemLocale,
+    region: SystemLocale,
+    system: Result<(), Failure>,
+    owner: Option<Result<(), Failure>>,
+    time_preferences: Option<Result<(), String>>,
+}
+
 #[derive(Default)]
 pub struct Page {
     entity: page::Entity,
@@ -122,6 +134,8 @@ pub struct Page {
     numeric_locale: Option<Locale>,
     /// Cached LC_TIME locale in icu locale format.
     time_locale: Option<Locale>,
+    pending: Pending,
+    notice: Option<String>,
 }
 
 impl page::Page<crate::pages::Message> for Page {
@@ -146,7 +160,10 @@ impl page::Page<crate::pages::Message> for Page {
     }
 
     fn on_enter(&mut self) -> cosmic::Task<crate::pages::Message> {
-        cosmic::task::future(async move { Message::Refresh(Arc::new(page_reload().await)) })
+        let revision = self.pending.revision();
+        cosmic::task::future(
+            async move { Message::Refresh(revision, Arc::new(page_reload().await)) },
+        )
     }
 
     fn on_leave(&mut self) -> cosmic::Task<crate::pages::Message> {
@@ -212,14 +229,37 @@ impl page::Page<crate::pages::Message> for Page {
 
 impl Page {
     pub fn update(&mut self, message: Message) -> cosmic::Task<crate::app::Message> {
+        if self.pending.busy()
+            && matches!(
+                &message,
+                Message::AddLanguage(_)
+                    | Message::RemoveLanguage(_)
+                    | Message::SourceContext(_)
+                    | Message::SelectRegion(_)
+                    | Message::ExpandLanguagePopover(_)
+                    | Message::InstallAdditionalLanguages
+            )
+        {
+            return cosmic::Task::none();
+        }
         match message {
             Message::AddLanguage(id) => {
                 if let Some(language) = self.available_languages.get(id)
                     && let Some((config, locales)) = self.config.as_mut()
                     && !locales.contains(&language.lang_code)
                 {
-                    locales.push(language.lang_code.clone());
-                    _ = config.set("system_locales", &locales);
+                    let mut next = locales.clone();
+                    next.push(language.lang_code.clone());
+                    match config.set("system_locales", &next) {
+                        Ok(()) => *locales = next,
+                        Err(error) => {
+                            self.notice = Some(fl!(
+                                "regional-settings",
+                                "local-error",
+                                detail = error.to_string()
+                            ))
+                        }
+                    }
                 }
             }
 
@@ -228,8 +268,18 @@ impl Page {
                     && let Some((config, locales)) = self.config.as_mut()
                     && let Some(pos) = locales.iter().position(|l| l == &language.lang_code)
                 {
-                    locales.remove(pos);
-                    _ = config.set("system_locales", &locales);
+                    let mut next = locales.clone();
+                    next.remove(pos);
+                    match config.set("system_locales", &next) {
+                        Ok(()) => *locales = next,
+                        Err(error) => {
+                            self.notice = Some(fl!(
+                                "regional-settings",
+                                "local-error",
+                                detail = error.to_string()
+                            ))
+                        }
+                    }
                 }
             }
 
@@ -237,18 +287,7 @@ impl Page {
                 if let Some((region, language)) =
                     self.available_languages.get(id).zip(self.language.as_ref())
                 {
-                    self.region = Some(region.clone());
-
-                    let lang = language.lang_code.clone();
-                    let region = region.lang_code.clone();
-
-                    return cosmic::task::future(async move {
-                        if set_locale(lang, region.clone()).await.is_ok() {
-                            update_time_settings_after_region_change(region);
-                        }
-
-                        Message::Refresh(Arc::new(page_reload().await))
-                    });
+                    return self.change(language.clone(), region.clone(), None, true);
                 }
             }
 
@@ -266,33 +305,86 @@ impl Page {
             }
 
             Message::InstallAdditionalLanguages => {
+                let revision = self.pending.revision();
                 return cosmic::task::future(async move {
                     _ = tokio::task::spawn_blocking(|| {
                         crate::claw_glue::start(&[GNOME_LANGUAGE_SELECTOR])
                     })
                     .await;
 
-                    Message::Refresh(Arc::new(page_reload().await))
+                    Message::Refresh(revision, Arc::new(page_reload().await))
                 });
             }
 
-            Message::Refresh(result) => match Arc::into_inner(result).unwrap() {
-                Ok(page_refresh) => {
-                    self.config = page_refresh.config;
-                    self.available_languages = page_refresh.available_languages;
-                    self.system_locales = page_refresh.system_locales;
-                    self.language = page_refresh.language;
-                    self.region = page_refresh.region;
-                    self.registry = Some(page_refresh.registry.0);
-                    self.language_selector_available = page_refresh.language_selector_available;
-                    self.numeric_locale = self.icu_locale_from_env("LC_NUMERIC");
-                    self.time_locale = self.icu_locale_from_env("LC_TIME");
+            Message::Refresh(revision, result) => {
+                if revision != self.pending.revision() {
+                    return cosmic::Task::none();
                 }
+                let Some(result) = Arc::into_inner(result) else {
+                    self.notice = Some(fl!(
+                        "regional-settings",
+                        "refresh-error",
+                        detail = "refresh result was shared; refresh again"
+                    ));
+                    return cosmic::Task::none();
+                };
+                match result {
+                    Ok(page_refresh) => {
+                        self.config = page_refresh.config;
+                        self.available_languages = page_refresh.available_languages;
+                        self.system_locales = page_refresh.system_locales;
+                        self.language = page_refresh.language;
+                        self.region = page_refresh.region;
+                        self.registry = Some(page_refresh.registry.0);
+                        self.language_selector_available = page_refresh.language_selector_available;
+                        self.numeric_locale = self.icu_locale_from_env("LC_NUMERIC");
+                        self.time_locale = self.icu_locale_from_env("LC_TIME");
+                    }
 
-                Err(why) => {
-                    tracing::error!(?why, "failed to get locales from the system");
+                    Err(why) => {
+                        tracing::error!(?why, "failed to get locales from the system");
+                        let message = fl!(
+                            "regional-settings",
+                            "refresh-error",
+                            detail = why.to_string()
+                        );
+                        self.notice = Some(match self.notice.take() {
+                            Some(previous) => format!("{previous}\n{message}"),
+                            None => message,
+                        });
+                    }
                 }
-            },
+            }
+
+            Message::Changed(result) => {
+                if !self.pending.complete(result.generation) {
+                    return cosmic::Task::none();
+                }
+                if result.system.is_ok() {
+                    self.numeric_locale = parse_locale(&result.region.lang_code);
+                    self.time_locale = self.numeric_locale.clone();
+                    self.language = Some(result.language);
+                    self.region = Some(result.region);
+                }
+                let mut notice = match &result.owner {
+                    Some(owner) => fl!(
+                        "regional-settings",
+                        "partial",
+                        system = regional_settings::outcome(&result.system),
+                        owner = regional_settings::outcome(owner)
+                    ),
+                    None => regional_settings::outcome(&result.system),
+                };
+                if let Some(Err(error)) = result.time_preferences {
+                    notice.push('\n');
+                    notice.push_str(&fl!("regional-settings", "local-error", detail = error));
+                }
+                self.notice = Some(notice);
+                let revision = self.pending.revision();
+                return cosmic::task::future(async move {
+                    Message::Refresh(revision, Arc::new(page_reload().await))
+                });
+            }
 
             Message::RegionContext => {
                 self.context = Some(ContextView::Region);
@@ -303,27 +395,41 @@ impl Page {
                 self.expanded_source_popover = None;
 
                 if let Some((config, locales)) = self.config.as_mut() {
+                    let mut next = locales.clone();
                     match context_message {
                         SourceContext::MoveDown(id) => {
-                            if id + 1 < locales.len() {
-                                locales.swap(id, id + 1);
+                            if id < next.len().saturating_sub(1) {
+                                next.swap(id, id + 1);
+                            } else {
+                                return cosmic::Task::none();
                             }
                         }
 
                         SourceContext::MoveUp(id) => {
-                            if id > 0 {
-                                locales.swap(id, id - 1);
+                            if id > 0 && id < next.len() {
+                                next.swap(id, id - 1);
+                            } else {
+                                return cosmic::Task::none();
                             }
                         }
 
                         SourceContext::Remove(id) => {
-                            let _removed = locales.remove(id);
+                            if id >= next.len() {
+                                return cosmic::Task::none();
+                            }
+                            next.remove(id);
                         }
                     }
 
-                    _ = config.set("system_locales", &locales);
-
-                    // Build the LANGUAGE string for AccountsService (colon-separated locales)
+                    if let Err(error) = config.set("system_locales", &next) {
+                        self.notice = Some(fl!(
+                            "regional-settings",
+                            "local-error",
+                            detail = error.to_string()
+                        ));
+                        return cosmic::Task::none();
+                    }
+                    *locales = next;
                     let language_list = build_language_list(locales);
 
                     if let Some(language_code) = locales.first()
@@ -333,30 +439,60 @@ impl Page {
                             .find(|lang| &lang.lang_code == language_code)
                     {
                         let language = language.clone();
-                        self.language = Some(language.clone());
-                        let region = self.region.clone();
-
-                        tokio::spawn(async move {
-                            _ = set_locale(
-                                language.lang_code.clone(),
-                                region.unwrap_or(language).lang_code.clone(),
-                            )
-                            .await;
-
-                            // Set the LANGUAGE variable via AccountsService
-                            if let Err(why) = set_user_language(language_list).await {
-                                tracing::error!(
-                                    ?why,
-                                    "failed to set user language via AccountsService"
-                                );
-                            }
-                        });
+                        let region = self.region.clone().unwrap_or_else(|| language.clone());
+                        return self.change(language, region, Some(language_list), false);
                     }
+                    self.notice = Some(fl!("regional-settings", "local-only"));
                 }
             }
         }
 
         cosmic::Task::none()
+    }
+
+    fn change(
+        &mut self,
+        language: SystemLocale,
+        region: SystemLocale,
+        languages: Option<String>,
+        update_time: bool,
+    ) -> cosmic::Task<crate::app::Message> {
+        let generation = match self.pending.begin() {
+            Ok(generation) => generation,
+            Err(error) => {
+                self.notice = Some(error.message());
+                return cosmic::Task::none();
+            }
+        };
+        self.expanded_source_popover = None;
+        self.notice = Some(fl!("regional-settings", "working"));
+        cosmic::task::future(async move {
+            let system = regional_settings::call(Change::SystemLocale {
+                lang: language.lang_code.clone(),
+                region: region.lang_code.clone(),
+            })
+            .await;
+            let time_preferences = if update_time && system.is_ok() {
+                Some(update_time_settings_after_region_change(&region.lang_code))
+            } else {
+                None
+            };
+            // The owner's preference is independent of the system default.
+            let owner = match languages {
+                Some(languages) => {
+                    Some(regional_settings::call(Change::OwnerLanguage { languages }).await)
+                }
+                None => None,
+            };
+            Message::Changed(Box::new(ChangeResult {
+                generation,
+                language,
+                region,
+                system,
+                owner,
+                time_preferences,
+            }))
+        })
     }
 
     fn add_language_view(&self) -> cosmic::Element<'_, crate::pages::Message> {
@@ -465,6 +601,9 @@ impl Page {
 
     fn region_view(&self) -> cosmic::Element<'_, crate::pages::Message> {
         let mut list = widget::list_column::with_capacity(self.available_languages.len());
+        if let Some(notice) = &self.notice {
+            list = list.add(widget::text::body(notice));
+        }
 
         let search_input = &self.add_language_search.trim().to_lowercase();
 
@@ -479,7 +618,7 @@ impl Page {
                 list = list.add(selection_context_item(
                     &locale.region_name,
                     is_selected,
-                    if is_selected {
+                    if is_selected || self.pending.busy() {
                         None
                     } else {
                         Some(Message::SelectRegion(id))
@@ -532,6 +671,7 @@ mod preferred_languages {
                                 id,
                                 format!("{} ({})", language, country),
                                 page.expanded_source_popover,
+                                !page.pending.busy(),
                             ));
                         }
                     }
@@ -539,17 +679,22 @@ mod preferred_languages {
 
                 let add_language_button =
                     widget::button::standard(&section.descriptions[add_lang_txt])
-                        .on_press(Message::AddLanguageContext)
+                        .on_press_maybe(
+                            (!page.pending.busy()).then_some(Message::AddLanguageContext),
+                        )
                         .apply(widget::container)
                         .width(Length::Fill)
                         .align_x(Alignment::End);
 
-                widget::column::with_capacity(5)
+                let mut view = widget::column::with_capacity(6)
                     .push(title)
                     .push(description)
                     .push(content)
-                    .push(add_language_button)
-                    .spacing(cosmic::theme::spacing().space_xxs)
+                    .push(add_language_button);
+                if let Some(notice) = &page.notice {
+                    view = view.push(widget::text::body(notice));
+                }
+                view.spacing(cosmic::theme::spacing().space_xxs)
                     .apply(cosmic::Element::from)
                     .map(Into::into)
             })
@@ -752,10 +897,11 @@ fn language_element(
     id: usize,
     description: String,
     expanded_source_popover: Option<usize>,
+    enabled: bool,
 ) -> cosmic::Element<'static, Message> {
     let expanded = expanded_source_popover.is_some_and(|expanded_id| expanded_id == id);
 
-    widget::settings::item(description, popover_button(id, expanded)).into()
+    widget::settings::item(description, popover_button(id, expanded, enabled)).into()
 }
 
 fn localized_iso_codes(locale: &locale::Locale) -> (String, String) {
@@ -781,12 +927,12 @@ fn localized_locale(locale: &locale::Locale, lang_code: String) -> SystemLocale 
     }
 }
 
-fn popover_button(id: usize, expanded: bool) -> Element<'static, Message> {
+fn popover_button(id: usize, expanded: bool, enabled: bool) -> Element<'static, Message> {
     let on_press = Message::ExpandLanguagePopover(if expanded { None } else { Some(id) });
 
     let button = button::icon(widget::icon::from_name("view-more-symbolic"))
         .extra_small()
-        .on_press(on_press);
+        .on_press_maybe(enabled.then_some(on_press));
 
     if expanded {
         widget::popover(button)
@@ -844,53 +990,6 @@ fn popover_menu_row(
         .apply(Element::from)
 }
 
-/// Sets the system locale using D-Bus instead of localectl for OpenRC compatibility.
-pub async fn set_locale(lang: String, region: String) -> eyre::Result<()> {
-    tracing::debug!("setting locale lang={lang}, region={region}");
-
-    let conn = zbus::Connection::system()
-        .await
-        .wrap_err("failed to connect to system D-Bus")?;
-
-    let proxy = locale1::locale1Proxy::new(&conn)
-        .await
-        .wrap_err("failed to create locale1 D-Bus proxy")?;
-
-    let locale_settings = build_locale_settings(&lang, &region);
-    let locale_strs: Vec<&str> = locale_settings.iter().map(|s| s.as_str()).collect();
-
-    proxy
-        .set_locale(&locale_strs, true)
-        .await
-        .wrap_err("failed to set locale via D-Bus")?;
-
-    tracing::debug!("successfully set locale via D-Bus");
-    Ok(())
-}
-
-/// Sets the user's preferred language list via AccountsService D-Bus.
-/// This updates the LANGUAGE environment variable for gettext-based applications.
-/// The language_list should be a colon-separated string like "de_DE:de:en_US:en".
-pub async fn set_user_language(language_list: String) -> eyre::Result<()> {
-    let conn = zbus::Connection::system()
-        .await
-        .wrap_err("zbus system connection error")?;
-
-    let uid = rustix::process::getuid().as_raw() as u64;
-
-    let user_proxy = accounts_zbus::UserProxy::from_uid(&conn, uid)
-        .await
-        .wrap_err("failed to create AccountsService user proxy")?;
-
-    user_proxy
-        .set_language(&language_list)
-        .await
-        .wrap_err("failed to set language via AccountsService")?;
-
-    tracing::debug!("set user language via AccountsService: {language_list}");
-    Ok(())
-}
-
 fn parse_locale(locale: &str) -> Option<Locale> {
     locale
         .split('.')
@@ -941,32 +1040,21 @@ fn get_default_first_day(locale: &str) -> usize {
     }
 }
 
-fn update_time_settings_after_region_change(region: String) {
-    // Create the same config that date.rs uses
-    let cosmic_applet_config = match cosmic_config::Config::new("com.clawos.AppletTime", 1) {
-        Ok(config) => config,
-        Err(err) => {
-            tracing::error!(
-                ?err,
-                "Failed to create cosmic applet config for time settings"
-            );
-            return;
-        }
-    };
-
-    // Update military_time based on new locale
-    let new_military_time = get_default_24h(&region);
-    if let Err(why) = cosmic_applet_config.set("military_time", new_military_time) {
-        tracing::error!(?why, "Failed to update military_time after region change");
-    }
-
-    // Update first_day_of_week based on new locale
-    let new_first_day = get_default_first_day(&region);
-    if let Err(why) = cosmic_applet_config.set("first_day_of_week", new_first_day) {
-        tracing::error!(
-            ?why,
-            "Failed to update first_day_of_week after region change"
-        );
+fn update_time_settings_after_region_change(region: &str) -> Result<(), String> {
+    let config = cosmic_config::Config::new("com.clawos.AppletTime", 1)
+        .map_err(|error| error.to_string())?;
+    let time = config.set("military_time", get_default_24h(region));
+    let week = config.set("first_day_of_week", get_default_first_day(region));
+    let failures: Vec<_> = time
+        .err()
+        .into_iter()
+        .chain(week.err())
+        .map(|error| error.to_string())
+        .collect();
+    if failures.is_empty() {
+        Ok(())
+    } else {
+        Err(failures.join("; "))
     }
 }
 
@@ -1037,23 +1125,6 @@ fn parse_locale_output(output: &str) -> Vec<String> {
         .filter(|line| utf8_encoding_re.is_match(line))
         .map(|line| line.to_string())
         .collect()
-}
-
-/// Builds the locale settings array for D-Bus SetLocale call.
-/// Sets LANG to the language parameter and all LC_* variables to the region parameter.
-fn build_locale_settings(lang: &str, region: &str) -> Vec<String> {
-    vec![
-        format!("LANG={}", lang),
-        format!("LC_ADDRESS={}", region),
-        format!("LC_IDENTIFICATION={}", region),
-        format!("LC_MEASUREMENT={}", region),
-        format!("LC_MONETARY={}", region),
-        format!("LC_NAME={}", region),
-        format!("LC_NUMERIC={}", region),
-        format!("LC_PAPER={}", region),
-        format!("LC_TELEPHONE={}", region),
-        format!("LC_TIME={}", region),
-    ]
 }
 
 #[cfg(test)]

@@ -84,7 +84,18 @@ argument scopes remain explicitly unsupported.
 
 Human UI writes,
 spawns and snapshot-backed mutations use controlled OS services, while
-interactive D-Bus/Wayland behavior and existing configuration remain unchanged.
+read-only D-Bus/Wayland behavior and existing configuration remain unchanged.
+
+Region/language and About setters use the typed OS regional service through
+the published SDK, without direct locale1/AccountsService/hostname1 setters
+or privileged helpers. System defaults, the owner's language preference and
+static hostname require three separate exact capabilities. Settings waits
+for matching confirmations, preserves attempted input on failure, blocks
+duplicate pending actions and reports non-atomic language outcomes honestly.
+The current GUI manifest/admission path still needs coordinated integration
+and a later published capability vocabulary. Broad polkit/Users payloads remain
+unchanged release blockers; isolated native/provider checks are not GUI,
+account-administration, polkit or release acceptance.
 
 ```bash
 python3 tools/test.py settings

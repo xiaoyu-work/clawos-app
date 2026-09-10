@@ -19,6 +19,7 @@ pub mod permissions;
 
 #[macro_use]
 pub mod localize;
+pub mod regional_settings;
 pub mod pages;
 pub mod subscription;
 pub mod theme;

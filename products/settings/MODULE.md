@@ -51,6 +51,7 @@ here, retaining its separate twelfth identity and original default pages.
 | `native/cosmic-settings/` | Entire independent GPL workspace, lock, all page/subscription crates and resource/config/translation inputs |
 | `native/cosmic-settings/cosmic-settings/src/mcp.rs` | Static page catalog/search and fixed OS Settings activation |
 | `native/cosmic-settings/cosmic-settings/src/permissions.rs`, `src/pages/applications/permissions.rs` | Shared OS query/request/revoke client and cancellable Applications UI; human confirmation belongs to OS review |
+| `native/cosmic-settings/cosmic-settings/src/regional_settings.rs`, `src/pages/time/region.rs`, `src/pages/system/about.rs` | Public SDK regional client and pending/error/partial-result UI; locale, owner language and static hostname setters remain OS-owned |
 | `native/cosmic-settings/cosmic-settings/src/claw_glue.rs`, `src/human.rs`, `human_bridge.py` | Human-only controlled filesystem/process/policy/snapshot adapters and SDK Agent context; no App dispatch |
 | `native/test_build.py`, `native/test_process.py` | Workspace/default graph, synthetic human adapters, installed resources, authenticated stdio MCP and clean-environment native permission client |
 
@@ -177,7 +178,32 @@ raw socket/file authority or a silent success fallback. No live device/user
 state or independent manager grants are migrated.
 
 The native human UI retains its original D-Bus/Wayland and configuration
-behavior, not the eleven Apps' combined grants. Former filesystem/exec App
+query behavior, not the eleven Apps' combined grants. Region/language and About
+mutations instead use `cos __regional-settings` through the published SDK's
+fixed `/usr/local/bin/cos` transport. Locale changes require `sys.locale`
+Name `system`; the owner's AccountsService preference requires `sys.language`
+Name `self`; static hostname requires `sys.hostname` Name `static`.
+No caller owner, bus, path, command, approval or privilege escalation is sent.
+Only matching OS confirmations update displayed state. Denied, review-required,
+unavailable, stale and ambiguous outcomes remain visible; separate system and
+owner-language writes never imply rollback. Local preference lists remain
+App-owned, and partial clock-format persistence errors are reported separately.
+
+The current manifest has no GUI operation declarations for these needs.
+Parent/publisher integration must supply actual GUI selectors/operation needs
+and a later published SDK vocabulary; existing 1.0.0 transport alone does not
+admit new High-risk grants. Authenticated GUI bootstrap/root-owned launch custody
+remain prerequisites. The original broad polkit rule, its installer and custom
+Users policy are unchanged release blockers, not authority for this client.
+No Users/password/account-administration cutover or real Wayland acceptance
+is included.
+
+Focused Rust tests are `regional_settings`, `pages::time::region` and
+`pages::system::about` in the independent `cosmic-settings` binary package,
+prepared through `tools/native_build.prepare` and the digest-verified published
+platform loader. Do not combine upstream native packages or import an OS tree.
+
+Former filesystem/exec App
 bridges now use controlled OS text writes, registered process spawning and
 human-only SDK policy/snapshot adapters. Queries remain timeout/output bounded
 and credential-scrubbed. These adapters reject MCP before any policy or effect.
@@ -202,3 +228,11 @@ prepared native candidate and its matching isolated Cargo output under `build/`.
 These are fixture inputs only: they neither change the platform lock nor
 authorize an unpublished SDK for production release. Candidate process checks
 do not approve the existing polkit payload or establish live Wayland acceptance.
+
+`native_payload` selects one real `bin/cosmic-settings` for signed primary
+and MCP entrypoints. The compatibility command uses the existing common Host;
+page selectors remain arguments, not executable paths or authority.
+The original installer's polkit rules/actions are rejected before output,
+never silently stripped or exempted. Signed ELF/resource fixtures are separate
+from that complete-package gate and actual GUI/provider admission; see
+[native payloads](../../docs/native-payloads.md).
