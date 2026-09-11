@@ -8,6 +8,9 @@ remains. Its Python paths include the named SDK/runtime exports and local
 App-owned `shared/python`, never OS `apps/`.
 `manifest_schema_path()` resolves the public SDK manifest contract, not private
 core source. `test.py` runs declared Python/Node contracts with these imports.
+The lock currently retains a withdrawn historical release, not an available
+replacement for unpublished platform `0.1.0`. Fresh downloads are blocked; see
+[publication status](../docs/releases.md#platform-publication-status).
 `stage.py` assembles declared App assets without installing them on the host.
 `package_assets.py` stages `installed_assets` declared by a product's
 `package.json`: each entry names a source file/directory, a root-relative

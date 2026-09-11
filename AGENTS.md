@@ -31,8 +31,11 @@ source group's `MODULE.md` before changing its boundary.
   Build native products on Linux/WSL's Linux filesystem.
 - Keep installed identities and permissions unchanged during repository moves.
   Product identity/data migrations are separate, explicit changes.
-- Stage explicit paths and preserve unrelated work. Publish each completed App
-  migration with its matching OS consumption/removal commit.
+- Stage explicit paths and preserve unrelated work. Coordinate each completed
+  App migration commit with its matching OS consumption/removal commit.
+- Releases, release tags, version bumps and platform/App pin adoption require
+  explicit owner approval. A request to commit or push source is not permission
+  to publish. See [platform publication status](docs/releases.md#platform-publication-status).
 - Use existing pytest, Node and upstream native test runners. Do not run the
   entire vendored source tree as a generic Python test suite.
 - Declare product Apps and extra tests in `package.json`; add each new product

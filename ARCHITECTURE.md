@@ -114,6 +114,9 @@ The consumer verifies the archive before extraction and rechecks its complete
 inventory on every cache use. It selects named SDK/runtime/toolkit exports;
 there is no Git, sibling-checkout or unverified-cache fallback. The SDK artifact
 contains OS libraries, not App helpers or private OS providers.
+The historical platform release has been withdrawn, so fresh dependency
+downloads are blocked. The OS platform source is unpublished `0.1.0`, not a
+replacement artifact pin; see [publication status](docs/releases.md#platform-publication-status).
 
 Email, delivery and other products use the App-owned common libraries in
 `shared/python`: `_shared`, `gateway._shared` and `canonical_argv`. Development

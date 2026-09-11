@@ -9,6 +9,23 @@ App provenance, security-floor gates and user state. There is no additional
 privileged updater, runtime source checkout, model-controlled signing key or
 trust-root override.
 
+## Platform publication status
+
+App development platform `1.0.0` and `1.1.0` releases, tags and uploaded Actions
+artifacts have been withdrawn at the owner's request. The OS platform source
+version is back to **unpublished `0.1.0`**; there is no replacement
+`app-platform-v0.1.0` release.
+
+The uncommitted `1.1.0` adoption has been reverted. `platform.lock.json` retains
+its historical `1.0.0` URL and digest, so a fresh environment cannot download
+that dependency. Existing local caches and validation artifacts are not a
+current publication. Do not fabricate a `0.1.0` URL/digest, substitute a sibling
+OS checkout or republish an artifact to bypass this blocked dependency.
+
+Any future release, release tag, version bump or dependency-pin adoption needs
+explicit owner approval. Source development, successful validation and requests
+to commit or push do not authorize publication.
+
 ## One App integration contract: pending
 
 The design is accepted; this status tracks implementation/integration acceptance,
@@ -61,7 +78,7 @@ replacement or remove/weaken their protections:
 | Clipboard `copyq.rs` and history-check service | The provider check is permission preflight; App code then executes CopyQ. An App can omit its own preflight, so authoritative resource enforcement must live in the generic OS service/sandbox boundary. Preserve the current check until the backend replacement is verified. The Debian `copyq` dependency is availability only. |
 | Native payload/runtime integration | [`native_payload.py`](../tools/native_payload.py) prepares real package-local ELFs and common-Host exports. Native GUI argv, Files' auxiliary applet and installed-resource/provider bindings remain explicitly gated; see [the bounded contract](native-payloads.md). |
 | Settings `native/cosmic-settings/justfile` | The installer currently copies `cosmic-settings.rules` and `com.clawos.Settings.Users.policy` into system polkit paths. The rule grants locale/keyboard/modem/hostname actions to active sudo/wheel users. The uniform delivery validator rejects this App-supplied authority configuration; move/generalize authority through the OS contract rather than exempt Settings or silently strip protection. |
-| Notifications presentation boundary | OS consumers use `claw-os-sdk/rust/notification-presentation` without App config/util or an interface tree. Stable SDK 1.0.0 is published and pinned. App config/util remain private; no old archive is restored, and signature/presentation definitions do not establish runtime activation. |
+| Notifications presentation boundary | OS consumers use `claw-os-sdk/rust/notification-presentation` without App config/util or an interface tree. The historical SDK 1.0.0 release has been withdrawn; see [platform publication status](#platform-publication-status). App config/util remain private; no old archive is restored, and signature/presentation definitions do not establish runtime activation. |
 
 Parent verification confirms `cosmic-applets` Cargo/main/build no longer
 references Calendar, Clipboard or Widget Rail. That completed separation is
