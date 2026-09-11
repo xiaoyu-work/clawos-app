@@ -1,7 +1,6 @@
 // Copyright 2023 System76 <info@system76.com>
 // SPDX-License-Identifier: GPL-3.0-only
 
-use clap::Parser;
 use cosmic::{
     Application, ApplicationExt, Element, action,
     app::{Core, CosmicFlags, Settings, Task, context_drawer},
@@ -40,6 +39,8 @@ use std::{
 
 use app_id::AppId;
 mod app_id;
+
+mod argparse;
 
 use app_info::{AppIcon, AppInfo, AppKind, AppProvide, AppUrl};
 mod app_info;
@@ -104,20 +105,6 @@ pub const ICON_SIZE_DETAILS: u16 = 128;
 pub const MAX_GRID_WIDTH: f32 = 1600.0;
 pub const MAX_RESULTS: usize = 100;
 
-#[derive(Debug, Default, Parser)]
-struct Cli {
-    subcommand_opt: Option<String>,
-    //TODO: should these extra gst-install-plugins-helper arguments actually be handled?
-    #[arg(long)]
-    transient_for: Option<String>,
-    #[arg(long)]
-    interaction: Option<String>,
-    #[arg(long)]
-    desktop_id: Option<String>,
-    #[arg(long)]
-    startup_notification_id: Option<String>,
-}
-
 /// Runs application with these settings
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     if std::env::var("COS_MCP_SERVER").as_deref() == Ok("1") {
@@ -130,7 +117,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     localize::localize();
 
-    let cli = Cli::parse();
+    let cli = argparse::parse();
 
     let (config_handler, config) = match cosmic_config::Config::new(App::APP_ID, CONFIG_VERSION) {
         Ok(config_handler) => {

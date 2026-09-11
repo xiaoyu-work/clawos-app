@@ -1,7 +1,7 @@
 use crate::app::iced::event::listen_raw;
+use crate::argparse::{self, Args, LauncherTasks};
 use crate::subscriptions::launcher;
 use crate::{components, fl};
-use clap::Parser;
 use cosmic::app::{Core, CosmicFlags, Settings, Task};
 use cosmic::cctk::sctk;
 use cosmic::cctk::sctk::shell::wlr_layer;
@@ -40,9 +40,7 @@ use cosmic::{Element, keyboard_nav, surface};
 use iced::keyboard::Key;
 use iced::{Alignment, Color};
 use pop_launcher::{ContextOption, GpuPreference, IconSource, SearchResult, SearchResultCategory};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::fmt::Display;
 use std::path::Path;
 use std::rc::Rc;
 use std::str::FromStr;
@@ -265,40 +263,6 @@ fn spotlight_pill_appearance(theme: &cosmic::Theme) -> cosmic::widget::text_inpu
     }
 }
 
-#[derive(Parser, Debug, Serialize, Deserialize, Clone)]
-#[command(author, version, about, long_about = None)]
-#[command(propagate_version = true)]
-pub struct Args {
-    #[clap(subcommand)]
-    pub subcommand: Option<LauncherTasks>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, clap::Subcommand)]
-pub enum LauncherTasks {
-    #[clap(about = "Toggle the launcher and switch to the alt-tab view")]
-    AltTab,
-    #[clap(about = "Toggle the launcher and switch to the alt-tab view")]
-    ShiftAltTab,
-    #[clap(about = "Start the launcher with an input")]
-    Input { input: Option<String> },
-    #[clap(about = "Close the launcher if open")]
-    Close,
-}
-
-impl Display for LauncherTasks {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", serde_json::ser::to_string(self).unwrap())
-    }
-}
-
-impl FromStr for LauncherTasks {
-    type Err = serde_json::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        serde_json::de::from_str(s)
-    }
-}
-
 impl CosmicFlags for Args {
     type SubCommand = LauncherTasks;
     type Args = Vec<String>;
@@ -309,7 +273,7 @@ impl CosmicFlags for Args {
 }
 
 pub fn run() -> cosmic::iced::Result {
-    let args = Args::parse();
+    let args = argparse::parse();
     cosmic::app::run_single_instance::<CosmicLauncher>(
         Settings::default()
             .antialiasing(true)

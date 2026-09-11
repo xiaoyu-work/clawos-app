@@ -982,6 +982,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3e64b0cc0439b12df2fa678eae89a1c56a529fd067a9115f7827f1fffd22b32"
 
 [[package]]
+name = "claw-app-gui-argv"
+version = "0.1.0"
+
+[[package]]
 name = "claw-os-sdk"
 version = "0.1.0"
 dependencies = [
@@ -1488,6 +1492,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "clap_lex",
+ "claw-app-gui-argv",
  "claw-os-sdk",
  "cos-runtime",
  "cosmic-files",

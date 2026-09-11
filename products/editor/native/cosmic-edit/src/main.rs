@@ -41,6 +41,7 @@ use tokio::time;
 use unicode_segmentation::UnicodeSegmentation;
 
 mod claw_glue;
+mod cli;
 mod mcp;
 
 use config::{AppTheme, CONFIG_VERSION, Config, ConfigState};
@@ -168,6 +169,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return mcp::run().map_err(|e| -> Box<dyn std::error::Error> { e.into() });
     }
 
+    let paths = cli::parse(env::args_os(), claw_os_sdk::gui::is_gui_launch());
+
     #[cfg(all(unix, not(target_os = "redox")))]
     match fork::daemon(true, true) {
         Ok(fork::Fork::Child) => (),
@@ -264,6 +267,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         config,
         config_state_handler,
         config_state,
+        paths,
     };
     cosmic::app::run::<App>(settings, flags)?;
 
@@ -428,6 +432,7 @@ pub struct Flags {
     config: Config,
     config_state_handler: Option<cosmic_config::Config>,
     config_state: ConfigState,
+    paths: Vec<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -1812,8 +1817,7 @@ impl Application for App {
 
         // Do not show nav bar by default. Will be opened by open_project if needed
         app.core.nav_bar_set_toggled(false);
-        for arg in env::args().skip(1) {
-            let path = PathBuf::from(arg);
+        for path in flags.paths {
             if path.is_dir() {
                 app.open_project(path);
             } else {

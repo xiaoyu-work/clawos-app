@@ -987,6 +987,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "claw-app-gui-argv"
+version = "0.1.0"
+
+[[package]]
 name = "claw-os-sdk"
 version = "0.1.0"
 dependencies = [
@@ -1402,6 +1406,7 @@ version = "1.0.13"
 dependencies = [
  "anyhow",
  "async-trait",
+ "claw-app-gui-argv",
  "claw-os-sdk",
  "cos-runtime",
  "cosmic-files",

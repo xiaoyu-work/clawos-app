@@ -77,3 +77,13 @@ These commands stage complete source and shared backend inputs under
 for resource installation after building. The on-screen UI still uses the
 OS launcher service; this move does not unify that service's catalog/history
 with isolated MCP data or change the UI.
+
+## Native GUI arguments
+
+After MCP dispatch, SDK GUI mode removes one exact leading `--gui` Host selector
+before the existing native Clap parser. The program name and all other
+arguments remain intact; direct CLI mode does not accept a new `--gui` option.
+For example, `input -- --gui` still passes the literal input `--gui`.
+Help/version, subcommands and single-instance serialization are unchanged.
+Parser regressions live in `test/unit/argparse.rs`; argument adaptation grants
+no desktop, catalog, history or resource access.

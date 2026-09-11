@@ -41,6 +41,11 @@ to exercise an OS-composed build from the same immutable source.
 The native payload binds both declared surfaces to real
 `bin/cosmic-screenshot`, retaining resources/licenses. Its compatibility
 command enters `cos app cosmic-screenshot --gui`, never the ELF directly.
+The native Clap parser consumes one leading Host selector only in GUI mode,
+preserving its original defaults, boolean/value syntax, save-path bytes,
+help/version, errors and MCP-first ordering. CLI early exits precede localization;
+MCP retains its existing localization initialization. The focused parser filter is
+`native_gui_argv_` in `test/unit/main.rs`.
 This does not establish the OS provider's `--portal-capture-stdout` contract or
-GUI argument/resource admission. Those paths remain gated rather than gain a
+GUI resource/authority admission. Those paths remain gated rather than gain a
 special launcher exception; see [native payloads](../../docs/native-payloads.md).

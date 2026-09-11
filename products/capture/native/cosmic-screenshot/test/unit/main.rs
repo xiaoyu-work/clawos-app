@@ -28,6 +28,90 @@ fn native_cli_preserves_original_interactive_modal_and_notification_defaults() {
     );
 }
 
+fn launch_args(argv: &[&str], gui: bool) -> Result<Args, clap::Error> {
+    Args::try_parse_from(claw_app_gui_argv::normalize(
+        argv.iter().map(std::ffi::OsString::from),
+        gui,
+        std::ffi::OsStr::new("--gui"),
+    ))
+}
+
+#[test]
+fn native_gui_argv_preserves_capture_options_and_values() {
+    for arguments in [
+        vec![],
+        vec!["--interactive=false", "--modal=false", "--notify=false"],
+        vec!["--save-dir", "shots with spaces"],
+        vec!["--save-dir=--gui", "--notify=false"],
+        vec!["--portal-capture-stdout", "--modal=false"],
+    ] {
+        let mut direct = vec!["cosmic-screenshot"];
+        direct.extend_from_slice(&arguments);
+        let mut gui = vec!["cosmic-screenshot", "--gui"];
+        gui.extend_from_slice(&arguments);
+        assert_eq!(
+            launch_args(&direct, false).unwrap(),
+            launch_args(&gui, true).unwrap(),
+        );
+    }
+}
+
+#[test]
+fn native_gui_argv_retains_clap_help_version_and_valid_errors() {
+    for arguments in [
+        vec!["--help"],
+        vec!["--version"],
+        vec!["--unknown"],
+        vec!["--save-dir"],
+        vec!["--save-dir", "--gui"],
+        vec!["--", "--gui"],
+        vec!["--interactive", "false"],
+        vec!["--portal-capture-stdout", "--save-dir", "shots"],
+    ] {
+        let mut direct = vec!["cosmic-screenshot"];
+        direct.extend_from_slice(&arguments);
+        let mut gui = vec!["cosmic-screenshot", "--gui"];
+        gui.extend_from_slice(&arguments);
+        let direct = launch_args(&direct, false).unwrap_err();
+        let gui = launch_args(&gui, true).unwrap_err();
+        assert_eq!(direct.kind(), gui.kind());
+        assert_eq!(direct.exit_code(), gui.exit_code());
+        assert_eq!(direct.to_string(), gui.to_string());
+    }
+}
+
+#[test]
+fn native_gui_argv_retains_direct_and_repeated_flags() {
+    let direct = launch_args(&["cosmic-screenshot", "--gui"], false).unwrap_err();
+    let repeated = launch_args(&["cosmic-screenshot", "--gui", "--gui"], true).unwrap_err();
+    assert_eq!(direct.kind(), clap::error::ErrorKind::UnknownArgument);
+    assert_eq!(direct.to_string(), repeated.to_string());
+    assert_eq!(
+        launch_args(&["cosmic-screenshot"], false).unwrap(),
+        launch_args(&["cosmic-screenshot"], true).unwrap(),
+    );
+}
+
+#[test]
+fn native_gui_argv_preserves_non_utf8_save_paths() {
+    use std::ffi::OsString;
+    use std::os::unix::ffi::OsStringExt;
+
+    let path = OsString::from_vec(b"shots-\xff".to_vec());
+    let args = Args::try_parse_from(claw_app_gui_argv::normalize(
+        [
+            OsString::from("cosmic-screenshot"),
+            OsString::from("--gui"),
+            OsString::from("--save-dir"),
+            path.clone(),
+        ],
+        true,
+        std::ffi::OsStr::new("--gui"),
+    ))
+    .unwrap();
+    assert_eq!(args.save_dir, Some(PathBuf::from(path)));
+}
+
 #[test]
 fn portal_png_is_bounded_regular_private_input_not_arbitrary_file_or_symlink() {
     let dir = tempfile::tempdir_in(std::env::current_dir().unwrap()).unwrap();

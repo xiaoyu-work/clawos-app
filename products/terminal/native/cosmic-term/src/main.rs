@@ -50,6 +50,7 @@ use config::{
 };
 mod config;
 mod claw_glue;
+mod cli;
 mod mouse_reporter;
 
 use icon_cache::IconCache;
@@ -83,8 +84,6 @@ mod terminal_theme;
 
 mod dnd;
 
-use clap_lex::RawArgs;
-
 static ICON_CACHE: LazyLock<Mutex<IconCache>> = LazyLock::new(|| Mutex::new(IconCache::new()));
 
 pub fn icon_cache_get(name: &'static str, size: u16) -> widget::icon::Icon {
@@ -99,56 +98,22 @@ fn main() -> Result<(), Box<dyn Error>> {
         return mcp::run().map_err(|e| -> Box<dyn Error> { e.into() });
     }
 
-    let raw_args = RawArgs::from_args();
-    let mut cursor = raw_args.cursor();
-
-    let mut shell_program_opt = None;
-    let mut shell_args = Vec::new();
-    let mut daemonize = true;
-    let mut working_directory = None;
-    // Parse the arguments using clap_lex
-    while let Some(arg) = raw_args.next_os(&mut cursor) {
-        match arg.to_str() {
-            Some("--help") | Some("-h") => {
+    let cli::Args { shell_program_opt, shell_args, daemonize, working_directory } =
+        match cli::parse(env::args_os(), claw_os_sdk::gui::is_gui_launch()) {
+            Ok(cli::Outcome::Run(args)) => args,
+            Ok(cli::Outcome::Help) => {
                 print_help();
                 return Ok(());
             }
-            Some("--version") | Some("-V") => {
-                println!(
-                    "cosmic-term {}",
-                    env!("CARGO_PKG_VERSION"),
-                );
+            Ok(cli::Outcome::Version) => {
+                println!("cosmic-term {}", env!("CARGO_PKG_VERSION"));
                 return Ok(());
             }
-            Some(arg_str @ "--working-directory") | Some(arg_str @ "-w") => {
-                if let Some(dir_arg) = raw_args.next_os(&mut cursor) {
-                    working_directory = Some(PathBuf::from(dir_arg));
-                } else {
-                    eprintln!("Missing argument for {arg_str}");
-                    process::exit(1);
-                }
+            Err(err) => {
+                eprintln!("{err}");
+                process::exit(1);
             }
-            Some("--no-daemon") => {
-                daemonize = false;
-            }
-            Some("-e") | Some("--command") | Some("--") => {
-                // Handle the '--command' or '-e' flag
-                break;
-            }
-            _ => {
-                //TODO: should this throw an error?
-                log::warn!("ignored argument {:?}", arg);
-            }
-        }
-    }
-    // After flags, process remaining shell program and args
-    while let Some(arg) = raw_args.next_os(&mut cursor) {
-        if shell_program_opt.is_some() {
-            shell_args.push(arg.to_string_lossy().to_string());
-        } else {
-            shell_program_opt = Some(arg.to_string_lossy().to_string());
-        }
-    }
+        };
 
     // Platform-specific daemonization logic
 

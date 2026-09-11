@@ -232,6 +232,13 @@ do not approve the existing polkit payload or establish live Wayland acceptance.
 `native_payload` selects one real `bin/cosmic-settings` for signed primary
 and MCP entrypoints. The compatibility command uses the existing common Host;
 page selectors remain arguments, not executable paths or authority.
+The native parser removes one leading `--gui` only in SDK-observed GUI mode,
+then retains the existing Clap pages, help/version, errors and OS-string theme
+paths. Help/version and parser errors exit before GUI localization/resource
+initialization; no debug-source resource mount is needed to parse them.
+MCP dispatch remains first. This does not create a GUI operation key,
+declare the pending regional needs or acquire any missing launch authority.
+The focused parser filter is `native_gui_argv_` in the binary's `test/unit/main.rs`.
 The original installer's polkit rules/actions are rejected before output,
 never silently stripped or exempted. Signed ELF/resource fixtures are separate
 from that complete-package gate and actual GUI/provider admission; see

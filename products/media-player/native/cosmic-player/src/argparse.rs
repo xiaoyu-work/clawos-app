@@ -1,6 +1,7 @@
 // Copyright 2024 System76 <info@system76.com>
 // SPDX-License-Identifier: GPL-3.0-only
 
+use std::ffi::{OsStr, OsString};
 use std::path::PathBuf;
 use std::{fs, io};
 
@@ -9,7 +10,28 @@ use log::warn;
 use url::Url;
 
 pub fn parse() -> Arguments {
-    let raw_args = RawArgs::from_args();
+    match parse_from(std::env::args_os(), claw_os_sdk::gui::is_gui_launch()) {
+        Ok(arguments) => arguments,
+        Err(DisplayRequest::Help) => print_help(),
+        Err(DisplayRequest::Version) => print_version(),
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum DisplayRequest {
+    Help,
+    Version,
+}
+
+fn parse_from<I>(argv: I, gui_launch: bool) -> Result<Arguments, DisplayRequest>
+where
+    I: IntoIterator<Item = OsString>,
+{
+    let raw_args = RawArgs::new(claw_app_gui_argv::normalize(
+        argv,
+        gui_launch,
+        OsStr::new("--gui"),
+    ));
     let mut cursor = raw_args.cursor();
     let mut arguments = Arguments::default();
     let mut urls = Vec::new();
@@ -20,15 +42,15 @@ pub fn parse() -> Arguments {
         if let Some(mut shorts) = arg.to_short() {
             while let Some(short) = shorts.next_flag() {
                 match short {
-                    Ok('h') => print_help(),
-                    Ok('V') => print_version(),
+                    Ok('h') => return Err(DisplayRequest::Help),
+                    Ok('V') => return Err(DisplayRequest::Version),
                     Ok(c) => warn!("unexpected flag: -{c}"),
                     Err(os_str) => warn!("unexpected flag: -{}", os_str.to_string_lossy()),
                 }
             }
         } else if let Some((long, opt_value)) = arg.to_long() {
             match long {
-                Ok("help") => print_help(),
+                Ok("help") => return Err(DisplayRequest::Help),
                 Ok("size") => {
                     if let Some(value) = opt_value
                         .or_else(|| raw_args.next_os(&mut cursor))
@@ -62,7 +84,7 @@ pub fn parse() -> Arguments {
                         warn!("thumbnail requires value");
                     }
                 }
-                Ok("version") => print_version(),
+                Ok("version") => return Err(DisplayRequest::Version),
                 _ => warn!("unexpected flag: {}", arg.display()),
             }
         } else {
@@ -85,7 +107,7 @@ pub fn parse() -> Arguments {
         arguments.url_opt = urls.pop();
     }
 
-    arguments
+    Ok(arguments)
 }
 
 #[derive(Debug, Default)]
@@ -166,4 +188,12 @@ pub fn print_version() -> ! {
     );
 
     std::process::exit(0);
+}
+
+#[cfg(test)]
+mod tests {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/unit/argparse.rs"
+    ));
 }

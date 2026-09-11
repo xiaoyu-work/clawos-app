@@ -7,6 +7,7 @@ edition = "2024"
 # The portal client keeps its original standalone graph, without a UI toolkit.
 
 [dependencies]
+claw-app-gui-argv = { path = "../../../../shared/rust/gui-argv" }
 cos-runtime = { path = "../../../cos-runtime/rust" }
 claw-os-sdk = { path = "../../../claw-os-sdk/rust" }
 ashpd = { version = "0.12", default-features = false, features = ["tokio"] }

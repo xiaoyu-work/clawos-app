@@ -13,6 +13,7 @@ translations, assets, original Cargo graph and `flathub-stats` workspace member.
 | `package.json` | Product-owned staging and test inputs |
 | `apps/cosmic-store/app.json` | Unchanged four-tool native descriptor and independent grants |
 | `native/cosmic-store/src/mcp.rs` | Three catalog queries and fixed Store activation |
+| `native/cosmic-store/src/argparse.rs`, `native/cosmic-store/test/unit/argparse.rs` | Native search/helper arguments, bounded Host GUI selector adaptation and parser regressions |
 | `native/cosmic-store/src/product.rs`, `product_bridge.py` | Embedded canonical catalog functions; OS policy/snapshot and desktop adapters |
 | `native/test_process.py` | Real binary/resource installation and authenticated synthetic stdio fixture |
 
@@ -45,6 +46,10 @@ full-image integration and interactive/visual acceptance are separate work.
 
 The native payload binds GUI and MCP to the real `bin/cosmic-store`, preserving
 resources and licenses. Its compatibility command enters the existing common
-Host rather than invoking the relocated ELF directly. URI arguments are
-forwarded unchanged; OS argv/resource/provider integration stays gated. See
+Host rather than invoking the relocated ELF directly. The App-owned
+`claw-app-gui-argv` library removes one exact argv[1] `--gui` only in SDK GUI mode,
+after the existing MCP dispatch. Search/URI/codec strings and helper option
+values retain their original boundaries; `-- --gui` remains a positional value.
+Help still exits successfully, and the unconfigured `--version` still errors.
+This parsing adaptation does not enable resource/provider integration. See
 [native payloads](../../docs/native-payloads.md).

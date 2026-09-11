@@ -14,7 +14,8 @@ The selected App's existing identity, version, AI policy, MCP tools and complete
 
 The nine manifests explicitly select `bin/<program>` for both `entry` and
 `mcp.entry`, with `runtime: "binary"` and `desktop.exec: "--gui"`. The selector
-is not an executable path or an argument injected into the native program.
+is not an executable path. The common Host forwards it as the first native
+argument, followed by the original user arguments.
 One real ELF serves both surfaces without copying it twice.
 
 [`native_payload.py`](../tools/native_payload.py) validates the original
@@ -66,6 +67,7 @@ bin/<auxiliary-program>          preserved file, not implicitly executable by a 
 resources/usr/share/...          original installed resource bytes
 LICENSE
 licenses/...                     original native license/copyright/notice files
+licenses/claw-app-gui-argv/LICENSE  root Apache-2.0 license in helper-consuming Apps
 .provenance.json                 supplied only by the existing public signer
 ```
 
@@ -74,6 +76,38 @@ into this directory. Common imports remain the separately owned
 `/usr/lib/cos/python` contract. There is no package-local venv/import activation.
 Ordinary `tools/stage.py` still stages source; it does not fabricate missing
 compiled binaries.
+
+## Native argv adaptation
+
+The native contract is `[argv0, desktop.exec, user arguments...]`, not an empty
+native argv reconstructed from `COS_ARGS_JSON`. The App-owned std-only
+[`claw-app-gui-argv`](../shared/rust/gui-argv/src/lib.rs) consumes exactly one
+leading `--gui` only when the existing SDK `gui::is_gui_launch()` observes GUI
+mode. It retains argv0 and every remaining OS string in order. A repeated
+selector, a flag-looking option value or text after `--` stays with the original
+parser. Outside GUI mode, even a leading `--gui` retains its original meaning
+or error. The marker selects parsing behavior, never identity or authority.
+
+| Product | Preserved native parsing contract |
+| --- | --- |
+| Editor | All remaining arguments are paths; no new option/help/version grammar. Paths are captured into startup flags rather than reread later from ambient argv. |
+| Files | Existing flags, file-URL/path resolution and separate location/URI collections. Its original parser has no end-of-options state; unknown tokens remain paths. The companion executable is unchanged. |
+| Terminal | Existing working-directory values, help/version/errors and command suffix after `-e`, `--command` or `--`. Child argument conversion retains its existing behavior. |
+| Launcher, Settings, Capture | Original Clap options/subcommands, help/version, ordering, `--` handling and errors. Theme/save paths remain OS strings. |
+| Store | Original optional search positional and helper options. Help remains supported; `--version` remains an error because the original parser has no version option. |
+| Media Player | Original URL ordering, thumbnail/size values, warnings and help/version. Its original parser has no end-of-options state; the adapter does not invent one. |
+| Notifications | No argv parser; all command-line tokens remain ignored. It needs no unused adapter dependency, and ordinary `--help`/`--version` are not GUI-free modes. |
+
+All nine retain MCP-first dispatch and their existing session/identity context.
+Settings and Capture parse CLI early exits before GUI localization. In particular,
+debug Settings help no longer requires exposing its build-source translation
+directory; normal GUI localization/resources still require their actual runtime
+contract. Capture's MCP localization initialization is unchanged.
+The immutable SDK 1.0.0 artifact is unchanged; the helper is compiled into the
+eight actual parser consumers, not installed as a new shared runtime or an OS
+source import. Parser and isolated no-desktop process checks do not prove
+authenticated Host launch, Wayland access, single-instance activation, resource
+mounts, file/URI access, provider execution or permission acquisition.
 
 ## Compatibility installation
 
@@ -111,7 +145,7 @@ empty resource directories and modes are retained inside the App.
 
 | Surface | Exact unresolved boundary |
 | --- | --- |
-| Native GUI arguments | The traced public router accepts trailing arguments, but `bridge::launch_gui` currently constructs an empty native argv and conveys them only as `COS_ARGS_JSON`. These programs parse native argv. Wrapper forwarding is preserved, but file/URI opens, Settings page selectors, Terminal flags, Capture modes and Player thumbnailing are not claimed working through this Host until the OS supplies the appropriate argument contract. |
+| End-to-end GUI execution | App-side selector parsing preserves the Host's forwarded arguments, but does not establish authenticated GUI bootstrap, Wayland/resource access or single-instance activation. File/URI opens, page selection, Terminal execution, Capture modes and Player thumbnailing still require their actual admitted runtime paths. |
 | GUI permissions | The current GUI plan derives fixed/wild operation needs, not MCP-tool needs. Fixed requests outside launcher delegation are dropped without an approval prompt, and an unregistered launcher cannot acquire rights above Medium risk. A declared GUI selector operation expresses needs but does not acquire them. Preserve zero/denied rights until an explicit OS-owned authorization path is available; do not union MCP permissions or bootstrap Admin. |
 | Files companion | The original installer also produces `cosmic-files-applet`. App-only preparation preserves its complete ELF under `bin/`, but the main manifest does not select that different executable. Compatibility installation refuses rather than retaining an unsandboxed secondary binary, choosing a new identity or inventing an auxiliary-entry ABI. |
 | Settings authority files | The original installer supplies `usr/share/polkit-1/rules.d/cosmic-settings.rules` and `usr/share/polkit-1/actions/com.clawos.Settings.Users.policy`. Both remain rejected before output; neither is silently stripped or exempted. The package stays gated pending OS-owned authority integration. |

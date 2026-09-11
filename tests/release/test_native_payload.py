@@ -7,6 +7,7 @@ from pathlib import Path
 import platform
 import shutil
 import sys
+import tomllib
 
 import pytest
 
@@ -131,6 +132,12 @@ def test_native_preparation_preserves_bytes_modes_licenses_and_raw_manifest(prod
     for license_path in license_files(selected.license.parent):
         target = result.root / "licenses" / license_path.relative_to(selected.license.parent)
         assert target.read_bytes() == license_path.read_bytes()
+    support_license = result.root / "licenses/claw-app-gui-argv/LICENSE"
+    if product == "notifications":
+        assert not support_license.exists()
+    else:
+        assert support_license.read_bytes() == (ROOT / "LICENSE").read_bytes()
+        assert support_license.stat().st_mode == (ROOT / "LICENSE").stat().st_mode
     assert not (result.root / ".provenance.json").exists()
     assert not (result.root / "usr/lib/cos/python").exists()
     snapshots.validate_manifest_entries(result.root, json.loads(original), result.entrypoints)
@@ -138,6 +145,47 @@ def test_native_preparation_preserves_bytes_modes_licenses_and_raw_manifest(prod
         snapshots.validate_manifest_entries(result.root, json.loads(original), [])
     with pytest.raises(ValueError, match="overwrite"):
         native_payload.prepare(selected, installed, result.root, ARCHITECTURE)
+
+
+@pytest.mark.parametrize("failure", ("missing", "symlink"))
+def test_missing_app_owned_gui_license_refuses_preparation(installer, tmp_path, monkeypatch, failure):
+    selected, installed = installer("capture")
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    if failure == "symlink":
+        (repository / "LICENSE").symlink_to(ROOT / "LICENSE")
+    monkeypatch.setattr(native_payload, "ROOT", repository)
+    with pytest.raises(ValueError, match="GUI argv support requires its original App-owned license"):
+        native_payload.prepare(selected, installed, tmp_path / "rejected", ARCHITECTURE)
+    assert not (tmp_path / "rejected").exists()
+
+
+@pytest.mark.parametrize("depth", (0, 1))
+def test_native_preparation_resolves_flat_and_nested_app_owned_gui_support(tmp_path, monkeypatch, depth):
+    repository = tmp_path / "repository"
+    source = repository / "products/fixture/native/component"
+    source.mkdir(parents=True)
+    package = source.parent.parent / "package.json"
+    package.write_text(json.dumps({
+        "native_kind": "binary", "native": {"component": "native/component"},
+    }))
+    manifest = source / ("child/Cargo.toml" if depth else "Cargo.toml")
+    manifest.parent.mkdir(exist_ok=True)
+    original = (
+        "[dependencies]\n"
+        f'claw-app-gui-argv = {{ path = "{"../" * (4 + depth)}shared/rust/gui-argv" }}\n'
+        f'claw-os-sdk = {{ path = "{"../" * (3 + depth)}claw-os-sdk/rust" }}\n'
+    )
+    manifest.write_text(original)
+    toolkit = tmp_path / "verified-platform/desktop/toolkit"
+    monkeypatch.setattr(native_build, "ROOT", repository)
+    destination = tmp_path / "prepared"
+    native_build.prepare("fixture", toolkit, destination)
+    dependencies = tomllib.loads((destination / manifest.relative_to(source)).read_text())["dependencies"]
+    assert dependencies["claw-app-gui-argv"]["path"] == (repository / "shared/rust/gui-argv").as_posix()
+    assert dependencies["claw-os-sdk"]["path"] == (toolkit.parents[1] / "claw-os-sdk/rust").as_posix()
+    assert manifest.read_text() == original
+    assert not (repository / "shared").exists()
 
 
 @pytest.mark.parametrize("product", PRODUCTS)

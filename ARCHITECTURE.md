@@ -9,7 +9,7 @@ language or UI, must use one authenticated manifest/Host/capability/resource-own
 and sandbox model. Package authenticity and versioned interface availability
 are not grants. The generic Host now admits signed package-relative entries
 without the former fixed launch table or native-host exemption. Business-name
-provider gates, Browser/Mail integration, native GUI arguments and resource
+provider gates, Browser/Mail integration, native GUI authority and resource
 admission, and Settings' authority payload remain coordinated blockers, not
 approved architecture. Preserve existing protections until equivalent generic
 checks and regressions replace them. New release publication is gated; see
@@ -60,6 +60,7 @@ points without duplicating its account state or inheriting a union of grants.
 | `products/messaging-channels/` | Discord/Telegram and outbound-only DingTalk/Google Chat/Lark/Matrix/Mattermost/Rocket.Chat/Signal/Slack/SMS/Teams/Webex/WhatsApp/Zulip connector sources; authenticated inbound owner/sender admission, lifecycle and durable replay handling remain pending |
 | `platform.lock.json`, `tools/platform_dependency.py` | Published, digest-pinned SDK/runtime/toolkit artifact, not an OS source checkout |
 | `shared/python/`, `shared/MODULE.md` | App-owned common client libraries, staged once through the common support package |
+| `shared/rust/gui-argv/` | App-owned compile-time selector adaptation for native parsers; no provider, permission, transport or runtime package |
 | `tools/test.py` | Product/capability-scoped tests using the locked runtime and declared library exports |
 | `tools/release.py`, `tools/release_apt.py`, `tools/release_publish.py` | Independent product/capability Debian versions, real native payloads, immutable Release assets and separately signed retained App APT metadata |
 | `claw-os` | Native authority launcher, package signing, installation, core services and system integration |
@@ -82,10 +83,17 @@ ABI dependencies, the bounded initial file transfer and publication prerequisite
 The nine native MCP products declare a real `bin/<program>` shared by their
 primary GUI and MCP entries. Their builder preserves all installer resources
 inside the App and exports only the common Host at the legacy primary command.
-Signed inventory admission is separate from native argv, external resources,
+Signed inventory admission and native selector parsing are separate from external resources,
 auxiliary executables and authority integration; see
 [native payloads](docs/native-payloads.md). No source-stage stub, App-specific
 Host exception or package-local dependency activation is introduced.
+The common Host's native argv contract is `[desktop.exec, user arguments...]`.
+Eight native parsers use the App-owned std-only adapter to consume exactly one
+leading selector in GUI mode and preserve the remaining OS strings for their
+original parsers. Notifications has no argv parser and retains its ignored-argv
+behavior. MCP dispatch still precedes GUI parsing. SDK 1.0.0 supplies the existing
+mode observation only; no SDK artifact, identity, session or grant changes.
+This is source-level argv adaptation, not installed GUI/authority acceptance.
 Notifications metadata no longer declares config/util exports; release and
 fixture assembly emit no product-library interface archive. Earlier candidates
 included presentation implementation and are not approved generic UI-free

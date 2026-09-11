@@ -15,6 +15,7 @@ product tests. The OS owns filesystem authority, sandbox mounts and snapshots.
 | `package.json` | Product-owned App staging and test inputs |
 | `apps/cosmic-files/` | Seven native MCP tools and authority/staging regressions |
 | `native/cosmic-files/` | Complete native UI/library and companion executable, original toolkit graph and resources |
+| `native/cosmic-files/src/cli.rs`, `native/cosmic-files/test/unit/cli.rs` | Primary Files argv parsing and path/URI regressions |
 | `native/cosmic-files/src/claw_glue/` | Shared product bridge, SDK AI and fixed OS reveal |
 | `native/cosmic-files/product_bridge.py` | Private compiled-in adapter over canonical filesystem/Recoll/parser libraries |
 | `python/claw_files/document.py` | Named shared descriptor-safe parsing/conversion export, also consumed by the Document Engine capability client |
@@ -46,6 +47,15 @@ python3 tools/native_build.py files test
 python3 tools/native_build.py files build
 python3 products/files/native/test_process.py
 ```
+
+The primary native entry uses shared `claw-app-gui-argv` and the published
+SDK's GUI-launch signal to remove only the leading Host `--gui`, after the
+existing MCP dispatch. Direct `--gui` remains a path; `--` is not a delimiter.
+Native flags, config-gated Recents, file-URL canonicalization and the separate
+ordered location/URI vectors are unchanged. Non-UTF-8 native path bytes are
+preserved. The `cli::tests::` Rust filter exercises the actual parser with
+injected canonicalization and a real local file URL. The auxiliary applet
+and GIO examples do not use this adaptation.
 
 `native_payload` binds both primary GUI and MCP to the real
 `bin/cosmic-files`. App-only preparation also preserves `cosmic-files-applet`

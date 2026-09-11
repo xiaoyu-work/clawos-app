@@ -44,8 +44,11 @@ def main():
     parser.add_argument("--binary", type=Path, default=ROOT / "build/native-target/debug/cosmic-notifications")
     parser.add_argument("--source", type=Path, default=ROOT / "build/notifications-native")
     parser.add_argument("--cos-binary", type=Path)
+    parser.add_argument("--fixture-root", type=Path, default=ROOT / "build/nf-process")
     options = parser.parse_args()
-    fixture = ROOT / "build/nf-process"
+    fixture = options.fixture_root.resolve()
+    if fixture == ROOT / "build" or not fixture.is_relative_to(ROOT / "build"):
+        parser.error("The private fixture root must be an explicit directory under build/")
     fixture.mkdir()
     processes = []
     listener = None
@@ -233,12 +236,37 @@ def main():
         process.stdin.flush()
         tools = request("tools/list", {})["result"]["tools"]
         assert {tool["name"] for tool in tools} == {"notify.post", "notify.close"}
+        discovery = "".join(json.dumps(message) + "\n" for message in [
+            {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
+                "protocolVersion": "2024-11-05", "capabilities": {},
+                "clientInfo": {"name": "notification-argv-fixture", "version": "1"},
+            }},
+            {"jsonrpc": "2.0", "method": "notifications/initialized"},
+            {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+        ])
+        for gui in ("0", "1"):
+            for arguments in [
+                [], ["--gui"], ["--gui", "--help"], ["--gui", "--version"],
+                ["--gui", "--gui"], ["--gui", "--", "--gui"],
+                ["--gui", "file:///private-not-opened", "--unknown", "value with spaces"],
+                ["--gui", os.fsdecode(b"private-not-opened-\xff")],
+            ]:
+                probe = subprocess.run([
+                    *command, "--setenv", "COS_APP_GUI", gui,
+                    "--", "/work/cosmic-notifications", *arguments,
+                ], input=discovery, capture_output=True, text=True, timeout=15)
+                assert probe.returncode == 0, (gui, arguments, probe.stderr)
+                messages = [json.loads(value) for value in probe.stdout.splitlines()]
+                listed = [value for value in messages if value.get("id") == 2]
+                assert len(listed) == 1 and listed[0]["result"]["tools"] == tools
+        assert calls == []
         wrong = json.loads(manifest.read_text())
         wrong["id"] = "wrong-identity"
         (fixture / "wrong.json").write_text(json.dumps(wrong))
         refused = subprocess.run([
             *command, "--ro-bind", str(fixture / "wrong.json"), "/work/wrong.json",
-            "--setenv", "COS_APP_MANIFEST", "/work/wrong.json", "--", "/work/cosmic-notifications",
+            "--setenv", "COS_APP_MANIFEST", "/work/wrong.json",
+            "--setenv", "COS_APP_GUI", "1", "--", "/work/cosmic-notifications", "--gui", "--help",
         ], input="", capture_output=True, text=True, timeout=10)
         assert refused.returncode != 0 and "cosmic-notifications" in refused.stderr
         denied(request("tools/call", {"name": "notify.post", "arguments": {"summary": "No context"}}))
@@ -299,7 +327,7 @@ def main():
         assert completed.wait(5)
         assert all(value["session"] == "worker-session" for value in calls)
         assert not failures, failures
-        print("Notifications installed payload, isolated MCP, exact intent/fields, errors and cancellation passed")
+        print("Notifications installed payload, argv/MCP precedence, exact intent/fields, errors and cancellation passed")
     finally:
         delay.clear()
         stopped.set()

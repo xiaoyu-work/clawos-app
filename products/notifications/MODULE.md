@@ -74,7 +74,9 @@ python3 products/notifications/native/test_process.py
 The process fixture accepts `--binary`, `--source`, and `--cos-binary` for
 immutable OS-composed source and the actual CLI. Without the last option it
 uses a fixture-only wire CLI and canned broker responses, not an OS provider
-copy. Real strict-worker/authority/SQLite/delivery/native-subscription acceptance
+copy. `--fixture-root` selects a fresh private directory under `build/` for
+independent validation without reusing another process fixture.
+Real strict-worker/authority/SQLite/delivery/native-subscription acceptance
 is owned by the OS's
 `notifications_actual_native_worker_durable_delivery_and_owner_bound_ui` test.
 The paired OS Notify fixture additionally signs/stages the real Python App,
@@ -94,3 +96,12 @@ The legacy primary command enters the common Host; it does not choose a new
 presentation transport, grant, default provider or resource mount. Private
 descriptor/owner integration and live popup acceptance remain OS-coordinated;
 see [native payloads](../../docs/native-payloads.md).
+
+Notifications has no CLI argument parser: ordinary argv, including `--gui`,
+`--help` and `--version`, remains ignored rather than becoming a new option
+grammar or a harmless GUI-free command. No unused normalization dependency is
+added. The existing MCP-first branch remains the private no-desktop command
+mode; `native/test_process.py` checks discovery with direct and Host-style argv,
+repeated selectors, help/version, `--`, URI/flag values and non-UTF8 input.
+Those probes preserve manifest/identity refusal and do not exercise GUI startup,
+open the supplied paths, consume notification state or grant a transport.

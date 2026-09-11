@@ -1,8 +1,8 @@
-# Shared App Python Libraries
+# Shared App Client Libraries
 
 This directory owns common App client support, not OS providers or another
 App's entrypoint. The first-party sources retain the root [license](../LICENSE).
-They originate from `claw-os/apps`. Removing the OS copy and transferring
+The Python helpers originate from `claw-os/apps`. Removing the OS copy and transferring
 installed file ownership are coordinated with the consumer/package cutover,
 not an App-data migration.
 
@@ -11,8 +11,42 @@ not an App-data migration.
 | `python/_shared/` | `_shared.atomic`, `.credentials`, `.env_scrub`, `.paths`, `.safe_http` |
 | `python/gateway/_shared/` | `gateway._shared` argument, transport, memory, inbound and subprocess helpers |
 | `python/canonical_argv.py` | `canonical_argv` parsing and normalization |
+| `rust/gui-argv/` | Private std-only `claw-app-gui-argv` compile-time dependency for native CLI adaptation |
 | `../tests/shared/` | Helper behavior, staging/import isolation and App transport contracts |
 | `../tests/shared/vectors/` | URL/IDNA/effective-port regression vectors; never runtime payload |
+
+## Native CLI Adapter
+
+`claw-app-gui-argv::normalize` accepts explicit OS-string argv, a GUI-mode bool
+and a selector. It removes only an exact, nonempty selector at argv index 1
+when GUI mode is selected. It preserves argv0, all other bytes/order, option
+values, repeated selectors and `--`; the original product parser retains its
+grammar and errors. Direct CLI input is unchanged. The adapter neither reads
+nor changes process environment, opens resources, selects a transport nor
+confers authority.
+
+Native callers observe GUI mode through the existing SDK 1.0.0
+`gui::is_gui_launch()` and pass the Host-forwarded argv directly. They do not
+reconstruct it from `COS_ARGS_JSON` or treat the mode marker as authentication.
+Notifications has no argv consumer and needs no unused adapter dependency.
+The eight consumers compile this App-owned crate into their own binaries;
+there is no shared native runtime package, new support ABI or SDK pin.
+`tools/native_build.py` resolves its checked-in relative Cargo path for flat
+and nested prepared workspaces. Native payload preparation preserves the root
+Apache-2.0 license under `licenses/claw-app-gui-argv/LICENSE` in each consuming
+App, alongside all original native licenses.
+
+Run the isolated pure parser tests from the repository root on Linux/WSL:
+
+```sh
+cargo test --locked --manifest-path shared/rust/gui-argv/Cargo.toml \
+  --target-dir build/gui-argv-target
+```
+
+Product tests exercise their actual parsers separately; see
+[native argv contracts](../docs/native-payloads.md#native-argv-adaptation).
+
+## Python Runtime Libraries
 
 Development puts `shared/python` on the same explicit Python path as the
 immutable OS SDK/runtime. Installed Python and native embedded clients use
@@ -59,15 +93,12 @@ or execute App-supplied hooks as privileged integration.
 Existing grants, validation order, per-redirect checks and result shapes are
 unchanged. Apps never invoke one another.
 
-This is the interface contract, not a claim that every existing OS integration
-already satisfies it. `TrustedNativeHost` exempts the fixed Mail host from the
-sandbox; the nine fixed native MCP executable rows still run sandboxed but
-retain App-name/Vendor admission. Package, app-permissions and media-player
-routes also retain business-name gates. The OS's compile-time dependency on
-Notifications config/util remains App-specific even when delivered as a
-verified interface artifact. These are transitional, not completed generic
-integration. Do not remove their protections before generic authenticated
-package/resource-owner and capability checks, with regressions, replace them.
+This is the interface contract, not a claim that every OS integration already
+satisfies it. Generic Host admission and App-side selector adaptation do not
+establish GUI authorization, resource admission, auxiliary entry routing or
+Settings policy integration. Preserve the checked-in publication gate and
+existing protections until the corresponding OS-owned checks are verified;
+see [the remaining native boundaries](../docs/native-payloads.md#deliberately-gated-surfaces).
 
 `_shared.safe_http` requires the distribution's `idna >= 3.3, < 4` library.
 The common runtime package must declare that dependency; missing or unsupported

@@ -190,6 +190,12 @@ pub fn main() -> color_eyre::Result<()> {
         return mcp::run().map_err(|e| color_eyre::eyre::eyre!("{e}"));
     }
 
+    let args = Args::parse_from(claw_app_gui_argv::normalize(
+        std::env::args_os(),
+        claw_os_sdk::gui::is_gui_launch(),
+        std::ffi::OsStr::new("--gui"),
+    ));
+
     color_eyre::install()?;
 
     if std::env::var("RUST_SPANTRACE").is_err() {
@@ -203,8 +209,6 @@ pub fn main() -> color_eyre::Result<()> {
     {
         let _ = gettextrs::setlocale(gettextrs::LocaleCategory::LcAll, "");
     }
-
-    let args = Args::parse();
 
     if let Some(PageCommands::Appearance { command: Some(cmd) }) = &args.sub_command {
         return match cmd {
@@ -273,4 +277,9 @@ macro_rules! cache_dynamic_lazy {
             $visible static $variable: $type = $expression;
         )+
     };
+}
+
+#[cfg(test)]
+mod tests {
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/unit/main.rs"));
 }

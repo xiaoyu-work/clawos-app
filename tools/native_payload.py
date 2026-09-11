@@ -12,9 +12,10 @@ import shutil
 import stat
 import struct
 import tempfile
+import tomllib
 
 import stage
-from release_common import license_files, work_path
+from release_common import ROOT, license_files, work_path
 from release_payload import validate_install_tree
 from release_snapshots import (
     app_path, manifest_entries, read_metadata, read_metadata_snapshot,
@@ -176,6 +177,17 @@ def _payload_path(name):
     return "resources/" + name
 
 
+def _gui_argv_license(native):
+    for manifest in native.rglob("Cargo.toml"):
+        dependencies = tomllib.loads(manifest.read_text()).get("dependencies", {})
+        if "claw-app-gui-argv" in dependencies:
+            license_path = ROOT / "LICENSE"
+            if not license_path.is_file() or license_path.is_symlink():
+                raise ValueError("Native GUI argv support requires its original App-owned license")
+            return license_path
+    return None
+
+
 def prepare(selected, installed, destination, architecture):
     """Create an unsigned App directory ready for the existing public provenance signer."""
     installed, destination = Path(installed), Path(destination)
@@ -186,6 +198,7 @@ def prepare(selected, installed, destination, architecture):
         raise ValueError("Native preparation must not rewrite an already signed App")
     if not selected.license.is_file() or selected.license.is_symlink():
         raise ValueError("Native payload requires its original product license")
+    gui_argv_license = _gui_argv_license(selected.license.parent)
     source_bytes = (selected.source / "app.json").read_bytes()
     if source_bytes != selected.manifest_bytes:
         raise ValueError("Native source manifest changed after its payload plan")
@@ -212,6 +225,12 @@ def prepare(selected, installed, destination, architecture):
             target = destination / "licenses" / license_path.relative_to(selected.license.parent)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(license_path, target)
+        if gui_argv_license:
+            target = destination / "licenses/claw-app-gui-argv/LICENSE"
+            if target.exists():
+                raise ValueError("Native product licenses conflict with GUI argv support")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(gui_argv_license, target)
         for name, record in inventory.items():
             relative = _payload_path(name)
             if relative is None:

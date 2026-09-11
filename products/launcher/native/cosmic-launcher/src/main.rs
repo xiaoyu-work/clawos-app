@@ -5,6 +5,7 @@ mod config {
     include!(concat!(env!("OUT_DIR"), "/config.rs"));
 }
 mod app;
+mod argparse;
 mod localize;
 mod mcp;
 mod subscriptions;

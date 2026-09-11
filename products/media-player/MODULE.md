@@ -4,6 +4,7 @@
 | --- | --- |
 | `apps/cosmic-player/app.json` | Seven tools and separate exact observation/control grants |
 | `native/cosmic-player/src/main.rs` | Original GStreamer/libcosmic UI and authoritative playback state |
+| `native/cosmic-player/src/argparse.rs`, `native/cosmic-player/test/unit/argparse.rs` | Native media/thumbnail arguments, bounded Host GUI selector adaptation and parser regressions |
 | `native/cosmic-player/src/playback.rs` | Shared native state snapshots and typed UI commands |
 | `native/cosmic-player/src/mpris_backend.rs` | Original MPRIS implementation, corrected name/Stop/status and live UI publication |
 | `native/cosmic-player/src/mpris.rs` | Native subscription connecting the MPRIS backend to the existing UI event loop |
@@ -39,5 +40,9 @@ open user files, start playback devices, or connect to a live desktop bus.
 `native_payload` selects the real `bin/cosmic-player` for GUI/MCP and preserves
 the original resources, thumbnailer metadata and licenses. The primary legacy
 command enters the common Host; it does not bypass admission for thumbnailing.
-URI/thumbnailer argv and existing OS playback executable/resource bindings
-remain explicit runtime gates; see [native payloads](../../docs/native-payloads.md).
+After the existing MCP dispatch, the App-owned `claw-app-gui-argv` library removes
+one exact argv[1] `--gui` only in SDK GUI mode. The existing lexer still owns
+option values, URL order, local-path canonicalization, warning-and-continue
+behavior and help/version exits; no new `--` end-of-options state is added.
+This does not change thumbnail admission or OS playback executable/resource
+bindings; see [native payloads](../../docs/native-payloads.md).

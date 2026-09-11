@@ -13,6 +13,8 @@ console = ["tokio/tracing"]
 [dependencies]
 anyhow = "1"
 async-trait = "0.1"
+claw-app-gui-argv = { path = "../../../../shared/rust/gui-argv" }
+claw-os-sdk = { path = "../../../claw-os-sdk/rust" }
 cos-runtime = { path = "../../../cos-runtime/rust" }
 console-subscriber = "0.5.0"
 futures = "0.3.31"

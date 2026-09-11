@@ -21,7 +21,9 @@ source group's `MODULE.md` before changing its boundary.
 - `platform.lock.json` pins a published SDK/runtime/toolkit artifact by version,
   HTTPS URL, SHA-256 and runtime ABI. Fetch it through
   `tools/platform_dependency.py`; never import from a sibling OS checkout.
-  Common App libraries belong to local `shared/python`, not the OS artifact.
+  Common App Python libraries belong to local `shared/python`, not the OS artifact.
+  The compile-time native argv adapter belongs to `shared/rust/gui-argv`; it
+  selects parsing behavior only and is not an SDK or runtime authority interface.
   Native products use `prepare_native()` for allowlisted shared toolkit,
   launcher backend and SDK/runtime libraries only; run
   `python3 tools/native_build.py <product> test` for actual native coverage.

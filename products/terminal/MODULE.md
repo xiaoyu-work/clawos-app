@@ -13,6 +13,7 @@ registry remain separate; this source move does not consolidate sessions.
 | `apps/exec/test_main.py` | Scratch isolation, shell scope, execution and service regressions |
 | `apps/cosmic-term/` | Native descriptor and independent three-tool/grant contracts |
 | `native/cosmic-term/` | Full terminal renderer, PTYs, configuration, resources, packaging and tests |
+| `native/cosmic-term/src/cli.rs`, `native/cosmic-term/test/unit/cli.rs` | Native option/command parsing and bounded GUI argv regressions |
 | `native/cosmic-term/src/product.rs` | Compiled-in shared command adapter and controlled OS filesystem/desktop clients |
 | `native/test_process.py` | Real authenticated stdio binary with isolated command and OS-service fixtures |
 | `package.json` | Product-owned staging and test inputs |
@@ -49,6 +50,15 @@ Native process tests require bubblewrap and use synthetic broker/command
 executables, never an interactive shell, GUI or live keyring. `just install`
 in the generated native tree retains upstream desktop/icon/metainfo paths.
 Native builds require the paired OS's fixed Terminal desktop service at runtime.
+
+Native startup uses shared `claw-app-gui-argv` with the published SDK's
+GUI-launch signal, removing only one leading Host `--gui` after MCP dispatch.
+The native parser still handles argv0, help/version early exits, working-directory
+values, unknown-argument warnings and daemonization as before. `-e`, `--command`
+and `--` stop option scanning; every suffix token stays in the command,
+including `--gui` and option-like values. Working-directory OS bytes are
+preserved; shell strings retain the existing terminal backend conversion.
+The included Rust parser regressions use the `cli::tests::` filter.
 
 The native payload now selects one real `bin/cosmic-term` for primary GUI and
 MCP, with original resources/licenses in the App snapshot. Its legacy command

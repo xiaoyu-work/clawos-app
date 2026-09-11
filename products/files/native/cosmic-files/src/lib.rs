@@ -10,12 +10,12 @@ use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::app::{App, Flags};
 use crate::config::{Config, State};
-use crate::tab::Location;
 
 pub mod app;
 mod archive;
 pub mod channel;
 mod claw_glue;
+mod cli;
 pub mod clipboard;
 pub mod config;
 mod context_action;
@@ -157,47 +157,12 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (config_handler, config) = Config::load();
     let (state_handler, state) = State::load();
 
-    let mut daemonize = true;
-    let mut locations = Vec::new();
-    let mut uris = Vec::new();
-    for arg in env::args().skip(1) {
-        let location = if &arg == "--no-daemon" {
-            daemonize = false;
-            continue;
-        } else if &arg == "--trash" {
-            Location::Trash
-        } else if &arg == "--recents" {
-            if config.show_recents {
-                Location::Recents
-            } else {
-                log::warn!("recents feature is disabled in config");
-                continue;
-            }
-        } else if &arg == "--network" {
-            Location::Network("network:///".to_string(), fl!("networks"), None)
-        } else {
-            //TODO: support more URLs
-            let path = match url::Url::parse(&arg) {
-                Ok(url) if url.scheme() == "file" => if let Ok(path) = url.to_file_path() { path } else {
-                    log::warn!("invalid argument {arg:?}");
-                    continue;
-                },
-                Ok(url) => {
-                    uris.push(url);
-                    continue;
-                }
-                _ => PathBuf::from(arg),
-            };
-            match fs::canonicalize(&path) {
-                Ok(absolute) => Location::Path(absolute),
-                Err(err) => {
-                    log::warn!("failed to canonicalize {}: {}", path.display(), err);
-                    continue;
-                }
-            }
-        };
-        locations.push(location);
-    }
+    let cli::Args { daemonize, locations, uris } = cli::parse(
+        env::args_os(),
+        claw_os_sdk::gui::is_gui_launch(),
+        config.show_recents,
+        |path| fs::canonicalize(path),
+    );
 
     if daemonize {
         #[cfg(all(unix, not(any(target_os = "macos", target_os = "redox"))))]

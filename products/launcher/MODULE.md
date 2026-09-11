@@ -11,6 +11,7 @@ Own the Python `launcher` App's five MCP tools and the complete native
 | `apps/launcher/test_main.py` | Desktop parsing, scopes, URI/path safety, broker errors, recent state and SDK dispatch |
 | `apps/cosmic-launcher/` | Unchanged native identity/permissions and authenticated adapter contracts |
 | `native/cosmic-launcher/` | Complete GPL UI, compiled-in MCP adapter, upstream packaging/resources and Rust tests |
+| `native/cosmic-launcher/src/argparse.rs`, `native/cosmic-launcher/test/unit/argparse.rs` | Native subcommands, bounded Host GUI selector adaptation and parser regressions |
 | `native/PROVENANCE.md` | Source origin, license and shared OS backend ownership |
 | `package.json` | Product-owned staging and test inputs |
 
@@ -62,3 +63,9 @@ GUI/MCP entry, without moving the OS launcher backend or common Python support.
 The compatibility command enters `cos app cosmic-launcher --gui`; this does not
 grant desktop transport, catalog/history access or activate resources. See
 [native payloads](../../docs/native-payloads.md).
+
+After the existing MCP dispatch, the native parser uses the App-owned
+`claw-app-gui-argv` library to remove one exact `--gui` at argv[1] only when the
+versioned SDK reports GUI mode. All remaining arguments go through the original
+Clap grammar, including `input -- --gui`. Direct CLI errors, help/version,
+single-instance command serialization and authenticated session state are unchanged.

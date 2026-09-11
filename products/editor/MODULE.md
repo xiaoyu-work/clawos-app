@@ -7,6 +7,7 @@ resources, translations, build inputs and descriptor.
 | --- | --- |
 | `apps/cosmic-edit/app.json` | Seven tools, exact file scopes, fixed desktop launch and AI budget |
 | `native/cosmic-edit/src/main.rs` | Native editor UI and unsaved-buffer AI requests |
+| `native/cosmic-edit/src/cli.rs`, `native/cosmic-edit/test/unit/cli.rs` | OS-native startup paths and bounded GUI argv regressions |
 | `native/cosmic-edit/src/mcp.rs` | Authenticated MCP handlers |
 | `native/cosmic-edit/src/claw_glue/ai.rs` | Shared SDK AI requests; document content remains untrusted |
 | `native/cosmic-edit/test/unit/mcp.rs` | Handler and UI AI regression with fake OS services |
@@ -39,6 +40,14 @@ python3 products/editor/native/test_process.py
 
 Rust environment-mutating tests run serially. These fixture checks do not
 replace interactive Wayland acceptance.
+
+Native startup uses the shared `claw-app-gui-argv` client helper and the
+published SDK's GUI-launch signal to remove only one leading Host `--gui`.
+Every remaining argument is a filename, including `--gui` on direct launches
+and option-like names or `--`; OS path bytes and order are preserved.
+Startup captures these paths in `Flags`, rather than rereading process argv
+after GUI initialization. `COS_MCP_SERVER=1` still takes precedence.
+The included Rust parser tests use the `cli::tests::` filter.
 
 `native_payload` prepares the real `bin/cosmic-edit` for both signed primary
 and MCP entries, preserving resources/licenses. The legacy command enters

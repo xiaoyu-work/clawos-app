@@ -45,6 +45,11 @@ def prepare(product: str, toolkit: Path, destination: Path):
                     f'"{prefix}{library}/',
                     '"' + (toolkit.parents[1] / library).as_posix() + "/",
                 )
+            shared_prefix = "../" * (4 + depth)
+            content = content.replace(
+                f'"{shared_prefix}shared/rust/gui-argv"',
+                '"' + (ROOT / "shared/rust/gui-argv").as_posix() + '"',
+            )
             manifest.write_text(content)
     else:
         shutil.copy2(source / "native/Cargo.lock", destination / "Cargo.lock")

@@ -993,6 +993,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "claw-app-gui-argv"
+version = "0.1.0"
+
+[[package]]
 name = "claw-os-sdk"
 version = "0.1.0"
 dependencies = [
@@ -1412,6 +1416,7 @@ dependencies = [
  "atomic_float",
  "bstr",
  "bzip2",
+ "claw-app-gui-argv",
  "claw-os-sdk",
  "compio",
  "cos-runtime",

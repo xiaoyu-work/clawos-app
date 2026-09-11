@@ -280,9 +280,8 @@ async fn send_notification(path: &str) {
 //TODO: better error handling
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
-    crate::localize::localize();
-
     if std::env::var("COS_MCP_SERVER").as_deref() == Ok("1") {
+        crate::localize::localize();
         if let Err(e) = mcp::run().await {
             eprintln!("cosmic-screenshot MCP server exited: {e}");
             std::process::exit(1);
@@ -290,7 +289,13 @@ async fn main() {
         return;
     }
 
-    let args = Args::parse();
+    let args = Args::parse_from(claw_app_gui_argv::normalize(
+        std::env::args_os(),
+        claw_os_sdk::gui::is_gui_launch(),
+        std::ffi::OsStr::new("--gui"),
+    ));
+
+    crate::localize::localize();
 
     if args.portal_capture_stdout {
         if let Err(error) = capture_stdout(args.modal).await {

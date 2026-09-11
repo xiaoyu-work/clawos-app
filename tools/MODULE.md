@@ -86,6 +86,13 @@ remain enabled.
 `native_build.py` supports libraries and standalone binaries without changing
 their upstream workspaces. `stage_native.py` copies declared native assets
 from the same product (including Launcher's compiled-in shared Python backend).
+Binary preparation also resolves the App-owned `shared/rust/gui-argv` Cargo
+dependency, including Settings' nested manifest. This std-only parser helper
+comes from this repository, not the immutable SDK artifact; SDK 1.0.0 and the
+Python runtime support ABI remain unchanged. Native payload preparation detects
+its actual Cargo consumers and preserves the root Apache-2.0 license alongside
+their original licenses. Flat/nested mapping and missing-license refusal are
+covered in `tests/release/test_native_payload.py`.
 Native dependency allowlisting includes the shared toolkit, launcher backend
 and Rust SDK/runtime, never core authority or another App implementation.
 Nested App layout is preserved and checked against the manifest identity.
