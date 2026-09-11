@@ -18,9 +18,12 @@ translations, assets, original Cargo graph and `flathub-stats` workspace member.
 | `native/test_process.py` | Real binary/resource installation and authenticated synthetic stdio fixture |
 
 Preserve the installed `pkg` identity and existing permissions. The OS package
-provider requires that identity, serializes transactions and records mutation
-and rollback state. No installed package database, apt configuration or OS
-provider code moves into this repository. Product code never invokes another
+provider now accepts any client with the existing Critical `sys.package` scope
+and matching authenticated owner/session; it does not require a `pkg` name.
+It still serializes transactions and records mutation/rollback state. Package
+effects are system-wide, and this grants neither native Store nor any other
+App new default authority. No installed package database, apt configuration or
+OS provider code moves into this repository. Product code never invokes another
 App, and the GUI must not gain authority by forwarding through `pkg`.
 
 ```bash
