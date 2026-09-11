@@ -48,6 +48,10 @@ Prepare the pinned artifact explicitly with `tools/platform_dependency.py`;
 the isolated native host never downloads build dependencies at runtime and
 disables bytecode when importing from that cache. Installed execution retains
 the fixed `/usr/lib/cos/python` root and existing OS authority launcher.
+Protocol tests stage their own source/bootstrap fixture and a fully verified
+platform archive selected by the developer test command. The fixture's synthetic
+pin is private test data, never a production pin or runtime override; the actual
+Native Host continues to exercise its unchanged pinned-source bootstrap.
 
 That current launcher is a remaining integration exception, not a privilege
 Mail should inherit: OS `TrustedNativeHost` admission is still tied to

@@ -90,6 +90,11 @@ def install_payload(product, package, prepared, output, environment, *, app_only
 
 
 def main(product=None):
+    specification = importlib.util.spec_from_file_location(
+        "platform_dependency", ROOT / "tools/platform_dependency.py"
+    )
+    platform = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(platform)
     parser = argparse.ArgumentParser(description=__doc__)
     if product is None:
         parser.add_argument("product", choices=[
@@ -103,7 +108,14 @@ def main(product=None):
                         help="Stage a release App payload and common-Host compatibility launchers")
     parser.add_argument("--app-root", type=Path,
                         help="Prepare a release App directory for the existing provenance signer")
+    platform.add_development_arguments(parser)
     options = parser.parse_args()
+    try:
+        development = platform.development_from_args(options)
+    except ValueError as error:
+        parser.error(str(error))
+    if development is not None and (options.install_root or options.app_root):
+        parser.error("A local development platform cannot be used for release payload or install staging")
     if options.install_root and (options.command != "build" or not options.release):
         parser.error("--install-root requires build --release")
     if options.app_root and (options.command != "build" or not options.release):
@@ -119,12 +131,8 @@ def main(product=None):
         install_root = output.resolve()
         if install_root == ROOT / "build" or not install_root.is_relative_to(ROOT / "build"):
             raise ValueError("Native install root must be an explicit directory under build/")
-    specification = importlib.util.spec_from_file_location(
-        "platform_dependency", ROOT / "tools/platform_dependency.py"
-    )
-    platform = importlib.util.module_from_spec(specification)
-    specification.loader.exec_module(platform)
-    toolkit = platform.prepare_native()
+    platform.report_development(development)
+    toolkit = platform.prepare_native(development=development)
     destination = ROOT / "build" / f"{product}-native"
     prepare(product, toolkit, destination)
     targets = [] if package.get("native_kind") == "binary" else ["--lib"]

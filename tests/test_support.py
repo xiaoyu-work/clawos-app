@@ -1,6 +1,7 @@
 """App-owned module loading and public MCP stdio contract fixtures."""
 
 from contextlib import contextmanager
+from functools import partial
 import importlib.util
 import json
 import os
@@ -12,6 +13,14 @@ import sys
 import tempfile
 
 import pytest
+
+
+_development_platform = None
+
+
+def configure_development_platform(selection):
+    global _development_platform
+    _development_platform = selection
 
 
 def authenticated_mcp_params(params, *, call_id="test-call"):
@@ -129,7 +138,12 @@ def load_local_module(path, name, *, clear_modules=()):
 
 def platform_dependency():
     root = Path(__file__).resolve().parents[1]
-    return load_local_module(root / "tools/platform_dependency.py", "_fixture_platform_dependency")
+    module = load_local_module(root / "tools/platform_dependency.py", "_fixture_platform_dependency")
+    if _development_platform is not None:
+        development = module.DevelopmentArtifact(*_development_platform)
+        for name in ("prepare_exports", "prepare", "manifest_schema_path", "prepare_native"):
+            setattr(module, name, partial(getattr(module, name), development=development))
+    return module
 
 
 def stage_platform_python(python):
@@ -141,3 +155,37 @@ def stage_platform_python(python):
             exports[export] / package, python / package,
             symlinks=True, ignore=platform.stage.IGNORE,
         )
+
+
+def stage_source_platform_fixture(destination):
+    """Stage a test-only pinned bootstrap without changing runtime selection."""
+    source = platform_dependency()
+    exports = source.prepare_exports(download=False)
+    if _development_platform is None:
+        identity = source.read_lock()
+    else:
+        selected = source.DevelopmentArtifact(*_development_platform)
+        identity = {
+            "version": selected.version, "sha256": selected.sha256,
+            "runtime_abi": source.RUNTIME_ABI,
+        }
+    archive = exports["ui-toolkit"].parents[1].parent / "archive.tar.gz"
+    fixture_url = "https://platform-fixture.invalid/archive.tar.gz"
+    destination = Path(destination)
+    tools = destination / "tools"
+    tools.mkdir(parents=True)
+    root = Path(__file__).resolve().parents[1]
+    for name in ("platform_dependency.py", "platform_archive.py", "stage.py"):
+        shutil.copy2(root / "tools" / name, tools / name)
+    (destination / "platform.lock.json").write_text(json.dumps({
+        "version": identity["version"], "sha256": identity["sha256"],
+        "runtime_abi": identity["runtime_abi"], "url": fixture_url,
+    }))
+    fixture = load_local_module(tools / "platform_dependency.py", "_source_platform_fixture")
+
+    def provide(url, output):
+        assert url == fixture_url
+        fixture.artifact.copy_verified_archive(archive, output, identity["sha256"])
+
+    fixture._download = provide
+    fixture.prepare_exports()

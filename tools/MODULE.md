@@ -1,7 +1,7 @@
 # App Build Tools
 
-`platform_dependency.py` fetches only the versioned public platform artifact
-selected by `platform.lock.json`. `platform_archive.py` verifies its public
+By default, `platform_dependency.py` fetches only the versioned public platform
+artifact selected by `platform.lock.json`. `platform_archive.py` verifies its public
 `claw.app-platform/v1` inventory and extracts it with `tarfile`'s data filter.
 No Git fetching, OS source checkout, sibling lookup or unverified cache fallback
 remains. Its Python paths include the named SDK/runtime exports and local
@@ -218,3 +218,54 @@ explicit CLI fixture with isolated trust namespaces; no fixture becomes a
 production pin. Consistent terminal/desktop review and per-App scoped allow,
 ask, deny and real revocation are OS-owned, not App UI or publisher behavior.
 See [the producer/consumer contract](../docs/releases.md#verified-app-snapshot-producer).
+
+## Local platform development
+
+Source development need not publish an SDK first. `platform_dependency.py`,
+`test.py` and `native_build.py` accept one explicit local archive together with
+its expected version and SHA-256. Obtain the digest from the trusted producer's
+checksum output. All three options are required on each command; preparation
+does not install a persistent default or change `platform.lock.json`.
+
+From the App repository root, with the archive and `EXPECTED_SHA256` supplied:
+
+```bash
+python3 tools/test.py mail \
+  --development-platform build/local-platform/claw-os-app-platform-0.1.0.tar.gz \
+  --development-platform-version 0.1.0 \
+  --development-platform-sha256 "$EXPECTED_SHA256"
+
+python3 tools/native_build.py launcher check \
+  --development-platform build/local-platform/claw-os-app-platform-0.1.0.tar.gz \
+  --development-platform-version 0.1.0 \
+  --development-platform-sha256 "$EXPECTED_SHA256"
+```
+
+The same options on `tools/platform_dependency.py` prepare the archive and
+print its verified Python import roots. The producer uses the OS's existing
+public artifact builder; consumers never import a sibling OS checkout.
+
+Local inputs use `build/platform-development/<sha256>/`, separate from the
+published-pin cache. They retain all regular-file, digest, ABI, inventory,
+extraction and cache-tampering checks. The selected source archive is rechecked
+even when its cache exists. A changed source or cache fails without redownload,
+repair or substitution. Missing production artifacts never select this mode.
+
+The Python runner forwards selection through explicit pytest options, and only
+test helpers bind those inputs. Runtime source bootstrap and release tools do
+not inherit a development override. Native builds keep `--locked` and never
+rewrite checked-in Cargo locks; an incompatible SDK graph must be handled
+explicitly. `--app-root` and `--install-root` refuse local development input.
+This is not App installation, publication authorization or a runtime grant.
+
+The independent `platform-tools` CI job exercises synthetic archives and a
+real minimal locked native consumer without downloading a released SDK:
+
+```bash
+PYTHONPATH=tests:tools python3 -m pytest -q --import-mode=importlib \
+  tests/test_platform_dependency.py tests/test_platform_native.py
+```
+
+The native smoke case is separate so ordinary Python product tests do not gain
+a Cargo dependency. Default product/native CI still needs an available
+published artifact; local development does not silently clear that blocker.

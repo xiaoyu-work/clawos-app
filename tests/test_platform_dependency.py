@@ -11,6 +11,7 @@ from pathlib import Path, PurePosixPath
 import shutil
 import stat
 import subprocess
+import sys
 import tarfile
 from types import SimpleNamespace
 import urllib.request
@@ -156,6 +157,217 @@ def test_named_exports_share_one_verified_artifact_and_keep_app_support_local(de
     assert stat.S_IMODE(cache(state).stat().st_mode) == 0o700
     assert stat.S_IMODE((cache(state) / "archive.tar.gz").stat().st_mode) == 0o600
     assert stat.S_IMODE((payload / "desktop").stat().st_mode) == 0o755
+
+
+@pytest.fixture
+def development(dependency):
+    data = public_archive(mutate=lambda manifest: manifest.update(version="0.1.0"))
+    path = dependency.root.parent / "development.tar.gz"
+    path.write_bytes(data)
+    return platform.DevelopmentArtifact(path, "0.1.0", hashlib.sha256(data).hexdigest())
+
+
+def development_cache(state, selected):
+    return state.root / "build/platform-development" / selected.sha256
+
+
+def test_local_input_is_explicit_and_preserves_the_production_pin(dependency, development):
+    original_lock = (dependency.root / "platform.lock.json").read_bytes()
+    published = platform.prepare_exports()
+    selected = platform.prepare_exports(development=development)
+    expected = development_cache(dependency, development) / "payload"
+    assert selected == {name: expected / path for name, path in EXPORTS.items()}
+    assert platform.prepare_native(development=development) == expected / "desktop/toolkit"
+    assert platform.manifest_schema_path(development=development) == expected / "claw-os-sdk/wire/v1/manifest.schema.json"
+    assert platform.prepare_exports(download=False) == published
+    assert platform.read_lock() == dependency.lock
+    assert (dependency.root / "platform.lock.json").read_bytes() == original_lock
+    assert dependency.calls == [URL]
+    assert stat.S_IMODE(development_cache(dependency, development).stat().st_mode) == 0o700
+
+
+def test_local_input_needs_no_production_lock_or_network(dependency, development):
+    (dependency.root / "platform.lock.json").unlink()
+    paths = platform.prepare(development=development)
+    assert paths[:2] == [
+        development_cache(dependency, development) / "payload" / EXPORTS[name]
+        for name in ("python-sdk", "python-runtime")
+    ]
+    assert dependency.calls == []
+    assert not (dependency.root / "build/platform-artifacts").exists()
+
+
+def test_local_cache_is_never_an_automatic_production_fallback(dependency, development):
+    platform.prepare(development=development)
+    with pytest.raises(FileNotFoundError, match="pinned App platform"):
+        platform.prepare(download=False)
+    assert dependency.calls == []
+
+
+@pytest.mark.parametrize("field", ["archive", "development"])
+def test_local_selection_cannot_be_embedded_in_a_production_pin(dependency, development, field):
+    with pytest.raises(ValueError, match="must pin a published artifact"):
+        platform.validate_lock({**dependency.lock, field: str(development.archive)})
+
+
+def test_local_hash_precedes_archive_inspection(dependency, development, monkeypatch):
+    wrong = platform.DevelopmentArtifact(development.archive, development.version, "0" * 64)
+    monkeypatch.setattr(
+        platform.artifact, "inspected_archive",
+        lambda *args: pytest.fail("unverified local bytes reached the tar reader"),
+    )
+    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+        platform.prepare(development=wrong)
+    assert not development_cache(dependency, wrong).exists()
+    assert dependency.calls == []
+
+
+@pytest.mark.parametrize("kind", ["directory", "symlink", "fifo"])
+def test_local_input_requires_a_regular_file(dependency, development, kind):
+    path = dependency.root / "invalid-local-source"
+    if kind == "directory":
+        path.mkdir()
+    elif kind == "symlink":
+        path.symlink_to(development.archive)
+    else:
+        os.mkfifo(path)
+    selected = platform.DevelopmentArtifact(path, development.version, development.sha256)
+    with pytest.raises((ValueError, OSError)):
+        platform.prepare(development=selected)
+    assert not development_cache(dependency, development).exists()
+    assert dependency.calls == []
+
+
+@pytest.mark.parametrize("change", [
+    {"version": "0.2.0"}, {"runtime_abi": 2}, {"runtime_abi": True},
+])
+def test_local_metadata_must_match_the_explicit_version_and_supported_abi(dependency, change):
+    data = public_archive(mutate=lambda manifest: manifest.update({"version": "0.1.0", **change}))
+    path = dependency.root / "wrong-metadata.tar.gz"
+    path.write_bytes(data)
+    selected = platform.DevelopmentArtifact(path, "0.1.0", hashlib.sha256(data).hexdigest())
+    with pytest.raises(ValueError, match="mismatch"):
+        platform.prepare(development=selected)
+    assert not development_cache(dependency, selected).exists()
+    assert dependency.calls == []
+
+
+def test_local_input_keeps_the_public_export_boundary(dependency):
+    data = public_archive(
+        files={**FILES, "core/private-provider.rs": b"not an App SDK export"},
+        mutate=lambda manifest: manifest.update(version="0.1.0"),
+    )
+    path = dependency.root / "private-provider.tar.gz"
+    path.write_bytes(data)
+    selected = platform.DevelopmentArtifact(path, "0.1.0", hashlib.sha256(data).hexdigest())
+    with pytest.raises(ValueError):
+        platform.prepare(development=selected)
+    assert not development_cache(dependency, selected).exists()
+
+
+def test_a_mutated_local_input_cannot_fall_back_to_its_good_cache(dependency, development):
+    platform.prepare(development=development)
+    cached = development_cache(dependency, development) / "archive.tar.gz"
+    original = cached.read_bytes()
+    development.archive.write_bytes(b"changed local input")
+    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+        platform.prepare(download=False, development=development)
+    assert cached.read_bytes() == original
+    assert dependency.calls == []
+
+
+@pytest.mark.parametrize("entry", ["archive.tar.gz", "payload/" + SDK_FILE])
+def test_a_local_source_does_not_repair_a_tampered_cache(dependency, development, entry):
+    platform.prepare(development=development)
+    target = development_cache(dependency, development) / entry
+    target.write_bytes(b"tampered")
+    with pytest.raises(ValueError, match="mismatch"):
+        platform.prepare(development=development)
+    assert target.read_bytes() == b"tampered"
+    assert dependency.calls == []
+
+
+def test_local_publication_revalidates_a_concurrent_winner(dependency, development, monkeypatch):
+    final = development_cache(dependency, development)
+
+    def winner(source, destination):
+        assert destination == final
+        shutil.copytree(source, destination, symlinks=True)
+        raise FileExistsError(17, "local fixture concurrent publication")
+
+    monkeypatch.setattr(platform.os, "rename", winner)
+    assert platform.prepare_native(development=development) == final / "payload/desktop/toolkit"
+    assert dependency.calls == []
+
+
+@pytest.mark.parametrize("supplied", [0, 1, 2])
+def test_development_flags_are_required_together(development, supplied):
+    values = [None, None, None]
+    values[supplied] = (development.archive, development.version, development.sha256)[supplied]
+    options = SimpleNamespace(**dict(zip((
+        "development_platform", "development_platform_version", "development_platform_sha256",
+    ), values)))
+    with pytest.raises(ValueError, match="together"):
+        platform.development_from_args(options)
+
+
+def copy_development_tools(root):
+    tools = root / "tools"
+    tools.mkdir(exist_ok=True)
+    for name in ("platform_dependency.py", "platform_archive.py", "stage.py",
+                 "stage_native.py", "native_build.py"):
+        shutil.copy2(ROOT / "tools" / name, tools / name)
+
+
+def test_local_cli_prepares_an_unpublished_artifact_without_network(dependency, development):
+    copy_development_tools(dependency.root)
+    driver = (
+        "import runpy, sys, urllib.request\n"
+        "def forbidden(*args, **kwargs): raise AssertionError('no development download')\n"
+        "urllib.request.build_opener = forbidden\n"
+        "sys.argv = sys.argv[1:]\n"
+        "runpy.run_path(sys.argv[0], run_name='__main__')\n"
+    )
+    result = subprocess.run(
+        [sys.executable, "-I", "-B", "-c", driver,
+         str(dependency.root / "tools/platform_dependency.py"), *development.arguments()],
+        capture_output=True, text=True, timeout=15,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "production pin unchanged" in result.stderr
+    assert str(development_cache(dependency, development)) in result.stdout
+    assert not cache(dependency).exists()
+
+
+def test_pytest_helpers_use_only_the_explicit_development_selection(dependency, development):
+    copy_development_tools(dependency.root)
+    platform.prepare(development=development)
+    tests = dependency.root / "tests"
+    tests.mkdir()
+    for name in ("test_support.py", "conftest.py"):
+        shutil.copy2(ROOT / "tests" / name, tests / name)
+    (tests / "test_selected.py").write_text(
+        "from test_support import platform_dependency\n"
+        "def test_selected():\n"
+        "    platform = platform_dependency()\n"
+        "    exports = platform.prepare_exports(download=False)\n"
+        "    assert 'platform-development' in str(exports['python-sdk'])\n"
+        "    assert platform.manifest_schema_path(download=False).is_file()\n"
+    )
+    command = [sys.executable, "-B", "-m", "pytest", "-q", str(tests / "test_selected.py")]
+    environment = {**os.environ, "PYTHONPATH": str(tests)}
+    selected = subprocess.run(
+        [*command, *development.arguments()], cwd=dependency.root,
+        env=environment, capture_output=True, text=True, timeout=30,
+    )
+    assert selected.returncode == 0, selected.stdout + selected.stderr
+    default = subprocess.run(
+        command, cwd=dependency.root, env=environment,
+        capture_output=True, text=True, timeout=30,
+    )
+    assert default.returncode != 0
+    assert "prepare the pinned App platform artifact" in default.stdout + default.stderr
+    assert not cache(dependency).exists()
 
 
 @pytest.mark.parametrize("app_id", ["pkg", "mail-ai", "user-owned-example"])
@@ -540,20 +752,29 @@ def test_source_native_host_uses_only_verified_cached_exports(dependency):
     assert "network must never run" not in missing.stderr
 
 
-def test_test_runner_disables_cache_bytecode(dependency, monkeypatch):
+@pytest.mark.parametrize("local", [False, True])
+def test_test_runner_disables_cache_bytecode(dependency, development, monkeypatch, local):
     monkeypatch.syspath_prepend(str(ROOT / "tools"))
     spec = importlib.util.spec_from_file_location("artifact_test_runner", ROOT / "tools/test.py")
     runner = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runner)
     monkeypatch.setattr(runner, "prepare", platform.prepare)
-    monkeypatch.setattr(runner.sys, "argv", ["test.py", "--shared"])
+    selected_arguments = development.arguments() if local else []
+    monkeypatch.setattr(runner.sys, "argv", ["test.py", "--shared", *selected_arguments])
     calls = []
     monkeypatch.setattr(runner.subprocess, "run", lambda *args, **kwargs: calls.append((args, kwargs)))
     runner.main()
     assert len(calls) == 1
     environment = calls[0][1]["env"]
     assert environment["PYTHONDONTWRITEBYTECODE"] == "1"
-    assert str(cache(dependency) / "payload" / EXPORTS["python-sdk"]) in environment["PYTHONPATH"]
+    expected = development_cache(dependency, development) if local else cache(dependency)
+    assert str(expected / "payload" / EXPORTS["python-sdk"]) in environment["PYTHONPATH"]
+    command = calls[0][0][0]
+    if local:
+        assert command[5:11] == selected_arguments
+        assert dependency.calls == []
+    else:
+        assert "--development-platform" not in command
 
 
 def test_real_os_artifact_interoperability(dependency, request):

@@ -22,6 +22,13 @@ that dependency. Existing local caches and validation artifacts are not a
 current publication. Do not fabricate a `0.1.0` URL/digest, substitute a sibling
 OS checkout or republish an artifact to bypass this blocked dependency.
 
+Source development can instead explicitly supply a local archive with its
+expected version and SHA-256; see
+[local platform development](../tools/MODULE.md#local-platform-development).
+This verifies the same public artifact format in a separate cache. It does not
+make the default CI dependency available, change `platform.lock.json`, authorize
+release/install payload staging or select another source at runtime.
+
 Any future release, release tag, version bump or dependency-pin adoption needs
 explicit owner approval. Source development, successful validation and requests
 to commit or push do not authorize publication.

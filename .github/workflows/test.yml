@@ -13,6 +13,23 @@ env:
   CLAW_CI_APT_SOURCES: /etc/apt/sources.list.d/ubuntu.sources
 
 jobs:
+  platform-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+      - run: python3 -m pip install -r requirements-dev.txt
+      - name: Verify platform preparation without a published SDK
+        env:
+          PYTHONPATH: tests:tools
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: >-
+          python3 -m pytest -q --import-mode=importlib
+          tests/test_platform_dependency.py tests/test_platform_native.py
+
   products:
     runs-on: ubuntu-latest
     strategy:

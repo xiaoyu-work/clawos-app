@@ -1,10 +1,13 @@
-"""Fetch the digest-pinned public App platform artifact, never an OS checkout."""
+"""Prepare a verified App platform artifact, never an OS source checkout."""
 
+import argparse
+from dataclasses import dataclass
 import errno
 import importlib.util
 import os
 from pathlib import Path
 import stat
+import sys
 import tempfile
 import time
 import urllib.parse
@@ -26,6 +29,69 @@ def _module(name, filename):
 
 stage = _module("app_shared_stage", "stage.py")
 artifact = _module("app_platform_archive", "platform_archive.py")
+
+
+def _identity(version, sha256):
+    if not isinstance(version, str) or not artifact.SEMVER.fullmatch(version):
+        raise ValueError("App platform version must be an explicit semantic version")
+    if not isinstance(sha256, str) or not artifact.SHA256.fullmatch(sha256):
+        raise ValueError("App platform SHA-256 must be exactly 64 hexadecimal characters")
+    return sha256.lower()
+
+
+@dataclass(frozen=True)
+class DevelopmentArtifact:
+    """Explicit build/test input, never a production pin or runtime override."""
+
+    archive: Path
+    version: str
+    sha256: str
+
+    def __post_init__(self):
+        object.__setattr__(self, "sha256", _identity(self.version, self.sha256))
+        object.__setattr__(self, "archive", Path(self.archive).absolute())
+
+    def arguments(self):
+        return [
+            "--development-platform", str(self.archive),
+            "--development-platform-version", self.version,
+            "--development-platform-sha256", self.sha256,
+        ]
+
+
+def add_development_arguments(parser):
+    group = parser.add_argument_group("Explicit local development platform")
+    group.add_argument(
+        "--development-platform", type=Path,
+        help="Local platform archive; never a download fallback",
+    )
+    group.add_argument("--development-platform-version", help="Expected archive version")
+    group.add_argument("--development-platform-sha256", help="Expected archive SHA-256")
+
+
+def development_from_args(options):
+    values = (
+        options.development_platform,
+        options.development_platform_version,
+        options.development_platform_sha256,
+    )
+    if all(value is None for value in values):
+        return None
+    if any(value is None for value in values):
+        raise ValueError(
+            "Local development requires --development-platform, "
+            "--development-platform-version and --development-platform-sha256 together"
+        )
+    return DevelopmentArtifact(*values)
+
+
+def report_development(development):
+    if development is not None:
+        print(
+            f"Using local development platform {development.version}, "
+            f"SHA-256 {development.sha256}; production pin unchanged",
+            file=sys.stderr,
+        )
 
 
 def _https(url):
@@ -55,14 +121,11 @@ def validate_lock(lock):
         )
     if lock.get("schema", artifact.SCHEMA) != artifact.SCHEMA:
         raise ValueError("Unsupported App platform lock schema")
-    if not isinstance(lock["version"], str) or not artifact.SEMVER.fullmatch(lock["version"]):
-        raise ValueError("App platform version must be an explicit release version")
+    digest = _identity(lock["version"], lock["sha256"])
     if type(lock["runtime_abi"]) is not int or lock["runtime_abi"] != RUNTIME_ABI:
         raise ValueError("Unsupported App platform runtime ABI")
-    if not isinstance(lock["sha256"], str) or not artifact.SHA256.fullmatch(lock["sha256"]):
-        raise ValueError("App platform SHA-256 must be exactly 64 hexadecimal characters")
     _https(lock["url"])
-    return {**lock, "sha256": lock["sha256"].lower()}
+    return {**lock, "sha256": digest}
 
 
 def read_lock():
@@ -111,8 +174,8 @@ def _download(url, destination):
                 raise ValueError("App platform download is truncated")
 
 
-def _cache_base():
-    base = ROOT / "build" / "platform-artifacts"
+def _cache_base(*, development=False):
+    base = ROOT / "build" / ("platform-development" if development else "platform-artifacts")
     for path in (ROOT / "build", base):
         if path.is_symlink() or (path.exists() and not path.is_dir()):
             raise ValueError("Invalid App platform cache directory")
@@ -132,24 +195,36 @@ def _cache_layout(cache):
         pass
 
 
-def prepare_exports(*, download=True):
+def prepare_exports(*, download=True, development=None):
     """Resolve named library exports only after archive and cache verification."""
-    lock = read_lock()
-    base = _cache_base()
+    if development is None:
+        lock = read_lock()
+    else:
+        lock = {
+            "version": development.version,
+            "sha256": _identity(development.version, development.sha256),
+            "runtime_abi": RUNTIME_ABI,
+        }
+    base = _cache_base(development=development is not None)
     cache = base / lock["sha256"]
     existing = cache.exists() or cache.is_symlink()
     if existing:
         _cache_layout(cache)
     elif not download:
+        if development is not None:
+            raise FileNotFoundError("Prepare the explicitly selected local development platform first")
         raise FileNotFoundError("Run tools/platform_dependency.py to prepare the pinned App platform artifact")
     with tempfile.TemporaryDirectory(prefix=".platform-", dir=base) as temporary:
         temporary = Path(temporary)
         ready = temporary / "ready"
         ready.mkdir(mode=0o700)
         verified = ready / "archive.tar.gz"
+        if development is not None:
+            local = temporary / "local-archive" if existing else verified
+            artifact.copy_verified_archive(development.archive, local, lock["sha256"])
         if existing:
             artifact.copy_verified_archive(cache / "archive.tar.gz", verified, lock["sha256"])
-        else:
+        elif development is None:
             received = temporary / "download"
             _download(lock["url"], received)
             artifact.copy_verified_archive(received, verified, lock["sha256"])
@@ -166,28 +241,36 @@ def prepare_exports(*, download=True):
             except OSError as error:
                 if error.errno not in (errno.EEXIST, errno.ENOTEMPTY):
                     raise
-                return prepare_exports(download=False)
+                return prepare_exports(download=False, development=development)
         return {name: cache / "payload" / path for name, path in manifest["exports"].items()}
 
 
-def prepare(*, download=True):
+def prepare(*, download=True, development=None):
     shared = stage.shared_python_root(ROOT)
-    exports = prepare_exports(download=download)
+    exports = prepare_exports(download=download, development=development)
     return [exports["python-sdk"], exports["python-runtime"], shared]
 
 
-def manifest_schema_path(*, download=True):
-    exports = prepare_exports(download=download)
+def manifest_schema_path(*, download=True, development=None):
+    exports = prepare_exports(download=download, development=development)
     schema = exports["python-sdk"].parents[1] / "wire/v1/manifest.schema.json"
     if not schema.is_file():
         raise ValueError("App platform artifact lacks its public SDK manifest schema")
     return schema
 
 
-def prepare_native():
-    return prepare_exports()["ui-toolkit"]
+def prepare_native(*, download=True, development=None):
+    return prepare_exports(download=download, development=development)["ui-toolkit"]
 
 
 if __name__ == "__main__":
-    for path in prepare():
+    parser = argparse.ArgumentParser(description=__doc__)
+    add_development_arguments(parser)
+    options = parser.parse_args()
+    try:
+        development = development_from_args(options)
+    except ValueError as error:
+        parser.error(str(error))
+    report_development(development)
+    for path in prepare(development=development):
         print(path)

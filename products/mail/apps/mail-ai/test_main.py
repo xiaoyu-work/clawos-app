@@ -7,16 +7,18 @@ import io
 import json
 import os
 from pathlib import Path
+import shutil
 import struct
 import subprocess
 import sys
 from unittest.mock import Mock
 
 import pytest
-from test_support import load_local_module
+from test_support import load_local_module, stage_source_platform_fixture
 
 
 HERE = Path(__file__).parent
+PROCESS_APP = HERE
 main = load_local_module(HERE / "main.py", "claw_test_mail_ai_main")
 MANIFEST = json.loads((HERE / "app.json").read_text())
 CASES = [
@@ -32,6 +34,19 @@ CASES = [
     ("chat", {"question": "When?", "context_json": '[{"sender":"alex","subject":"Review","date":"Friday","snippet":"Due"}]'},
      "Friday [1]. Not [99].", 3000),
 ]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def native_source_fixture(tmp_path_factory):
+    root = tmp_path_factory.mktemp("mail-source-platform")
+    stage_source_platform_fixture(root)
+    app = root / "products/mail/apps/mail-ai"
+    app.mkdir(parents=True)
+    for name in ("main.py", "native_host.py", "server.py", "app.json"):
+        shutil.copy2(HERE / name, app / name)
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(sys.modules[__name__], "PROCESS_APP", app)
+        yield
 
 
 def response(text):
@@ -343,12 +358,13 @@ def drive(mode, requests=(), *, text="Hello", failure="", raw=None):
         else:
             raw = b"".join((json.dumps(request) + "\n").encode() for request in requests)
     process = subprocess.run(
-        [sys.executable, "-I", "-c", DRIVER, str(HERE.resolve()), mode, text, failure],
-        input=raw, capture_output=True, timeout=20, cwd=HERE,
+        [sys.executable, "-I", "-c", DRIVER, str(PROCESS_APP.resolve()), mode, text, failure],
+        input=raw, capture_output=True, timeout=20, cwd=PROCESS_APP,
         env={key: value for key, value in os.environ.items() if key not in ("COS_APP_MANIFEST", "COS_SESSION")},
     )
     stderr = process.stderr.decode()
-    effect_line = next(line for line in stderr.splitlines() if line.startswith("TEST_EFFECTS="))
+    effect_line = next((line for line in stderr.splitlines() if line.startswith("TEST_EFFECTS=")), None)
+    assert effect_line is not None, f"Mail process fixture failed before reporting effects: {stderr}"
     effects = json.loads(effect_line.removeprefix("TEST_EFFECTS="))
     diagnostics = "\n".join(line for line in stderr.splitlines() if not line.startswith("TEST_EFFECTS="))
     replies = []
@@ -464,8 +480,8 @@ def test_native_eof_and_probe_are_side_effect_free():
     assert effects == [] and diagnostics == ""
     assert replies == [{"ok": True, "verbs": sorted(main.HANDLERS)}]
     process = subprocess.run(
-        [sys.executable, "-I", str(HERE / "native_host.py"), "--probe"],
-        capture_output=True, timeout=10,
+        [sys.executable, "-I", str(PROCESS_APP / "native_host.py"), "--probe"],
+        capture_output=True, timeout=10, cwd=PROCESS_APP,
         env={**os.environ, "PYTHONPATH": "/nonexistent-path"},
     )
     assert process.returncode == 0, process.stderr
@@ -523,9 +539,9 @@ def test_declared_native_host_answers_fragmented_frames_before_input_eof():
     import time
 
     process = subprocess.Popen(
-        [sys.executable, "-I", "-c", DRIVER, str(HERE.resolve()), "native", "Hello", ""],
+        [sys.executable, "-I", "-c", DRIVER, str(PROCESS_APP.resolve()), "native", "Hello", ""],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        bufsize=0,
+        bufsize=0, cwd=PROCESS_APP,
         env={key: value for key, value in os.environ.items() if key not in ("COS_APP_MANIFEST", "COS_SESSION")},
     )
 
