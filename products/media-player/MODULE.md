@@ -21,6 +21,15 @@ selection, dispatch gating, deadlines and audit. Product code imports only
 the versioned SDK, not OS providers or other Apps. Native state is projected
 from the UI, never a second MCP-only cache.
 
+The OS playback service accepts other independently authorized clients without
+requiring the caller to be `cosmic-player`. The native product keeps its own
+identity and manifest; its exact `desktop.media.observe:cosmic-player` and
+`desktop.media.control:cosmic-player` scopes name the fixed playback target.
+The provider still validates that target's owner, executable and unique MPRIS
+connection, and applies each calling App's own live grants and denial policy.
+This is not arbitrary-player discovery, an automatic grant, GUI admission or
+completion of the package-local executable/resource-binding cutover.
+
 Run from the repository root on Linux/WSL:
 
 ```sh
