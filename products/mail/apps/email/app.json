@@ -21,7 +21,7 @@
   "operations": {
     "send": {
       "label": {
-        "en": "Send an email (--to, --subject, --body, --provider smtp|gmail|outlook)"
+        "en": "Send an email (--to, --subject, --body, --provider smtp|gmail|outlook; SMTP requires --host host:port)"
       },
       "args": [
         {
@@ -38,6 +38,9 @@
         {
           "name": "host",
           "kind": "host",
+          "label": {
+            "en": "SMTP endpoint with an explicit port: mail.example.com:587 (STARTTLS) or mail.example.com:465 (TLS)"
+          },
           "required": false,
           "binding": "flag",
           "required_when": {
@@ -79,7 +82,7 @@
             "arg": "host"
           },
           "why": {
-            "en": "Open a network connection to the SMTP server or provider API to deliver the message."
+            "en": "Connect only to the explicit SMTP host and port selected for this message."
           },
           "when": {
             "kind": "arg-equals",
@@ -469,7 +472,7 @@
       {
         "name": "email.send",
         "summary": {
-          "en": "Send an email (--to, --subject, --body, --provider smtp|gmail|outlook)"
+          "en": "Send an email (--to, --subject, --body, --provider smtp|gmail|outlook; SMTP requires --host host:port)"
         },
         "args": [
           {
@@ -485,6 +488,9 @@
           {
             "name": "host",
             "kind": "host",
+            "label": {
+              "en": "SMTP endpoint with an explicit port: mail.example.com:587 (STARTTLS) or mail.example.com:465 (TLS)"
+            },
             "required": false,
             "required_when": {
               "kind": "arg-equals",
@@ -521,7 +527,7 @@
               "arg": "host"
             },
             "why": {
-              "en": "Open a network connection to the SMTP server or provider API to deliver the message."
+              "en": "Connect only to the explicit SMTP host and port selected for this message."
             },
             "when": {
               "kind": "arg-equals",

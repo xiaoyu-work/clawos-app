@@ -240,7 +240,7 @@ class TestSendCommand(unittest.TestCase):
                 "--subject", "hi",
                 "--body", "hello",
                 "--provider", "smtp",
-                "--host", "mail.example.com",
+                "--host", "mail.example.com:587",
             ],
         )
         self.assertTrue(result.get("sent"))
@@ -268,7 +268,7 @@ class TestSendCommand(unittest.TestCase):
                 "--body", "hello",
                 "--cc", "z@y.com",
                 "--provider", "smtp",
-                "--host", "localhost",
+                "--host", "localhost:25",
             ],
         )
         self.assertTrue(result.get("sent"))
@@ -293,7 +293,7 @@ class TestSendCommand(unittest.TestCase):
                 "--subject", "hi",
                 "--body", "hello",
                 "--provider", "smtp",
-                "--host", "localhost",
+                "--host", "localhost:25",
             ],
         )
         self.assertTrue(result.get("sent"))
@@ -315,11 +315,70 @@ class TestSendCommand(unittest.TestCase):
                 "--subject", "hi",
                 "--body", "hello",
                 "--provider", "smtp",
-                "--host", "localhost",
+                "--host", "localhost:25",
             ],
         )
         self.assertTrue(result.get("sent"))
         mock_server.login.assert_not_called()
+
+    @patch("claw_test_email_main._remember_sent")
+    @patch("claw_test_email_main.policy.require")
+    @patch("claw_test_email_main.cos_smtp.connect")
+    def test_smtp_checks_and_connects_to_the_declared_endpoint(self, connect, require, remember):
+        os.environ["SMTP_PORT"] = "invalid-undisclosed-port"
+        os.environ["SMTP_PASSWORD"] = "fixture-password"
+        for port in (587, 465, 25, 2525):
+            with self.subTest(port=port):
+                connect.reset_mock()
+                require.reset_mock()
+                endpoint = f"Mail.Example.com:{port}"
+                result = run("send", [
+                    "--to", "recipient@example.com", "--subject", "hi", "--body", "hello",
+                    "--provider", "smtp", "--host", endpoint,
+                ])
+                self.assertTrue(result.get("sent"), result)
+                require.assert_any_call("net.dial", host=endpoint)
+                connect.assert_called_once_with(
+                    "mail.example.com", port, timeout=30,
+                    implicit_tls=port == 465, starttls=port == 587,
+                )
+
+    @patch("claw_test_email_main.load_credential")
+    @patch("claw_test_email_main.cos_smtp.connect")
+    @patch("claw_test_email_main.policy.require")
+    def test_invalid_smtp_endpoint_is_rejected_before_policy_or_credentials(self, require, connect, load):
+        for endpoint in (
+            "mail.example.com", "mail.example.com:", "mail.example.com:0",
+            "mail.example.com:65536", "mail.example.com:+587", "mail.example.com:abc",
+            "mail.example.com:587/path", "mail.example.com:587?query",
+            "mail.example.com:587#fragment", "mail.example.com: 587",
+            "mail.example.com:587\n", "mail.example.com.:587", "-bad.example.com:587",
+            "mail..example.com:587", "user@host.example.com:587",
+            "user:password@host.example.com:587", "https://mail.example.com:587",
+            "[2001:db8::1]:587", "m\u00e4il.example.com:587", "mail.example.com:\uff15\uff18\uff17",
+        ):
+            with self.subTest(endpoint=endpoint):
+                result = run("send", [
+                    "--to", "recipient@example.com", "--subject", "hi", "--body", "hello",
+                    "--provider", "smtp", f"--host={endpoint}",
+                ])
+                self.assertIn("invalid SMTP --host", result.get("error", ""))
+        require.assert_not_called()
+        connect.assert_not_called()
+        load.assert_not_called()
+
+    @patch("claw_test_email_main.load_credential")
+    @patch("claw_test_email_main.cos_smtp.connect")
+    @patch("claw_test_email_main.policy.require")
+    def test_smtp_policy_failure_never_connects_or_loads_credentials(self, require, connect, load):
+        require.side_effect = email_main.policy.PolicyUnavailable("fixture policy unavailable")
+        result = run("send", [
+            "--to", "recipient@example.com", "--subject", "hi", "--body", "hello",
+            "--provider", "smtp", "--host", "mail.example.com:587",
+        ])
+        self.assertIn("capability check failed", result.get("error", ""))
+        connect.assert_not_called()
+        load.assert_not_called()
 
     @patch("claw_test_email_main._gmail_request")
     def test_send_gmail_success(self, mock_req):

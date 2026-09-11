@@ -22,6 +22,20 @@ provider credentials and authorization in the OS; importing source does not
 grant access to a user's profile. The repository move preserves installed
 `mail-ai`, `email` and `gateway-email` identities, paths, grants and protocols.
 All legacy identities still await product consolidation.
+Email's SMTP `send` operation and `email.send` MCP tool require an explicit
+`host:port`, such as `mail.example.com:587` or `mail.example.com:465`. That
+same argument supplies the manifest's `net.dial` scope, the policy check and
+the actual connection. Bare hosts are rejected before policy or credential
+access: the worker's exact-endpoint policy otherwise selects port 443, which
+is not an SMTP default. `SMTP_PORT` no longer changes Email's destination.
+Use `--host server:587` for STARTTLS or `--host server:465` for implicit TLS;
+custom explicit ports retain their existing TLS behavior. SMTP credentials,
+sender configuration, Gmail/Outlook and the separate gateway configuration
+are unchanged. No wildcard grant or sandbox networking exception is added.
+The Email process fixture uses OpenSSL, public MCP and a private Unix egress
+peer to exercise real STARTTLS/implicit TLS and endpoint refusal. Its policy
+responses and messages are synthetic; it sends no real mail and grants no
+production authority.
 Email's `_shared` dependency is an App-owned common library under
 [`shared/python`](../../shared/MODULE.md), not another App or an OS export.
 The delivery adapter uses the separately named `gateway._shared` library

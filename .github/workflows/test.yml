@@ -27,6 +27,13 @@ jobs:
         with:
           node-version: "22"
       - run: python3 -m pip install -r requirements-dev.txt
+      - name: Install Mail TLS fixture dependency
+        if: matrix.product == 'mail'
+        run: |
+          test -s "$CLAW_CI_APT_SOURCES"
+          sudo apt-get -o Dir::Etc::sourcelist="$CLAW_CI_APT_SOURCES" \
+            -o Dir::Etc::sourceparts=- update -qq
+          sudo apt-get install -y openssl
       - name: Install Files search dependency
         if: matrix.product == 'files'
         run: |

@@ -16,6 +16,8 @@ import urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+import idna
+
 from _shared.credentials import load_credential  # noqa: E402
 from _shared.safe_http import open_url  # noqa: E402
 from claw_os_sdk import ai  # noqa: E402
@@ -107,7 +109,7 @@ def _build_send_parser():
     p.add_argument("--body", required=True)
     p.add_argument("--cc", default=None)
     p.add_argument("--provider", required=True, choices=["smtp", "gmail", "outlook"])
-    p.add_argument("--host", default=None)
+    p.add_argument("--host", default=None, help="SMTP endpoint, e.g. mail.example.com:587")
     return p
 
 
@@ -189,9 +191,26 @@ def _smtp_connection(host, port, timeout=30):
     )
 
 
-def _send_smtp(to, subject, body, host, cc=None):
+def _smtp_endpoint(value):
+    host, separator, port = value.rpartition(":")
+    if (
+        not separator
+        or not host
+        or ":" in host
+        or not value.isascii()
+        or not port.isdecimal()
+        or len(port) > 5
+    ):
+        raise ValueError("SMTP requires an explicit host:port")
+    port = int(port)
+    if not 1 <= port <= 65535 or host.endswith("."):
+        raise ValueError("invalid SMTP host or port")
+    host = idna.encode(host, uts46=True, std3_rules=True).decode("ascii")
+    return host.lower(), port
+
+
+def _send_smtp(to, subject, body, host, port, cc=None):
     """Send an email via SMTP."""
-    port = int(os.environ.get("SMTP_PORT", "587"))
     user = os.environ.get("SMTP_USER", "")
     password, _ = _credential_value("SMTP_PASSWORD")
     password = password or ""
@@ -606,10 +625,17 @@ def cmd_send(args):
     if provider == "smtp":
         if not opts.host:
             return {"error": "missing required argument: --host for smtp provider"}
+        try:
+            host, port = _smtp_endpoint(opts.host)
+        except ValueError:
+            return {
+                "error": "invalid SMTP --host: use an explicit DNS name or IPv4 address "
+                "and port, e.g. mail.example.com:587 (STARTTLS) or mail.example.com:465 (TLS)"
+            }
         policy.require("secret.read", name="default/SMTP_PASSWORD")
         policy.require("net.dial", host=opts.host)
         result = _send_smtp(
-            opts.to, opts.subject, opts.body, opts.host, cc=opts.cc
+            opts.to, opts.subject, opts.body, host, port, cc=opts.cc
         )
     elif provider == "gmail":
         policy.require("secret.read", name="default/GOOGLE_ACCESS_TOKEN")
