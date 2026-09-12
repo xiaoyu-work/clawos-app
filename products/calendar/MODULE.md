@@ -29,6 +29,13 @@ The existing read-only `data.db.read:Name(calendar)` provider stays OS-owned,
 also serving Widget Rail. Denial and missing/broken service errors remain
 visible. No identity, grant or data partition is merged.
 
+The OS App-service Host now binds Calendar's existing owner/App data partition
+through a private UID-mapped view, so a new service Host can read the same
+on-disk state without copying it or changing its owner. This is not a new
+Calendar directory. The panel still needs the OS-owned cross-App resource
+binding; its own private data directory is not Calendar's database. Legacy
+task-host operations and installed GUI/resource acceptance remain separate.
+
 The Rust UI uses the same verified App manifest, identity/session, capability
 and sandbox contract as any other App. Neither its language nor its package
 origin grants privilege. The public data service is available to other Apps
