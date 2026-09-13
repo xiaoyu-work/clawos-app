@@ -48,6 +48,14 @@ Product tests exercise their actual parsers separately; see
 
 ## Python Runtime Libraries
 
+`_shared.atomic.atomic_write_bytes` and `atomic_write_json` accept the additive
+`strict=True` option used by Files' private plan records. Strict writes stage
+exclusively without following a leaf symlink, require file and directory
+fsyncs, and surface every durability failure; an error after replacement may
+be indeterminate. Existing best-effort replacement defaults and
+`atomic_create_bytes`'s no-replace semantics are unchanged. App-owned helper
+regressions live in `tests/shared/test_atomic.py`; no OS provider is copied.
+
 Development puts `shared/python` on the same explicit Python path as the
 immutable OS SDK/runtime. Installed Python and native embedded clients use
 `/usr/lib/cos/python`. Imports do not search an App parent directory or a sibling

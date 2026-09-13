@@ -11,7 +11,7 @@ identities, grants and data; KV is not Agent memory.
 | `apps/db/main.py` | Existing scoped SQLite CRUD, schema/query, name validation, authorizers and bounded results |
 | `apps/db/server.py` | Direct manifest-bound handlers through the immutable OS SDK |
 | `apps/db/test_main.py` | SQL/path/policy boundaries, public MCP stdio with the real SDK, transactions, connection lifetime and concurrency |
-| `apps/kv/app.json` | Five unchanged tool/CLI schemas and separate exact-key read/write/delete needs |
+| `apps/kv/app.json` | Five tool/CLI schemas, exact-key needs, entry-object resolver and declarative effect previews |
 | `apps/kv/server.py` | Complete KV MCP, strict UTF-8 string-map persistence, parsed cache, flock and atomic replacement; no `main.py` |
 | `apps/kv/test_server.py` | Original tests plus isolated cache/locking/failure/privacy and real MCP process regressions |
 | `package.json` | Explicit source kind, installed App and test selection; no native assets or library exports |
@@ -45,6 +45,20 @@ named-key grants, which cannot safely authorize an unfiltered store scan.
 A pattern does not narrow the required grant, and no union of key grants
 becomes full-store authority. The OS gates every call before forwarding it. KV does not add
 duplicate in-handler authorization or a read/write/delete grant union.
+
+KV's `objects.entry.resolve` is `{"operation":"get","id_arg":"key"}`.
+`operation` selects the existing ordinary human command, which maps exactly to
+the existing `kv.get` MCP tool; it is not a second resolver service or a reason
+to recreate `main.py`/`operations`. The OS must validate resolver arguments and
+capabilities against that same manifest command lookup. Keys, including
+option-shaped strings, remain literal data in canonical
+`app://kv/entry?id=ENCODED_KEY` references. The unchanged `get` result cannot
+distinguish a missing key from a stored empty string: resolution and
+authenticated declarations do not prove object existence or freshness.
+The new `get`/`set`/`del` effect declarations are previews, not execution
+evidence or rollback promises. Static discovery still only reads metadata.
+These fields require the compatible public platform manifest schema/MCP
+reader; they do not alter the production platform pin or publication gate.
 
 Relocation also fixes demonstrated persistence bugs: cached reads now compare
 the current bytes before reusing parsed JSON; mutations hold one exclusive

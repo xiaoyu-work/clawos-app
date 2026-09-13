@@ -21,6 +21,9 @@ main = load_local_module(
     "claw_test_fs_main",
     clear_modules=("_shared",),
 )
+plans = load_local_module(
+    Path(__file__).with_name("file_plans.py"), "claw_test_fs_plans_for_main"
+)
 MANIFEST = json.loads(Path(__file__).with_name("app.json").read_text())
 REAL_SNAPSHOT = main.snapshot.snapshot
 
@@ -43,7 +46,7 @@ def file(tmp_path):
 @pytest.fixture
 def server(monkeypatch):
     monkeypatch.setenv("COS_APP_MANIFEST", str(Path(__file__).with_name("app.json")))
-    with mock.patch.dict(sys.modules, {"main": main}):
+    with mock.patch.dict(sys.modules, {"main": main, "file_plans": plans}):
         return load_local_module(
             Path(__file__).with_name("server.py"), "claw_test_fs_server"
         )
@@ -544,11 +547,12 @@ def test_recent_walk_errors_raise(tmp_path, monkeypatch):
 
 def test_mcp_manifest_contract_and_defaults(server, tmp_path, monkeypatch):
     tools = MANIFEST["mcp"]["tools"]
-    assert len(tools) == 14
+    assert len(tools) == 18
     assert {tool["name"] for tool in tools} == {
         f"fs.{name}" for name in (
             "ls", "read", "write", "rm", "mkdir", "stat", "search", "tag",
             "recent", "rename", "move", "copy", "read_bytes", "write_bytes",
+            "plan_write", "plan_show", "plan_apply", "plan_prune",
         )
     }
     assert MANIFEST["mcp"]["access"] == {"system_agent": True}

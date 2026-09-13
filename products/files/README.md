@@ -1,8 +1,14 @@
 # Files
 
-The existing `fs` App provides fourteen direct SDK MCP tools for filesystem
+The existing `fs` App provides eighteen direct SDK MCP tools for filesystem
 operations, bounded text/binary reads, metadata and search. Mutation snapshots
 use the authenticated MCP session, and the manifest owns the capability schema.
+Its four reviewed file-plan tools prepare private bounded UTF-8 drafts and real
+diffs, then apply explicitly confirmed review fingerprints through exact OS
+file authority. Preparation never writes a target; uncertain applies cannot
+replay. Object references and effect/recovery declarations are metadata, not
+existence, permission or rollback guarantees. See
+[the plan contract and platform requirements](MODULE.md#reviewed-file-plans-and-object-metadata).
 
 The `docs` App adds four MCP tools for Recoll document search, indexing, status
 and configuration. It uses the owner's existing `~/.recoll` state, with

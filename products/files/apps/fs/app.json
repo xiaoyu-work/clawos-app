@@ -6,6 +6,18 @@
   "icon": "📁",
   "runtime": "python",
   "entry": "main.py",
+  "objects": {
+    "file": {
+      "label": {"en": "File", "zh-CN": "文件"},
+      "summary": {"en": "Metadata for the filesystem object at an absolute path. Renames require updating the reference."},
+      "resolve": {"operation": "stat", "id_arg": "path"}
+    },
+    "change-plan": {
+      "label": {"en": "File change plan"},
+      "summary": {"en": "An App-owned write proposal for an absolute path. Its revision selects a plan, not write authority."},
+      "resolve": {"operation": "plan_show", "id_arg": "path", "revision_arg": "plan"}
+    }
+  },
   "dependencies": {"system": ["coreutils", "ripgrep"]},
   "schema_version": 2,
   "mcp": {
@@ -16,6 +28,75 @@
       "system_agent": true
     },
     "tools": [
+      {
+        "name": "fs.plan_write",
+        "summary": {"en": "Prepare a bounded UTF-8 file write plan without changing the target. Content must be explicit and may be empty."},
+        "args": [
+          {"name": "path", "kind": "path", "binding": "positional", "required": true},
+          {"name": "content", "kind": "text", "binding": "flag", "required": true},
+          {"name": "ttl_seconds", "kind": "integer", "binding": "flag", "default": 3600}
+        ],
+        "needs": [
+          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Read the target baseline to compute a real diff."}},
+          {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"}}, "why": {"en": "Persist the private App-owned proposal and review fingerprint."}}
+        ],
+        "effects": [
+          {"kind": "read", "label": {"en": "Read the requested file baseline"}, "target_arg": "path", "recovery": "not_applicable"},
+          {"kind": "create", "label": {"en": "Save App-owned plan data; the target file is not changed"}, "recovery": "unknown"}
+        ]
+      },
+      {
+        "name": "fs.plan_show",
+        "summary": {"en": "Read a stored file plan; omit --plan to select the newest for this path."},
+        "args": [
+          {"name": "path", "kind": "path", "binding": "positional", "required": true},
+          {"name": "plan", "kind": "name", "binding": "flag"}
+        ],
+        "needs": [
+          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Require current read authority before disclosing cached content for this target."}},
+          {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"}}, "why": {"en": "Read the App-owned proposal data."}}
+        ],
+        "effects": [
+          {"kind": "read", "label": {"en": "Read a cached proposal for the requested target, not its current contents"}, "target_arg": "path", "recovery": "not_applicable"}
+        ]
+      },
+      {
+        "name": "fs.plan_apply",
+        "summary": {"en": "Apply a reviewed plan through the file broker after conflict checks."},
+        "args": [
+          {"name": "path", "kind": "path", "binding": "positional", "required": true},
+          {"name": "plan", "kind": "name", "binding": "flag", "required": true},
+          {"name": "review", "kind": "name", "binding": "flag", "required": true},
+          {"name": "confirm", "kind": "bool", "binding": "flag", "required": true, "choices": [true]}
+        ],
+        "needs": [
+          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Check that the reviewed file baseline still matches."}},
+          {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Apply the reviewed bytes only to the explicitly authorized target."}},
+          {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"}}, "why": {"en": "Read the proposal and its review fingerprint."}},
+          {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"}}, "why": {"en": "Durably bracket apply and record its reported outcome."}}
+        ],
+        "effects": [
+          {"kind": "update", "label": {"en": "Apply reviewed content only if the file state still matches"}, "target_arg": "path", "recovery": "unknown"},
+          {"kind": "update", "label": {"en": "Record the plan lifecycle; uncertain outcomes cannot be replayed"}, "recovery": "unknown"}
+        ]
+      },
+      {
+        "name": "fs.plan_prune",
+        "summary": {"en": "Explicitly prune consumed or expired plans without changing target files."},
+        "args": [
+          {"name": "path", "kind": "path", "binding": "positional", "required": true},
+          {"name": "keep", "kind": "integer", "binding": "flag", "default": 10},
+          {"name": "confirm", "kind": "bool", "binding": "flag", "required": true, "choices": [true]}
+        ],
+        "needs": [
+          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Require target read authority before inspecting its cached plan records."}},
+          {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"}}, "why": {"en": "Inspect only this target's plan lifecycle records."}},
+          {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"}}, "why": {"en": "Remove only consumed or expired App-owned plan records."}}
+        ],
+        "effects": [
+          {"kind": "delete", "label": {"en": "Delete retired App-owned plan records, never the target file"}, "recovery": "unknown"}
+        ]
+      },
       {
         "name": "fs.ls",
         "summary": {"en": "Show the names of files inside a folder."},
@@ -42,6 +123,9 @@
       },
       {
         "name": "fs.write",
+        "effects": [
+          {"kind": "update", "label": {"en": "Write the requested file contents"}, "target_arg": "path", "recovery": "unknown"}
+        ],
         "summary": {"en": "Write explicit text content to a file. Empty content creates or truncates a file.", "zh-CN": "写入文件"},
         "args": [
           {"name": "path", "kind": "path", "required": true, "binding": "positional"},
@@ -53,6 +137,9 @@
       },
       {
         "name": "fs.rm",
+        "effects": [
+          {"kind": "delete", "label": {"en": "Remove the requested filesystem object"}, "target_arg": "path", "recovery": "unknown"}
+        ],
         "summary": {"en": "Delete a file or directory tree", "zh-CN": "删除文件"},
         "args": [
           {"name": "path", "kind": "path", "required": true, "binding": "positional"}
@@ -73,6 +160,9 @@
       },
       {
         "name": "fs.stat",
+        "effects": [
+          {"kind": "read", "label": {"en": "Inspect metadata for the requested filesystem object"}, "target_arg": "path", "recovery": "not_applicable"}
+        ],
         "summary": {"en": "Show file info and tags from its sibling metadata sidecar", "zh-CN": "显示文件信息"},
         "args": [
           {"name": "path", "kind": "path", "required": true, "binding": "positional"}

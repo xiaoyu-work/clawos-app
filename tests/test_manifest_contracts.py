@@ -1072,6 +1072,97 @@ def test_every_manifest_matches_published_schema_contract() -> None:
     assert not drift, "\n".join(drift)
 
 
+@pytest.mark.parametrize("relative", [
+    "products/files/apps/fs/app.json",
+    "capabilities/storage-sdk/apps/kv/app.json",
+])
+def test_activity_object_metadata_matches_public_manifest_schema(relative):
+    from jsonschema import Draft202012Validator
+
+    manifest = json.loads((APPS_ROOT / relative).read_text(encoding="utf-8"))
+    Draft202012Validator(_schema()).validate(manifest)
+
+
+def test_activity_objects_and_effects_use_ordinary_manifest_commands():
+    declarations = {
+        "products/files/apps/fs/app.json": {
+            "file": {"operation": "stat", "id_arg": "path"},
+            "change-plan": {
+                "operation": "plan_show", "id_arg": "path", "revision_arg": "plan",
+            },
+        },
+        "capabilities/storage-sdk/apps/kv/app.json": {
+            "entry": {"operation": "get", "id_arg": "key"},
+        },
+    }
+    for relative, expected in declarations.items():
+        manifest = json.loads((APPS_ROOT / relative).read_text(encoding="utf-8"))
+        assert "operations" not in manifest
+        prefix = manifest["id"] + "."
+        commands = {
+            tool["name"][len(prefix):]: tool
+            for tool in manifest["mcp"]["tools"] if tool["name"].startswith(prefix)
+        }
+        assert {name: value["resolve"] for name, value in manifest["objects"].items()} == expected
+        for resolver in expected.values():
+            tool = commands[resolver["operation"]]
+            args = {arg["name"]: arg for arg in tool.get("args", [])}
+            assert args[resolver["id_arg"]]["required"] is True
+            if "revision_arg" in resolver:
+                assert args[resolver["revision_arg"]]["kind"] == "name"
+                assert args[resolver["revision_arg"]]["binding"] == "flag"
+                assert not args[resolver["revision_arg"]].get("required")
+                assert "required_when" not in args[resolver["revision_arg"]]
+        for tool in commands.values():
+            names = {arg["name"] for arg in tool.get("args", [])}
+            for effect in tool.get("effects", []):
+                if "target_arg" in effect:
+                    assert effect["target_arg"] in names
+                assert effect["recovery"] == (
+                    "not_applicable" if effect["kind"] == "read" else "unknown"
+                )
+
+
+def test_file_plan_manifest_keeps_exact_authority_and_explicit_confirmation():
+    manifest = json.loads(
+        (APPS_ROOT / "products/files/apps/fs/app.json").read_text(encoding="utf-8")
+    )
+    tools = {tool["name"]: tool for tool in manifest["mcp"]["tools"]}
+    for name in ("plan_write", "plan_show", "plan_apply", "plan_prune"):
+        tool = tools["fs." + name]
+        assert not tool.get("stdin")
+        for need in tool["needs"]:
+            if need["verb"].startswith("fs."):
+                assert need["scope"] == {"kind": "from-arg", "arg": "path"}
+            else:
+                assert need["scope"] == {
+                    "kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"},
+                }
+        args = {arg["name"]: arg for arg in tool["args"]}
+        assert args["path"]["kind"] == "path"
+        assert args["path"]["required"] is True
+        assert "session_id" not in args
+        if name != "plan_apply":
+            assert not {"fs.write", "fs.delete"} & {
+                need["verb"] for need in tool["needs"]
+            }
+        if name in ("plan_apply", "plan_prune"):
+            assert args["confirm"]["kind"] == "bool"
+            assert args["confirm"]["required"] is True
+            assert len(args["confirm"]["choices"]) == 1
+            assert args["confirm"]["choices"][0] is True
+    assert {
+        need["verb"] for need in tools["fs.plan_write"]["needs"]
+    } == {"fs.read", "data.db.write"}
+    assert {
+        need["verb"] for need in tools["fs.plan_apply"]["needs"]
+    } == {"fs.read", "fs.write", "data.db.read", "data.db.write"}
+    content = next(
+        arg for arg in tools["fs.plan_write"]["args"] if arg["name"] == "content"
+    )
+    assert content["required"] is True and content["binding"] == "flag"
+
+
 def test_bundled_apps_have_an_explicit_agent_surface() -> None:
     human_only = {"panel-calendar", "panel-clipboard", "widget-rail"}
     manifests = [

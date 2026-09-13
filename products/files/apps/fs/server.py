@@ -1,9 +1,46 @@
-from claw_os_sdk.mcp import App, current_context
+from claw_os_sdk.mcp import App, ToolResult, current_context
 
+import file_plans
 import main
 
 
 app = App.from_manifest()
+
+
+def _plan_result(handler, *args, **kwargs) -> ToolResult:
+    try:
+        return ToolResult.structured(handler(*args, **kwargs))
+    except file_plans.PlanError as error:
+        value = {"error": str(error), "code": error.code}
+    except ValueError as error:
+        value = {"error": str(error), "code": "invalid_args"}
+    except OSError as error:
+        value = {"error": f"file plan I/O failed: {error}", "code": "file_plan_io"}
+    result = ToolResult.structured(value)
+    return ToolResult(content=result.content, is_error=True, structured_content=value)
+
+
+@app.tool("fs.plan_write")
+def plan_write(path: str, content: str, ttl_seconds: int = 3600) -> ToolResult:
+    return _plan_result(file_plans.plan_write, path, content, ttl_seconds)
+
+
+@app.tool("fs.plan_show")
+def plan_show(path: str, plan: str | None = None) -> ToolResult:
+    return _plan_result(file_plans.plan_show, path, plan)
+
+
+@app.tool("fs.plan_apply")
+def plan_apply(path: str, plan: str, review: str, confirm: bool) -> ToolResult:
+    return _plan_result(
+        file_plans.plan_apply, path, plan, review, confirm,
+        session_id=current_context().session_id,
+    )
+
+
+@app.tool("fs.plan_prune")
+def plan_prune(path: str, confirm: bool, keep: int = 10) -> ToolResult:
+    return _plan_result(file_plans.plan_prune, path, confirm, keep)
 
 
 @app.tool("fs.ls")

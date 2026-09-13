@@ -1,6 +1,6 @@
 {
   "apps": ["apps/fs", "apps/docs", "apps/cosmic-files"],
-  "tests": [],
+  "tests": ["apps/fs/test_file_plans.py"],
   "native": {"cosmic-files": "native/cosmic-files"},
   "native_kind": "binary",
   "native_payload": {"app": "cosmic-files", "program": "cosmic-files", "auxiliary_programs": ["cosmic-files-applet"]},

@@ -338,6 +338,55 @@ def test_manifest_keeps_key_grants_distinct_and_requires_full_store_read():
         assert tool["needs"][0]["scope"] == {"kind": "fixed", "scope": {"kind": "wild"}}
 
 
+def test_object_declaration_reuses_the_existing_exact_key_mcp_command():
+    manifest = json.loads((APP_DIR / "app.json").read_text())
+    resolver = manifest["objects"]["entry"]["resolve"]
+    assert resolver == {"operation": "get", "id_arg": "key"}
+    assert "operations" not in manifest
+    assert not (APP_DIR / "main.py").exists()
+    tool = next(
+        tool for tool in manifest["mcp"]["tools"]
+        if tool["name"] == f"{manifest['id']}.{resolver['operation']}"
+    )
+    assert tool["args"] == [{"name": "key", "kind": "name", "required": True}]
+    assert tool["needs"][0]["verb"] == "data.kv.read"
+    assert tool["needs"][0]["scope"] == {"kind": "from-arg", "arg": "key"}
+    assert tool["effects"][0]["recovery"] == "not_applicable"
+    for name in ("kv.set", "kv.del"):
+        mutation = next(tool for tool in manifest["mcp"]["tools"] if tool["name"] == name)
+        assert mutation["effects"][0]["target_arg"] == "key"
+        assert mutation["effects"][0]["recovery"] == "unknown"
+
+
+@pytest.mark.parametrize("key", ["--schema", "001", "space /?id=key&revision=版本"])
+def test_object_identity_remains_literal_data_through_public_mcp(tmp_path, key):
+    from claw_os_sdk.objects import format_reference, parse_reference
+
+    reference = format_reference({
+        "app_id": "kv", "object_type": "entry", "object_id": key,
+    })
+    identity = parse_reference(reference)["object_id"]
+    assert identity == key
+    with mcp_process(APP_DIR, env=_environment(tmp_path)) as request:
+        assert _object(_call(request, "set", {"key": identity, "value": "literal"})) == {
+            "key": key, "value": "literal",
+        }
+        assert _text(_call(request, "get", {"key": identity})) == "literal"
+        assert _object(_call(request, "del", {"key": identity})) == {
+            "key": key, "deleted": True,
+        }
+
+
+def test_object_resolution_preserves_missing_and_empty_get_results(tmp_path):
+    with mcp_process(APP_DIR, env=_environment(tmp_path)) as request:
+        assert _text(_call(request, "get", {"key": "missing"})) == ""
+        assert not list(tmp_path.iterdir())
+        _object(_call(request, "set", {"key": "empty", "value": ""}))
+        assert _text(_call(request, "get", {"key": "empty"})) == ""
+        assert _text(_call(request, "get", {"key": "missing"})) == ""
+        assert _object(_call(request, "dump")) == {"count": 1, "data": {"empty": ""}}
+
+
 @pytest.mark.parametrize(("command", "arguments"), [
     ("get", {}),
     ("get", {"key": 42}),

@@ -29,7 +29,7 @@ points without duplicating its account state or inheriting a union of grants.
 | --- | --- |
 | `products/mail/` | Thunderbird source, Mail AI, legacy email and restricted delivery, extension UI and product packaging |
 | `products/calendar/` | Local events, Google/Outlook integration, Calendar MCP and the complete native panel UI library/assets |
-| `products/files/` | Complete native Files UI/library/companion, filesystem MCP, owner-scoped Recoll, shared document parsing and SDK AI |
+| `products/files/` | Complete native Files UI/library/companion, filesystem MCP and private reviewed file plans, owner-scoped Recoll, shared document parsing and SDK AI |
 | `capabilities/document-engine/` | Legacy `doc` facade, manifest, owning-client MCP bridge and tests; explicitly not another business product |
 | `capabilities/storage-sdk/` | Legacy `db` SQLite and `kv` JSON clients, independent MCP/CLI contracts and state; separate from the Storage business product and OS SDK/providers |
 | `capabilities/http/` | Complete `net` HTTP client and MCP contract; shared transport, egress authority, SDK/runtime and installation remain OS-owned |
@@ -164,6 +164,18 @@ Doc's six operations, CLI bindings, signed schema, AI budget/safety/origin,
 existing grants, document outputs and `doc` memory identity are unchanged.
 This is source ownership, not identity retirement, a grant union, new backend
 authority, user-data relocation or completion of the broader product redesign.
+
+Files' four plan commands use its existing `fs` MCP entrypoint and owner/App
+data partition. Preparation stores bounded private UTF-8 proposals and real
+diffs without writing targets; apply durably records its bracket before using
+the public session-bound `system.file.replace` runtime/broker boundary.
+Exact path checks remain OS-owned, parent mounts are not widened, and unknown
+outcomes cannot replay. Files/KV object resolvers select ordinary manifest
+commands (`stat`, `plan_show`, `get`), including their normal MCP mappings.
+Authenticated object/effect declarations are schema-only previews, not proof
+of existence, freshness, execution or rollback. Their public SDK/runtime
+exports and manifest support require coordinated platform validation/adoption;
+see [the Files contract](products/files/MODULE.md#reviewed-file-plans-and-object-metadata).
 
 HTTP preserves `net.fetch` and `net.download`, their CLI argument bindings,
 bounded requests/responses, private atomic downloads and existing exact grants.
