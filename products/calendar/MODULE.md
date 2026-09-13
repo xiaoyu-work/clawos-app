@@ -32,9 +32,10 @@ visible. No identity, grant or data partition is merged.
 The OS service and ordinary task-operation Hosts bind Calendar's existing
 owner/App data partition through private UID-mapped views, so a new Host can read the same
 on-disk state without copying it or changing its owner. This is not a new
-Calendar directory. The panel still needs the OS-owned cross-App resource
-binding; its own private data directory is not Calendar's database. Installed
-GUI/resource acceptance remains separate.
+Calendar directory. Panel and Widget Rail reads now use the owner-scoped OS
+Calendar service through the unchanged SDK interface. Their own data directories
+cannot select the Calendar database, and they receive no raw file access.
+Installed GUI/resource acceptance remains separate.
 
 The Rust UI uses the same verified App manifest, identity/session, capability
 and sandbox contract as any other App. Neither its language nor its package
