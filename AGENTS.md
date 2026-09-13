@@ -18,6 +18,10 @@ source group's `MODULE.md` before changing its boundary.
   regressions are verified; unresolved special integration blocks publication.
 - Keep authority, credentials, consent, audit, App Host and system services in
   `xiaoyu-work/claw-os`. Do not copy their implementations here.
+- Apps must run independently of an active AI Agent, Agent UI or model request.
+  Their lifecycle belongs to the OS service `clawd`, not the AI runtime.
+  Root is not a standalone lifecycle bypass. Keep the OS cutover status
+  explicit; this contract does not itself complete runtime integration.
 - `platform.lock.json` pins a published SDK/runtime/toolkit artifact by version,
   HTTPS URL, SHA-256 and runtime ABI. Fetch it through
   `tools/platform_dependency.py`; never import from a sibling OS checkout.

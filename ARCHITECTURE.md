@@ -19,11 +19,34 @@ checks and regressions replace them. New release publication is gated; see
 Product UI ----+
               +--> product business implementation --> versioned OS SDK/runtime
 Product MCP --+                                             |
-                                                       clawd / AI gate
+                                                     clawd (OS services)
+                                                           |
+                                                  AI gate, when requested
 ```
 
 Applications do not call one another. One product can have multiple entry
 points without duplicating its account state or inheriting a union of grants.
+
+## App lifecycle and AI independence
+
+An App must run without opening the Agent UI, running an AI Agent task or
+making a model request. `clawd` is the OS service responsible for App lifetime,
+permissions and system resources; it is not the `claw-agentd` model/tool loop.
+Both terminal-only and desktop installations use that OS service.
+
+The accepted lifecycle contract requires `clawd` to be available for managed
+App startup and lifetime operations. Stopping that system service is different
+from not running the AI Agent. An unavailable daemon must produce an explicit
+error, including for independent Root clients; Root is not a second App
+integration path. Only features that explicitly request AI depend on the
+OS AI gate and its consent, capability and budget checks.
+
+The OS launch-ownership cutover and installation/update/rollback coordination
+remain tracked in [contract status](docs/releases.md#one-app-integration-contract-pending).
+This accepted boundary is not a claim that every runtime path or installed
+package has completed that migration.
+
+## Source ownership
 
 | Surface | Owner |
 | --- | --- |
