@@ -42,6 +42,16 @@ cos activity attach-object ACTIVITY_ID --label "Source email" \
 
 ## Existing transport and packaging
 
+`attachment_download` takes an explicit provider, message/attachment ID and
+absolute output path. It supports Gmail attachment bodies (including nested
+inline MIME parts) and Outlook file attachments, bounded to 16 MiB. Output
+parents must exist; private atomic creation never overwrites an existing
+entry. Failed durability after creation is reported as indeterminate.
+Attachment filenames never select a destination. `attachment-file` references
+resolve through `attachment_file` with only exact metadata authority, while
+downloads retain their provider credential/host and exact output-write grants.
+MCP snapshots use the authenticated call session, never ambient service state.
+
 Email's SMTP `send` operation and `email.send` MCP tool require an explicit
 `host:port`, such as `mail.example.com:587` or `mail.example.com:465`. That
 same argument supplies the manifest's `net.dial` scope, the policy check and

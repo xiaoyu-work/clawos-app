@@ -7,9 +7,11 @@ sharing Thunderbird account/object state requires the separate product cutover.
 
 import argparse
 import base64
+import hashlib
 import json
 import os
 import smtplib
+import stat
 import sys
 import urllib.error
 import urllib.parse
@@ -20,10 +22,13 @@ from email.mime.text import MIMEText
 import idna
 
 from _shared.credentials import load_credential  # noqa: E402
+from _shared.atomic import atomic_create_bytes, _fsync_dir  # noqa: E402
+from _shared.paths import safe_realpath  # noqa: E402
 from _shared.safe_http import open_url  # noqa: E402
 from claw_os_sdk import ai  # noqa: E402
 from claw_os_sdk.objects import ObjectRefError, format_reference  # noqa: E402
-from cos_runtime import memory, policy  # noqa: E402
+from claw_os_sdk.mcp import current_context  # noqa: E402
+from cos_runtime import memory, policy, snapshot  # noqa: E402
 from cos_runtime import smtp as cos_smtp  # noqa: E402
 
 
@@ -35,6 +40,7 @@ GMAIL_API_HOST = "gmail.googleapis.com"
 OUTLOOK_API_HOST = "graph.microsoft.com"
 GOOGLE_ACCESS_TOKEN = "GOOGLE_ACCESS_TOKEN"
 MICROSOFT_ACCESS_TOKEN = "MICROSOFT_ACCESS_TOKEN"
+MAX_ATTACHMENT_BYTES = 16 * 1024 * 1024
 
 
 def _credential_value(store_name, *legacy_env_names):
@@ -162,6 +168,144 @@ def cmd_gmail_message(args):
 
 def cmd_outlook_message(args):
     return _read_message_object("outlook", args)
+
+
+def _message_parts(payload):
+    pending = [payload]
+    count = 0
+    while pending:
+        part = pending.pop()
+        count += 1
+        if count > 1000:
+            raise ValueError("message exceeds the 1000-part MIME limit")
+        yield part
+        pending.extend(reversed(part.get("parts", [])))
+
+
+def _decode_attachment(encoded, limit):
+    if not isinstance(encoded, str) or len(encoded) > ((limit + 2) // 3) * 4 + 4:
+        raise ValueError("attachment exceeds its size limit")
+    data = base64.b64decode(
+        encoded + "=" * (-len(encoded) % 4), altchars=b"-_", validate=True,
+    )
+    if len(data) > limit:
+        raise ValueError("attachment exceeds its size limit")
+    return data
+
+
+def _attachment_file_reference(path):
+    return format_reference({
+        "app_id": "email", "object_type": "attachment-file", "object_id": path,
+    })
+
+
+def cmd_attachment_file(args):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--path", required=True)
+    try:
+        options = parser.parse_args(args)
+    except SystemExit:
+        return {"error": "usage: email attachment_file --path <absolute-path>"}
+    path = safe_realpath(options.path)
+    if not os.path.isabs(options.path) or path != options.path:
+        return {"error": "attachment file path must be absolute and canonical"}
+    policy.require("fs.meta", path=path)
+    metadata = os.stat(path, follow_symlinks=False)
+    if not stat.S_ISREG(metadata.st_mode):
+        return {"error": "attachment path is not a regular file"}
+    return {
+        "path": path, "size": metadata.st_size, "modified_ns": metadata.st_mtime_ns,
+        "object": _attachment_file_reference(path),
+    }
+
+
+def cmd_attachment_download(args):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--provider", choices=["gmail", "outlook"], required=True)
+    parser.add_argument("--id", required=True)
+    parser.add_argument("--attachment", required=True)
+    parser.add_argument("--output", required=True)
+    parser.add_argument("--max-bytes", dest="max_bytes", type=int, default=MAX_ATTACHMENT_BYTES)
+    try:
+        options = parser.parse_args(args)
+    except SystemExit:
+        return {"error": "usage: email attachment_download --provider gmail|outlook --id MESSAGE --attachment ID --output PATH"}
+    try:
+        _message_reference(options.provider, options.id)
+        format_reference({
+            "app_id": "email", "object_type": "attachment", "object_id": options.attachment,
+        })
+        if not 1 <= options.max_bytes <= MAX_ATTACHMENT_BYTES:
+            raise ValueError("max-bytes must be between 1 and 16777216")
+        path = safe_realpath(options.output)
+        if not os.path.isabs(options.output) or path != options.output:
+            raise ValueError("output must be an absolute canonical path")
+        _attachment_file_reference(path)
+    except ValueError as error:
+        return {"error": str(error)}
+    policy.require("fs.write", path=path)
+    if os.path.lexists(path):
+        return {"error": "attachment output already exists; it will not be overwritten"}
+    if not os.path.isdir(os.path.dirname(path)):
+        return {"error": "attachment output parent must already exist"}
+    message = urllib.parse.quote(options.id, safe="")
+    attachment = urllib.parse.quote(options.attachment, safe="")
+    if options.provider == "gmail":
+        policy.require("secret.read", name="default/GOOGLE_ACCESS_TOKEN")
+        policy.require("net.dial", host=GMAIL_API_HOST)
+        if options.attachment.startswith("part:"):
+            result = _gmail_request(
+                f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{message}?format=full"
+            )
+            if "error" in result:
+                return result
+            result = next(
+                (part["body"] for part in _message_parts(result.get("payload", {}))
+                 if part.get("filename") and f"part:{part.get('partId')}" == options.attachment),
+                {"error": "inline attachment part was not found"},
+            )
+        else:
+            result = _gmail_request(
+                f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{message}/attachments/{attachment}"
+            )
+        encoded = result.get("data")
+    else:
+        policy.require("secret.read", name="default/MICROSOFT_ACCESS_TOKEN")
+        policy.require("net.dial", host=OUTLOOK_API_HOST)
+        result = _outlook_request(
+            f"https://graph.microsoft.com/v1.0/me/messages/{message}/attachments/{attachment}"
+        )
+        if result.get("@odata.type", "#microsoft.graph.fileAttachment") != "#microsoft.graph.fileAttachment":
+            return {"error": "only Outlook file attachments can be downloaded"}
+        encoded = result.get("contentBytes")
+    if "error" in result:
+        return result
+    try:
+        data = _decode_attachment(encoded, options.max_bytes)
+    except ValueError as error:
+        return {"error": str(error)}
+    try:
+        context = current_context()
+    except RuntimeError:
+        context = None
+    if context is not None and context.session_id:
+        snapshot.snapshot(path, "attachment_download", session_id=context.session_id)
+    try:
+        atomic_create_bytes(path, data, mode=0o600)
+        _fsync_dir(os.path.dirname(path), strict=True)
+    except FileExistsError:
+        return {"error": "attachment output already exists; it will not be overwritten"}
+    except OSError as error:
+        return {
+            "error": f"attachment persistence failed: {error}",
+            "indeterminate": os.path.lexists(path), "path": path,
+        }
+    return {
+        "provider": options.provider, "id": options.id, "attachment": options.attachment,
+        "path": path, "bytes": len(data), "sha256": "sha256:" + hashlib.sha256(data).hexdigest(),
+        "object": _attachment_file_reference(path),
+        "source_message": _message_reference(options.provider, options.id),
+    }
 
 
 def _build_draft_parser():
@@ -345,25 +489,29 @@ def _parse_gmail_message(msg_data):
     body = ""
     payload = msg_data.get("payload", {})
     if payload.get("body", {}).get("data"):
-        body = base64.urlsafe_b64decode(payload["body"]["data"]).decode(
+        body = _decode_attachment(payload["body"]["data"], MAX_ATTACHMENT_BYTES).decode(
             "utf-8", errors="replace"
         )
     else:
-        for part in payload.get("parts", []):
+        for part in _message_parts(payload):
             if part.get("mimeType") == "text/plain" and part.get("body", {}).get("data"):
-                body = base64.urlsafe_b64decode(part["body"]["data"]).decode(
+                body = _decode_attachment(part["body"]["data"], MAX_ATTACHMENT_BYTES).decode(
                     "utf-8", errors="replace"
                 )
                 break
 
     # Attachments
     attachments = []
-    for part in payload.get("parts", []):
+    for part in _message_parts(payload):
         filename = part.get("filename")
         if filename:
             attachments.append({
                 "name": filename,
                 "size": part.get("body", {}).get("size", 0),
+                "id": part.get("body", {}).get("attachmentId") or (
+                    f"part:{part['partId']}" if part.get("partId") is not None else None
+                ),
+                "content_type": part.get("mimeType", ""),
             })
 
     result = {
@@ -538,7 +686,8 @@ def _parse_outlook_message(msg_data):
         for r in msg_data.get("toRecipients", [])
     ]
     attachments = [
-        {"name": a.get("name", ""), "size": a.get("size", 0)}
+        {"id": a.get("id"), "name": a.get("name", ""), "size": a.get("size", 0),
+         "content_type": a.get("contentType", "")}
         for a in msg_data.get("attachments", [])
     ]
     result = {
@@ -614,7 +763,10 @@ def _list_outlook(max_results, unread):
 
 def _read_outlook(message_id):
     """Read a specific email via the Microsoft Graph API."""
-    url = f"https://graph.microsoft.com/v1.0/me/messages/{urllib.parse.quote(message_id, safe='')}"
+    url = (
+        f"https://graph.microsoft.com/v1.0/me/messages/{urllib.parse.quote(message_id, safe='')}"
+        "?$expand=attachments($select=id,name,size,contentType)"
+    )
     result = _outlook_request(url)
     if "error" in result:
         return result
@@ -820,6 +972,8 @@ def run(command, args):
     from canonical_argv import normalize_argparse_booleans
     args = normalize_argparse_booleans(args, bool_flags={"unread"})
     handlers = {
+        "attachment_file": cmd_attachment_file,
+        "attachment_download": cmd_attachment_download,
         "gmail_message": cmd_gmail_message,
         "outlook_message": cmd_outlook_message,
         "send": cmd_send,
