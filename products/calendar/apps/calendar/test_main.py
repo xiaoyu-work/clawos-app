@@ -100,6 +100,49 @@ class TestCreateValidation(unittest.TestCase):
         self.assertIn("error", result)
 
 
+class TestEventObjects(unittest.TestCase):
+    def test_local_event_resolves_the_created_object(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            os.environ, {"COS_DATA_DIR": directory}
+        ):
+            created = run(
+                "create", ["--provider", "local", "--title", "Review",
+                           "--start", "2026-11-10T10:00:00Z"],
+            )["event"]
+            result = run("local_event", ["--id", created["id"]])
+        self.assertEqual(result["event"], created)
+        self.assertTrue(created["object"].startswith("app://calendar/local-event?id="))
+
+    def test_missing_local_object_does_not_create_a_database(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            os.environ, {"COS_DATA_DIR": directory}
+        ):
+            result = run("local_event", ["--id", "missing"])
+            self.assertFalse(os.path.exists(os.path.join(directory, "calendar", "events.db")))
+        self.assertIn("event not found", result["error"])
+
+    def test_event_object_rejects_provider_override_before_access(self):
+        with mock.patch.object(calendar_main, "_require_provider_access") as access:
+            result = run("google_event", ["--id", "event", "--provider", "outlook"])
+        self.assertIn("error", result)
+        access.assert_not_called()
+
+    def test_remote_object_keeps_the_provider_and_encodes_the_id(self):
+        for provider in ("google", "outlook"):
+            with self.subTest(provider=provider), mock.patch.object(
+                calendar_main, f"_{provider}_token", return_value="fixture-token"
+            ), mock.patch.object(
+                calendar_main, f"_{provider}_request",
+                return_value={"id": "event/with?reserved"},
+            ) as request, mock.patch.object(calendar_main, "_require_provider_access"):
+                result = run(f"{provider}_event", ["--id", "event/with?reserved"])
+            self.assertEqual(
+                result["event"]["object"],
+                f"app://calendar/{provider}-event?id=event%2Fwith%3Freserved",
+            )
+            self.assertTrue(request.call_args.args[1].endswith("event%2Fwith%3Freserved"))
+
+
 class TestListValidation(unittest.TestCase):
     def setUp(self):
         _setup_local()
