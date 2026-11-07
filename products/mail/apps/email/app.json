@@ -9,6 +9,18 @@
   },
   "icon": "✉️",
   "runtime": "python",
+  "objects": {
+    "gmail-message": {
+      "label": {"en": "Gmail message"},
+      "summary": {"en": "A message in the owner's authorized Gmail account, addressed by its opaque provider ID."},
+      "resolve": {"operation": "gmail_message", "id_arg": "id"}
+    },
+    "outlook-message": {
+      "label": {"en": "Outlook message"},
+      "summary": {"en": "A message in the owner's authorized Outlook account, addressed by its opaque provider ID."},
+      "resolve": {"operation": "outlook_message", "id_arg": "id"}
+    }
+  },
   "ai": {
     "budget": {
       "monthly_units": 100000
@@ -19,6 +31,42 @@
     ]
   },
   "operations": {
+    "gmail_message": {
+      "label": {"en": "Read a Gmail message object by its provider ID"},
+      "args": [
+        {"name": "id", "kind": "name", "required": true, "binding": "flag"}
+      ],
+      "needs": [
+        {
+          "verb": "secret.read",
+          "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}},
+          "why": {"en": "Read only the owner's Gmail credential."}
+        },
+        {
+          "verb": "net.dial",
+          "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}},
+          "why": {"en": "Read the requested message through the Gmail API."}
+        }
+      ]
+    },
+    "outlook_message": {
+      "label": {"en": "Read an Outlook message object by its provider ID"},
+      "args": [
+        {"name": "id", "kind": "name", "required": true, "binding": "flag"}
+      ],
+      "needs": [
+        {
+          "verb": "secret.read",
+          "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}},
+          "why": {"en": "Read only the owner's Outlook credential."}
+        },
+        {
+          "verb": "net.dial",
+          "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}},
+          "why": {"en": "Read the requested message through the Outlook API."}
+        }
+      ]
+    },
     "send": {
       "label": {
         "en": "Send an email (--to, --subject, --body, --provider smtp|gmail|outlook; SMTP requires --host host:port)"
@@ -469,6 +517,40 @@
       "system_agent": true
     },
     "tools": [
+      {
+        "name": "email.gmail_message",
+        "summary": {"en": "Read a Gmail message object by its provider ID"},
+        "args": [{"name": "id", "kind": "name", "required": true}],
+        "needs": [
+          {
+            "verb": "secret.read",
+            "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}},
+            "why": {"en": "Read only the owner's Gmail credential."}
+          },
+          {
+            "verb": "net.dial",
+            "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}},
+            "why": {"en": "Read the requested message through the Gmail API."}
+          }
+        ]
+      },
+      {
+        "name": "email.outlook_message",
+        "summary": {"en": "Read an Outlook message object by its provider ID"},
+        "args": [{"name": "id", "kind": "name", "required": true}],
+        "needs": [
+          {
+            "verb": "secret.read",
+            "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}},
+            "why": {"en": "Read only the owner's Outlook credential."}
+          },
+          {
+            "verb": "net.dial",
+            "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}},
+            "why": {"en": "Read the requested message through the Outlook API."}
+          }
+        ]
+      },
       {
         "name": "email.send",
         "summary": {
