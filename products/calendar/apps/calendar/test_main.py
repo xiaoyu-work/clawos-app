@@ -100,6 +100,80 @@ class TestCreateValidation(unittest.TestCase):
         self.assertIn("error", result)
 
 
+class TestMeetingCollaboration(unittest.TestCase):
+    def test_confirmed_invitations_use_the_selected_provider(self):
+        for provider in ("google", "outlook"):
+            with self.subTest(provider=provider), mock.patch.object(
+                calendar_main, f"_{provider}_token", return_value="fixture-token"
+            ), mock.patch.object(
+                calendar_main, f"_{provider}_request", return_value={"id": "meeting"}
+            ) as request, mock.patch.object(calendar_main, "_require_provider_access"):
+                result = run(
+                    "invite",
+                    ["--provider", provider, "--title", "Review",
+                     "--start", "2026-11-10T10:00:00+02:00",
+                     "--end", "2026-11-10T11:00:00+02:00",
+                     "--attendees", '["guest@example.invalid"]', "--confirm"],
+                )
+            self.assertTrue(result["invitations_requested"])
+            self.assertFalse(result["delivery_confirmed"])
+            body = request.call_args.kwargs["body"]
+            if provider == "google":
+                self.assertTrue(request.call_args.args[1].endswith("sendUpdates=all"))
+                self.assertEqual(body["attendees"], [{"email": "guest@example.invalid"}])
+            else:
+                self.assertEqual(body["start"], {"dateTime": "2026-11-10T08:00:00", "timeZone": "UTC"})
+                self.assertEqual(body["attendees"][0]["emailAddress"]["address"], "guest@example.invalid")
+
+    def test_invitation_validation_precedes_provider_authority(self):
+        for extra in ([], ["--confirm"]):
+            with self.subTest(extra=extra), mock.patch.object(
+                calendar_main, "_require_provider_access"
+            ) as access:
+                result = run(
+                    "invite",
+                    ["--provider", "google", "--title", "Review",
+                     "--start", "2026-11-10T10:00:00Z", "--end", "2026-11-10T11:00:00Z",
+                     "--attendees", '["same@example.invalid","same@example.invalid"]', *extra],
+                )
+            self.assertIn("error", result)
+            access.assert_not_called()
+
+    def test_google_response_only_changes_self_and_keeps_revision_guard(self):
+        event = {
+            "etag": '"revision-1"',
+            "attendees": [
+                {"email": "other@example.invalid", "responseStatus": "accepted"},
+                {"email": "owner@example.invalid", "self": True, "responseStatus": "needsAction"},
+            ],
+        }
+        with mock.patch.object(calendar_main, "_google_token", return_value="fixture-token"), \
+                mock.patch.object(calendar_main, "_google_request", side_effect=[event, {}]) as request, \
+                mock.patch.object(calendar_main, "_require_provider_access"):
+            result = run(
+                "respond", ["--provider", "google", "--id", "event/one",
+                            "--response", "declined", "--confirm"],
+            )
+        self.assertEqual(result["response"], "declined")
+        submitted = request.call_args.kwargs
+        self.assertEqual(submitted["if_match"], '"revision-1"')
+        self.assertEqual(submitted["body"]["attendees"][0]["responseStatus"], "accepted")
+        self.assertEqual(submitted["body"]["attendees"][1]["responseStatus"], "declined")
+        self.assertIn("event%2Fone", request.call_args.args[1])
+
+    def test_google_response_cannot_choose_another_attendee(self):
+        with mock.patch.object(calendar_main, "_google_token", return_value="fixture-token"), \
+                mock.patch.object(calendar_main, "_google_request", return_value={"attendees": [
+                    {"email": "other@example.invalid"}
+                ]}) as request, mock.patch.object(calendar_main, "_require_provider_access"):
+            result = run(
+                "respond", ["--provider", "google", "--id", "event",
+                            "--response", "accepted", "--confirm"],
+            )
+        self.assertIn("unambiguous attendee", result["error"])
+        self.assertEqual(request.call_count, 1)
+
+
 class TestEventObjects(unittest.TestCase):
     def test_local_event_resolves_the_created_object(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch.dict(

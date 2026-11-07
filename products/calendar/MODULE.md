@@ -52,6 +52,18 @@ store. Remote IDs are encoded as individual API path segments.
 List/create/update results carry the same references without renaming the
 App, copying account data or treating an object reference as permission.
 
+## Provider invitations and responses
+
+`invite` explicitly creates a Google/Outlook meeting with 1..100 distinct
+attendee addresses and requests provider delivery. `respond` accepts,
+tentatively accepts or declines as the authorized calendar owner. Both require
+explicit confirmation before App policy checks; confirmation is not OS consent.
+Google responses change only the `self` attendee and use the returned ETag
+for conditional patching. Outlook uses its dedicated response actions.
+Times require offsets; Outlook receives explicit UTC date/time values.
+Local event CRUD is unchanged and does not pretend to deliver invitations.
+Returned notification fields report requested delivery, not guest receipt.
+
 From the repository root:
 
 ```bash
