@@ -9,7 +9,67 @@
   },
   "icon": "📅",
   "runtime": "python",
+  "objects": {
+    "local-event": {
+      "label": {"en": "Local calendar event"},
+      "summary": {"en": "An event in the owner's local Calendar data partition."},
+      "resolve": {"operation": "local_event", "id_arg": "id"}
+    },
+    "google-event": {
+      "label": {"en": "Google Calendar event"},
+      "summary": {"en": "An event in the owner's authorized Google primary calendar."},
+      "resolve": {"operation": "google_event", "id_arg": "id"}
+    },
+    "outlook-event": {
+      "label": {"en": "Outlook Calendar event"},
+      "summary": {"en": "An event in the owner's authorized Outlook calendar."},
+      "resolve": {"operation": "outlook_event", "id_arg": "id"}
+    }
+  },
   "operations": {
+    "local_event": {
+      "label": {"en": "Read a local Calendar event by its ID"},
+      "args": [{"name": "id", "kind": "name", "required": true, "binding": "flag"}],
+      "needs": [
+        {
+          "verb": "data.db.read",
+          "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "calendar"}},
+          "why": {"en": "Read this event from the owner's existing Calendar database."}
+        }
+      ]
+    },
+    "google_event": {
+      "label": {"en": "Read a Google Calendar event by its ID"},
+      "args": [{"name": "id", "kind": "name", "required": true, "binding": "flag"}],
+      "needs": [
+        {
+          "verb": "secret.read",
+          "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}},
+          "why": {"en": "Read only the owner's Google Calendar credential."}
+        },
+        {
+          "verb": "net.dial",
+          "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "www.googleapis.com"}},
+          "why": {"en": "Read the requested event through the Google Calendar API."}
+        }
+      ]
+    },
+    "outlook_event": {
+      "label": {"en": "Read an Outlook Calendar event by its ID"},
+      "args": [{"name": "id", "kind": "name", "required": true, "binding": "flag"}],
+      "needs": [
+        {
+          "verb": "secret.read",
+          "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}},
+          "why": {"en": "Read only the owner's Outlook Calendar credential."}
+        },
+        {
+          "verb": "net.dial",
+          "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}},
+          "why": {"en": "Read the requested event through the Outlook Calendar API."}
+        }
+      ]
+    },
     "list": {
       "label": {
         "en": "List events in a time range (--from, --to, --provider local|google|outlook)"
@@ -695,6 +755,52 @@
       "system_agent": true
     },
     "tools": [
+      {
+        "name": "calendar.local_event",
+        "summary": {"en": "Read a local Calendar event by its ID"},
+        "args": [{"name": "id", "kind": "name", "required": true}],
+        "needs": [
+          {
+            "verb": "data.db.read",
+            "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "calendar"}},
+            "why": {"en": "Read this event from the owner's existing Calendar database."}
+          }
+        ]
+      },
+      {
+        "name": "calendar.google_event",
+        "summary": {"en": "Read a Google Calendar event by its ID"},
+        "args": [{"name": "id", "kind": "name", "required": true}],
+        "needs": [
+          {
+            "verb": "secret.read",
+            "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}},
+            "why": {"en": "Read only the owner's Google Calendar credential."}
+          },
+          {
+            "verb": "net.dial",
+            "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "www.googleapis.com"}},
+            "why": {"en": "Read the requested event through the Google Calendar API."}
+          }
+        ]
+      },
+      {
+        "name": "calendar.outlook_event",
+        "summary": {"en": "Read an Outlook Calendar event by its ID"},
+        "args": [{"name": "id", "kind": "name", "required": true}],
+        "needs": [
+          {
+            "verb": "secret.read",
+            "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}},
+            "why": {"en": "Read only the owner's Outlook Calendar credential."}
+          },
+          {
+            "verb": "net.dial",
+            "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}},
+            "why": {"en": "Read the requested event through the Outlook Calendar API."}
+          }
+        ]
+      },
       {
         "name": "calendar.list",
         "summary": {

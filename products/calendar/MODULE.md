@@ -42,6 +42,16 @@ and sandbox contract as any other App. Neither its language nor its package
 origin grants privilege. The public data service is available to other Apps
 with the same resource scopes; no native App allowlist entry is added.
 
+## Activity event objects
+
+The `local-event`, `google-event` and `outlook-event` types fix the provider
+in their declaration. Each resolver takes only `--id`, checks its existing
+provider-specific grants and returns a canonical App reference. Local
+resolution opens an existing database read-only and never creates a missing
+store. Remote IDs are encoded as individual API path segments.
+List/create/update results carry the same references without renaming the
+App, copying account data or treating an object reference as permission.
+
 From the repository root:
 
 ```bash

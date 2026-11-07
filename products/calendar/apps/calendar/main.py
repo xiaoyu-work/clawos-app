@@ -17,6 +17,7 @@ from datetime import datetime, timedelta, timezone
 
 from _shared.credentials import load_credential  # noqa: E402
 from _shared.safe_http import open_url  # noqa: E402
+from claw_os_sdk.objects import format_reference  # noqa: E402
 from cos_runtime import memory, policy  # noqa: E402
 
 # Ceiling on one provider request. Bounded here rather than left to the
@@ -92,6 +93,99 @@ def _detect_provider(explicit=None):
 def _now_iso():
     """Return the current UTC time as an ISO-8601 string."""
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _event_reference(provider, event_id):
+    return format_reference({
+        "app_id": "calendar",
+        "object_type": f"{provider}-event",
+        "object_id": event_id,
+    })
+
+
+def _event_object(provider, event):
+    if event.get("id"):
+        event["object"] = _event_reference(provider, event["id"])
+    return event
+
+
+def _get_local(event_id):
+    path = _db_path()
+    if not os.path.exists(path):
+        return None
+    uri = "file:" + urllib.parse.quote(path, safe="/") + "?mode=ro"
+    connection = sqlite3.connect(uri, uri=True)
+    try:
+        row = connection.execute(
+            "SELECT id, title, start_time, end_time, description, location "
+            "FROM events WHERE id = ?", (event_id,),
+        ).fetchone()
+    finally:
+        connection.close()
+    if row is None:
+        return None
+    return dict(zip(("id", "title", "start", "end", "description", "location"), row))
+
+
+def _object_event_id(provider, args):
+    parsed = _parse_args(args)
+    event_id = parsed.get("id")
+    if set(parsed) != {"id"} or not event_id:
+        raise ValueError(f"usage: calendar {provider}_event --id <event-id>")
+    _event_reference(provider, event_id)
+    return event_id
+
+
+def _get_event(provider, args):
+    try:
+        event_id = _object_event_id(provider, args)
+    except ValueError as error:
+        return {"error": str(error)}
+    _require_provider_access(provider, write=False)
+    encoded = urllib.parse.quote(event_id, safe="")
+    try:
+        if provider == "google":
+            token = _google_token()
+            if not token:
+                return _provider_auth_error(provider, "GOOGLE_ACCESS_TOKEN is unavailable")
+            value = _google_request(
+                "GET", f"https://www.googleapis.com/calendar/v3/calendars/primary/events/{encoded}",
+                token=token,
+            )
+            event = _google_event_to_dict(value)
+        else:
+            token = _outlook_token()
+            if not token:
+                return _provider_auth_error(provider, "MICROSOFT_ACCESS_TOKEN is unavailable")
+            value = _outlook_request(
+                "GET", f"https://graph.microsoft.com/v1.0/me/events/{encoded}", token=token,
+            )
+            event = _outlook_event_to_dict(value)
+    except urllib.error.HTTPError as error:
+        return _provider_http_error(provider, error)
+    except urllib.error.URLError as error:
+        return {"error": f"API request failed: {error.reason}"}
+    return {"provider": provider, "event": _event_object(provider, event)}
+
+
+def cmd_local_event(args):
+    try:
+        event_id = _object_event_id("local", args)
+    except ValueError as error:
+        return {"error": str(error)}
+    policy.require("data.db.read", name="calendar")
+    event = _get_local(event_id)
+    if event is None:
+        return {"error": f"event not found: {event_id}"}
+    return {"provider": "local", "event": _event_object("local", event)}
+
+
+def cmd_google_event(args):
+    return _get_event("google", args)
+
+
+def cmd_outlook_event(args):
+    return _get_event("outlook", args)
 
 
 def _default_end(start_iso):
@@ -316,7 +410,7 @@ def cmd_list(args):
         "provider": provider,
         "from": from_time,
         "to": to_time,
-        "events": events,
+        "events": [_event_object(provider, event) for event in events],
         "count": len(events),
     }
 
@@ -415,7 +509,7 @@ def cmd_create(args):
         return {"error": f"API request failed: {exc.reason}"}
 
     _remember_event("created", provider, event)
-    return {"created": True, "provider": provider, "event": event}
+    return {"created": True, "provider": provider, "event": _event_object(provider, event)}
 
 
 # ---------------------------------------------------------------------------
@@ -534,7 +628,7 @@ def cmd_update(args):
         return {"error": f"API request failed: {exc.reason}"}
 
     _remember_event("updated", provider, event)
-    return {"updated": True, "provider": provider, "event": event}
+    return {"updated": True, "provider": provider, "event": _event_object(provider, event)}
 
 
 # ---------------------------------------------------------------------------
@@ -653,7 +747,7 @@ def _remember_event(action, provider, event):
             kind="event",
             entity_id=event_id or None,
             tags=tags,
-            link=f"cos app calendar list --provider {provider}",
+            link=_event_reference(provider, event_id) if event_id else None,
         )
     except memory.MemoryError:
         pass
@@ -664,6 +758,9 @@ def _remember_event(action, provider, event):
 # ---------------------------------------------------------------------------
 
 COMMANDS = {
+    "local_event": cmd_local_event,
+    "google_event": cmd_google_event,
+    "outlook_event": cmd_outlook_event,
     "list": cmd_list,
     "create": cmd_create,
     "update": cmd_update,
