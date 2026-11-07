@@ -4,6 +4,7 @@ Local SQLite calendar as default (zero config), plus Google Calendar and
 Outlook providers when credentials are configured.
 """
 
+import argparse
 import json
 import os
 import random
@@ -207,7 +208,7 @@ def _google_token():
     return load_credential(GOOGLE_ACCESS_TOKEN)[0]
 
 
-def _google_request(method, url, body=None, token=None):
+def _google_request(method, url, body=None, token=None, if_match=None):
     """Make an authenticated request to Google Calendar API."""
     headers = {"Authorization": f"Bearer {token}"}
     data = None
@@ -215,6 +216,10 @@ def _google_request(method, url, body=None, token=None):
         headers["Content-Type"] = "application/json"
         data = json.dumps(body).encode()
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    if if_match is not None:
+        if not isinstance(if_match, str) or len(if_match) > 512 or any(c in if_match for c in "\r\n"):
+            raise ValueError("invalid event revision header")
+        req.add_header("If-Match", if_match)
     # `open_url` authorizes the endpoint before it connects, carries
     # the request over the operation's approved transport — the brokered
     # egress tunnel inside a sandbox — and re-authorizes every redirect
@@ -236,6 +241,10 @@ def _google_event_to_dict(item):
         "end": end.get("dateTime", end.get("date", "")),
         "description": item.get("description", ""),
         "location": item.get("location", ""),
+        "attendees": [
+            {"email": attendee.get("email", ""), "response": attendee.get("responseStatus", "needsAction")}
+            for attendee in item.get("attendees", [])
+        ],
     }
 
 
@@ -311,6 +320,11 @@ def _outlook_event_to_dict(item):
         "end": end.get("dateTime", ""),
         "description": item.get("bodyPreview", ""),
         "location": (item.get("location") or {}).get("displayName", ""),
+        "attendees": [
+            {"email": attendee.get("emailAddress", {}).get("address", ""),
+             "response": attendee.get("status", {}).get("response", "notResponded")}
+            for attendee in item.get("attendees", [])
+        ],
     }
 
 
@@ -716,6 +730,133 @@ def cmd_today(args):
     return cmd_list(new_args)
 
 
+def cmd_invite(args):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--provider", required=True, choices=["google", "outlook"])
+    parser.add_argument("--title", required=True)
+    parser.add_argument("--start", required=True)
+    parser.add_argument("--end", required=True)
+    parser.add_argument("--attendees", required=True)
+    parser.add_argument("--description", default="")
+    parser.add_argument("--location", default="")
+    parser.add_argument("--confirm", nargs="?", const=True, required=True)
+    try:
+        options = parser.parse_args(args)
+        if options.confirm is not True:
+            raise ValueError("meeting invitations require explicit confirmation")
+        attendees = json.loads(options.attendees)
+        if (
+            not isinstance(attendees, list) or not 1 <= len(attendees) <= 100
+            or any(not isinstance(address, str) or "@" not in address
+                   or address != address.strip() or any(c.isspace() for c in address)
+                   for address in attendees)
+            or len(set(address.casefold() for address in attendees)) != len(attendees)
+        ):
+            raise ValueError("attendees must be a JSON array of 1..100 distinct email addresses")
+        start = datetime.fromisoformat(options.start.replace("Z", "+00:00"))
+        end = datetime.fromisoformat(options.end.replace("Z", "+00:00"))
+        if start.tzinfo is None or end.tzinfo is None or end <= start:
+            raise ValueError("meeting times require offsets and end must follow start")
+    except (SystemExit, ValueError) as error:
+        return {"error": f"invalid invitation: {error}"}
+    _require_provider_access(options.provider, write=True)
+    try:
+        if options.provider == "google":
+            token = _google_token()
+            if not token:
+                return _provider_auth_error("google", "GOOGLE_ACCESS_TOKEN is unavailable")
+            body = {
+                "summary": options.title, "start": {"dateTime": options.start},
+                "end": {"dateTime": options.end}, "description": options.description,
+                "location": options.location, "attendees": [{"email": address} for address in attendees],
+            }
+            value = _google_request(
+                "POST", "https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all",
+                body=body, token=token,
+            )
+            event = _google_event_to_dict(value)
+        else:
+            token = _outlook_token()
+            if not token:
+                return _provider_auth_error("outlook", "MICROSOFT_ACCESS_TOKEN is unavailable")
+            body = {
+                "subject": options.title,
+                "start": {"dateTime": start.astimezone(timezone.utc).replace(tzinfo=None).isoformat(), "timeZone": "UTC"},
+                "end": {"dateTime": end.astimezone(timezone.utc).replace(tzinfo=None).isoformat(), "timeZone": "UTC"},
+                "body": {"contentType": "Text", "content": options.description},
+                "location": {"displayName": options.location},
+                "attendees": [{"emailAddress": {"address": address}, "type": "required"} for address in attendees],
+            }
+            value = _outlook_request(
+                "POST", "https://graph.microsoft.com/v1.0/me/events", body=body, token=token,
+            )
+            event = _outlook_event_to_dict(value)
+    except urllib.error.HTTPError as error:
+        return _provider_http_error(options.provider, error)
+    except urllib.error.URLError as error:
+        return {"error": f"API request failed: {error.reason}"}
+    if not event.get("id"):
+        return {"error": "provider did not return a created meeting ID", "indeterminate": True}
+    return {
+        "provider": options.provider, "event": _event_object(options.provider, event),
+        "invitations_requested": True, "delivery_confirmed": False,
+    }
+
+
+def cmd_respond(args):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--provider", required=True, choices=["google", "outlook"])
+    parser.add_argument("--id", required=True)
+    parser.add_argument("--response", required=True, choices=["accepted", "tentative", "declined"])
+    parser.add_argument("--comment", default="")
+    parser.add_argument("--confirm", nargs="?", const=True, required=True)
+    try:
+        options = parser.parse_args(args)
+        _event_reference(options.provider, options.id)
+        if options.confirm is not True:
+            raise ValueError("meeting responses require explicit confirmation")
+    except (SystemExit, ValueError) as error:
+        return {"error": f"invalid meeting response: {error}"}
+    _require_provider_access(options.provider, write=True)
+    encoded = urllib.parse.quote(options.id, safe="")
+    try:
+        if options.provider == "google":
+            token = _google_token()
+            if not token:
+                return _provider_auth_error("google", "GOOGLE_ACCESS_TOKEN is unavailable")
+            url = f"https://www.googleapis.com/calendar/v3/calendars/primary/events/{encoded}"
+            event = _google_request("GET", url, token=token)
+            attendees = event.get("attendees", [])
+            own = [attendee for attendee in attendees if attendee.get("self") is True]
+            if len(own) != 1:
+                return {"error": "the authorized calendar owner is not one unambiguous attendee"}
+            own[0]["responseStatus"] = options.response
+            if options.comment:
+                own[0]["comment"] = options.comment
+            _google_request(
+                "PATCH", url + "?sendUpdates=all", body={"attendees": attendees},
+                token=token, if_match=event.get("etag"),
+            )
+        else:
+            token = _outlook_token()
+            if not token:
+                return _provider_auth_error("outlook", "MICROSOFT_ACCESS_TOKEN is unavailable")
+            action = {"accepted": "accept", "tentative": "tentativelyAccept", "declined": "decline"}[options.response]
+            _outlook_request(
+                "POST", f"https://graph.microsoft.com/v1.0/me/events/{encoded}/{action}",
+                body={"comment": options.comment, "sendResponse": True}, token=token,
+            )
+    except urllib.error.HTTPError as error:
+        return _provider_http_error(options.provider, error)
+    except urllib.error.URLError as error:
+        return {"error": f"API request failed: {error.reason}"}
+    return {
+        "provider": options.provider, "id": options.id, "response": options.response,
+        "object": _event_reference(options.provider, options.id),
+        "notification_requested": True, "delivery_confirmed": False,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Memory hook
 # ---------------------------------------------------------------------------
@@ -758,6 +899,8 @@ def _remember_event(action, provider, event):
 # ---------------------------------------------------------------------------
 
 COMMANDS = {
+    "invite": cmd_invite,
+    "respond": cmd_respond,
     "local_event": cmd_local_event,
     "google_event": cmd_google_event,
     "outlook_event": cmd_outlook_event,
@@ -771,8 +914,11 @@ COMMANDS = {
 
 def run(command, args):
     """Entry point called by cos."""
-    from canonical_argv import normalize_canonical_argv
-    args = normalize_canonical_argv(args)
+    from canonical_argv import normalize_argparse_booleans, normalize_canonical_argv
+    args = (
+        normalize_argparse_booleans(args, bool_flags={"confirm"})
+        if command in {"invite", "respond"} else normalize_canonical_argv(args)
+    )
     # Re-read DATA_DIR in case COS_DATA_DIR changed (e.g. in tests).
     global DATA_DIR
     DATA_DIR = os.environ.get("COS_DATA_DIR", "/var/lib/cos")
