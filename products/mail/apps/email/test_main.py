@@ -6,6 +6,7 @@ import json
 import os
 import pathlib
 import sys
+import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -699,6 +700,75 @@ class TestReadCommand(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Parser edge-cases
 # ---------------------------------------------------------------------------
+
+
+class TestAttachmentDownloads(unittest.TestCase):
+    def arguments(self, provider, output, attachment="attachment/one"):
+        return [
+            "--provider", provider, "--id", "message/one",
+            "--attachment", attachment, "--output", str(output),
+        ]
+
+    def test_nested_inline_attachment_is_discoverable_and_saved_privately(self):
+        data = b"%PDF-1.7 synthetic attachment"
+        part = {
+            "partId": "1.2", "filename": "agenda.pdf", "mimeType": "application/pdf",
+            "body": {"data": base64.urlsafe_b64encode(data).decode().rstrip("=")},
+        }
+        message = {"id": "message/one", "payload": {"parts": [{"parts": [part]}]}}
+        self.assertEqual(_parse_gmail_message(message)["attachments"][0]["id"], "part:1.2")
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            email_main, "_gmail_request", return_value=message
+        ), patch.object(email_main.policy, "require"), patch.object(
+            email_main, "current_context", return_value=MagicMock(session_id="call-session")
+        ), patch.object(email_main.snapshot, "snapshot") as snapshot:
+            output = pathlib.Path(directory) / "agenda.pdf"
+            result = run("attachment_download", self.arguments("gmail", output, "part:1.2"))
+            self.assertEqual(output.read_bytes(), data)
+            self.assertEqual(output.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(run("attachment_file", ["--path", str(output)])["object"], result["object"])
+        snapshot.assert_called_once_with(
+            str(output), "attachment_download", session_id="call-session"
+        )
+        self.assertTrue(result["source_message"].startswith("app://email/gmail-message?id="))
+
+    def test_outlook_attachment_download_encodes_both_provider_ids(self):
+        data = b"synthetic document"
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            email_main, "_outlook_request",
+            return_value={"contentBytes": base64.b64encode(data).decode()},
+        ) as request, patch.object(email_main.policy, "require"):
+            output = pathlib.Path(directory) / "document.bin"
+            result = run("attachment_download", self.arguments("outlook", output))
+            self.assertEqual(output.read_bytes(), data)
+        self.assertEqual(result["bytes"], len(data))
+        self.assertTrue(
+            request.call_args.args[0].endswith(
+                "/messages/message%2Fone/attachments/attachment%2Fone"
+            )
+        )
+
+    def test_existing_outputs_and_oversized_or_invalid_data_are_preserved(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            email_main, "_gmail_request",
+            return_value={"data": base64.b64encode(b"too large").decode()},
+        ) as request, patch.object(email_main.policy, "require"):
+            output = pathlib.Path(directory) / "attachment.bin"
+            output.write_bytes(b"original")
+            result = run("attachment_download", self.arguments("gmail", output))
+            self.assertIn("already exists", result["error"])
+            self.assertEqual(output.read_bytes(), b"original")
+            request.assert_not_called()
+            output.unlink()
+            result = run(
+                "attachment_download", self.arguments("gmail", output) + ["--max-bytes", "2"]
+            )
+            self.assertIn("size limit", result["error"])
+            self.assertFalse(output.exists())
+            request.return_value = {"data": "not%base64"}
+            result = run("attachment_download", self.arguments("gmail", output))
+            self.assertIn("error", result)
+            self.assertEqual(list(pathlib.Path(directory).iterdir()), [])
 
 
 class TestParseGmailMessage(unittest.TestCase):

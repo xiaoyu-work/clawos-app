@@ -10,6 +10,11 @@
   "icon": "✉️",
   "runtime": "python",
   "objects": {
+    "attachment-file": {
+      "label": {"en": "Downloaded Mail attachment"},
+      "summary": {"en": "Metadata for a downloaded file at an explicitly authorized absolute path; the path does not prove its mail origin."},
+      "resolve": {"operation": "attachment_file", "id_arg": "path"}
+    },
     "gmail-message": {
       "label": {"en": "Gmail message"},
       "summary": {"en": "A message in the owner's authorized Gmail account, addressed by its opaque provider ID."},
@@ -31,6 +36,36 @@
     ]
   },
   "operations": {
+    "attachment_file": {
+      "label": {"en": "Read metadata for a downloaded Mail attachment file"},
+      "args": [{"name": "path", "kind": "path", "required": true, "binding": "flag"}],
+      "needs": [
+        {"verb": "fs.meta", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Inspect only the requested attachment file."}}
+      ]
+    },
+    "attachment_download": {
+      "label": {"en": "Download one attachment to an explicit new private file"},
+      "args": [
+        {"name": "provider", "kind": "name", "required": true, "binding": "flag", "choices": ["gmail", "outlook"]},
+        {"name": "id", "kind": "name", "required": true, "binding": "flag"},
+        {"name": "attachment", "kind": "name", "required": true, "binding": "flag"},
+        {"name": "output", "kind": "path", "required": true, "binding": "flag"},
+        {"name": "max-bytes", "kind": "integer", "binding": "flag", "default": 16777216}
+      ],
+      "needs": [
+        {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "output"}, "why": {"en": "Create only the explicitly selected attachment output."}},
+        {
+          "verb": "secret.read",
+          "scope": {"kind": "from-arg-map", "arg": "provider", "values": {
+            "gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"},
+            "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}
+          }},
+          "why": {"en": "Read only the selected mailbox credential."}
+        },
+        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "gmail"}, "why": {"en": "Download the requested Gmail attachment."}},
+        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Download the requested Outlook attachment."}}
+      ]
+    },
     "gmail_message": {
       "label": {"en": "Read a Gmail message object by its provider ID"},
       "args": [
@@ -517,6 +552,38 @@
       "system_agent": true
     },
     "tools": [
+      {
+        "name": "email.attachment_file",
+        "summary": {"en": "Read metadata for a downloaded Mail attachment file"},
+        "args": [{"name": "path", "kind": "path", "required": true}],
+        "needs": [
+          {"verb": "fs.meta", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Inspect only the requested attachment file."}}
+        ]
+      },
+      {
+        "name": "email.attachment_download",
+        "summary": {"en": "Download one attachment to an explicit new private file"},
+        "args": [
+          {"name": "provider", "kind": "name", "required": true, "choices": ["gmail", "outlook"]},
+          {"name": "id", "kind": "name", "required": true},
+          {"name": "attachment", "kind": "name", "required": true},
+          {"name": "output", "kind": "path", "required": true},
+          {"name": "max-bytes", "kind": "integer", "default": 16777216}
+        ],
+        "needs": [
+          {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "output"}, "why": {"en": "Create only the explicitly selected attachment output."}},
+          {
+            "verb": "secret.read",
+            "scope": {"kind": "from-arg-map", "arg": "provider", "values": {
+              "gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"},
+              "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}
+            }},
+            "why": {"en": "Read only the selected mailbox credential."}
+          },
+          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "gmail"}, "why": {"en": "Download the requested Gmail attachment."}},
+          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Download the requested Outlook attachment."}}
+        ]
+      },
       {
         "name": "email.gmail_message",
         "summary": {"en": "Read a Gmail message object by its provider ID"},
