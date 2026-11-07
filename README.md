@@ -17,10 +17,11 @@ partitions. KV is not Agent memory.
 SDK/runtime, network authority and the shared transport remain OS-owned.
 [`capabilities/ai-helpers`](capabilities/ai-helpers/MODULE.md) owns `summarize`,
 an explicit-text AI client, not a provider or another product's AI gateway.
-All **75/75 original identities** now have source here: **24 business product
-groups plus four shared-capability groups (63 Agent, 12 desktop)**. Installed
-identities, consent and user namespaces are not merged. This completes original
-source relocation, not backend/state/identity consolidation or visual acceptance.
+The selected source now contains **64 App identities**: **24 business product
+groups plus four shared-capability groups (52 Agent, 12 desktop)**. Eleven
+messaging connectors were explicitly retired after the original 75-identity
+source relocation. Retained identities, consent and user namespaces are not
+merged; source ownership is not backend consolidation or visual acceptance.
 
 | Product | Source | Migration state |
 | --- | --- | --- |
@@ -51,7 +52,7 @@ source relocation, not backend/state/identity consolidation or visual acceptance
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) and [AGENTS.md](AGENTS.md).
 Messaging connector sources are grouped under
 [products/messaging-channels](products/messaging-channels/README.md), starting
-with Discord/Telegram and outbound-only DingTalk/Google Chat/Lark/Matrix/Mattermost/Rocket.Chat/Signal/Slack/SMS/Teams/Webex/WhatsApp/Zulip.
+with Discord, Telegram, Slack and WhatsApp.
 Source relocation does not complete
 authenticated inbound admission.
 

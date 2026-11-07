@@ -81,7 +81,7 @@ def test_ai_helpers_complete_original_source_ownership_without_provider_or_state
         for name in names:
             source, package = stage.load_package(name, kind)
             identities.extend(stage.app_entries(source, package))
-    assert len(identities) == len(set(identities)) == 75
+    assert len(identities) == len(set(identities)) == 64
     assert stage.stage("ai-helpers", tmp_path, kind="capability") == ["summarize"]
     original = ROOT / "capabilities/ai-helpers/apps/summarize"
     installed = tmp_path / "usr/lib/cos/apps/summarize"
@@ -710,8 +710,8 @@ def test_notification_delivery_stages_only_product_payload(tmp_path):
 
 
 def test_messaging_channels_stage_nested_connector_without_shared_runtime_or_state(tmp_path):
-    assert stage.stage("messaging-channels", tmp_path) == ["gateway-discord", "gateway-dingtalk", "gateway-googlechat", "gateway-larksuite", "gateway-matrix", "gateway-mattermost", "gateway-rocketchat", "gateway-signal", "gateway-slack", "gateway-sms", "gateway-teams", "gateway-telegram", "gateway-webex", "gateway-whatsapp", "gateway-zulip"]
-    for channel in ("discord", "dingtalk", "googlechat", "larksuite", "matrix", "mattermost", "rocketchat", "signal", "slack", "sms", "teams", "telegram", "webex", "whatsapp", "zulip"):
+    assert stage.stage("messaging-channels", tmp_path) == ["gateway-discord", "gateway-slack", "gateway-telegram", "gateway-whatsapp"]
+    for channel in ("discord", "slack", "telegram", "whatsapp"):
         source = ROOT / "products/messaging-channels/apps/gateway" / channel
         installed = tmp_path / "usr/lib/cos/apps/gateway" / channel
         for filename in ("app.json", "main.py", "server.py"):
