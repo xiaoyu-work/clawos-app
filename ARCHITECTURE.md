@@ -80,7 +80,7 @@ package has completed that migration.
 | `tools/native_payload.py` | Original-installer output to package-local ELF/resource/license preparation, explicit signer entries and common-Host compatibility launchers; no resource activation or authority |
 | `products/desktop-widgets/` | Complete Widget Rail native presentation and assets; Calendar/task/telemetry access and authority remain OS-provided |
 | `products/home-integration/` | Home Assistant REST adapter source; external server, accounts, devices and automation state are not imported; OS credentials and egress authority remain separate |
-| `products/messaging-channels/` | Discord/Telegram and outbound-only DingTalk/Google Chat/Lark/Matrix/Mattermost/Rocket.Chat/Signal/Slack/SMS/Teams/Webex/WhatsApp/Zulip connector sources; authenticated inbound owner/sender admission, lifecycle and durable replay handling remain pending |
+| `products/messaging-channels/` | Selected Discord, Telegram, Slack and WhatsApp connector sources; authenticated inbound owner/sender admission, lifecycle and durable replay handling remain OS-owned integration work |
 | `platform.lock.json`, `tools/platform_dependency.py` | Published, digest-pinned SDK/runtime/toolkit artifact, not an OS source checkout |
 | `shared/python/`, `shared/MODULE.md` | App-owned common client libraries, staged once through the common support package |
 | `shared/rust/gui-argv/` | App-owned compile-time selector adaptation for native parsers; no provider, permission, transport or runtime package |
@@ -169,11 +169,13 @@ Source composition distinguishes `products/<name>` (business products) from
 commands retain their meaning; capability selection is explicit, never a
 filesystem fallback. Names cannot collide across kinds. Document Engine owns
 `doc`; Storage SDK owns `db` and `kv`; HTTP owns `net`; AI Helpers owns
-`summarize`. All 75 original identities now belong to 24 business product groups
-plus four shared-capability groups, partitioned as 63 Agent and 12 desktop
+`summarize`. The 64 retained identities belong to 24 business product groups
+plus four shared-capability groups, partitioned as 52 Agent and 12 desktop
 identities. Native preparation remains product-only. Source completion does not
 complete shared-state/backend or identity cutovers, new UI work, or installed
-visual/hardware acceptance.
+visual/hardware acceptance. Eleven messaging connectors were explicitly
+retired after the original 75-identity source relocation; their previous
+credentials and installed state are not deleted or migrated here.
 
 Document Engine declares a `python_dependencies` entry for the Files product's
 named `claw_files` export, scoped to `doc`. The same resolver supplies test
