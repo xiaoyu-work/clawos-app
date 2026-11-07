@@ -8,6 +8,7 @@ import pathlib
 import sys
 import tempfile
 import unittest
+import uuid
 from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -700,6 +701,65 @@ class TestReadCommand(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Parser edge-cases
 # ---------------------------------------------------------------------------
+
+
+class TestSubmissionRequestIds(unittest.TestCase):
+    def arguments(self, request_id):
+        return [
+            "--provider", "gmail", "--to", "recipient@example.invalid",
+            "--subject", "Report", "--body", "Reviewed content",
+            "--request-id", request_id,
+        ]
+
+    def test_identical_request_returns_the_original_result_without_resending(self):
+        request_id = str(uuid.uuid4())
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"COS_DATA_DIR": directory}
+        ), patch.object(email_main.policy, "require"), patch.object(
+            email_main, "_send_gmail", return_value={"sent": True, "provider": "gmail", "id": "message"}
+        ) as send, patch.object(email_main.memory, "remember"):
+            first = run("send", self.arguments(request_id))
+            second = run("send", self.arguments(request_id))
+            self.assertEqual(first, second)
+            self.assertEqual(send.call_count, 1)
+            stored = pathlib.Path(directory) / "mail-requests" / (request_id + ".json")
+            self.assertEqual(stored.stat().st_mode & 0o777, 0o600)
+            changed = self.arguments(request_id)
+            changed[changed.index("--body") + 1] = "Different content"
+            self.assertIn("different Mail operation", run("send", changed)["error"])
+            self.assertEqual(send.call_count, 1)
+
+    def test_interrupted_request_never_replays_an_uncertain_effect(self):
+        request_id = str(uuid.uuid4())
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"COS_DATA_DIR": directory}
+        ), patch.object(email_main.policy, "require"), patch.object(
+            email_main, "_send_gmail", side_effect=RuntimeError("lost response")
+        ) as send:
+            with self.assertRaises(RuntimeError):
+                run("send", self.arguments(request_id))
+            send.side_effect = None
+            result = run("send", self.arguments(request_id))
+            self.assertTrue(result["indeterminate"])
+            self.assertFalse(result["retryable"])
+            self.assertEqual(send.call_count, 1)
+
+    def test_corrupt_request_history_is_not_repaired_or_replayed(self):
+        request_id = str(uuid.uuid4())
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"COS_DATA_DIR": directory}
+        ), patch.object(email_main.policy, "require"), patch.object(
+            email_main, "_send_gmail"
+        ) as send:
+            store = pathlib.Path(directory) / "mail-requests"
+            store.mkdir(mode=0o700)
+            record = store / (request_id + ".json")
+            record.write_text("corrupt")
+            record.chmod(0o600)
+            result = run("send", self.arguments(request_id))
+            self.assertIn("corrupt", result["error"])
+            self.assertEqual(record.read_text(), "corrupt")
+            send.assert_not_called()
 
 
 class TestProviderDrafts(unittest.TestCase):

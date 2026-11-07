@@ -7,6 +7,7 @@ sharing Thunderbird account/object state requires the separate product cutover.
 
 import argparse
 import base64
+import fcntl
 import hashlib
 import json
 import os
@@ -16,13 +17,14 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 import idna
 
 from _shared.credentials import load_credential  # noqa: E402
-from _shared.atomic import atomic_create_bytes, _fsync_dir  # noqa: E402
+from _shared.atomic import atomic_create_bytes, atomic_write_json, _fsync_dir  # noqa: E402
 from _shared.paths import safe_realpath  # noqa: E402
 from _shared.safe_http import open_url  # noqa: E402
 from claw_os_sdk import ai  # noqa: E402
@@ -118,6 +120,7 @@ def _build_send_parser():
     p.add_argument("--cc", default=None)
     p.add_argument("--provider", required=True, choices=["smtp", "gmail", "outlook"])
     p.add_argument("--host", default=None, help="SMTP endpoint, e.g. mail.example.com:587")
+    p.add_argument("--request-id")
     return p
 
 
@@ -392,6 +395,7 @@ def cmd_draft_save(args):
     parser.add_argument("--subject", required=True)
     parser.add_argument("--body", required=True)
     parser.add_argument("--cc")
+    parser.add_argument("--request-id")
     try:
         options = parser.parse_args(args)
         if any("\r" in value or "\n" in value for value in (options.to, options.subject, options.cc or "")):
@@ -452,6 +456,7 @@ def cmd_draft_send(args):
     parser.add_argument("--id", required=True)
     parser.add_argument("--review", required=True)
     parser.add_argument("--confirm", nargs="?", const=True, required=True)
+    parser.add_argument("--request-id")
     try:
         options = parser.parse_args(args)
         _draft_reference(options.provider, options.id)
@@ -1135,6 +1140,110 @@ def cmd_draft(args):
 # Entry point
 # ---------------------------------------------------------------------------
 
+def _request_guard(command, args, handler):
+    request_id = None
+    filtered = []
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if token == "--request-id" or token.startswith("--request-id="):
+            if request_id is not None:
+                return {"error": "request-id must occur only once"}
+            if token == "--request-id":
+                index += 1
+                if index == len(args):
+                    return {"error": "request-id requires a canonical UUID"}
+                request_id = args[index]
+            else:
+                request_id = token.partition("=")[2]
+        else:
+            filtered.append(token)
+        index += 1
+    if request_id is None:
+        return handler(args)
+    try:
+        if str(uuid.UUID(request_id)) != request_id:
+            raise ValueError("noncanonical UUID")
+    except ValueError:
+        return {"error": "request-id must be a canonical UUID"}
+    policy.require("data.db.read", name="mail-requests")
+    policy.require("data.db.write", name="mail-requests")
+    root = os.environ.get("COS_DATA_DIR")
+    if not root or not os.path.isabs(root):
+        return {"error": "Mail request storage requires the authenticated App data partition"}
+    directory = os.path.join(root, "mail-requests")
+    try:
+        os.mkdir(directory, 0o700)
+        _fsync_dir(root, strict=True)
+    except FileExistsError:
+        pass
+    metadata = os.stat(directory, follow_symlinks=False)
+    if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077:
+        return {"error": "Mail request directory must be a private owner-owned directory"}
+    fingerprint = hashlib.sha256(json.dumps(
+        {"operation": command, "arguments": filtered}, ensure_ascii=False,
+        sort_keys=True, separators=(",", ":"),
+    ).encode()).hexdigest()
+    path = os.path.join(directory, request_id + ".json")
+    lock = os.open(path + ".lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    try:
+        lock_metadata = os.fstat(lock)
+        if (
+            not stat.S_ISREG(lock_metadata.st_mode) or lock_metadata.st_nlink != 1
+            or lock_metadata.st_uid != os.geteuid() or lock_metadata.st_mode & 0o077
+        ):
+            return {"error": "Mail request lock must be a private owner-owned regular file"}
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        except FileNotFoundError:
+            previous = None
+        else:
+            with os.fdopen(descriptor, "rb") as source:
+                metadata = os.fstat(source.fileno())
+                if (
+                    not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1
+                    or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077
+                ):
+                    return {"error": "Mail request record must be a private regular file"}
+                encoded = source.read(65537)
+            if len(encoded) > 65536:
+                return {"error": "Mail request record exceeds its bound"}
+            try:
+                previous = json.loads(encoded)
+            except ValueError:
+                return {"error": "Mail request record is corrupt"}
+            if not isinstance(previous, dict) or set(previous) != {"fingerprint", "state", "result"}:
+                return {"error": "Mail request record is corrupt"}
+        if previous is not None:
+            if previous["fingerprint"] != fingerprint:
+                return {"error": "request-id is already bound to a different Mail operation"}
+            if previous["state"] != "returned":
+                return {
+                    "error": "the previous Mail request outcome is unknown; inspect it before a new request",
+                    "indeterminate": True, "retryable": False,
+                }
+            return previous["result"]
+        if sum(name.endswith(".json") for name in os.listdir(directory)) >= 10000:
+            return {"error": "Mail submission history reached its retained request limit"}
+        record = {"fingerprint": fingerprint, "state": "in_flight", "result": None}
+        atomic_write_json(path, record, mode=0o600, strict=True)
+        result = handler(filtered)
+        if isinstance(result, dict) and "error" in result:
+            result = {**result, "indeterminate": True, "retryable": False}
+        record.update(state="returned", result=result)
+        try:
+            atomic_write_json(path, record, mode=0o600, strict=True)
+        except OSError as error:
+            return {
+                "error": f"Mail result recording failed; do not repeat the request: {error}",
+                "indeterminate": True, "retryable": False, "result": result,
+            }
+        return result
+    finally:
+        os.close(lock)
+
+
 def run(command, args):
     """Entry point called by cos."""
     from canonical_argv import normalize_argparse_booleans
@@ -1158,6 +1267,8 @@ def run(command, args):
     if handler is None:
         return {"error": f"unknown command: {command}"}
     try:
+        if command in {"send", "draft_save", "draft_send"}:
+            return _request_guard(command, args, handler)
         return handler(args)
     except policy.PermissionDenied as denied:
         return {"error": str(denied), "denial": denied.denial}

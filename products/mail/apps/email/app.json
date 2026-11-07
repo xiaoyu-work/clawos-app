@@ -65,6 +65,7 @@
     "draft_save": {
       "label": {"en": "Create or update a provider draft without sending it"},
       "args": [
+        {"name": "request-id", "kind": "name", "binding": "flag"},
         {"name": "provider", "kind": "name", "required": true, "binding": "flag", "choices": ["gmail", "outlook"]},
         {"name": "id", "kind": "name", "binding": "flag"},
         {"name": "to", "kind": "text", "required": true, "binding": "flag"},
@@ -73,6 +74,8 @@
         {"name": "cc", "kind": "text", "binding": "flag"}
       ],
       "needs": [
+        {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Read this owner's existing Mail submission receipt."}},
+        {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Durably bracket this Mail submission without replaying uncertain effects."}},
         {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected mailbox's draft credential."}},
         {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "gmail"}, "why": {"en": "Save or update the Gmail draft; never send it."}},
         {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Save or update the Outlook draft; never send it."}}
@@ -81,12 +84,15 @@
     "draft_send": {
       "label": {"en": "Explicitly send an unchanged reviewed provider draft"},
       "args": [
+        {"name": "request-id", "kind": "name", "binding": "flag"},
         {"name": "provider", "kind": "name", "required": true, "binding": "flag", "choices": ["gmail", "outlook"]},
         {"name": "id", "kind": "name", "required": true, "binding": "flag"},
         {"name": "review", "kind": "name", "required": true, "binding": "flag"},
         {"name": "confirm", "kind": "bool", "required": true, "binding": "flag", "choices": [true]}
       ],
       "needs": [
+        {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Read this owner's existing Mail submission receipt."}},
+        {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Durably bracket this Mail submission without replaying uncertain effects."}},
         {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected mailbox's reviewed draft credential."}},
         {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "gmail"}, "why": {"en": "Read the current draft and explicitly submit it through Gmail."}},
         {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Read the current draft and explicitly submit it through Outlook."}}
@@ -163,6 +169,7 @@
         "en": "Send an email (--to, --subject, --body, --provider smtp|gmail|outlook; SMTP requires --host host:port)"
       },
       "args": [
+        {"name": "request-id", "kind": "name", "binding": "flag"},
         {
           "name": "provider",
           "kind": "name",
@@ -214,6 +221,8 @@
         }
       ],
       "needs": [
+        {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Read this owner's existing Mail submission receipt."}},
+        {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Durably bracket this Mail submission without replaying uncertain effects."}},
         {
           "verb": "net.dial",
           "scope": {
@@ -630,6 +639,7 @@
         "name": "email.draft_save",
         "summary": {"en": "Create or update a provider draft without sending it"},
         "args": [
+          {"name": "request-id", "kind": "name"},
           {"name": "provider", "kind": "name", "required": true, "choices": ["gmail", "outlook"]},
           {"name": "id", "kind": "name"},
           {"name": "to", "kind": "text", "required": true},
@@ -638,6 +648,8 @@
           {"name": "cc", "kind": "text"}
         ],
         "needs": [
+          {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Read this owner's existing Mail submission receipt."}},
+          {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Durably bracket this Mail submission without replaying uncertain effects."}},
           {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected mailbox's draft credential."}},
           {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "gmail"}, "why": {"en": "Save or update the Gmail draft; never send it."}},
           {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Save or update the Outlook draft; never send it."}}
@@ -647,12 +659,15 @@
         "name": "email.draft_send",
         "summary": {"en": "Explicitly send an unchanged reviewed provider draft"},
         "args": [
+          {"name": "request-id", "kind": "name"},
           {"name": "provider", "kind": "name", "required": true, "choices": ["gmail", "outlook"]},
           {"name": "id", "kind": "name", "required": true},
           {"name": "review", "kind": "name", "required": true},
           {"name": "confirm", "kind": "bool", "required": true, "choices": [true]}
         ],
         "needs": [
+          {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Read this owner's existing Mail submission receipt."}},
+          {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Durably bracket this Mail submission without replaying uncertain effects."}},
           {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected mailbox's reviewed draft credential."}},
           {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "gmail"}, "why": {"en": "Read the current draft and explicitly submit it through Gmail."}},
           {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Read the current draft and explicitly submit it through Outlook."}}
@@ -730,6 +745,7 @@
           "en": "Send an email (--to, --subject, --body, --provider smtp|gmail|outlook; SMTP requires --host host:port)"
         },
         "args": [
+          {"name": "request-id", "kind": "name"},
           {
             "name": "provider",
             "kind": "name",
@@ -775,6 +791,8 @@
           }
         ],
         "needs": [
+          {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Read this owner's existing Mail submission receipt."}},
+          {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Durably bracket this Mail submission without replaying uncertain effects."}},
           {
             "verb": "net.dial",
             "scope": {

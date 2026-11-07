@@ -55,6 +55,16 @@ Gmail draft operations require OAuth `gmail.compose`; Outlook needs
 `Mail.ReadWrite`. Existing tokens are not silently upgraded; use the normal
 OS browser authorization to consent to these scopes.
 
+Outbound `send`, `draft_save` and `draft_send` optionally accept a canonical
+UUID `request-id`. The owned `mail-requests` partition durably records the
+canonical operation/argument fingerprint before submission and the result
+afterward. Identical retries return the retained result; different arguments,
+corruption and interrupted in-flight requests never resubmit. Read/write
+authority for this store is conditional on supplying the flag. Without it,
+legacy behavior is unchanged. This is an App request receipt, not provider
+exactly-once delivery or an OS-confirmed effect. Activity workflows should
+retain one request ID per reviewed outward action.
+
 `attachment_download` takes an explicit provider, message/attachment ID and
 absolute output path. It supports Gmail attachment bodies (including nested
 inline MIME parts) and Outlook file attachments, bounded to 16 MiB. Output
