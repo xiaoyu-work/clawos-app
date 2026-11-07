@@ -594,6 +594,38 @@ class TestReadCommand(unittest.TestCase):
     def tearDown(self):
         _clear_provider_env()
 
+    def test_message_objects_bind_the_provider_and_encode_opaque_ids(self):
+        message_id = "message/with?reserved&id"
+        for provider, request_name, host in [
+            ("gmail", "_gmail_request", email_main.GMAIL_API_HOST),
+            ("outlook", "_outlook_request", email_main.OUTLOOK_API_HOST),
+        ]:
+            with self.subTest(provider=provider), patch.object(
+                email_main, request_name, return_value={"id": message_id}
+            ) as request, patch.object(email_main.policy, "require"):
+                result = run(f"{provider}_message", ["--id", message_id])
+            self.assertEqual(result["id"], message_id)
+            self.assertEqual(
+                result["object"],
+                f"app://email/{provider}-message?id=message%2Fwith%3Freserved%26id",
+            )
+            self.assertIn(host, request.call_args.args[0])
+            self.assertIn("message%2Fwith%3Freserved%26id", request.call_args.args[0])
+
+    def test_message_object_cannot_override_its_declared_provider(self):
+        with patch.object(email_main.policy, "require") as require:
+            result = run(
+                "gmail_message", ["--id", "msg123", "--provider", "outlook"]
+            )
+        self.assertIn("error", result)
+        require.assert_not_called()
+
+    def test_invalid_message_identity_is_rejected_before_authority(self):
+        with patch.object(email_main.policy, "require") as require:
+            result = run("outlook_message", ["--id", "message\nid"])
+        self.assertIn("invalid message ID", result["error"])
+        require.assert_not_called()
+
     def test_read_no_provider(self):
         result = run("read", ["--id", "msg123"])
         self.assertIn("error", result)

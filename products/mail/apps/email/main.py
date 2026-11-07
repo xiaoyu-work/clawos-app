@@ -12,6 +12,7 @@ import os
 import smtplib
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -21,6 +22,7 @@ import idna
 from _shared.credentials import load_credential  # noqa: E402
 from _shared.safe_http import open_url  # noqa: E402
 from claw_os_sdk import ai  # noqa: E402
+from claw_os_sdk.objects import ObjectRefError, format_reference  # noqa: E402
 from cos_runtime import memory, policy  # noqa: E402
 from cos_runtime import smtp as cos_smtp  # noqa: E402
 
@@ -134,6 +136,32 @@ def _build_read_parser():
     p.add_argument("--id", required=True, dest="message_id")
     p.add_argument("--provider", required=True, choices=["gmail", "outlook"])
     return p
+
+
+def _message_reference(provider, message_id):
+    return format_reference({
+        "app_id": "email",
+        "object_type": f"{provider}-message",
+        "object_id": message_id,
+    })
+
+
+def _read_message_object(provider, args):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--id", required=True)
+    try:
+        opts = parser.parse_args(args)
+    except SystemExit:
+        return {"error": f"usage: email {provider}_message --id <message-id>"}
+    return cmd_read(["--provider", provider, f"--id={opts.id}"])
+
+
+def cmd_gmail_message(args):
+    return _read_message_object("gmail", args)
+
+
+def cmd_outlook_message(args):
+    return _read_message_object("outlook", args)
 
 
 def _build_draft_parser():
@@ -338,7 +366,7 @@ def _parse_gmail_message(msg_data):
                 "size": part.get("body", {}).get("size", 0),
             })
 
-    return {
+    result = {
         "id": msg_data.get("id", ""),
         "from": headers.get("from", ""),
         "to": [a.strip() for a in headers.get("to", "").split(",") if a.strip()],
@@ -349,6 +377,9 @@ def _parse_gmail_message(msg_data):
         "unread": unread,
         "attachments": attachments,
     }
+    if result["id"]:
+        result["object"] = _message_reference("gmail", result["id"])
+    return result
 
 
 def _search_gmail(query, max_results):
@@ -380,6 +411,7 @@ def _search_gmail(query, max_results):
             "snippet": parsed["snippet"],
             "date": parsed["date"],
             "unread": parsed["unread"],
+            "object": parsed.get("object"),
         })
 
     return {"query": query, "provider": "gmail", "emails": emails, "count": len(emails)}
@@ -417,6 +449,7 @@ def _list_gmail(max_results, unread):
             "snippet": parsed["snippet"],
             "date": parsed["date"],
             "unread": parsed["unread"],
+            "object": parsed.get("object"),
         })
 
     return {"provider": "gmail", "emails": emails, "count": len(emails)}
@@ -425,7 +458,7 @@ def _list_gmail(max_results, unread):
 def _read_gmail(message_id):
     """Read a specific email via the Gmail API."""
     url = (
-        f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{message_id}"
+        f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{urllib.parse.quote(message_id, safe='')}"
         f"?format=full"
     )
     result = _gmail_request(url)
@@ -508,7 +541,7 @@ def _parse_outlook_message(msg_data):
         {"name": a.get("name", ""), "size": a.get("size", 0)}
         for a in msg_data.get("attachments", [])
     ]
-    return {
+    result = {
         "id": msg_data.get("id", ""),
         "from": from_field.get("address", ""),
         "to": to_list,
@@ -519,6 +552,9 @@ def _parse_outlook_message(msg_data):
         "unread": not msg_data.get("isRead", True),
         "attachments": attachments,
     }
+    if result["id"]:
+        result["object"] = _message_reference("outlook", result["id"])
+    return result
 
 
 def _search_outlook(query, max_results):
@@ -543,6 +579,7 @@ def _search_outlook(query, max_results):
             "snippet": parsed["snippet"],
             "date": parsed["date"],
             "unread": parsed["unread"],
+            "object": parsed.get("object"),
         })
 
     return {"query": query, "provider": "outlook", "emails": emails, "count": len(emails)}
@@ -569,6 +606,7 @@ def _list_outlook(max_results, unread):
             "snippet": parsed["snippet"],
             "date": parsed["date"],
             "unread": parsed["unread"],
+            "object": parsed.get("object"),
         })
 
     return {"provider": "outlook", "emails": emails, "count": len(emails)}
@@ -576,7 +614,7 @@ def _list_outlook(max_results, unread):
 
 def _read_outlook(message_id):
     """Read a specific email via the Microsoft Graph API."""
-    url = f"https://graph.microsoft.com/v1.0/me/messages/{message_id}"
+    url = f"https://graph.microsoft.com/v1.0/me/messages/{urllib.parse.quote(message_id, safe='')}"
     result = _outlook_request(url)
     if "error" in result:
         return result
@@ -608,7 +646,7 @@ def _remember_sent(result, to, subject, body, cc=None):
             kind="event",
             entity_id=message_id or None,
             tags=tags,
-            link=f"cos app email read --id {message_id}" if message_id else None,
+            link=_message_reference(provider, message_id) if message_id else None,
         )
     except memory.MemoryError:
         pass
@@ -701,6 +739,10 @@ def cmd_read(args):
         return {"error": "missing required argument: --id"}
 
     provider = opts.provider
+    try:
+        _message_reference(provider, opts.message_id)
+    except ObjectRefError as error:
+        return {"error": f"invalid message ID: {error}"}
     if provider == "gmail":
         policy.require("secret.read", name="default/GOOGLE_ACCESS_TOKEN")
         policy.require("net.dial", host=GMAIL_API_HOST)
@@ -778,6 +820,8 @@ def run(command, args):
     from canonical_argv import normalize_argparse_booleans
     args = normalize_argparse_booleans(args, bool_flags={"unread"})
     handlers = {
+        "gmail_message": cmd_gmail_message,
+        "outlook_message": cmd_outlook_message,
         "send": cmd_send,
         "search": cmd_search,
         "list": cmd_list,

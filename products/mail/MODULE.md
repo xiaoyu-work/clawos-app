@@ -22,6 +22,26 @@ provider credentials and authorization in the OS; importing source does not
 grant access to a user's profile. The repository move preserves installed
 `mail-ai`, `email` and `gateway-email` identities, paths, grants and protocols.
 All legacy identities still await product consolidation.
+
+## Activity message objects
+
+`email` declares separate `gmail-message` and `outlook-message` object types.
+Their `gmail_message` and `outlook_message` resolvers take only the opaque
+message ID; the declaration fixes the provider and its exact credential/host
+needs. A resolver cannot borrow the other provider's authority through a flag.
+Read/search/list results include canonical `app://email/TYPE?id=...` references.
+Opaque provider IDs are percent-encoded independently in references and API
+path segments. References do not fetch data, grant access or merge accounts.
+Existing `email.read --provider ... --id ...` remains supported.
+
+```bash
+cos app email gmail_message --id MESSAGE_ID
+cos activity attach-object ACTIVITY_ID --label "Source email" \
+  --app email --type gmail-message --object-id MESSAGE_ID
+```
+
+## Existing transport and packaging
+
 Email's SMTP `send` operation and `email.send` MCP tool require an explicit
 `host:port`, such as `mail.example.com:587` or `mail.example.com:465`. That
 same argument supplies the manifest's `net.dial` scope, the policy check and
