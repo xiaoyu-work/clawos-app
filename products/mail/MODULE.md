@@ -42,6 +42,19 @@ cos activity attach-object ACTIVITY_ID --label "Source email" \
 
 ## Existing transport and packaging
 
+`draft_save` creates or updates a real Gmail/Outlook draft without sending.
+The provider-specific `gmail-draft` and `outlook-draft` references resolve
+through `gmail_draft` and `outlook_draft`; Outlook resolution rejects sent
+messages. Reads expose To/Cc/Bcc and a fingerprint of the returned provider
+data. `draft_send` requires that fingerprint and explicit confirmation, reads
+the current draft again and refuses a mismatch before submission.
+This is not a provider-wide compare-and-swap guarantee against edits after
+the final read. Confirmation is not an OS permission grant or delivery proof.
+The existing `email.draft` remains an AI text helper and never saves or sends.
+Gmail draft operations require OAuth `gmail.compose`; Outlook needs
+`Mail.ReadWrite`. Existing tokens are not silently upgraded; use the normal
+OS browser authorization to consent to these scopes.
+
 `attachment_download` takes an explicit provider, message/attachment ID and
 absolute output path. It supports Gmail attachment bodies (including nested
 inline MIME parts) and Outlook file attachments, bounded to 16 MiB. Output

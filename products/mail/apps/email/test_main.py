@@ -702,6 +702,85 @@ class TestReadCommand(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
+class TestProviderDrafts(unittest.TestCase):
+    def test_save_creates_provider_drafts_without_sending(self):
+        for provider, helper, suffix in [
+            ("gmail", "_gmail_request", "/drafts"),
+            ("outlook", "_outlook_request", "/me/messages"),
+        ]:
+            with self.subTest(provider=provider), patch.object(
+                email_main, helper, return_value={"id": "saved/draft", "isDraft": True}
+            ) as request, patch.object(email_main.policy, "require"):
+                result = run(
+                    "draft_save",
+                    ["--provider", provider, "--to", "recipient@example.invalid",
+                     "--subject", "Review", "--body", "Explicit draft content"],
+                )
+            self.assertTrue(result["saved"])
+            self.assertFalse(result["sent"])
+            self.assertEqual(
+                result["draft"]["object"],
+                f"app://email/{provider}-draft?id=saved%2Fdraft",
+            )
+            self.assertTrue(request.call_args.args[0].endswith(suffix))
+            self.assertEqual(request.call_args.kwargs["method"], "POST")
+
+    def test_outlook_draft_operations_never_update_a_sent_message(self):
+        with patch.object(
+            email_main, "_outlook_request", return_value={"id": "sent", "isDraft": False}
+        ) as request, patch.object(email_main.policy, "require"):
+            result = run(
+                "draft_save",
+                ["--provider", "outlook", "--id", "sent", "--to", "a@example.invalid",
+                 "--subject", "New subject", "--body", "New body"],
+            )
+        self.assertIn("not a draft", result["error"])
+        self.assertEqual(request.call_count, 1)
+        self.assertEqual(request.call_args.kwargs, {})
+
+    def test_send_checks_the_reviewed_provider_data_before_submitting(self):
+        original = {
+            "id": "draft", "message": {"id": "message", "payload": {"headers": [
+                {"name": "Subject", "value": "Reviewed subject"},
+                {"name": "Bcc", "value": "hidden@example.invalid"},
+            ]}},
+        }
+        with patch.object(
+            email_main, "_gmail_request", return_value=original
+        ) as request, patch.object(email_main.policy, "require"):
+            viewed = run("gmail_draft", ["--id", "draft"])["draft"]
+            self.assertEqual(viewed["message"]["bcc"], ["hidden@example.invalid"])
+            changed = json.loads(json.dumps(original))
+            changed["message"]["payload"]["headers"][0]["value"] = "Changed subject"
+            request.return_value = changed
+            request.reset_mock()
+            result = run(
+                "draft_send",
+                ["--provider", "gmail", "--id", "draft",
+                 "--review", viewed["review"], "--confirm"],
+            )
+            self.assertTrue(result["conflicted"])
+            self.assertEqual(request.call_count, 1)
+            request.side_effect = [original, {"id": "sent-message"}]
+            result = run(
+                "draft_send",
+                ["--provider", "gmail", "--id", "draft",
+                 "--review", viewed["review"], "--confirm"],
+            )
+        self.assertTrue(result["sent"])
+        self.assertFalse(result["delivery_confirmed"])
+        self.assertTrue(request.call_args.args[0].endswith("/drafts/send"))
+
+    def test_draft_send_requires_confirmation_before_any_authority(self):
+        with patch.object(email_main.policy, "require") as require:
+            result = run(
+                "draft_send",
+                ["--provider", "gmail", "--id", "draft", "--review", "sha256:review"],
+            )
+        self.assertIn("error", result)
+        require.assert_not_called()
+
+
 class TestAttachmentDownloads(unittest.TestCase):
     def arguments(self, provider, output, attachment="attachment/one"):
         return [

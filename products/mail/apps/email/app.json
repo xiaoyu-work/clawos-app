@@ -10,6 +10,16 @@
   "icon": "✉️",
   "runtime": "python",
   "objects": {
+    "gmail-draft": {
+      "label": {"en": "Gmail draft"},
+      "summary": {"en": "A saved Gmail draft; its ID is distinct from the draft message ID."},
+      "resolve": {"operation": "gmail_draft", "id_arg": "id"}
+    },
+    "outlook-draft": {
+      "label": {"en": "Outlook draft"},
+      "summary": {"en": "A saved Outlook draft; resolution rejects sent messages."},
+      "resolve": {"operation": "outlook_draft", "id_arg": "id"}
+    },
     "attachment-file": {
       "label": {"en": "Downloaded Mail attachment"},
       "summary": {"en": "Metadata for a downloaded file at an explicitly authorized absolute path; the path does not prove its mail origin."},
@@ -36,6 +46,52 @@
     ]
   },
   "operations": {
+    "gmail_draft": {
+      "label": {"en": "Read a saved Gmail draft and its review fingerprint"},
+      "args": [{"name": "id", "kind": "name", "required": true, "binding": "flag"}],
+      "needs": [
+        {"verb": "secret.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}}, "why": {"en": "Read the owner's Gmail draft credential."}},
+        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "why": {"en": "Read only the requested Gmail draft."}}
+      ]
+    },
+    "outlook_draft": {
+      "label": {"en": "Read a saved Outlook draft and its review fingerprint"},
+      "args": [{"name": "id", "kind": "name", "required": true, "binding": "flag"}],
+      "needs": [
+        {"verb": "secret.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}, "why": {"en": "Read the owner's Outlook draft credential."}},
+        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "why": {"en": "Read only the requested Outlook draft."}}
+      ]
+    },
+    "draft_save": {
+      "label": {"en": "Create or update a provider draft without sending it"},
+      "args": [
+        {"name": "provider", "kind": "name", "required": true, "binding": "flag", "choices": ["gmail", "outlook"]},
+        {"name": "id", "kind": "name", "binding": "flag"},
+        {"name": "to", "kind": "text", "required": true, "binding": "flag"},
+        {"name": "subject", "kind": "text", "required": true, "binding": "flag"},
+        {"name": "body", "kind": "text", "required": true, "binding": "flag"},
+        {"name": "cc", "kind": "text", "binding": "flag"}
+      ],
+      "needs": [
+        {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected mailbox's draft credential."}},
+        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "gmail"}, "why": {"en": "Save or update the Gmail draft; never send it."}},
+        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Save or update the Outlook draft; never send it."}}
+      ]
+    },
+    "draft_send": {
+      "label": {"en": "Explicitly send an unchanged reviewed provider draft"},
+      "args": [
+        {"name": "provider", "kind": "name", "required": true, "binding": "flag", "choices": ["gmail", "outlook"]},
+        {"name": "id", "kind": "name", "required": true, "binding": "flag"},
+        {"name": "review", "kind": "name", "required": true, "binding": "flag"},
+        {"name": "confirm", "kind": "bool", "required": true, "binding": "flag", "choices": [true]}
+      ],
+      "needs": [
+        {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected mailbox's reviewed draft credential."}},
+        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "gmail"}, "why": {"en": "Read the current draft and explicitly submit it through Gmail."}},
+        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Read the current draft and explicitly submit it through Outlook."}}
+      ]
+    },
     "attachment_file": {
       "label": {"en": "Read metadata for a downloaded Mail attachment file"},
       "args": [{"name": "path", "kind": "path", "required": true, "binding": "flag"}],
@@ -552,6 +608,56 @@
       "system_agent": true
     },
     "tools": [
+      {
+        "name": "email.gmail_draft",
+        "summary": {"en": "Read a saved Gmail draft and its review fingerprint"},
+        "args": [{"name": "id", "kind": "name", "required": true}],
+        "needs": [
+          {"verb": "secret.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}}, "why": {"en": "Read the owner's Gmail draft credential."}},
+          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "why": {"en": "Read only the requested Gmail draft."}}
+        ]
+      },
+      {
+        "name": "email.outlook_draft",
+        "summary": {"en": "Read a saved Outlook draft and its review fingerprint"},
+        "args": [{"name": "id", "kind": "name", "required": true}],
+        "needs": [
+          {"verb": "secret.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}, "why": {"en": "Read the owner's Outlook draft credential."}},
+          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "why": {"en": "Read only the requested Outlook draft."}}
+        ]
+      },
+      {
+        "name": "email.draft_save",
+        "summary": {"en": "Create or update a provider draft without sending it"},
+        "args": [
+          {"name": "provider", "kind": "name", "required": true, "choices": ["gmail", "outlook"]},
+          {"name": "id", "kind": "name"},
+          {"name": "to", "kind": "text", "required": true},
+          {"name": "subject", "kind": "text", "required": true},
+          {"name": "body", "kind": "text", "required": true},
+          {"name": "cc", "kind": "text"}
+        ],
+        "needs": [
+          {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected mailbox's draft credential."}},
+          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "gmail"}, "why": {"en": "Save or update the Gmail draft; never send it."}},
+          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Save or update the Outlook draft; never send it."}}
+        ]
+      },
+      {
+        "name": "email.draft_send",
+        "summary": {"en": "Explicitly send an unchanged reviewed provider draft"},
+        "args": [
+          {"name": "provider", "kind": "name", "required": true, "choices": ["gmail", "outlook"]},
+          {"name": "id", "kind": "name", "required": true},
+          {"name": "review", "kind": "name", "required": true},
+          {"name": "confirm", "kind": "bool", "required": true, "choices": [true]}
+        ],
+        "needs": [
+          {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected mailbox's reviewed draft credential."}},
+          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "gmail"}, "why": {"en": "Read the current draft and explicitly submit it through Gmail."}},
+          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Read the current draft and explicitly submit it through Outlook."}}
+        ]
+      },
       {
         "name": "email.attachment_file",
         "summary": {"en": "Read metadata for a downloaded Mail attachment file"},
