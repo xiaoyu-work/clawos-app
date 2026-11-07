@@ -319,6 +319,170 @@ def _build_draft_parser():
     return p
 
 
+def _draft_reference(provider, draft_id):
+    return format_reference({
+        "app_id": "email", "object_type": f"{provider}-draft", "object_id": draft_id,
+    })
+
+
+def _authorize_mailbox(provider):
+    if provider == "gmail":
+        policy.require("secret.read", name="default/GOOGLE_ACCESS_TOKEN")
+        policy.require("net.dial", host=GMAIL_API_HOST)
+    else:
+        policy.require("secret.read", name="default/MICROSOFT_ACCESS_TOKEN")
+        policy.require("net.dial", host=OUTLOOK_API_HOST)
+
+
+def _draft_view(provider, draft_id, message):
+    raw = json.dumps(message, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
+    parsed = _parse_gmail_message(message) if provider == "gmail" else _parse_outlook_message(message)
+    return {
+        "id": draft_id, "object": _draft_reference(provider, draft_id),
+        "review": "sha256:" + hashlib.sha256(raw).hexdigest(), "message": parsed,
+    }
+
+
+def _fetch_draft(provider, draft_id):
+    encoded = urllib.parse.quote(draft_id, safe="")
+    if provider == "gmail":
+        result = _gmail_request(
+            f"https://gmail.googleapis.com/gmail/v1/users/me/drafts/{encoded}?format=full"
+        )
+        if "error" in result:
+            return result
+        message = result.get("message", {})
+    else:
+        result = _outlook_request(
+            f"https://graph.microsoft.com/v1.0/me/messages/{encoded}?$expand=attachments"
+        )
+        if "error" in result:
+            return result
+        if result.get("isDraft") is not True:
+            return {"error": "the selected Outlook message is not a draft"}
+        message = result
+    return {"provider": provider, "draft": _draft_view(provider, draft_id, message)}
+
+
+def _read_draft_object(provider, args):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--id", required=True)
+    try:
+        options = parser.parse_args(args)
+        _draft_reference(provider, options.id)
+    except (SystemExit, ValueError):
+        return {"error": f"usage: email {provider}_draft --id <draft-id>"}
+    _authorize_mailbox(provider)
+    return _fetch_draft(provider, options.id)
+
+
+def cmd_gmail_draft(args):
+    return _read_draft_object("gmail", args)
+
+
+def cmd_outlook_draft(args):
+    return _read_draft_object("outlook", args)
+
+
+def cmd_draft_save(args):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--provider", required=True, choices=["gmail", "outlook"])
+    parser.add_argument("--id")
+    parser.add_argument("--to", required=True)
+    parser.add_argument("--subject", required=True)
+    parser.add_argument("--body", required=True)
+    parser.add_argument("--cc")
+    try:
+        options = parser.parse_args(args)
+        if any("\r" in value or "\n" in value for value in (options.to, options.subject, options.cc or "")):
+            raise ValueError("draft address and subject headers must not contain newlines")
+        if options.id is not None:
+            _draft_reference(options.provider, options.id)
+    except (SystemExit, ValueError) as error:
+        return {"error": f"invalid draft save arguments: {error}"}
+    _authorize_mailbox(options.provider)
+    if options.provider == "gmail":
+        message = MIMEMultipart()
+        message["To"] = options.to
+        message["Subject"] = options.subject
+        if options.cc:
+            message["Cc"] = options.cc
+        message.attach(MIMEText(options.body, "plain"))
+        data = {"message": {"raw": base64.urlsafe_b64encode(message.as_bytes()).decode()}}
+        url = "https://gmail.googleapis.com/gmail/v1/users/me/drafts"
+        if options.id is not None:
+            data["id"] = options.id
+            url += "/" + urllib.parse.quote(options.id, safe="")
+        result = _gmail_request(url, method="PUT" if options.id is not None else "POST", data=data)
+    else:
+        data = {
+            "subject": options.subject,
+            "body": {"contentType": "Text", "content": options.body},
+            "toRecipients": [
+                {"emailAddress": {"address": address.strip()}}
+                for address in options.to.split(",") if address.strip()
+            ],
+        }
+        if options.cc:
+            data["ccRecipients"] = [
+                {"emailAddress": {"address": address.strip()}}
+                for address in options.cc.split(",") if address.strip()
+            ]
+        url = "https://graph.microsoft.com/v1.0/me/messages"
+        if options.id is not None:
+            existing = _fetch_draft(options.provider, options.id)
+            if "error" in existing:
+                return existing
+            url += "/" + urllib.parse.quote(options.id, safe="")
+        result = _outlook_request(url, method="PATCH" if options.id is not None else "POST", data=data)
+    if "error" in result:
+        return result
+    draft_id = result.get("id")
+    if not draft_id:
+        return {"error": "provider did not return a saved draft ID", "indeterminate": True}
+    return {
+        "saved": True, "sent": False, "provider": options.provider,
+        "draft": {"id": draft_id, "object": _draft_reference(options.provider, draft_id)},
+    }
+
+
+def cmd_draft_send(args):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--provider", required=True, choices=["gmail", "outlook"])
+    parser.add_argument("--id", required=True)
+    parser.add_argument("--review", required=True)
+    parser.add_argument("--confirm", nargs="?", const=True, required=True)
+    try:
+        options = parser.parse_args(args)
+        _draft_reference(options.provider, options.id)
+        if options.confirm is not True:
+            raise ValueError("draft send requires explicit confirmation")
+    except (SystemExit, ValueError) as error:
+        return {"error": f"invalid draft send arguments: {error}"}
+    _authorize_mailbox(options.provider)
+    current = _fetch_draft(options.provider, options.id)
+    if "error" in current:
+        return current
+    if options.review != current["draft"]["review"]:
+        return {"error": "draft changed; read and review it again before sending", "conflicted": True}
+    if options.provider == "gmail":
+        result = _gmail_request(
+            "https://gmail.googleapis.com/gmail/v1/users/me/drafts/send",
+            method="POST", data={"id": options.id},
+        )
+    else:
+        result = _outlook_request(
+            f"https://graph.microsoft.com/v1.0/me/messages/{urllib.parse.quote(options.id, safe='')}/send",
+            method="POST",
+        )
+    if "error" in result:
+        return result
+    return {
+        "sent": True, "provider": options.provider, "draft_id": options.id,
+        "id": result.get("id"), "delivery_confirmed": False,
+    }
+
+
 _DRAFT_SYSTEMS = {
     "formal": (
         "Draft a polite, professional email reply based on the user's context. "
@@ -518,6 +682,8 @@ def _parse_gmail_message(msg_data):
         "id": msg_data.get("id", ""),
         "from": headers.get("from", ""),
         "to": [a.strip() for a in headers.get("to", "").split(",") if a.strip()],
+        "cc": [a.strip() for a in headers.get("cc", "").split(",") if a.strip()],
+        "bcc": [a.strip() for a in headers.get("bcc", "").split(",") if a.strip()],
         "subject": headers.get("subject", ""),
         "snippet": snippet,
         "body": body,
@@ -694,6 +860,8 @@ def _parse_outlook_message(msg_data):
         "id": msg_data.get("id", ""),
         "from": from_field.get("address", ""),
         "to": to_list,
+        "cc": [r.get("emailAddress", {}).get("address", "") for r in msg_data.get("ccRecipients", [])],
+        "bcc": [r.get("emailAddress", {}).get("address", "") for r in msg_data.get("bccRecipients", [])],
         "subject": msg_data.get("subject", ""),
         "snippet": msg_data.get("bodyPreview", ""),
         "body": msg_data.get("body", {}).get("content", ""),
@@ -970,8 +1138,12 @@ def cmd_draft(args):
 def run(command, args):
     """Entry point called by cos."""
     from canonical_argv import normalize_argparse_booleans
-    args = normalize_argparse_booleans(args, bool_flags={"unread"})
+    args = normalize_argparse_booleans(args, bool_flags={"unread", "confirm"})
     handlers = {
+        "draft_save": cmd_draft_save,
+        "draft_send": cmd_draft_send,
+        "gmail_draft": cmd_gmail_draft,
+        "outlook_draft": cmd_outlook_draft,
         "attachment_file": cmd_attachment_file,
         "attachment_download": cmd_attachment_download,
         "gmail_message": cmd_gmail_message,
