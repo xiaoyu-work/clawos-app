@@ -21,6 +21,109 @@ stage = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(stage)
 
 
+def test_staged_calendar_files_mail_chain_uses_public_mcp_and_isolated_wire(tmp_path):
+    """Protocol acceptance only; OS Host/authority acceptance remains separate."""
+    import textwrap
+
+    destination = tmp_path / "stage"
+    stage.stage("calendar", destination, ["calendar"])
+    stage.stage("files", destination, ["fs"])
+    stage.stage("mail", destination, ["email"])
+    stage.stage_shared(destination)
+    python = destination / "usr/lib/cos/python"
+    stage_platform_python(python)
+    control = tmp_path / "wire-control.json"
+    control.write_text('{"deny":null}')
+    log = tmp_path / "wire.jsonl"
+    peer = tmp_path / "cos"
+    peer.write_text(f"#!{sys.executable}\n" + textwrap.dedent("""\
+        import json, os, sys
+        from pathlib import Path
+        assert sys.argv[1] == "--wire=1"
+        app = os.environ["COS_APP_ID"]
+        assert app in {"calendar", "fs", "email"}
+        args = sys.argv[2:]
+        record = {"app":app,"args":args}
+        if args[:2] == ["__policy", "check"]:
+            denied = json.loads(Path(os.environ["TEST_CONTROL"]).read_text())["deny"]
+            data = {"decision":"deny" if args[2] == denied else "allow"}
+        elif args[:2] == ["__app_event", "publish"]:
+            record["event"] = json.loads(sys.stdin.read())
+            assert "owner_uid" not in record["event"] and "source" not in record["event"]
+            data = {"accepted":True}
+        elif args[:2] == ["__memory", "remember"]:
+            data = {"row_id":1,"session_id":"synthetic","indexed_semantic":False}
+        elif args[:2] == ["ai", "chat"]:
+            assert app == "email"
+            options = dict(zip(args[2::2],args[3::2],strict=True))
+            assert options["--app"] == "email"
+            record["prompt"] = Path(options["--prompt-file"]).read_text()
+            data = {"text":"Synthetic review draft","model":"fixture","provider":"fixture",
+                "verb":"ai.chat","usage":{"input_tokens":1,"output_tokens":1,"units":2},
+                "budget":{"period":"2026-11","units_used":2,"units_cap":10000},
+                "review":{"safety":"strict","prompt_redacted":True}}
+        else:
+            raise AssertionError("No task submission, external transport or other App route")
+        with open(os.environ["TEST_LOG"],"a") as out:
+            out.write(json.dumps(record)+"\\n")
+        print(json.dumps({"ok":True,"wire_version":1,"data":data}))
+    """))
+    peer.chmod(0o755)
+    target = tmp_path / "agenda.txt"
+    target.write_text("Original agenda\n")
+    sentinels = [tmp_path / "other-owner" / "memory.db", tmp_path / "owner" / "credentials.json"]
+    for sentinel in sentinels:
+        sentinel.parent.mkdir(parents=True, exist_ok=True)
+        sentinel.write_bytes(b"unrelated synthetic state")
+
+    def environment(app):
+        data = tmp_path / "owner" / "apps" / app
+        data.mkdir(parents=True, mode=0o700)
+        return {
+            "PATH": os.defpath, "PYTHONPATH": str(python), "CLAW_COS_BIN": str(peer),
+            "COS_SESSION": f"synthetic-{app}", "COS_DATA_DIR": str(data),
+            "TEST_CONTROL": str(control), "TEST_LOG": str(log),
+        }
+
+    def call(request, name, arguments):
+        result = request("tools/call", authenticated_mcp_params({"name": name, "arguments": arguments}))
+        assert not result.get("isError"), result
+        return result["structuredContent"]
+
+    apps = destination / "usr/lib/cos/apps"
+    with mcp_process(apps / "calendar", env=environment("calendar")) as calendar:
+        event = call(calendar, "calendar.create", {
+            "provider": "local", "title": "Synthetic review", "start": "2026-11-10T10:00:00Z",
+        })
+        reference = event["event"]["object"]
+        assert reference.startswith("app://calendar/local-event?")
+    with mcp_process(apps / "fs", env=environment("fs")) as files:
+        proposal = call(files, "fs.plan_write", {
+            "path": str(target), "content": f"Review {reference}\n",
+        })
+        assert proposal["reference"].startswith("app://fs/change-plan?")
+        shown = call(files, "fs.plan_show", {"path": str(target), "plan": proposal["plan_id"]})
+        assert shown["review"] == proposal["review"]
+        assert reference in shown["diff"]
+        control.write_text('{"deny":"data.db.write"}')
+        refused = files("tools/call", authenticated_mcp_params({
+            "name": "fs.plan_write", "arguments": {"path": str(target), "content": "must not apply"},
+        }))
+        assert refused["isError"] is True
+        control.write_text('{"deny":null}')
+    with mcp_process(apps / "email", env=environment("email")) as mail:
+        draft = call(mail, "email.draft", {
+            "context": f"Prepare a review note for {reference} and {proposal['reference']}", "style": "formal",
+        })
+        assert draft["draft"] == "Synthetic review draft"
+    records = [json.loads(line) for line in log.read_text().splitlines()]
+    ai_call = next(row for row in records if row["args"][:2] == ["ai", "chat"])
+    assert reference in ai_call["prompt"] and proposal["reference"] in ai_call["prompt"]
+    assert [row["app"] for row in records if "event" in row] == ["calendar", "fs"]
+    assert target.read_text() == "Original agenda\n"
+    assert all(path.read_bytes() == b"unrelated synthetic state" for path in sentinels)
+
+
 def test_calendar_stage_is_separate_and_preserves_its_manifest(tmp_path):
     assert {"mail", "calendar"} <= set(stage.products())
     assert stage.stage("calendar", tmp_path) == ["calendar", "panel-calendar"]
