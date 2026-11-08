@@ -17,15 +17,15 @@ partitions. KV is not Agent memory.
 SDK/runtime, network authority and the shared transport remain OS-owned.
 [`capabilities/ai-helpers`](capabilities/ai-helpers/MODULE.md) owns `summarize`,
 an explicit-text AI client, not a provider or another product's AI gateway.
-The selected source now contains **64 App identities**: **24 business product
-groups plus four shared-capability groups (52 Agent, 12 desktop)**. Eleven
+The selected source now contains **63 App identities**: **24 business product
+groups plus four shared-capability groups (51 Agent, 12 desktop)**. Eleven
 messaging connectors were explicitly retired after the original 75-identity
-source relocation. Retained identities, consent and user namespaces are not
+source relocation, followed by the legacy `gateway-email` App. Retained identities, consent and user namespaces are not
 merged; source ownership is not backend consolidation or visual acceptance.
 
 | Product | Source | Migration state |
 | --- | --- | --- |
-| Mail | [products/mail](products/mail/README.md) | Native Thunderbird source, AI/UI and account-scoped Agent Email share native mailbox operations; restricted delivery remains separate; installed acceptance and identity consolidation remain pending |
+| Mail | [products/mail](products/mail/README.md) | Native Thunderbird source, AI/UI and account-scoped Agent Email share native mailbox operations; the legacy SMTP gateway is retired; installed acceptance and identity consolidation remain pending |
 | Calendar | [products/calendar](products/calendar/README.md) | Event operations, provider integration and complete native panel UI/build have moved; OS policy and data paths remain unchanged |
 | Files | [products/files](products/files/README.md) | Complete native UI/library/companion, filesystem and Recoll MCP, shared document parsing and SDK AI; source moved, identities/data remain separate |
 | Browser | [products/browser](products/browser/README.md) | `search`, `web`, `browser-attached`, Native Host and MV3 extension have moved; native browser UI remains pending |

@@ -76,9 +76,10 @@ python3 tools/stage.py document-engine --kind capability --root build/doc-stage
 
 These tests do not replace the native product's build or UI acceptance.
 
-The 64 retained App identities are source-owned here (24 business products,
-four capability groups; 52 Agent and 12 desktop identities). Eleven messaging
-connectors were explicitly retired; do not restore them as source fallbacks. Keep source
+The 63 retained App identities are source-owned here (24 business products,
+four capability groups; 51 Agent and 12 desktop identities). Eleven messaging
+connectors and the legacy `gateway-email` App were explicitly retired; do not
+restore them as source fallbacks. Keep source
 completion separate from pending backend/state/identity consolidation or new
 UI work. AI Helpers owns only the `summarize` client; other products use SDK AI
 directly. Its tests must use isolated synthetic public AI/policy/memory wire

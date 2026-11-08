@@ -4,8 +4,9 @@ This is **M1**, the first foundation of the
 [Mail product](../../README.md). The App identity
 remains `mail-ai`. It is not a unified mailbox, a completed Mail product, or a
 completed upstream fork. M2 defines the mailbox contract, M3 integrates the
-pinned upstream source, and M4 merges `email`, `mail-ai`, and `gateway-email`
-with an atomic identity and data/consent cutover.
+pinned upstream source, and the later M4 cutover concerns retained `email`
+and `mail-ai` identities and data/consent. The independent `gateway-email`
+source App has been retired, not merged or restored as a fallback.
 
 The Thunderbird [MailExtension](../../extension/) and the
 system Agent's authenticated MCP tools call the same typed Python functions in

@@ -57,7 +57,7 @@ package has completed that migration.
 
 | Surface | Owner |
 | --- | --- |
-| `products/mail/` | Thunderbird source, Mail AI, legacy email and restricted delivery, extension UI and product packaging |
+| `products/mail/` | Thunderbird source, Mail AI, native-account Email, extension UI and product packaging; legacy SMTP gateway retired |
 | `products/calendar/` | Local events, Google/Outlook integration, Calendar MCP and the complete native panel UI library/assets |
 | `products/files/` | Complete native Files UI/library/companion, filesystem MCP and private reviewed file plans, owner-scoped Recoll, shared document parsing and SDK AI |
 | `capabilities/document-engine/` | Legacy `doc` facade, manifest, owning-client MCP bridge and tests; explicitly not another business product |
@@ -136,7 +136,8 @@ Mail preserves `mail-ai` and its six AI operations, plus the `email` identity
 now backed by Thunderbird's existing accounts through the account-scoped OS
 mail service. Independent Gmail/Outlook API and SMTP backends are not Email
 fallbacks. Native Thunderbird source is also owned
-here, along with the restricted `gateway-email` delivery adapter. These source moves do not merge
+here. The separate `gateway-email` delivery App has been explicitly retired
+without deleting credentials or installed user data. These source moves do not merge
 legacy identities or account state; completing that product cutover requires
 explicit account, consent and installation changes.
 
@@ -179,8 +180,8 @@ Source composition distinguishes `products/<name>` (business products) from
 commands retain their meaning; capability selection is explicit, never a
 filesystem fallback. Names cannot collide across kinds. Document Engine owns
 `doc`; Storage SDK owns `db` and `kv`; HTTP owns `net`; AI Helpers owns
-`summarize`. The 64 retained identities belong to 24 business product groups
-plus four shared-capability groups, partitioned as 52 Agent and 12 desktop
+`summarize`. The 63 retained identities belong to 24 business product groups
+plus four shared-capability groups, partitioned as 51 Agent and 12 desktop
 identities. Native preparation remains product-only. Source completion does not
 complete shared-state/backend or identity cutovers, new UI work, or installed
 visual/hardware acceptance. Eleven messaging connectors were explicitly
