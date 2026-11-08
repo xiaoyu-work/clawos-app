@@ -144,9 +144,10 @@ The consumer verifies the archive before extraction and rechecks its complete
 inventory on every cache use. It selects named SDK/runtime/toolkit exports;
 there is no Git, sibling-checkout or unverified-cache fallback. The SDK artifact
 contains OS libraries, not App helpers or private OS providers.
-The historical platform release has been withdrawn, so fresh dependency
-downloads are blocked. The OS platform source is unpublished `0.1.0`, not a
-replacement artifact pin; see [publication status](docs/releases.md#platform-publication-status).
+Historical platform `1.0.0`/`1.1.0` releases remain withdrawn. The explicitly
+approved `app-platform-v0.1.0` release now supplies the verified development pin,
+including public event/channel and object/effect contracts; see
+[publication status](docs/releases.md#platform-publication-status).
 Developer commands can explicitly supply a local archive, expected version
 and SHA-256 through the same public artifact verifier. This uses a separate
 development cache, not an OS source checkout or a replacement production pin.

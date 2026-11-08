@@ -1,7 +1,7 @@
 {
   "schema": "claw.app-platform/v1",
-  "version": "1.0.0",
-  "url": "https://github.com/xiaoyu-work/claw-os/releases/download/app-platform-v1.0.0/claw-os-app-platform-1.0.0.tar.gz",
-  "sha256": "5225640b647f3eeb234ec002f7b170a9c4d420ba2a6caf2e748e7a8ca8a913aa",
+  "version": "0.1.0",
+  "url": "https://github.com/xiaoyu-work/claw-os/releases/download/app-platform-v0.1.0/claw-os-app-platform-0.1.0.tar.gz",
+  "sha256": "0cc2efe5d05ddc555da1526a9fd8e56d65eb79ab913c12f3f2ebe1f9ae66cca1",
   "runtime_abi": 1
 }
