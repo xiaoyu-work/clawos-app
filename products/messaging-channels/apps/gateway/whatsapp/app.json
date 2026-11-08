@@ -5,7 +5,7 @@
     "en": "WhatsApp Gateway"
   },
   "summary": {
-    "en": "WhatsApp Cloud API gateway. send posts text messages through Meta's Graph API; webhook-server start and stop are not implemented."
+    "en": "Whatsapp outbound client and authenticated owner-bound Activity channel through the OS service."
   },
   "runtime": "python",
   "operations": {
@@ -82,10 +82,107 @@
     },
     "status": {
       "label": {
-        "en": "Show gateway configuration and status"
+        "en": "Show status for the OS-managed Whatsapp channel"
       },
       "args": [],
-      "needs": []
+      "needs": [
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "channel:gateway-whatsapp"
+            }
+          },
+          "why": {
+            "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
+          }
+        }
+      ]
+    },
+    "start": {
+      "label": {
+        "en": "Start the OS-managed Whatsapp channel"
+      },
+      "args": [],
+      "needs": [
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "channel:gateway-whatsapp"
+            }
+          },
+          "why": {
+            "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
+          }
+        }
+      ]
+    },
+    "stop": {
+      "label": {
+        "en": "Stop the OS-managed Whatsapp channel"
+      },
+      "args": [],
+      "needs": [
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "channel:gateway-whatsapp"
+            }
+          },
+          "why": {
+            "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
+          }
+        }
+      ]
+    },
+    "reply": {
+      "label": {
+        "en": "Reply once to an authenticated incoming message using its owner-bound receipt"
+      },
+      "args": [
+        {
+          "name": "event_id",
+          "kind": "name",
+          "required": true
+        },
+        {
+          "name": "text",
+          "kind": "text",
+          "required": true,
+          "repeatable": true
+        },
+        {
+          "name": "confirm",
+          "kind": "bool",
+          "required": true,
+          "choices": [
+            true
+          ]
+        }
+      ],
+      "needs": [
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "channel:gateway-whatsapp"
+            }
+          },
+          "why": {
+            "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
+          }
+        }
+      ]
     }
   },
   "schema_version": 2,
@@ -102,18 +199,6 @@
         "summary": {
           "en": "Send a message through this gateway"
         },
-        "args": [
-          {
-            "name": "recipient_phone",
-            "kind": "name",
-            "required": true
-          },
-          {
-            "name": "text",
-            "kind": "text",
-            "required": true
-          }
-        ],
         "needs": [
           {
             "verb": "net.dial",
@@ -167,13 +252,124 @@
               "en": "Remember the successful send so the agent can recall it later."
             }
           }
+        ],
+        "args": [
+          {
+            "name": "recipient_phone",
+            "kind": "name",
+            "required": true
+          },
+          {
+            "name": "text",
+            "kind": "text",
+            "required": true
+          }
         ]
       },
       {
         "name": "gateway-whatsapp.status",
         "summary": {
-          "en": "Show gateway configuration and status"
-        }
+          "en": "Show status for the OS-managed Whatsapp channel"
+        },
+        "needs": [
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "channel:gateway-whatsapp"
+              }
+            },
+            "why": {
+              "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
+            }
+          }
+        ]
+      },
+      {
+        "name": "gateway-whatsapp.start",
+        "summary": {
+          "en": "Start the OS-managed Whatsapp channel"
+        },
+        "needs": [
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "channel:gateway-whatsapp"
+              }
+            },
+            "why": {
+              "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
+            }
+          }
+        ]
+      },
+      {
+        "name": "gateway-whatsapp.stop",
+        "summary": {
+          "en": "Stop the OS-managed Whatsapp channel"
+        },
+        "needs": [
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "channel:gateway-whatsapp"
+              }
+            },
+            "why": {
+              "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
+            }
+          }
+        ]
+      },
+      {
+        "name": "gateway-whatsapp.reply",
+        "summary": {
+          "en": "Reply once to an authenticated incoming message using its owner-bound receipt"
+        },
+        "needs": [
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "channel:gateway-whatsapp"
+              }
+            },
+            "why": {
+              "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "event_id",
+            "kind": "name",
+            "required": true
+          },
+          {
+            "name": "text",
+            "kind": "text",
+            "required": true,
+            "repeatable": true
+          },
+          {
+            "name": "confirm",
+            "kind": "bool",
+            "required": true,
+            "choices": [
+              true
+            ]
+          }
+        ]
       }
     ]
   }

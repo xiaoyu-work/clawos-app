@@ -5,13 +5,13 @@
     "en": "Discord Gateway"
   },
   "summary": {
-    "en": "Bidirectional Discord bot gateway. Routes allowlisted DMs, guild mentions, and thread messages to the system agent."
+    "en": "Discord outbound client and authenticated owner-bound Activity channel through the OS service."
   },
   "runtime": "python",
   "operations": {
     "configure": {
       "label": {
-        "en": "Configure Discord inbound access"
+        "en": "Save legacy local preferences, not owner admission"
       },
       "args": [
         {
@@ -84,134 +84,104 @@
     },
     "status": {
       "label": {
-        "en": "Show Discord gateway status"
+        "en": "Show status for the OS-managed Discord channel"
       },
       "args": [],
       "needs": [
         {
-          "verb": "proc.observe",
+          "verb": "ipc.publish",
           "scope": {
-            "kind": "wild"
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "channel:gateway-discord"
+            }
           },
           "why": {
-            "en": "Check whether the Discord gateway process is running."
+            "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
         }
       ]
     },
     "start": {
       "label": {
-        "en": "Start the Discord agent gateway"
+        "en": "Start the OS-managed Discord channel"
       },
       "args": [],
       "needs": [
         {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "gateway.discord.gg"
-            }
-          },
-          "why": {
-            "en": "Maintain the Discord Gateway WebSocket connection."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "*.discord.gg"
-            }
-          },
-          "why": {
-            "en": "Reconnect to the Discord-provided regional resume gateway."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "discord.com"
-            }
-          },
-          "why": {
-            "en": "Validate the bot identity and post replies through the Discord REST API."
-          }
-        },
-        {
-          "verb": "secret.read",
+          "verb": "ipc.publish",
           "scope": {
             "kind": "fixed",
             "scope": {
               "kind": "name",
-              "value": "default/discord_bot_token"
+              "value": "channel:gateway-discord"
             }
           },
           "why": {
-            "en": "Load the configured Discord bot token."
-          }
-        },
-        {
-          "verb": "data.inbox.write",
-          "scope": {
-            "kind": "wild"
-          },
-          "why": {
-            "en": "Authorize allowlisted inbound Discord messages."
-          }
-        },
-        {
-          "verb": "agent.spawn",
-          "scope": {
-            "kind": "wild"
-          },
-          "why": {
-            "en": "Ask the system agent to answer inbound Discord messages."
-          }
-        },
-        {
-          "verb": "proc.observe",
-          "scope": {
-            "kind": "wild"
-          },
-          "why": {
-            "en": "Check for an existing Discord gateway process."
-          }
-        },
-        {
-          "verb": "memory.write",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "self-ref",
-              "value": "gateway-discord"
-            }
-          },
-          "why": {
-            "en": "Remember replies sent by the Discord gateway."
+            "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
         }
       ]
     },
     "stop": {
       "label": {
-        "en": "Stop the Discord agent gateway"
+        "en": "Stop the OS-managed Discord channel"
       },
       "args": [],
       "needs": [
         {
-          "verb": "proc.observe",
+          "verb": "ipc.publish",
           "scope": {
-            "kind": "wild"
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "channel:gateway-discord"
+            }
           },
           "why": {
-            "en": "Check whether the Discord gateway process is still running."
+            "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
+          }
+        }
+      ]
+    },
+    "reply": {
+      "label": {
+        "en": "Reply once to an authenticated incoming message using its owner-bound receipt"
+      },
+      "args": [
+        {
+          "name": "event_id",
+          "kind": "name",
+          "required": true
+        },
+        {
+          "name": "text",
+          "kind": "text",
+          "required": true,
+          "repeatable": true
+        },
+        {
+          "name": "confirm",
+          "kind": "bool",
+          "required": true,
+          "choices": [
+            true
+          ]
+        }
+      ],
+      "needs": [
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "channel:gateway-discord"
+            }
+          },
+          "why": {
+            "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
         }
       ]
@@ -229,8 +199,9 @@
       {
         "name": "gateway-discord.configure",
         "summary": {
-          "en": "Configure Discord inbound access"
+          "en": "Save legacy local preferences, not owner admission"
         },
+        "needs": [],
         "args": [
           {
             "name": "settings",
@@ -245,19 +216,6 @@
         "summary": {
           "en": "Send a message through Discord"
         },
-        "args": [
-          {
-            "name": "channel_id",
-            "kind": "name",
-            "required": true
-          },
-          {
-            "name": "text",
-            "kind": "text",
-            "required": true,
-            "repeatable": true
-          }
-        ],
         "needs": [
           {
             "verb": "net.dial",
@@ -298,21 +256,38 @@
               "en": "Remember successful outbound Discord messages."
             }
           }
+        ],
+        "args": [
+          {
+            "name": "channel_id",
+            "kind": "name",
+            "required": true
+          },
+          {
+            "name": "text",
+            "kind": "text",
+            "required": true,
+            "repeatable": true
+          }
         ]
       },
       {
         "name": "gateway-discord.status",
         "summary": {
-          "en": "Show Discord gateway status"
+          "en": "Show status for the OS-managed Discord channel"
         },
         "needs": [
           {
-            "verb": "proc.observe",
+            "verb": "ipc.publish",
             "scope": {
-              "kind": "wild"
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "channel:gateway-discord"
+              }
             },
             "why": {
-              "en": "Check whether the Discord gateway process is running."
+              "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
             }
           }
         ]
@@ -320,99 +295,20 @@
       {
         "name": "gateway-discord.start",
         "summary": {
-          "en": "Start the Discord agent gateway"
+          "en": "Start the OS-managed Discord channel"
         },
         "needs": [
           {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "gateway.discord.gg"
-              }
-            },
-            "why": {
-              "en": "Maintain the Discord Gateway WebSocket connection."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "*.discord.gg"
-              }
-            },
-            "why": {
-              "en": "Reconnect to the Discord-provided regional resume gateway."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "discord.com"
-              }
-            },
-            "why": {
-              "en": "Validate the bot identity and post replies through the Discord REST API."
-            }
-          },
-          {
-            "verb": "secret.read",
+            "verb": "ipc.publish",
             "scope": {
               "kind": "fixed",
               "scope": {
                 "kind": "name",
-                "value": "default/discord_bot_token"
+                "value": "channel:gateway-discord"
               }
             },
             "why": {
-              "en": "Load the configured Discord bot token."
-            }
-          },
-          {
-            "verb": "data.inbox.write",
-            "scope": {
-              "kind": "wild"
-            },
-            "why": {
-              "en": "Authorize allowlisted inbound Discord messages."
-            }
-          },
-          {
-            "verb": "agent.spawn",
-            "scope": {
-              "kind": "wild"
-            },
-            "why": {
-              "en": "Ask the system agent to answer inbound Discord messages."
-            }
-          },
-          {
-            "verb": "proc.observe",
-            "scope": {
-              "kind": "wild"
-            },
-            "why": {
-              "en": "Check for an existing Discord gateway process."
-            }
-          },
-          {
-            "verb": "memory.write",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "self-ref",
-                "value": "gateway-discord"
-              }
-            },
-            "why": {
-              "en": "Remember replies sent by the Discord gateway."
+              "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
             }
           }
         ]
@@ -420,17 +316,63 @@
       {
         "name": "gateway-discord.stop",
         "summary": {
-          "en": "Stop the Discord agent gateway"
+          "en": "Stop the OS-managed Discord channel"
         },
         "needs": [
           {
-            "verb": "proc.observe",
+            "verb": "ipc.publish",
             "scope": {
-              "kind": "wild"
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "channel:gateway-discord"
+              }
             },
             "why": {
-              "en": "Check whether the Discord gateway process is still running."
+              "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
             }
+          }
+        ]
+      },
+      {
+        "name": "gateway-discord.reply",
+        "summary": {
+          "en": "Reply once to an authenticated incoming message using its owner-bound receipt"
+        },
+        "needs": [
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "channel:gateway-discord"
+              }
+            },
+            "why": {
+              "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "event_id",
+            "kind": "name",
+            "required": true
+          },
+          {
+            "name": "text",
+            "kind": "text",
+            "required": true,
+            "repeatable": true
+          },
+          {
+            "name": "confirm",
+            "kind": "bool",
+            "required": true,
+            "choices": [
+              true
+            ]
           }
         ]
       }

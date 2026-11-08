@@ -80,7 +80,7 @@ package has completed that migration.
 | `tools/native_payload.py` | Original-installer output to package-local ELF/resource/license preparation, explicit signer entries and common-Host compatibility launchers; no resource activation or authority |
 | `products/desktop-widgets/` | Complete Widget Rail native presentation and assets; Calendar/task/telemetry access and authority remain OS-provided |
 | `products/home-integration/` | Home Assistant REST adapter source; external server, accounts, devices and automation state are not imported; OS credentials and egress authority remain separate |
-| `products/messaging-channels/` | Selected Discord, Telegram, Slack and WhatsApp connector sources; authenticated inbound owner/sender admission, lifecycle and durable replay handling remain OS-owned integration work |
+| `products/messaging-channels/` | Selected Discord, Telegram, Slack and WhatsApp outbound/presentation clients; versioned SDK delegates authenticated owner/sender admission, lifecycle and replay to the OS and ordinary Activity triggers |
 | `platform.lock.json`, `tools/platform_dependency.py` | Published, digest-pinned SDK/runtime/toolkit artifact, not an OS source checkout |
 | `shared/python/`, `shared/MODULE.md` | App-owned common client libraries, staged once through the common support package |
 | `shared/rust/gui-argv/` | App-owned compile-time selector adaptation for native parsers; no provider, permission, transport or runtime package |

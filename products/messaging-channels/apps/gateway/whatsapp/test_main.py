@@ -43,7 +43,7 @@ def invoke(request):
     assert len(servers) == 1
     app = servers[0]
     assert {tool["name"] for tool in app._handle_request("tools/list", {}, True)["tools"]} == {
-        "gateway-whatsapp.send", "gateway-whatsapp.status",
+        f"gateway-whatsapp.{name}" for name in json.loads(Path(__file__).with_name("app.json").read_text())["operations"]
     }
 
     def call(command, **arguments):
@@ -147,13 +147,11 @@ def test_text_limit_is_preserved(invoke, length):
     assert json.loads(transport.call_args.kwargs["body"])["text"]["body"] == expected
 
 
-def test_status_has_no_credentials_network_or_webhook_receiver(invoke):
-    with mock.patch.object(main.safe_egress, "safe_urlopen") as transport:
+def test_status_uses_the_os_without_app_credentials_or_network(invoke):
+    expected = {"ok": True, "platform": "whatsapp", "running": False, "configured": False}
+    with mock.patch.object(main.channels.channels, "control", return_value=expected), mock.patch.object(main.safe_egress, "safe_urlopen") as transport:
         result = invoke("status")
-    assert result == {
-        "ok": True, "platform": "whatsapp", "running": False, "api_version": "v21.0",
-        "note": "Outbound-only mode. Webhook receiver not yet implemented.",
-    }
+    assert result == expected
     main._load_credential.assert_not_called()
     main.gateway_memory.remember_send.assert_not_called()
     transport.assert_not_called()
