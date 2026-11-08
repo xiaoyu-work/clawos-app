@@ -13,21 +13,31 @@ trust-root override.
 
 App development platform `1.0.0` and `1.1.0` releases, tags and uploaded Actions
 artifacts have been withdrawn at the owner's request. The OS platform source
-version is back to **unpublished `0.1.0`**; there is no replacement
-`app-platform-v0.1.0` release.
+version is now the separately approved, published **`0.1.0`** platform,
+runtime ABI 1. Historical `1.0.0`/`1.1.0` archives were not restored.
 
-The uncommitted `1.1.0` adoption has been reverted. `platform.lock.json` retains
-its historical `1.0.0` URL and digest, so a fresh environment cannot download
-that dependency. Existing local caches and validation artifacts are not a
-current publication. Do not fabricate a `0.1.0` URL/digest, substitute a sibling
-OS checkout or republish an artifact to bypass this blocked dependency.
+[`app-platform-v0.1.0`](https://github.com/xiaoyu-work/claw-os/releases/tag/app-platform-v0.1.0)
+was published by the approved platform workflow from OS source
+`e561926c43018a1c583bdf68ae563f0fb0c8d719`.
+`platform.lock.json` pins the downloaded and verified release asset:
+`0cc2efe5d05ddc555da1526a9fd8e56d65eb79ab913c12f3f2ebe1f9ae66cca1`.
+The archive includes the event/channel SDK clients and existing public
+object/effect/runtime exports; full payload verification and 411 focused App
+compatibility tests passed without sibling-source imports or live accounts/models.
+
+This release supplies development libraries, not installed Apps or a running
+OS update. Production channel ingress also requires its matching OS service,
+explicit human owner/provider/sender configuration and public HTTPS forwarding
+for Slack/WhatsApp. App products, OS images and APT packages were not released
+by this platform approval. Their distinct publication gate below remains intact.
 
 Source development can instead explicitly supply a local archive with its
 expected version and SHA-256; see
 [local platform development](../tools/MODULE.md#local-platform-development).
 This verifies the same public artifact format in a separate cache. It does not
-make the default CI dependency available, change `platform.lock.json`, authorize
-release/install payload staging or select another source at runtime.
+authorize release/install payload staging or select another source at runtime.
+Default development now resolves the published pin above through the same
+strict artifact verifier.
 
 Any future release, release tag, version bump or dependency-pin adoption needs
 explicit owner approval. Source development, successful validation and requests
