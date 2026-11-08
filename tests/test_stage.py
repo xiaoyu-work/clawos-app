@@ -184,7 +184,7 @@ def test_ai_helpers_complete_original_source_ownership_without_provider_or_state
         for name in names:
             source, package = stage.load_package(name, kind)
             identities.extend(stage.app_entries(source, package))
-    assert len(identities) == len(set(identities)) == 64
+    assert len(identities) == len(set(identities)) == 63
     assert stage.stage("ai-helpers", tmp_path, kind="capability") == ["summarize"]
     original = ROOT / "capabilities/ai-helpers/apps/summarize"
     installed = tmp_path / "usr/lib/cos/apps/summarize"
@@ -760,7 +760,7 @@ def test_broker_products_stage_without_os_services(tmp_path, product, app_ids):
 
 
 def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
-    assert stage.stage("mail", tmp_path) == ["mail-ai", "email", "gateway-email"]
+    assert stage.stage("mail", tmp_path) == ["mail-ai", "email"]
     app = tmp_path / "usr/lib/cos/apps/mail-ai"
     assert (app / "server.py").is_file()
     assert (app / "native_host.py").is_file()
@@ -771,9 +771,7 @@ def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
     assert not (email / "test_main.py").exists()
     assert not (tmp_path / "usr/lib/cos/apps/_shared").exists()
     gateway = tmp_path / "usr/lib/cos/apps/gateway/email"
-    assert (gateway / "main.py").is_file()
-    assert (gateway / "server.py").is_file()
-    assert not (gateway / "test_main.py").exists()
+    assert not gateway.exists()
     assert not (tmp_path / "usr/lib/cos/apps/gateway-email").exists()
     assert not (tmp_path / "usr/lib/cos/apps/gateway/_shared").exists()
     assert not (tmp_path / "usr/lib/cos/python").exists()
@@ -845,35 +843,3 @@ def test_stage_rejects_identity_or_layout_drift(tmp_path, monkeypatch, layout, a
     with pytest.raises(ValueError, match="layout"):
         stage.stage("mail", target)
     assert not target.exists()
-
-
-def test_packaged_gateway_runs_with_only_installed_libraries(tmp_path):
-    stage.stage("mail", tmp_path)
-    python = stage.stage_shared(tmp_path)
-    stage_platform_python(python)
-    apps = tmp_path / "usr/lib/cos/apps"
-    result = subprocess.run(
-        [sys.executable, str(apps / "gateway/email/main.py"), "status"],
-        cwd=tmp_path, capture_output=True, text=True, check=True, timeout=20,
-        env={
-            "PATH": os.defpath, "PYTHONPATH": str(python),
-            "COS_SMTP_HOST": "smtp.example.invalid", "COS_SMTP_PORT": "587",
-            "COS_SMTP_USER": "fixture@example.invalid", "COS_SMTP_PASSWORD": "fixture",
-            "COS_SMTP_FROM": "fixture@example.invalid",
-        },
-    )
-    status = json.loads(result.stdout)
-    assert status["configured"] is True
-    assert status["platform"] == "email"
-    assert status["tls"] == "starttls"
-    with mcp_process(apps / "gateway/email", env={
-        "PATH": os.defpath, "PYTHONPATH": str(python),
-        "COS_SMTP_HOST": "smtp.example.invalid", "COS_SMTP_PORT": "587",
-        "COS_SMTP_USER": "fixture@example.invalid", "COS_SMTP_PASSWORD": "fixture",
-        "COS_SMTP_FROM": "fixture@example.invalid",
-    }) as request:
-        result = request("tools/call", authenticated_mcp_params({
-            "name": "gateway-email.status", "arguments": {},
-        }))
-        assert not result.get("isError"), result
-        assert result["structuredContent"] == status

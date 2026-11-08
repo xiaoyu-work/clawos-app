@@ -3,7 +3,7 @@
 This product owns the complete Thunderbird **153.2.0esr** source at `comm/`,
 the existing shared Mail AI business implementation at `apps/mail-ai/`,
 its Thunderbird UI at `extension/`, and the Thunderbird-backed Agent
-client at `apps/email/`, plus restricted delivery at `apps/gateway/email/`.
+client at `apps/email/`. The separate legacy SMTP delivery gateway is retired.
 
 The source moved from Claw OS commit
 `0492ea6c13cca3213b1b1bafabeed5e6074ebb44`. See
@@ -21,8 +21,9 @@ account IDs; mailbox operations require an explicit `--account`, without
 credential detection or Gmail/Outlook API/SMTP fallback. Separate `mail.read`,
 `mail.draft` and `mail.send` grants replace those operation needs; existing
 credentials and grants are not copied, deleted or silently converted.
-Delivery keeps `gateway-email` at `/usr/lib/cos/apps/gateway/email` and uses
-the required OS runtime, with no unguarded SMTP fallback when it is missing.
+`gateway-email` source and its active App selection are removed explicitly.
+Its old credentials and installed user data remain untouched; it is not an
+Email fallback or another source-owned mailbox.
 The OS broker starts the owner's Thunderbird through its user-session service
 manager when necessary. The extension uses native background send/save APIs,
 not a model request or a compose-window automation loop.

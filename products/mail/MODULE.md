@@ -11,7 +11,6 @@ model policy and signed installation.
 | `comm/` | Full Thunderbird source; native account, message and compose engine |
 | `apps/mail-ai/` | Existing six shared AI operations and manifest |
 | `apps/email/` | Thunderbird-backed Agent operations, account-scoped needs, stable objects, arrival cursors and submission receipts |
-| `apps/gateway/email/` | Restricted outbound SMTP delivery; keeps the nested installed path and `gateway-email` identity |
 | `extension/` | AI UI plus native mailbox business operations using Thunderbird's existing account/message APIs |
 | `build.py`, `mozconfig`, `upstream.json` | Matched native source build |
 | `build-extension.py`, `package.json` | Deterministic XPI and installed asset ownership |
@@ -19,9 +18,11 @@ model policy and signed installation.
 
 The native product build is independent of the OS Rust workspace. Keep
 provider credentials and authorization in the OS; importing source does not
-grant access to a user's profile. Installed `mail-ai`, `email` and
-`gateway-email` identities and paths remain separate. The Email backend cutover
-does not merge them or move credentials/account data. Its newly declared mail
+grant access to a user's profile. Retained `mail-ai` and `email` identities and
+paths remain separate. The legacy `gateway-email` App is explicitly retired;
+its source and active installation selection are removed, not aliased to Email.
+Existing credentials and installed user data are not deleted or migrated.
+The Email backend cutover does not merge identities or move account data. Its newly declared mail
 permissions require the normal owner authorization; old provider grants are
 not converted into mailbox or sender authority.
 
@@ -102,10 +103,6 @@ requests. AI App stdout can return only correlated AI responses, never mailbox
 commands. The `mail-ai` host's standing AI/memory ceiling stays unchanged.
 Email's `_shared` dependency is an App-owned common library under
 [`shared/python`](../../shared/MODULE.md), not another App or an OS export.
-The delivery adapter uses the separately named `gateway._shared` library
-from the same common runtime and requires the OS policy/SMTP runtime;
-missing runtime cannot enable a direct SMTP fallback. Nested package paths
-must continue to derive the same App ID.
 Source-checkout Native Messaging resolves named SDK/runtime exports from the
 verified platform artifact cache, never a Git directory or sibling OS checkout.
 Prepare the pinned artifact explicitly with `tools/platform_dependency.py`;
