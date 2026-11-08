@@ -314,7 +314,7 @@ def test_development_flags_are_required_together(development, supplied):
 def copy_development_tools(root):
     tools = root / "tools"
     tools.mkdir(exist_ok=True)
-    for name in ("platform_dependency.py", "platform_archive.py", "stage.py",
+    for name in ("platform_dependency.py", "platform_archive.py", "stage.py", "web_ui.py",
                  "stage_native.py", "native_build.py"):
         shutil.copy2(ROOT / "tools" / name, tools / name)
 
@@ -721,7 +721,7 @@ def test_source_native_host_uses_only_verified_cached_exports(dependency):
     platform.prepare()
     tools = dependency.root / "tools"
     tools.mkdir()
-    for name in ["platform_dependency.py", "platform_archive.py", "stage.py"]:
+    for name in ["platform_dependency.py", "platform_archive.py", "stage.py", "web_ui.py"]:
         shutil.copy2(ROOT / "tools" / name, tools / name)
     app = dependency.root / "products/mail/apps/mail-ai"
     app.mkdir(parents=True)

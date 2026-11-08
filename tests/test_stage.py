@@ -178,7 +178,7 @@ def test_document_engine_is_a_capability_not_a_business_product(tmp_path):
     assert stage.stage("document-engine", tmp_path, kind="capability") == ["doc"]
     source = ROOT / "capabilities/document-engine/apps/doc"
     installed = tmp_path / "usr/lib/cos/apps/doc"
-    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
+    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py", "web", "web-ui.json"}
     for name in ("app.json", "main.py", "server.py"):
         assert (installed / name).read_bytes() == (source / name).read_bytes()
         assert (installed / name).stat().st_mode == (source / name).stat().st_mode
@@ -208,7 +208,7 @@ def test_ai_helpers_complete_original_source_ownership_without_provider_or_state
     assert stage.stage("ai-helpers", tmp_path, kind="capability") == ["summarize"]
     original = ROOT / "capabilities/ai-helpers/apps/summarize"
     installed = tmp_path / "usr/lib/cos/apps/summarize"
-    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
+    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py", "web", "web-ui.json"}
     for name in ("app.json", "main.py", "server.py"):
         assert (installed / name).read_bytes() == (original / name).read_bytes()
         assert (installed / name).stat().st_mode == (original / name).stat().st_mode
@@ -227,7 +227,7 @@ def test_http_stages_the_complete_client_without_an_os_provider_or_product(tmp_p
     assert stage.stage("http", tmp_path, kind="capability") == ["net"]
     source = ROOT / "capabilities/http/apps/net"
     installed = tmp_path / "usr/lib/cos/apps/net"
-    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
+    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py", "web", "web-ui.json"}
     for name in ("app.json", "main.py", "server.py"):
         assert (installed / name).read_bytes() == (source / name).read_bytes()
         assert (installed / name).stat().st_mode == (source / name).stat().st_mode
@@ -248,7 +248,7 @@ def test_storage_sdk_stages_only_db_without_copying_sdk_providers_or_state(tmp_p
     assert stage.stage("storage-sdk", tmp_path, ["db"], kind="capability") == ["db"]
     source = ROOT / "capabilities/storage-sdk/apps/db"
     installed = tmp_path / "usr/lib/cos/apps/db"
-    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
+    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py", "web", "web-ui.json"}
     for name in ("app.json", "main.py", "server.py"):
         assert (installed / name).read_bytes() == (source / name).read_bytes()
         assert (installed / name).stat().st_mode == (source / name).stat().st_mode
@@ -268,7 +268,7 @@ def test_storage_sdk_stages_independent_db_and_kv_without_platform_code(tmp_path
     assert sorted(path.name for path in apps.iterdir()) == ["db", "kv"]
     kv = apps / "kv"
     original = ROOT / "capabilities/storage-sdk/apps/kv"
-    assert {path.name for path in kv.iterdir()} == {"app.json", "server.py"}
+    assert {path.name for path in kv.iterdir()} == {"app.json", "server.py", "web", "web-ui.json"}
     for name in ("app.json", "server.py"):
         assert (kv / name).read_bytes() == (original / name).read_bytes()
         assert (kv / name).stat().st_mode == (original / name).stat().st_mode
@@ -809,7 +809,7 @@ def test_home_integration_stages_only_adapter_payload(tmp_path):
     assert stage.stage("home-integration", tmp_path) == ["gateway-homeassistant"]
     source = ROOT / "products/home-integration/apps/gateway/homeassistant"
     installed = tmp_path / "usr/lib/cos/apps/gateway/homeassistant"
-    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
+    assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py", "web", "web-ui.json"}
     for filename in ("app.json", "main.py", "server.py"):
         assert (installed / filename).read_bytes() == (source / filename).read_bytes()
     assert not (tmp_path / "usr/lib/cos/apps/gateway-homeassistant").exists()
@@ -822,7 +822,7 @@ def test_notification_delivery_stages_only_product_payload(tmp_path):
     for channel in ("ntfy", "pushover", "webhook"):
         source = ROOT / "products/notification-delivery/apps/gateway" / channel
         installed = tmp_path / "usr/lib/cos/apps/gateway" / channel
-        assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py"}
+        assert {path.name for path in installed.iterdir()} == {"app.json", "main.py", "server.py", "web", "web-ui.json"}
         for filename in ("app.json", "main.py", "server.py"):
             assert (installed / filename).read_bytes() == (source / filename).read_bytes()
         assert not (tmp_path / "usr/lib/cos/apps" / f"gateway-{channel}").exists()

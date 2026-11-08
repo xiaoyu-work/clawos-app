@@ -1,0 +1,9 @@
+# Preserve the deleted fork's locked source using the identical upstream commit.
+[source.trash-cosmic]
+git = "https://github.com/jackpot51/trash-rs.git"
+branch = "cosmic"
+replace-with = "trash-upstream"
+
+[source.trash-upstream]
+git = "https://github.com/Byron/trash-rs.git"
+rev = "a225f753a88e722aeeb27bb2fb00144739911035"
