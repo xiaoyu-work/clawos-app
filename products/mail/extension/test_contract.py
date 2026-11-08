@@ -167,3 +167,173 @@ process.stdout.write(JSON.stringify(sent.map(request => request.args)));
     )
     assert process.returncode == 0, process.stderr
     assert json.loads(process.stdout) == [False, None, [], "", {"body": True}]
+
+
+MAILBOX_DRIVER = r"""
+const fs = require("fs"), vm = require("vm"), assert = require("assert/strict");
+const {webcrypto} = require("crypto");
+const {File} = require("buffer");
+const profile = "00000000-0000-4000-8000-000000000001";
+const stored = {mailboxProfileId: profile};
+let attachmentBytes = "abc";
+const headers = [
+  {id: 11, headerMessageId: "draft@example.invalid", author: "Alice <alice@example.invalid>",
+   recipients: ["public@example.invalid"], ccList: [], bccList: ["hidden@example.invalid"],
+   subject: "Review", read: true, folder: {
+     id: "account1://Drafts", accountId: "account1", specialUse: ["drafts"],
+   }},
+  {id: 12, headerMessageId: "other@example.invalid", author: "Bob <bob@example.invalid>",
+   recipients: ["public@example.invalid"], ccList: [], bccList: [],
+   subject: "Other", read: false, folder: {
+     id: "account2://INBOX", accountId: "account2", specialUse: ["inbox"],
+   }},
+];
+const body = new Map([[11, "Reviewed body"], [12, "Other account body"]]);
+const attachments = new Map([[11, [{name: "evidence.txt", type: "text/plain", content: "abc"}]]]);
+const calls = [];
+let nextId = 20;
+function account(id) {
+  return {
+    id, name: id, type: "imap",
+    identities: [{
+      id: "identity-" + id, email: id === "account1" ? "alice@example.invalid" : "bob@example.invalid",
+    }],
+    rootFolder: {
+      id: id + "://", accountId: id, specialUse: [], subFolders: [
+        {id: id + "://INBOX", name: "Inbox", accountId: id, specialUse: ["inbox"]},
+        {id: id + "://Drafts", name: "Drafts", accountId: id, specialUse: ["drafts"]},
+      ],
+    },
+  };
+}
+const ctx = vm.createContext({
+  self: {}, console, TextEncoder, TextDecoder, btoa, atob, File, Uint8Array,
+  crypto: webcrypto,
+  extractPlainText: full => full.parts.map(part => part.body).join("\n"),
+  browser: {
+    storage: {local: {
+      get: async keys => {
+        if (!Array.isArray(keys)) keys = [keys];
+        return Object.fromEntries(keys.filter(key => key in stored).map(key => [key, stored[key]]));
+      },
+      set: async values => Object.assign(stored, values),
+    }},
+    accounts: {
+      list: async () => [account("account1"), account("account2")],
+      get: async id => ["account1", "account2"].includes(id) ? account(id) : null,
+    },
+    messengerUtilities: {
+      parseMailboxString: async value => [{email: value.match(/<([^>]+)>/)?.[1] || value}],
+    },
+    messages: {
+      query: async query => ({messages: headers.filter(header =>
+        header.folder.accountId === query.accountId
+        && (!query.folderId || header.folder.id === query.folderId)
+        && (!query.headerMessageId || header.headerMessageId === query.headerMessageId))}),
+      abortList: async () => {},
+      getFull: async id => ({
+        headers: {}, parts: [{contentType: "text/plain", body: body.get(id)}],
+      }),
+      listAttachments: async id => (attachments.get(id) || []).map((file, index) => ({
+        partName: "1." + (index + 2), name: file.name, contentType: file.type, size: file.content.length,
+      })),
+      getAttachmentFile: async (id, part) => {
+        const file = attachments.get(id)[Number(part.split(".")[1]) - 2];
+        return new File([id === 11 ? attachmentBytes : file.content], file.name, {type: file.type});
+      },
+      saveMessage: async (details, options) => {
+        calls.push({kind: "save", details, options});
+        assert.equal(options.mode, "draft");
+        const native = details.identityId.slice("identity-".length);
+        const header = {
+          id: ++nextId, headerMessageId: "saved-" + nextId + "@example.invalid",
+          author: account(native).identities[0].email,
+          recipients: details.to, ccList: details.cc, bccList: details.bcc || [],
+          subject: details.subject, read: true,
+          folder: {id: native + "://Drafts", accountId: native, specialUse: ["drafts"]},
+        };
+        headers.push(header);
+        body.set(header.id, details.plainTextBody);
+        attachments.set(header.id, await Promise.all((details.attachments || []).map(async item => ({
+          name: item.name, type: item.file.type, content: await item.file.text(),
+        }))));
+        return {mode: "draft", messages: [header]};
+      },
+      sendMessage: async (details, options) => {
+        calls.push({kind: "send", details, options});
+        assert.equal(options.mode, "sendNow");
+        return {mode: "sendNow", headerMessageId: "sent@example.invalid", messages: []};
+      },
+      delete: async ids => {
+        calls.push({kind: "delete", ids});
+        for (const id of ids) {
+          const index = headers.findIndex(header => header.id === id);
+          if (index >= 0) headers.splice(index, 1);
+        }
+      },
+    },
+  },
+});
+vm.runInContext(fs.readFileSync(process.argv[1] + "/lib/mailbox.js", "utf8"), ctx);
+(async () => {
+  const mailbox = ctx.self.ClawMailbox;
+  await mailbox.ready;
+  const accounts = await mailbox.handle("accounts", {});
+  const a = accounts.accounts[0].id, b = accounts.accounts[1].id;
+  const list = await mailbox.handle("search", {account: a, query: "Review", max_results: 10});
+  const id = list.messages[0].id;
+  assert.equal(typeof id, "string");
+  assert.notEqual(id, "11");
+  const read = await mailbox.handle("read", {account: a, id});
+  assert.equal(read.body, "Reviewed body");
+  await assert.rejects(mailbox.handle("read", {account: b, id}), /different account/);
+  const draft = await mailbox.handle("native_draft", {account: a, id});
+  assert.deepEqual(Array.from(draft.draft.message.bcc), ["hidden@example.invalid"]);
+  attachmentBytes = "xyz";
+  const changed = await mailbox.handle("draft_send", {
+    account: a, sender_account: a, id, review: draft.draft.review, confirm: true,
+  });
+  assert.equal(changed.conflicted, true);
+  assert.equal(calls.filter(call => call.kind === "send").length, 0);
+  attachmentBytes = "abc";
+  const saved = await mailbox.handle("draft_save", {
+    account: a, source_account: a, id,
+    to: "public@example.invalid", subject: "Updated", body: "New native draft",
+  });
+  assert.equal(saved.sent, false);
+  const save = calls.find(call => call.kind === "save");
+  assert.deepEqual(Array.from(save.details.bcc), ["hidden@example.invalid"]);
+  assert.equal(save.details.attachments.length, 1);
+  assert.equal(await save.details.attachments[0].file.text(), "abc");
+  const current = await mailbox.handle("native_draft", {account: a, id: saved.draft.id});
+  const sent = await mailbox.handle("draft_send", {
+    account: a, sender_account: a, id: saved.draft.id, review: current.draft.review, confirm: true,
+  });
+  assert.equal(sent.sent, true);
+  assert.equal(sent.delivery_confirmed, false);
+  const send = calls.find(call => call.kind === "send");
+  assert.equal(send.details.identityId, "identity-account1");
+  assert.equal(send.details.plainTextBody, "New native draft");
+  assert.deepEqual(Array.from(send.details.bcc), ["hidden@example.invalid"]);
+  assert.equal(send.details.attachments.length, 1);
+  assert.equal(await send.details.attachments[0].file.text(), "abc");
+
+  const baseline = await mailbox.handle("sync", {account: b});
+  assert.equal(baseline.baseline, true);
+  await mailbox.onNewMail(headers.find(header => header.id === 12).folder, {
+    messages: [headers.find(header => header.id === 12)],
+  });
+  const arrivals = await mailbox.handle("sync", {account: b, cursor: baseline.cursor});
+  assert.equal(arrivals.messages.length, 1);
+  assert.equal(arrivals.messages[0].account, b);
+  process.stdout.write("native mailbox contracts passed");
+})().catch(error => {console.error(error); process.exit(1)});
+"""
+
+
+def test_native_mailbox_accounts_drafts_attachment_reviews_and_arrivals():
+    process = subprocess.run(
+        ["node", "-e", MAILBOX_DRIVER, str(HERE.resolve())],
+        capture_output=True, text=True, timeout=15, cwd=HERE,
+    )
+    assert process.returncode == 0, process.stderr

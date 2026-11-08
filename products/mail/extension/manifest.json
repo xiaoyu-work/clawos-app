@@ -24,13 +24,16 @@
     "messagesModify",
     "messagesMove",
     "messagesTags",
+    "messages.send",
+    "messages.save",
+    "messagesDelete",
     "accountsRead",
     "compose",
     "compose.save"
   ],
 
   "background": {
-    "scripts": ["lib/native.js", "background.js"]
+    "scripts": ["lib/native.js", "lib/mailbox.js", "background.js"]
   },
 
   "action": {

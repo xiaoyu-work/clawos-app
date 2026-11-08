@@ -28,6 +28,22 @@
   let lastStatus = { status: "idle" };
   let stableTimer = null;
   let seenRoundTrip = false;
+  let mailboxHandler = null;
+  let mailboxReady = null;
+
+  function announceMailbox() {
+    if (!mailboxHandler || !mailboxReady || !port) return;
+    const current = port;
+    mailboxReady.then(() => {
+      if (port === current) current.postMessage({ type: "mailbox.ready", version: 1 });
+    }).catch(() => console.error("[claw-mail] mailbox initialization failed"));
+  }
+
+  function setMailboxHandler(handler, ready) {
+    mailboxHandler = handler;
+    mailboxReady = ready;
+    announceMailbox();
+  }
 
   function uuid() {
     // Service worker-safe; crypto.randomUUID is widely available.
@@ -65,6 +81,7 @@
     fireStatus({ status: "connected" });
 
     port.onMessage.addListener(onMessage);
+    announceMailbox();
     port.onDisconnect.addListener(() => {
       const err = browser.runtime.lastError;
       const msg = err?.message || "host disconnected";
@@ -93,6 +110,23 @@
 
   function onMessage(msg) {
     if (!msg || typeof msg !== "object") return;
+    if (msg.type === "mailbox.request") {
+      const current = port;
+      Promise.resolve().then(() => {
+        if (!mailboxHandler) throw Error("Native mailbox handler is unavailable");
+        return mailboxHandler(msg.verb, msg.args);
+      }).then(result => {
+        if (port === current) current.postMessage({
+          type: "mailbox.response", id: msg.id, ok: true, result,
+        });
+      }).catch(error => {
+        if (port === current) current.postMessage({
+          type: "mailbox.response", id: msg.id, ok: false,
+          error: String(error.message || "Thunderbird mailbox operation failed").slice(0, 4096),
+        });
+      });
+      return;
+    }
     const id = msg.id;
     if (!id) return;
     const entry = pending.get(id);
@@ -146,5 +180,5 @@
 
   function getStatus() { return lastStatus; }
 
-  self.ClawNative = { connect, call, onStatus, getStatus };
+  self.ClawNative = { connect, call, onStatus, getStatus, setMailboxHandler };
 })();

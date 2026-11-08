@@ -92,6 +92,8 @@ browser.runtime.onInstalled.addListener(async () => {
 });
 
 // Open the long-lived NM port as early as possible.
+ClawNative.setMailboxHandler(ClawMailbox.handle, ClawMailbox.ready);
+browser.messages.onNewMailReceived.addListener(ClawMailbox.onNewMail);
 ClawNative.connect("os.claw.mail_ai");
 
 // Create the Spaces entry (TB 115+). The Spaces API is idempotent on

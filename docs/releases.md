@@ -13,17 +13,27 @@ trust-root override.
 
 App development platform `1.0.0` and `1.1.0` releases, tags and uploaded Actions
 artifacts have been withdrawn at the owner's request. The OS platform source
-version is now the separately approved, published **`0.1.0`** platform,
+version is now the separately approved, published **`0.2.0`** platform,
 runtime ABI 1. Historical `1.0.0`/`1.1.0` archives were not restored.
 
 [`app-platform-v0.1.0`](https://github.com/xiaoyu-work/claw-os/releases/tag/app-platform-v0.1.0)
 was published by the approved platform workflow from OS source
 `e561926c43018a1c583bdf68ae563f0fb0c8d719`.
-`platform.lock.json` pins the downloaded and verified release asset:
+Its historical release asset has SHA-256:
 `0cc2efe5d05ddc555da1526a9fd8e56d65eb79ab913c12f3f2ebe1f9ae66cca1`.
 The archive includes the event/channel SDK clients and existing public
 object/effect/runtime exports; full payload verification and 411 focused App
 compatibility tests passed without sibling-source imports or live accounts/models.
+
+[`app-platform-v0.2.0`](https://github.com/xiaoyu-work/claw-os/releases/tag/app-platform-v0.2.0)
+was published with explicit owner approval from OS source
+`ae4ede35da721d5743c5d71693f6ffdb9abb21e3`.
+`platform.lock.json` selects its real HTTPS archive with SHA-256
+`7db6ab8c069ca245b98cd1395d1aa70c28524eb2fc0a1d593b1a36b4d9586c6d`,
+runtime ABI 1. It adds the account-scoped `mail.accounts`, `mail.read`,
+`mail.draft` and `mail.send` manifest vocabulary consumed by Thunderbird-backed
+Agent Email. Both the GitHub asset digest and published checksum agree;
+the normal dependency consumer re-verifies the complete payload on use.
 
 This release supplies development libraries, not installed Apps or a running
 OS update. Production channel ingress also requires its matching OS service,
@@ -88,7 +98,7 @@ replacement or remove/weaken their protections:
 | --- | --- |
 | App lifecycle and AI independence | The accepted [lifecycle contract](../ARCHITECTURE.md#app-lifecycle-and-ai-independence) keeps Apps independent of an active AI Agent while requiring OS `clawd` custody, with no standalone Root bypass. The OS launch-ownership cutover and Root install/update/rollback coordination remain in progress; this declaration is not runtime acceptance or publication approval. |
 | OS `core/src/worker/trusted_desktop.rs::verified_entrypoint` | Generic signed package-relative entry admission has replaced the fixed launch table. The nine native producer manifests/payload plans now use it; this does not establish runtime resource or provider integration. |
-| Mail opaque stdio integration | The `TrustedNativeHost` exemption is removed. Mail still requires its ordinary declared stdin operation and common Host/controller integration; no publisher-created fallback or native-host flag is introduced. |
+| Mail opaque stdio integration | The existing `TrustedNativeHost` launcher/parent/provenance checks and AI-only standing ceiling remain. Account-scoped Mail requests cross the OS-owned native gateway, not AI App stdout or old provider grants. This does not complete the generic Host/sandbox replacement or authorize App publication. |
 | Browser Native Messaging launcher/host | The package-owned direct Python launcher and root-peer socket check must be reconciled with generic authenticated App Host/session binding. Packaging preserves those checks; it does not establish an exemption. |
 | OS `core/src/clawd/packages.rs` | Fixed `pkg` client gating is replaced by the existing Critical `sys.package` authority, exact requested scope and authenticated owner/session. Each client retains its identity; global actions still require explicit wildcard authority and rollback must match recorded inverse state. Effects remain system-wide. No default App grants, installation-review bypass or publication readiness follows. |
 | OS App permission-management service | `system.app-permissions` now accepts independently authorized Apps through the existing High-risk `sys.permissions:manage` capability and authenticated owner, not a fixed Settings identity. It can inspect, request restoration and revoke supported permissions; trusted OS approval, target validation and checked retirement remain mandatory. This does not complete GUI permission acquisition or permit App-owned approval. |
