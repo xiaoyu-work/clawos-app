@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["storage-manager"]},
   "apps": ["apps/storage-manager"],
   "tests": []
 }

@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Settings</title><link rel="stylesheet" href="shared/ui.css"></head><body>
+<header><div><h1>Settings</h1><p data-app-label>System settings with independently authorized resource controls</p></div></header>
+<main class="stack"><div class="toolbar"><h2 id="section">Settings</h2><button id="refresh" class="primary">Inspect current settings</button></div>
+<p id="notice" class="notice"></p><section class="card stack"><h2>Current configuration</h2><div id="state"></div></section>
+<section class="card stack"><h2>Available changes</h2><p class="muted small">Each control retains its own permission, scope and confirmation contract.</p>
+<div id="actions" class="toolbar"></div><div id="result"></div></section><div id="more"></div></main>
+<script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

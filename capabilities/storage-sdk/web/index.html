@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Storage SDK</title><link rel="stylesheet" href="shared/ui.css"></head><body>
+<header><div><h1>Storage SDK</h1><p data-app-label>Separate owner/App SQLite and key-value stores</p></div></header>
+<main class="stack"><section id="kv" class="card stack"><h2>Key-value entries</h2><div class="toolbar">
+<input id="key" placeholder="Exact key"><button id="get">Get</button><button id="delete">Delete</button>
+<input id="pattern" value="*" placeholder="Key pattern"><button id="list">List</button></div>
+<label>String value<textarea id="value"></textarea></label><button id="set" class="primary">Set value</button></section>
+<section id="db" class="card stack"><h2>SQLite database</h2><input id="database" placeholder="Database name">
+<textarea id="sql" class="editor" placeholder="SELECT ..." spellcheck="false"></textarea><div class="toolbar">
+<button id="query" class="primary">Read-only query</button><button id="execute">Execute write statement</button><div id="db-actions" class="toolbar"></div></div></section>
+<p id="notice" class="notice"></p><section class="card stack"><h2>Store result</h2><div id="result"></div></section><div id="more"></div></main>
+<script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

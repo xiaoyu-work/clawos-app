@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["container-manager"]},
   "apps": ["apps/container-manager"],
   "tests": []
 }

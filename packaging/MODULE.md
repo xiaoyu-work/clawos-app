@@ -29,6 +29,13 @@ construction or a privileged updater.
   compatibility delivery, not a bypass. Operation/GUI and MCP/background entry
   binding follows the public manifest defaults, while `needs[].why` and scope
   requests remain unchanged data for OS-owned review and enforcement.
+- `../tools/release_store.py` creates a separately signed, freshness-bounded
+  Store index over exact authenticated App snapshots. Publication signs the
+  tested Debian App directories through the existing public provenance CLI,
+  includes product Web resources in immutable Release assets, and retains
+  `store/index.json` in the authenticated Pages snapshot. It supplies no
+  installer, grant or source-download fallback; public tool pins and package
+  signing inputs are explicit owner-controlled release prerequisites.
 - `../tools/release_development.py` assembles the complete declared fixture
   staging closure and explicitly exported compatibility crates as a
   digest-addressed development archive; it is never a runtime dependency.

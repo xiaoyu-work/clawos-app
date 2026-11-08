@@ -9,6 +9,11 @@ import re
 import shutil
 import stat
 
+_ui_spec = importlib.util.spec_from_file_location("app_web_ui", Path(__file__).with_name("web_ui.py"))
+_ui_module = importlib.util.module_from_spec(_ui_spec)
+_ui_spec.loader.exec_module(_ui_module)
+stage_ui = _ui_module.stage_ui
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOTS = {"product": "products", "capability": "capabilities"}
@@ -232,6 +237,7 @@ def stage(product: str, destination: Path, app_ids: list[str] | None = None,
         app = apps[app_id]
         target = destination / "usr/lib/cos/apps" / app.relative_to(source / "apps")
         shutil.copytree(app, target, symlinks=True, ignore=IGNORE)
+        stage_ui(source, package, app_id, target, kind=kind)
     extension = package.get("extension")
     if extension and "mail-ai" in installed:
         specification = importlib.util.spec_from_file_location(

@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["config-editor", "systemd"]},
   "apps": ["apps/config-editor", "apps/systemd"],
   "tests": []
 }

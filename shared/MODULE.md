@@ -13,6 +13,7 @@ not an App-data migration.
 | `python/gateway/_shared/channels.py` | Presentation-only public channel SDK client; Root retains owner/sender binding, credentials, replay and receiver lifetime |
 | `python/canonical_argv.py` | `canonical_argv` parsing and normalization |
 | `rust/gui-argv/` | Private std-only `claw-app-gui-argv` compile-time dependency for native CLI adaptation |
+| `web/` | Bundled Web presentation styles, DOM helpers and the owning-App Host message client; no authority or Agent credential |
 | `../tests/shared/` | Helper behavior, staging/import isolation and App transport contracts |
 | `../tests/shared/vectors/` | URL/IDNA/effective-port regression vectors; never runtime payload |
 
@@ -85,6 +86,12 @@ caches and bytecode are excluded; an unexpected test or bytecode file in an
 existing owned destination is a conflict, not an ignored payload.
 
 ## Authority and Dependencies
+
+Product-owned Web interfaces bundle `web/` presentation helpers into their
+own signed App-relative resource tree. These are static UI resources, not a
+second globally installed support library or SDK implementation. They use
+the versioned OS Web Host transport and can request only the current App's
+declared tool calls. See [released Web Apps](../docs/web-apps.md).
 
 The OS retains SDK/runtime implementation ownership, capability enforcement,
 credential storage, AI consent/budgets/providers, brokered egress, memory and

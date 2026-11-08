@@ -177,7 +177,8 @@ def previous_snapshot(github, destination, *, initialize):
     return destination, commit
 
 
-def release_assets(plan, selection, packages, directory, signing, *, development, artifact_directory, interfaces=None):
+def release_assets(plan, selection, packages, directory, signing, *, development, artifact_directory,
+                   interfaces=None, snapshots=None):
     if interfaces not in (None, {}):
         raise ValueError("Retired App config/util interface archives cannot be signed or published")
     target = directory / release_tag(selection, plan["version"])
@@ -199,13 +200,20 @@ def release_assets(plan, selection, packages, directory, signing, *, development
         verify_archive(archive, fixture, plan)
         shutil.copy2(archive, target / archive.name)
         verify_archive(target / archive.name, fixture, plan)
-    write_json(target / "release.json", {
+    snapshot_records = []
+    if snapshots:
+        from release_store import release_files
+        snapshot_records = release_files(snapshots, target)
+    metadata = {
         "format": "claw.app-release-assets/v1", "selection": selection,
         "version": plan["version"], "source_revision": plan["source_revision"],
         "packages": sorted(selected, key=identity),
         "development": fixture,
         "interfaces": None,
-    })
+    }
+    if snapshot_records:
+        metadata["app_snapshots"] = snapshot_records
+    write_json(target / "release.json", metadata)
     sums = "".join(f"{digest(path)}  {path.name}\n" for path in sorted(target.iterdir()))
     (target / "SHA256SUMS").write_text(sums)
     signing.sign(target / "SHA256SUMS", target / "SHA256SUMS.asc", armored=True)
@@ -315,6 +323,10 @@ def main():
     publishing.add_argument("--plan", type=Path, required=True)
     publishing.add_argument("--artifacts", type=Path, required=True)
     publishing.add_argument("--initialize", action="store_true")
+    publishing.add_argument("--cos", type=Path, help="Verified public provenance-capable CLI")
+    publishing.add_argument("--cos-sha256", help="Explicit public executable SHA256")
+    publishing.add_argument("--publisher-key-id", help="Trusted App package publisher key ID")
+    publishing.add_argument("--app-signing-key", type=Path, help="Private input to the existing public signer")
     for action in (publishing, commands.add_parser("refresh")):
         action.add_argument("--output", type=Path, default=ROOT / "build/apt-publication")
     options = parser.parse_args()
@@ -339,6 +351,29 @@ def main():
                 verify_repository(previous, signing)
             signing.import_environment()
             compose(packages, output, signing, previous=previous, initialize=previous is None)
+            snapshot_groups = {}
+            snapshots_root = output.parent / ".app-store-release-snapshots"
+            if plan and any(entry["apps"] for entry in plan["packages"]):
+                if not all((options.cos, options.cos_sha256, options.publisher_key_id, options.app_signing_key)):
+                    raise ValueError("App Store publication requires the public provenance CLI, its pins and the App signing key")
+                from release_snapshots import Provenance
+                from release_store import prepare_release_snapshots, compose as compose_store
+                provenance = Provenance(options.cos, options.cos_sha256, options.publisher_key_id)
+                snapshot_groups = prepare_release_snapshots(
+                    plan, packages, snapshots_root, provenance, signing, options.app_signing_key,
+                )
+                store_output = output.parent / ".app-store-next"
+                compose_store(
+                    [directory for values in snapshot_groups.values() for directory in values],
+                    store_output, provenance, signing,
+                    previous=previous / "store" if previous and (previous / "store").exists() else None,
+                )
+                if (output / "store").exists():
+                    shutil.rmtree(output / "store")
+                store_output.rename(output / "store")
+            elif (output / "store").exists():
+                from release_store import refresh
+                refresh(output / "store", signing)
             check_hosting_limits(output)
             if plan:
                 check_published_versions(github, plan["selections"], plan["version"])
@@ -354,7 +389,7 @@ def main():
                     for selection in plan["selections"]:
                         assets = release_assets(plan, selection, packages, assets_root, signing,
                                                 development=development, artifact_directory=options.artifacts,
-                                                interfaces=interfaces)
+                                                interfaces=interfaces, snapshots=snapshot_groups.get(selection))
                         if not existing[selection]:
                             # Bound small-package batches below GitHub's content-creation rate limit.
                             time.sleep(max(0, 9 - (time.monotonic() - previous_write)))
@@ -366,6 +401,8 @@ def main():
                     shutil.rmtree(assets_root)
             push_snapshot(github, output, commit)
             verify_repository(output, signing)
+            if snapshots_root.exists():
+                shutil.rmtree(snapshots_root)
     finally:
         if previous:
             shutil.rmtree(previous)

@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["summarize"]},
   "kind": "shared-capability-client",
   "apps": ["apps/summarize"],
   "tests": ["apps/summarize/test_mcp.py"]

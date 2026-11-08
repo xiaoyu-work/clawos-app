@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Notifications</title><link rel="stylesheet" href="shared/ui.css"></head><body>
+<header><div><h1>Notifications</h1><p data-app-label>App-owned notification production with OS-owned delivery</p></div></header>
+<main class="stack"><section class="card stack"><h2>Send a notification</h2><form id="send"><label>Message<textarea name="message" required></textarea></label>
+<label><span><input name="urgent" type="checkbox" style="width:auto"> Urgent (when declared by this entry)</span></label>
+<div class="toolbar"><button class="primary" type="submit">Send</button><button id="refresh" type="button">Load notifications</button></div></form></section>
+<p id="notice" class="notice"></p><section id="notifications" class="card"></section><div id="actions" class="toolbar"></div><div id="more"></div></main>
+<script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

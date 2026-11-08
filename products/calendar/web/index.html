@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calendar</title><link rel="stylesheet" href="shared/ui.css"></head><body>
+<header><div><h1>Calendar</h1><p data-app-label>Events, invitations and connected calendars</p></div></header>
+<main class="stack"><div class="toolbar"><button id="previous">Previous</button><h2 id="month"></h2>
+<button id="next">Next</button><select id="provider" style="width:auto"><option value="local">Local calendar</option>
+<option value="google">Google</option><option value="outlook">Outlook</option></select>
+<button id="refresh">Refresh</button><button id="create" class="primary">New event</button></div>
+<p id="notice" class="notice" role="status"></p><div id="calendar" class="calendar"></div>
+<section class="card"><h2>Event details</h2><div id="details" class="small muted">Select an event to inspect it.</div></section>
+<div id="more"></div></main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script>
+</body></html>
