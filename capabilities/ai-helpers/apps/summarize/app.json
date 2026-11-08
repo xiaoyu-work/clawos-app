@@ -65,6 +65,22 @@
               "en": "Remember the summary so the agent can recall it later."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Summarize explicitly provided text into three short lines."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       }
     ]

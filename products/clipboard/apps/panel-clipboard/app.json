@@ -42,6 +42,15 @@
             "en": "Restore, delete, or clear entries when you choose a clipboard action."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Open the clipboard history panel applet"
+          },
+          "recovery": "unknown"
+        }
       ]
     }
   },

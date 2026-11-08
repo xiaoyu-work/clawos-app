@@ -37,6 +37,15 @@
               "en": "Read COSMIC output modes/layout and kernel backlight state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect displays and backlights"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -65,6 +74,16 @@
               "en": "Enable the selected COSMIC output."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Enable an output"
+            },
+            "recovery": "unknown",
+            "target_arg": "output"
+          }
         ]
       },
       {
@@ -92,6 +111,16 @@
             "why": {
               "en": "Disable the selected output unless it is the last enabled display."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Disable an output"
+            },
+            "recovery": "unknown",
+            "target_arg": "output"
           }
         ]
       },
@@ -125,6 +154,16 @@
             "why": {
               "en": "Mirror a selected output from another output."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Mirror one output from another"
+            },
+            "recovery": "unknown",
+            "target_arg": "output"
           }
         ]
       },
@@ -163,6 +202,16 @@
             "why": {
               "en": "Change the selected output's logical position."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Position an output"
+            },
+            "recovery": "unknown",
+            "target_arg": "output"
           }
         ]
       },
@@ -253,6 +302,16 @@
               "en": "Change mode, refresh, scale, position, rotation, or adaptive sync."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set output mode and optional properties"
+            },
+            "recovery": "unknown",
+            "target_arg": "output"
+          }
         ]
       },
       {
@@ -285,6 +344,16 @@
             "why": {
               "en": "Change scale while preserving the current mode and refresh."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set output scale"
+            },
+            "recovery": "unknown",
+            "target_arg": "output"
           }
         ]
       },
@@ -332,6 +401,16 @@
               "en": "Read layout KDL from the exact approved file."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Apply a full cosmic-randr KDL layout"
+            },
+            "recovery": "unknown",
+            "target_arg": "source"
+          }
         ]
       },
       {
@@ -364,6 +443,15 @@
             "why": {
               "en": "Change one exact kernel backlight device."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set a kernel backlight percentage"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -400,6 +488,15 @@
             "why": {
               "en": "Restore the previous layout or brightness if current state still matches."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Restore a previous display state"
+            },
+            "recovery": "unknown"
           }
         ]
       }

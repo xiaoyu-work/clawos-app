@@ -37,6 +37,15 @@
               "en": "Read system and user container inventories."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect all container runtimes"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -80,6 +89,15 @@
             "why": {
               "en": "Read container names, images, state, ports, and identifiers."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List containers"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -129,6 +147,16 @@
             "why": {
               "en": "Read full container configuration and runtime state."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect a container"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
           }
         ]
       },
@@ -187,6 +215,16 @@
               "en": "Read potentially sensitive stdout/stderr retained for this container."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read container logs"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
+          }
         ]
       },
       {
@@ -235,6 +273,16 @@
             "why": {
               "en": "Read process state inside the selected container."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List processes in a container"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
           }
         ]
       },
@@ -285,6 +333,16 @@
               "en": "Read CPU, memory, network, and block-I/O usage."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read container resource statistics"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
+          }
         ]
       },
       {
@@ -333,6 +391,16 @@
             "why": {
               "en": "Read namespace inode identities, capabilities, seccomp, and cgroup membership."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect container namespaces and cgroups"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
           }
         ]
       },
@@ -383,6 +451,16 @@
               "en": "Start the selected container."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Start a container"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
+          }
         ]
       },
       {
@@ -431,6 +509,16 @@
             "why": {
               "en": "Stop the selected container."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Stop a container"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
           }
         ]
       },
@@ -481,6 +569,16 @@
               "en": "Restart the selected container."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Restart a container"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
+          }
         ]
       },
       {
@@ -530,6 +628,16 @@
               "en": "Freeze the selected container workload."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Pause a container"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
+          }
         ]
       },
       {
@@ -578,6 +686,16 @@
             "why": {
               "en": "Resume the selected paused container."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Unpause a container"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
           }
         ]
       },
@@ -641,6 +759,16 @@
               "en": "Send a bounded signal to the selected container."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Signal a container"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
+          }
         ]
       },
       {
@@ -698,6 +826,16 @@
             "why": {
               "en": "Permanently remove container metadata without deleting volumes."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Remove a stopped container"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
           }
         ]
       }

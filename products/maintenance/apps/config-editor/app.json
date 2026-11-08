@@ -41,6 +41,16 @@
               "en": "Read this exact sensitive system configuration file."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect a supported system config"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
+          }
         ]
       },
       {
@@ -80,6 +90,16 @@
             "why": {
               "en": "Read staged replacement content without putting it in argv."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Validate staged config content"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
           }
         ]
       },
@@ -129,6 +149,16 @@
               "en": "Read staged replacement content from the approved source file."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Apply validated config content"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
+          }
         ]
       },
       {
@@ -166,6 +196,16 @@
             "why": {
               "en": "Restore the durable backup for this exact system config."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Restore a config backup"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
           }
         ]
       }

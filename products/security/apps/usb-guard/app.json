@@ -37,6 +37,15 @@
               "en": "Read USB identity, authorization, block devices, and managed rules."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect USB devices and block policy"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -88,6 +97,16 @@
               "en": "Change this currently connected USB device's authorization state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Authorize or deauthorize a current USB device"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
+          }
         ]
       },
       {
@@ -124,6 +143,16 @@
             "why": {
               "en": "Create a vendor/product/serial udev block rule and deauthorize the device."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Persistently block a USB device"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
           }
         ]
       },
@@ -162,6 +191,16 @@
               "en": "Remove one exact managed block rule and reauthorize a unique connected match."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Remove a persistent USB block rule"
+            },
+            "recovery": "unknown",
+            "target_arg": "rule_id"
+          }
         ]
       },
       {
@@ -199,6 +238,16 @@
               "en": "Power off whole USB disks after protected-mount and swap checks."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Safely eject USB storage"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
+          }
         ]
       },
       {
@@ -235,6 +284,15 @@
             "why": {
               "en": "Restore the previous persistent block policy if no newer revision exists."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Restore USB block policy"
+            },
+            "recovery": "unknown"
           }
         ]
       }

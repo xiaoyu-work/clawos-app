@@ -37,6 +37,15 @@
               "en": "Read audio devices, nodes, streams, defaults, and volume state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect PipeWire audio state"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -65,6 +74,15 @@
               "en": "Change speaker or headphone volume."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set output volume"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -92,6 +110,15 @@
             "why": {
               "en": "Change microphone input volume."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set microphone volume"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -126,6 +153,15 @@
               "en": "Change speaker or headphone mute state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Mute or unmute output"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -159,6 +195,15 @@
               "en": "Change microphone mute state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Mute or unmute microphone"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -187,6 +232,15 @@
               "en": "Change a default target in the PipeWire media graph."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set default output node"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -214,6 +268,15 @@
             "why": {
               "en": "Change a default target in the PipeWire media graph."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set default input node"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -248,6 +311,15 @@
               "en": "Change a route in the PipeWire media graph."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set an output node route"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -281,6 +353,15 @@
               "en": "Change a route in the PipeWire media graph."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set an input node route"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -313,6 +394,15 @@
             "why": {
               "en": "Change a device profile in the PipeWire media graph."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set an audio device profile"
+            },
+            "recovery": "unknown"
           }
         ]
       }

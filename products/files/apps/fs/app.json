@@ -1,24 +1,50 @@
 {
   "id": "fs",
   "version": "0.1.0",
-  "name": {"en": "Files", "zh-CN": "文件"},
-  "summary": {"en": "Agent-native file system with metadata and search."},
+  "name": {
+    "en": "Files",
+    "zh-CN": "文件"
+  },
+  "summary": {
+    "en": "Agent-native file system with metadata and search."
+  },
   "icon": "📁",
   "runtime": "python",
   "entry": "main.py",
   "objects": {
     "file": {
-      "label": {"en": "File", "zh-CN": "文件"},
-      "summary": {"en": "Metadata for the filesystem object at an absolute path. Renames require updating the reference."},
-      "resolve": {"operation": "stat", "id_arg": "path"}
+      "label": {
+        "en": "File",
+        "zh-CN": "文件"
+      },
+      "summary": {
+        "en": "Metadata for the filesystem object at an absolute path. Renames require updating the reference."
+      },
+      "resolve": {
+        "operation": "stat",
+        "id_arg": "path"
+      }
     },
     "change-plan": {
-      "label": {"en": "File change plan"},
-      "summary": {"en": "An App-owned write proposal for an absolute path. Its revision selects a plan, not write authority."},
-      "resolve": {"operation": "plan_show", "id_arg": "path", "revision_arg": "plan"}
+      "label": {
+        "en": "File change plan"
+      },
+      "summary": {
+        "en": "An App-owned write proposal for an absolute path. Its revision selects a plan, not write authority."
+      },
+      "resolve": {
+        "operation": "plan_show",
+        "id_arg": "path",
+        "revision_arg": "plan"
+      }
     }
   },
-  "dependencies": {"system": ["coreutils", "ripgrep"]},
+  "dependencies": {
+    "system": [
+      "coreutils",
+      "ripgrep"
+    ]
+  },
   "schema_version": 2,
   "mcp": {
     "entry": "server.py",
@@ -30,249 +56,1095 @@
     "tools": [
       {
         "name": "fs.plan_write",
-        "summary": {"en": "Prepare a bounded UTF-8 file write plan without changing the target. Content must be explicit and may be empty."},
+        "summary": {
+          "en": "Prepare a bounded UTF-8 file write plan without changing the target. Content must be explicit and may be empty."
+        },
         "args": [
-          {"name": "path", "kind": "path", "binding": "positional", "required": true},
-          {"name": "content", "kind": "text", "binding": "flag", "required": true},
-          {"name": "ttl_seconds", "kind": "integer", "binding": "flag", "default": 3600}
+          {
+            "name": "path",
+            "kind": "path",
+            "binding": "positional",
+            "required": true
+          },
+          {
+            "name": "content",
+            "kind": "text",
+            "binding": "flag",
+            "required": true
+          },
+          {
+            "name": "ttl_seconds",
+            "kind": "integer",
+            "binding": "flag",
+            "default": 3600
+          }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:fs"}}, "why": {"en": "Publish Files' owner-bound reported change or proposal event."}},
-          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Read the target baseline to compute a real diff."}},
-          {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"}}, "why": {"en": "Persist the private App-owned proposal and review fingerprint."}}
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:fs"
+              }
+            },
+            "why": {
+              "en": "Publish Files' owner-bound reported change or proposal event."
+            }
+          },
+          {
+            "verb": "fs.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Read the target baseline to compute a real diff."
+            }
+          },
+          {
+            "verb": "data.db.write",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "fs-change-plans"
+              }
+            },
+            "why": {
+              "en": "Persist the private App-owned proposal and review fingerprint."
+            }
+          }
         ],
         "effects": [
-          {"kind": "read", "label": {"en": "Read the requested file baseline"}, "target_arg": "path", "recovery": "not_applicable"},
-          {"kind": "create", "label": {"en": "Save App-owned plan data; the target file is not changed"}, "recovery": "unknown"}
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read the requested file baseline"
+            },
+            "target_arg": "path",
+            "recovery": "not_applicable"
+          },
+          {
+            "kind": "create",
+            "label": {
+              "en": "Save App-owned plan data; the target file is not changed"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
         "name": "fs.plan_show",
-        "summary": {"en": "Read a stored file plan; omit --plan to select the newest for this path."},
+        "summary": {
+          "en": "Read a stored file plan; omit --plan to select the newest for this path."
+        },
         "args": [
-          {"name": "path", "kind": "path", "binding": "positional", "required": true},
-          {"name": "plan", "kind": "name", "binding": "flag"}
+          {
+            "name": "path",
+            "kind": "path",
+            "binding": "positional",
+            "required": true
+          },
+          {
+            "name": "plan",
+            "kind": "name",
+            "binding": "flag"
+          }
         ],
         "needs": [
-          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Require current read authority before disclosing cached content for this target."}},
-          {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"}}, "why": {"en": "Read the App-owned proposal data."}}
+          {
+            "verb": "fs.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Require current read authority before disclosing cached content for this target."
+            }
+          },
+          {
+            "verb": "data.db.read",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "fs-change-plans"
+              }
+            },
+            "why": {
+              "en": "Read the App-owned proposal data."
+            }
+          }
         ],
         "effects": [
-          {"kind": "read", "label": {"en": "Read a cached proposal for the requested target, not its current contents"}, "target_arg": "path", "recovery": "not_applicable"}
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read a cached proposal for the requested target, not its current contents"
+            },
+            "target_arg": "path",
+            "recovery": "not_applicable"
+          }
         ]
       },
       {
         "name": "fs.plan_apply",
-        "summary": {"en": "Apply a reviewed plan through the file broker after conflict checks."},
+        "summary": {
+          "en": "Apply a reviewed plan through the file broker after conflict checks."
+        },
         "args": [
-          {"name": "path", "kind": "path", "binding": "positional", "required": true},
-          {"name": "plan", "kind": "name", "binding": "flag", "required": true},
-          {"name": "review", "kind": "name", "binding": "flag", "required": true},
-          {"name": "confirm", "kind": "bool", "binding": "flag", "required": true, "choices": [true]}
+          {
+            "name": "path",
+            "kind": "path",
+            "binding": "positional",
+            "required": true
+          },
+          {
+            "name": "plan",
+            "kind": "name",
+            "binding": "flag",
+            "required": true
+          },
+          {
+            "name": "review",
+            "kind": "name",
+            "binding": "flag",
+            "required": true
+          },
+          {
+            "name": "confirm",
+            "kind": "bool",
+            "binding": "flag",
+            "required": true,
+            "choices": [
+              true
+            ]
+          }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:fs"}}, "why": {"en": "Publish Files' owner-bound reported change or proposal event."}},
-          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Check that the reviewed file baseline still matches."}},
-          {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Apply the reviewed bytes only to the explicitly authorized target."}},
-          {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"}}, "why": {"en": "Read the proposal and its review fingerprint."}},
-          {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"}}, "why": {"en": "Durably bracket apply and record its reported outcome."}}
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:fs"
+              }
+            },
+            "why": {
+              "en": "Publish Files' owner-bound reported change or proposal event."
+            }
+          },
+          {
+            "verb": "fs.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Check that the reviewed file baseline still matches."
+            }
+          },
+          {
+            "verb": "fs.write",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Apply the reviewed bytes only to the explicitly authorized target."
+            }
+          },
+          {
+            "verb": "data.db.read",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "fs-change-plans"
+              }
+            },
+            "why": {
+              "en": "Read the proposal and its review fingerprint."
+            }
+          },
+          {
+            "verb": "data.db.write",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "fs-change-plans"
+              }
+            },
+            "why": {
+              "en": "Durably bracket apply and record its reported outcome."
+            }
+          }
         ],
         "effects": [
-          {"kind": "update", "label": {"en": "Apply reviewed content only if the file state still matches"}, "target_arg": "path", "recovery": "unknown"},
-          {"kind": "update", "label": {"en": "Record the plan lifecycle; uncertain outcomes cannot be replayed"}, "recovery": "unknown"}
+          {
+            "kind": "update",
+            "label": {
+              "en": "Apply reviewed content only if the file state still matches"
+            },
+            "target_arg": "path",
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "Record the plan lifecycle; uncertain outcomes cannot be replayed"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
         "name": "fs.plan_prune",
-        "summary": {"en": "Explicitly prune consumed or expired plans without changing target files."},
+        "summary": {
+          "en": "Explicitly prune consumed or expired plans without changing target files."
+        },
         "args": [
-          {"name": "path", "kind": "path", "binding": "positional", "required": true},
-          {"name": "keep", "kind": "integer", "binding": "flag", "default": 10},
-          {"name": "confirm", "kind": "bool", "binding": "flag", "required": true, "choices": [true]}
+          {
+            "name": "path",
+            "kind": "path",
+            "binding": "positional",
+            "required": true
+          },
+          {
+            "name": "keep",
+            "kind": "integer",
+            "binding": "flag",
+            "default": 10
+          },
+          {
+            "name": "confirm",
+            "kind": "bool",
+            "binding": "flag",
+            "required": true,
+            "choices": [
+              true
+            ]
+          }
         ],
         "needs": [
-          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Require target read authority before inspecting its cached plan records."}},
-          {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"}}, "why": {"en": "Inspect only this target's plan lifecycle records."}},
-          {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"}}, "why": {"en": "Remove only consumed or expired App-owned plan records."}}
+          {
+            "verb": "fs.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Require target read authority before inspecting its cached plan records."
+            }
+          },
+          {
+            "verb": "data.db.read",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "fs-change-plans"
+              }
+            },
+            "why": {
+              "en": "Inspect only this target's plan lifecycle records."
+            }
+          },
+          {
+            "verb": "data.db.write",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "fs-change-plans"
+              }
+            },
+            "why": {
+              "en": "Remove only consumed or expired App-owned plan records."
+            }
+          }
         ],
         "effects": [
-          {"kind": "delete", "label": {"en": "Delete retired App-owned plan records, never the target file"}, "recovery": "unknown"}
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Delete retired App-owned plan records, never the target file"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
         "name": "fs.ls",
-        "summary": {"en": "Show the names of files inside a folder."},
+        "summary": {
+          "en": "Show the names of files inside a folder."
+        },
         "args": [
-          {"name": "path", "kind": "path", "required": false, "binding": "positional", "default": "."}
+          {
+            "name": "path",
+            "kind": "path",
+            "required": false,
+            "binding": "positional",
+            "default": "."
+          }
         ],
         "needs": [
-          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Read the contents of the folder you asked to list."}}
+          {
+            "verb": "fs.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Read the contents of the folder you asked to list."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Show the names of files inside a folder."
+            },
+            "recovery": "not_applicable",
+            "target_arg": "path"
+          }
         ]
       },
       {
         "name": "fs.read",
-        "summary": {"en": "Read bounded UTF-8 text by byte offset or inclusive 1-based line range.", "zh-CN": "读取文件"},
+        "summary": {
+          "en": "Read bounded UTF-8 text by byte offset or inclusive 1-based line range.",
+          "zh-CN": "读取文件"
+        },
         "args": [
-          {"name": "path", "kind": "path", "required": true, "binding": "positional"},
-          {"name": "offset", "kind": "integer", "required": false, "binding": "flag", "default": 0},
-          {"name": "limit", "kind": "integer", "required": false, "binding": "flag", "default": 1000000},
-          {"name": "start", "kind": "integer", "required": false, "binding": "flag"},
-          {"name": "end", "kind": "integer", "required": false, "binding": "flag"}
+          {
+            "name": "path",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          },
+          {
+            "name": "offset",
+            "kind": "integer",
+            "required": false,
+            "binding": "flag",
+            "default": 0
+          },
+          {
+            "name": "limit",
+            "kind": "integer",
+            "required": false,
+            "binding": "flag",
+            "default": 1000000
+          },
+          {
+            "name": "start",
+            "kind": "integer",
+            "required": false,
+            "binding": "flag"
+          },
+          {
+            "name": "end",
+            "kind": "integer",
+            "required": false,
+            "binding": "flag"
+          }
         ],
         "needs": [
-          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Read the file you asked to open."}}
+          {
+            "verb": "fs.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Read the file you asked to open."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read bounded UTF-8 text by byte offset or inclusive 1-based line range.",
+              "zh-CN": "读取文件"
+            },
+            "recovery": "not_applicable",
+            "target_arg": "path"
+          }
         ]
       },
       {
         "name": "fs.write",
         "effects": [
-          {"kind": "update", "label": {"en": "Write the requested file contents"}, "target_arg": "path", "recovery": "unknown"}
+          {
+            "kind": "update",
+            "label": {
+              "en": "Write the requested file contents"
+            },
+            "target_arg": "path",
+            "recovery": "unknown"
+          }
         ],
-        "summary": {"en": "Write explicit text content to a file. Empty content creates or truncates a file.", "zh-CN": "写入文件"},
+        "summary": {
+          "en": "Write explicit text content to a file. Empty content creates or truncates a file.",
+          "zh-CN": "写入文件"
+        },
         "args": [
-          {"name": "path", "kind": "path", "required": true, "binding": "positional"},
-          {"name": "content", "kind": "text", "required": true, "binding": "flag"}
+          {
+            "name": "path",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          },
+          {
+            "name": "content",
+            "kind": "text",
+            "required": true,
+            "binding": "flag"
+          }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:fs"}}, "why": {"en": "Publish Files' owner-bound reported change or proposal event."}},
-          {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Write the content you provided to that file."}}
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:fs"
+              }
+            },
+            "why": {
+              "en": "Publish Files' owner-bound reported change or proposal event."
+            }
+          },
+          {
+            "verb": "fs.write",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Write the content you provided to that file."
+            }
+          }
         ]
       },
       {
         "name": "fs.rm",
         "effects": [
-          {"kind": "delete", "label": {"en": "Remove the requested filesystem object"}, "target_arg": "path", "recovery": "unknown"}
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Remove the requested filesystem object"
+            },
+            "target_arg": "path",
+            "recovery": "unknown"
+          }
         ],
-        "summary": {"en": "Delete a file or directory tree", "zh-CN": "删除文件"},
+        "summary": {
+          "en": "Delete a file or directory tree",
+          "zh-CN": "删除文件"
+        },
         "args": [
-          {"name": "path", "kind": "path", "required": true, "binding": "positional"}
+          {
+            "name": "path",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:fs"}}, "why": {"en": "Publish Files' owner-bound reported change or proposal event."}},
-          {"verb": "fs.delete", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Remove the file you specified."}}
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:fs"
+              }
+            },
+            "why": {
+              "en": "Publish Files' owner-bound reported change or proposal event."
+            }
+          },
+          {
+            "verb": "fs.delete",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Remove the file you specified."
+            }
+          }
         ]
       },
       {
         "name": "fs.mkdir",
-        "summary": {"en": "Create a folder", "zh-CN": "创建文件夹"},
+        "summary": {
+          "en": "Create a folder",
+          "zh-CN": "创建文件夹"
+        },
         "args": [
-          {"name": "path", "kind": "path", "required": true, "binding": "positional"}
+          {
+            "name": "path",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:fs"}}, "why": {"en": "Publish Files' owner-bound reported change or proposal event."}},
-          {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Create a new folder at that path."}}
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:fs"
+              }
+            },
+            "why": {
+              "en": "Publish Files' owner-bound reported change or proposal event."
+            }
+          },
+          {
+            "verb": "fs.write",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Create a new folder at that path."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Create a folder",
+              "zh-CN": "创建文件夹"
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
+          }
         ]
       },
       {
         "name": "fs.stat",
         "effects": [
-          {"kind": "read", "label": {"en": "Inspect metadata for the requested filesystem object"}, "target_arg": "path", "recovery": "not_applicable"}
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect metadata for the requested filesystem object"
+            },
+            "target_arg": "path",
+            "recovery": "not_applicable"
+          }
         ],
-        "summary": {"en": "Show file info and tags from its sibling metadata sidecar", "zh-CN": "显示文件信息"},
+        "summary": {
+          "en": "Show file info and tags from its sibling metadata sidecar",
+          "zh-CN": "显示文件信息"
+        },
         "args": [
-          {"name": "path", "kind": "path", "required": true, "binding": "positional"}
+          {
+            "name": "path",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          }
         ],
         "needs": [
-          {"verb": "fs.meta", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Read size, dates and permissions for the requested path."}},
-          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path", "transform": "parent"}, "why": {"en": "Read tags from the metadata sidecar next to the file."}}
+          {
+            "verb": "fs.meta",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Read size, dates and permissions for the requested path."
+            }
+          },
+          {
+            "verb": "fs.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path",
+              "transform": "parent"
+            },
+            "why": {
+              "en": "Read tags from the metadata sidecar next to the file."
+            }
+          }
         ]
       },
       {
         "name": "fs.search",
-        "summary": {"en": "Search file contents with ripgrep and also match filenames", "zh-CN": "搜索文件"},
+        "summary": {
+          "en": "Search file contents with ripgrep and also match filenames",
+          "zh-CN": "搜索文件"
+        },
         "args": [
-          {"name": "query", "kind": "text", "required": true, "binding": "positional"},
-          {"name": "path", "kind": "path", "required": false, "binding": "positional", "default": "/workspace"}
+          {
+            "name": "query",
+            "kind": "text",
+            "required": true,
+            "binding": "positional"
+          },
+          {
+            "name": "path",
+            "kind": "path",
+            "required": false,
+            "binding": "positional",
+            "default": "/workspace"
+          }
         ],
         "needs": [
-          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Scan files under the path you specified for the search query."}}
+          {
+            "verb": "fs.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Scan files under the path you specified for the search query."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Search file contents with ripgrep and also match filenames",
+              "zh-CN": "搜索文件"
+            },
+            "recovery": "not_applicable",
+            "target_arg": "path"
+          }
         ]
       },
       {
         "name": "fs.tag",
-        "summary": {"en": "Merge nonempty tags into a file's metadata sidecar", "zh-CN": "标记文件"},
+        "summary": {
+          "en": "Merge nonempty tags into a file's metadata sidecar",
+          "zh-CN": "标记文件"
+        },
         "args": [
-          {"name": "path", "kind": "path", "required": true, "binding": "positional"},
-          {"name": "tags", "kind": "text", "required": true, "binding": "positional", "repeatable": true}
+          {
+            "name": "path",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          },
+          {
+            "name": "tags",
+            "kind": "text",
+            "required": true,
+            "binding": "positional",
+            "repeatable": true
+          }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:fs"}}, "why": {"en": "Publish Files' owner-bound reported change or proposal event."}},
-          {"verb": "fs.meta", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Verify that the tagged path is a regular file."}},
-          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path", "transform": "parent"}, "why": {"en": "Read the existing metadata sidecar before merging tags."}},
-          {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "path", "transform": "parent"}, "why": {"en": "Update the metadata sidecar next to the file with the new tags."}}
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:fs"
+              }
+            },
+            "why": {
+              "en": "Publish Files' owner-bound reported change or proposal event."
+            }
+          },
+          {
+            "verb": "fs.meta",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Verify that the tagged path is a regular file."
+            }
+          },
+          {
+            "verb": "fs.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path",
+              "transform": "parent"
+            },
+            "why": {
+              "en": "Read the existing metadata sidecar before merging tags."
+            }
+          },
+          {
+            "verb": "fs.write",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path",
+              "transform": "parent"
+            },
+            "why": {
+              "en": "Update the metadata sidecar next to the file with the new tags."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Merge nonempty tags into a file's metadata sidecar",
+              "zh-CN": "标记文件"
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
+          }
         ]
       },
       {
         "name": "fs.recent",
-        "summary": {"en": "Recently changed non-hidden regular files in the workspace", "zh-CN": "最近更改的文件"},
+        "summary": {
+          "en": "Recently changed non-hidden regular files in the workspace",
+          "zh-CN": "最近更改的文件"
+        },
         "args": [
-          {"name": "n", "kind": "integer", "required": false, "binding": "positional", "default": 10}
+          {
+            "name": "n",
+            "kind": "integer",
+            "required": false,
+            "binding": "positional",
+            "default": 10
+          }
         ],
         "needs": [
-          {"verb": "fs.read", "scope": {"kind": "fixed", "scope": {"kind": "path", "value": "/workspace/**"}}, "why": {"en": "Walk the workspace to find recently modified files."}}
+          {
+            "verb": "fs.read",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "path",
+                "value": "/workspace/**"
+              }
+            },
+            "why": {
+              "en": "Walk the workspace to find recently modified files."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Recently changed non-hidden regular files in the workspace",
+              "zh-CN": "最近更改的文件"
+            },
+            "recovery": "not_applicable"
+          }
         ]
       },
       {
         "name": "fs.rename",
-        "summary": {"en": "Rename a file or folder"},
+        "summary": {
+          "en": "Rename a file or folder"
+        },
         "args": [
-          {"name": "src", "kind": "path", "required": true, "binding": "positional"},
-          {"name": "dst", "kind": "path", "required": true, "binding": "positional"}
+          {
+            "name": "src",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          },
+          {
+            "name": "dst",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:fs"}}, "why": {"en": "Publish Files' owner-bound reported change or proposal event."}},
-          {"verb": "fs.delete", "scope": {"kind": "from-arg", "arg": "src"}, "why": {"en": "Remove the source path after renaming it."}},
-          {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "dst"}, "why": {"en": "Create the renamed item at the destination path."}}
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:fs"
+              }
+            },
+            "why": {
+              "en": "Publish Files' owner-bound reported change or proposal event."
+            }
+          },
+          {
+            "verb": "fs.delete",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "src"
+            },
+            "why": {
+              "en": "Remove the source path after renaming it."
+            }
+          },
+          {
+            "verb": "fs.write",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "dst"
+            },
+            "why": {
+              "en": "Create the renamed item at the destination path."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Rename a file or folder"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
         "name": "fs.move",
-        "summary": {"en": "Move a file or folder"},
+        "summary": {
+          "en": "Move a file or folder"
+        },
         "args": [
-          {"name": "src", "kind": "path", "required": true, "binding": "positional"},
-          {"name": "dst", "kind": "path", "required": true, "binding": "positional"}
+          {
+            "name": "src",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          },
+          {
+            "name": "dst",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:fs"}}, "why": {"en": "Publish Files' owner-bound reported change or proposal event."}},
-          {"verb": "fs.delete", "scope": {"kind": "from-arg", "arg": "src"}, "why": {"en": "Remove the item from its source path."}},
-          {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "dst"}, "why": {"en": "Create the item at its destination path."}}
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:fs"
+              }
+            },
+            "why": {
+              "en": "Publish Files' owner-bound reported change or proposal event."
+            }
+          },
+          {
+            "verb": "fs.delete",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "src"
+            },
+            "why": {
+              "en": "Remove the item from its source path."
+            }
+          },
+          {
+            "verb": "fs.write",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "dst"
+            },
+            "why": {
+              "en": "Create the item at its destination path."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Move a file or folder"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
         "name": "fs.copy",
-        "summary": {"en": "Copy a regular file or directory tree without symlinks or special files"},
+        "summary": {
+          "en": "Copy a regular file or directory tree without symlinks or special files"
+        },
         "args": [
-          {"name": "src", "kind": "path", "required": true, "binding": "positional"},
-          {"name": "dst", "kind": "path", "required": true, "binding": "positional"}
+          {
+            "name": "src",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          },
+          {
+            "name": "dst",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:fs"}}, "why": {"en": "Publish Files' owner-bound reported change or proposal event."}},
-          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "src"}, "why": {"en": "Read the source file or directory tree."}},
-          {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "dst"}, "why": {"en": "Create the copy at the destination path."}}
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:fs"
+              }
+            },
+            "why": {
+              "en": "Publish Files' owner-bound reported change or proposal event."
+            }
+          },
+          {
+            "verb": "fs.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "src"
+            },
+            "why": {
+              "en": "Read the source file or directory tree."
+            }
+          },
+          {
+            "verb": "fs.write",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "dst"
+            },
+            "why": {
+              "en": "Create the copy at the destination path."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Copy a regular file or directory tree without symlinks or special files"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
         "name": "fs.read_bytes",
-        "summary": {"en": "Read binary file data as base64"},
+        "summary": {
+          "en": "Read binary file data as base64"
+        },
         "args": [
-          {"name": "path", "kind": "path", "required": true, "binding": "positional"},
-          {"name": "offset", "kind": "integer", "required": false, "binding": "flag", "default": 0},
-          {"name": "limit", "kind": "integer", "required": false, "binding": "flag", "default": 4194304}
+          {
+            "name": "path",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          },
+          {
+            "name": "offset",
+            "kind": "integer",
+            "required": false,
+            "binding": "flag",
+            "default": 0
+          },
+          {
+            "name": "limit",
+            "kind": "integer",
+            "required": false,
+            "binding": "flag",
+            "default": 4194304
+          }
         ],
         "needs": [
-          {"verb": "fs.read", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Read binary data from the file you specified."}}
+          {
+            "verb": "fs.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Read binary data from the file you specified."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read binary file data as base64"
+            },
+            "recovery": "not_applicable",
+            "target_arg": "path"
+          }
         ]
       },
       {
         "name": "fs.write_bytes",
-        "summary": {"en": "Write explicit, strictly validated base64 content to a file"},
+        "summary": {
+          "en": "Write explicit, strictly validated base64 content to a file"
+        },
         "args": [
-          {"name": "path", "kind": "path", "required": true, "binding": "positional"},
-          {"name": "content", "kind": "text", "required": true, "binding": "flag"}
+          {
+            "name": "path",
+            "kind": "path",
+            "required": true,
+            "binding": "positional"
+          },
+          {
+            "name": "content",
+            "kind": "text",
+            "required": true,
+            "binding": "flag"
+          }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:fs"}}, "why": {"en": "Publish Files' owner-bound reported change or proposal event."}},
-          {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "path"}, "why": {"en": "Write binary data to the file you specified."}}
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:fs"
+              }
+            },
+            "why": {
+              "en": "Publish Files' owner-bound reported change or proposal event."
+            }
+          },
+          {
+            "verb": "fs.write",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Write binary data to the file you specified."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Write explicit, strictly validated base64 content to a file"
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
+          }
         ]
       }
     ]

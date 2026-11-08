@@ -37,6 +37,15 @@
               "en": "Read Claw's dedicated nftables table and detect drift."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect managed firewall state"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -104,6 +113,15 @@
               "en": "Add one validated allow or deny rule to the managed nftables table."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Add a scoped firewall rule"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -131,6 +149,16 @@
             "why": {
               "en": "Delete one exact managed firewall rule."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Delete a managed rule"
+            },
+            "recovery": "unknown",
+            "target_arg": "rule_id"
           }
         ]
       },
@@ -162,6 +190,15 @@
             "why": {
               "en": "Remove every rule from Claw's dedicated table."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Clear all managed rules"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -198,6 +235,15 @@
             "why": {
               "en": "Restore the exact previous managed state if no newer revision exists."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Restore a managed firewall backup"
+            },
+            "recovery": "unknown"
           }
         ]
       }

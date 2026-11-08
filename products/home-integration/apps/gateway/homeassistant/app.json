@@ -80,6 +80,23 @@
             "en": "Remember the successful send so the agent can recall it later."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Send a message through this gateway"
+          },
+          "recovery": "unknown",
+          "target_arg": "service"
+        },
+        {
+          "kind": "update",
+          "label": {
+            "en": "May record this App's successful result in its own Agent memory scope"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "status": {
@@ -113,6 +130,15 @@
           "why": {
             "en": "Read the configured homeassistant_token secret required by this gateway."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Show gateway configuration and status"
+          },
+          "recovery": "unknown"
         }
       ]
     },
@@ -167,6 +193,16 @@
           "why": {
             "en": "Read the configured homeassistant_token secret required by this gateway."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Call a Home Assistant service with a raw payload"
+          },
+          "recovery": "unknown",
+          "target_arg": "service"
         }
       ]
     }
@@ -251,6 +287,23 @@
               "en": "Remember the successful send so the agent can recall it later."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Send a message through this gateway"
+            },
+            "recovery": "unknown",
+            "target_arg": "service"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -284,6 +337,15 @@
             "why": {
               "en": "Read the configured homeassistant_token secret required by this gateway."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Show gateway configuration and status"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -339,6 +401,16 @@
             "why": {
               "en": "Read the configured homeassistant_token secret required by this gateway."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Call a Home Assistant service with a raw payload"
+            },
+            "recovery": "unknown",
+            "target_arg": "service"
           }
         ]
       }

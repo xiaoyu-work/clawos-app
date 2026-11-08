@@ -21,7 +21,16 @@
           "repeatable": true
         }
       ],
-      "needs": []
+      "needs": [],
+      "effects": [
+        {
+          "kind": "update",
+          "label": {
+            "en": "Save legacy local preferences, not owner admission"
+          },
+          "recovery": "unknown"
+        }
+      ]
     },
     "send": {
       "label": {
@@ -80,6 +89,23 @@
             "en": "Remember successful outbound Discord messages."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Send a message through Discord"
+          },
+          "recovery": "unknown",
+          "target_arg": "channel_id"
+        },
+        {
+          "kind": "update",
+          "label": {
+            "en": "May record this App's successful result in its own Agent memory scope"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "status": {
@@ -100,6 +126,15 @@
           "why": {
             "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Show status for the OS-managed Discord channel"
+          },
+          "recovery": "unknown"
         }
       ]
     },
@@ -122,6 +157,15 @@
             "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "update",
+          "label": {
+            "en": "Start the OS-managed Discord channel"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "stop": {
@@ -142,6 +186,15 @@
           "why": {
             "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "update",
+          "label": {
+            "en": "Stop the OS-managed Discord channel"
+          },
+          "recovery": "unknown"
         }
       ]
     },
@@ -184,6 +237,16 @@
             "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Reply once to an authenticated incoming message using its owner-bound receipt"
+          },
+          "recovery": "unknown",
+          "target_arg": "event_id"
+        }
       ]
     }
   },
@@ -208,6 +271,15 @@
             "kind": "text",
             "required": true,
             "repeatable": true
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Save legacy local preferences, not owner admission"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -269,6 +341,23 @@
             "required": true,
             "repeatable": true
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Send a message through Discord"
+            },
+            "recovery": "unknown",
+            "target_arg": "channel_id"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -289,6 +378,15 @@
             "why": {
               "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Show status for the OS-managed Discord channel"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -311,6 +409,15 @@
               "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Start the OS-managed Discord channel"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -331,6 +438,15 @@
             "why": {
               "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Stop the OS-managed Discord channel"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -373,6 +489,16 @@
             "choices": [
               true
             ]
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Reply once to an authenticated incoming message using its owner-bound receipt"
+            },
+            "recovery": "unknown",
+            "target_arg": "event_id"
           }
         ]
       }

@@ -10,7 +10,9 @@
   },
   "runtime": "binary",
   "entry": "bin/cosmic-edit",
-  "desktop": {"exec": "--gui"},
+  "desktop": {
+    "exec": "--gui"
+  },
   "ai": {
     "budget": {
       "monthly_units": 200000
@@ -51,6 +53,16 @@
               "en": "Read the file you asked to inspect."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read a file as UTF-8 text through the filesystem capability gate."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
+          }
         ]
       },
       {
@@ -86,6 +98,16 @@
             "why": {
               "en": "Write the replacement text to the requested file."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Overwrite a file with new UTF-8 text."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
           }
         ]
       },
@@ -141,6 +163,16 @@
               "en": "Write the file after replacing the unique match."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Replace exactly one occurrence of text while preserving the rest of the file."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
+          }
         ]
       },
       {
@@ -174,9 +206,27 @@
           },
           {
             "verb": "fs.read",
-            "scope": {"kind": "from-arg", "arg": "path"},
-            "when": {"kind": "arg-present", "arg": "path"},
-            "why": {"en": "Allow the native editor to open the requested file."}
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "when": {
+              "kind": "arg-present",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Allow the native editor to open the requested file."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Open the text editor, optionally focused on one file."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
           }
         ]
       },
@@ -215,6 +265,16 @@
               "en": "Send the file text through the OS AI gate for summarization."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Summarize a file through the OS AI gate."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
+          }
         ]
       },
       {
@@ -251,6 +311,16 @@
             "why": {
               "en": "Send the file text through the OS AI gate for explanation."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Generate a plain-language explanation of a file."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
           }
         ]
       },
@@ -296,6 +366,16 @@
             "why": {
               "en": "Send the file text and instruction through the OS AI gate."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Propose rewritten file contents from a natural-language instruction without writing them back."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
           }
         ]
       }

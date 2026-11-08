@@ -11,7 +11,9 @@
   "icon": "🔔",
   "runtime": "binary",
   "entry": "bin/cosmic-notifications",
-  "desktop": {"exec": "--gui"},
+  "desktop": {
+    "exec": "--gui"
+  },
   "mcp": {
     "entry": "bin/cosmic-notifications",
     "transport": "stdio",
@@ -95,6 +97,15 @@
               "en": "Send a desktop notification to the user."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Persist a notification, queue enabled delivery channels, and return its durable string id. Delivery is not user acknowledgement."
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -121,6 +132,15 @@
             "why": {
               "en": "Dismiss a desktop notification."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Dismiss this App's durable notification and close its desktop presentation. Legacy desktop numeric ids are not accepted."
+            },
+            "recovery": "unknown"
           }
         ]
       }

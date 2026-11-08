@@ -37,6 +37,15 @@
               "en": "Read window titles, AppIDs, stable identifiers, and compositor state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List running desktop windows"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -65,6 +74,15 @@
               "en": "Ask the compositor to activate the selected window."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Focus a desktop window"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -92,6 +110,15 @@
             "why": {
               "en": "Ask the compositor to close the selected window."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Close a desktop window"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -135,6 +162,16 @@
             "why": {
               "en": "Relaunch the exact desktop AppID after its windows close."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Restart a desktop application"
+            },
+            "recovery": "unknown",
+            "target_arg": "app_id"
           }
         ]
       }

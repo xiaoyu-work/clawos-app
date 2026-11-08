@@ -58,6 +58,15 @@
               "en": "Read entries from the system audit log."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read recent log entries (filter by --app, --status)"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -83,6 +92,15 @@
             "why": {
               "en": "Read the most recent entries from the system audit log."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Show last N log entries"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -122,6 +140,15 @@
               "en": "Scan the system audit log for entries matching your query."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Search logs by keyword (filter by --app)"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -159,6 +186,15 @@
             "why": {
               "en": "Append a manual entry to the system audit log."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Write a manual log entry"
+            },
+            "recovery": "unknown"
           }
         ]
       }

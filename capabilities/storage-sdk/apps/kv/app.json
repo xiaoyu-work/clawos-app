@@ -12,9 +12,16 @@
   "runtime": "python",
   "objects": {
     "entry": {
-      "label": {"en": "Key-value entry"},
-      "summary": {"en": "An App-owned entry addressed by its exact key. Resolution retains get's empty-string result for a missing key; metadata is not proof of existence."},
-      "resolve": {"operation": "get", "id_arg": "key"}
+      "label": {
+        "en": "Key-value entry"
+      },
+      "summary": {
+        "en": "An App-owned entry addressed by its exact key. Resolution retains get's empty-string result for a missing key; metadata is not proof of existence."
+      },
+      "resolve": {
+        "operation": "get",
+        "id_arg": "key"
+      }
     }
   },
   "mcp": {
@@ -24,7 +31,14 @@
       {
         "name": "kv.get",
         "effects": [
-          {"kind": "read", "label": {"en": "Read the value of the requested key"}, "target_arg": "key", "recovery": "not_applicable"}
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read the value of the requested key"
+            },
+            "target_arg": "key",
+            "recovery": "not_applicable"
+          }
         ],
         "summary": {
           "en": "Read the value stored under `key`. Returns an empty string if missing."
@@ -52,7 +66,14 @@
       {
         "name": "kv.set",
         "effects": [
-          {"kind": "update", "label": {"en": "Store the value under the requested key"}, "target_arg": "key", "recovery": "unknown"}
+          {
+            "kind": "update",
+            "label": {
+              "en": "Store the value under the requested key"
+            },
+            "target_arg": "key",
+            "recovery": "unknown"
+          }
         ],
         "summary": {
           "en": "Store `value` under `key`, overwriting any prior value."
@@ -85,7 +106,14 @@
       {
         "name": "kv.del",
         "effects": [
-          {"kind": "delete", "label": {"en": "Delete the requested key"}, "target_arg": "key", "recovery": "unknown"}
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Delete the requested key"
+            },
+            "target_arg": "key",
+            "recovery": "unknown"
+          }
         ],
         "summary": {
           "en": "Delete `key`. Idempotent; missing keys still succeed."
@@ -136,6 +164,15 @@
               "en": "Scan every key in the store to filter by the pattern."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List keys matching the glob `pattern`. Returns a sorted name list."
+            },
+            "recovery": "not_applicable"
+          }
         ]
       },
       {
@@ -155,6 +192,15 @@
             "why": {
               "en": "Read every key and value in the store."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Return every key/value pair in the store."
+            },
+            "recovery": "not_applicable"
           }
         ]
       }

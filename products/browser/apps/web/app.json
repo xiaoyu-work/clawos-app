@@ -87,6 +87,15 @@
             "en": "Open a network connection to the URL you asked to load."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Fetch URL, return {url, title, text, links} (or raw HTML / arbitrary --eval result)"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "scrape": {
@@ -139,6 +148,15 @@
           "required": false,
           "binding": "flag",
           "default": "json"
+        }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Fetch many URLs in parallel"
+          },
+          "recovery": "unknown"
         }
       ]
     },
@@ -209,6 +227,23 @@
             "en": "Save the screenshot to the path you specified."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "create",
+          "label": {
+            "en": "Capture a screenshot of a URL (shells out to chromium)"
+          },
+          "recovery": "unknown",
+          "target_arg": "output"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the explicitly selected remote provider"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "submit": {
@@ -253,6 +288,15 @@
           "why": {
             "en": "POST to the URL you asked to submit data to."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Submit form data (POST) via urllib"
+          },
+          "recovery": "unknown"
         }
       ]
     },
@@ -300,6 +344,29 @@
           "why": {
             "en": "Remember the page summary so the agent can recall it later."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Fetch a URL and return a 3-line AI summary"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "Request SDK AI processing under existing consent and budget"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "update",
+          "label": {
+            "en": "May record this App's successful result in its own Agent memory scope"
+          },
+          "recovery": "unknown"
         }
       ]
     }
@@ -386,6 +453,15 @@
               "en": "Open a network connection to the URL you asked to load."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Fetch URL, return {url, title, text, links} (or raw HTML / arbitrary --eval result)"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -435,6 +511,15 @@
             "why": {
               "en": "Open network connections to each URL you asked to load."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Fetch many URLs in parallel"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -501,6 +586,23 @@
               "en": "Save the screenshot to the path you specified."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Capture a screenshot of a URL (shells out to chromium)"
+            },
+            "recovery": "unknown",
+            "target_arg": "output"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the explicitly selected remote provider"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -543,6 +645,15 @@
             "why": {
               "en": "POST to the URL you asked to submit data to."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Submit form data (POST) via urllib"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -591,6 +702,29 @@
             "why": {
               "en": "Remember the page summary so the agent can recall it later."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Fetch a URL and return a 3-line AI summary"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "Request SDK AI processing under existing consent and budget"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
           }
         ]
       }

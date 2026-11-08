@@ -38,6 +38,15 @@
               "en": "Read host interface state and counters."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect host network interfaces"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -59,6 +68,15 @@
             "why": {
               "en": "Read the host kernel route table."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect host network routes"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -85,6 +103,16 @@
             "why": {
               "en": "Resolve this exact host or host:port target."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Resolve one exact network target through the host resolver"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
           }
         ]
       },
@@ -136,6 +164,16 @@
               "en": "Open bounded TCP probes only to the resolved target."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Test TCP reachability and latency for one exact host:port target"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
+          }
         ]
       },
       {
@@ -184,6 +222,16 @@
             "why": {
               "en": "Test TCP reachability only to the resolved target."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Run staged host link, route, DNS, and TCP diagnosis"
+            },
+            "recovery": "unknown",
+            "target_arg": "target"
           }
         ]
       }

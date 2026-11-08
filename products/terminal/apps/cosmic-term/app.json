@@ -10,7 +10,9 @@
   },
   "runtime": "binary",
   "entry": "bin/cosmic-term",
-  "desktop": {"exec": "--gui"},
+  "desktop": {
+    "exec": "--gui"
+  },
   "mcp": {
     "entry": "bin/cosmic-term",
     "transport": "stdio",
@@ -61,6 +63,15 @@
               "en": "Start exactly the requested program through the audited process runner."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Run one program with arguments and return stdout, stderr, exit code, and timeout state."
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -88,6 +99,16 @@
             "why": {
               "en": "Look up where the requested program lives on the filesystem."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Resolve a program name to its absolute path on PATH."
+            },
+            "recovery": "unknown",
+            "target_arg": "program"
           }
         ]
       },
@@ -119,6 +140,15 @@
             "why": {
               "en": "Open the native terminal for the user."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Open an interactive terminal, optionally in a working directory."
+            },
+            "recovery": "unknown"
           }
         ]
       }

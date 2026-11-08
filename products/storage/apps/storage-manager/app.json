@@ -37,6 +37,15 @@
               "en": "Read block-device, filesystem, and mount metadata."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List block devices and mounts"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -64,6 +73,16 @@
             "why": {
               "en": "Read SMART, filesystem metadata, and matching kernel storage errors."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect SMART and filesystem health"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
           }
         ]
       },
@@ -93,6 +112,16 @@
               "en": "Read the entire unmounted filesystem with a no-repair checker."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Run an offline read-only filesystem check"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
+          }
         ]
       },
       {
@@ -117,6 +146,16 @@
             "why": {
               "en": "Mount this exact canonical block device."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Mount a filesystem through UDisks2"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
           }
         ]
       },
@@ -143,6 +182,16 @@
               "en": "Unmount this exact canonical block device."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Unmount a filesystem through UDisks2"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
+          }
         ]
       },
       {
@@ -167,6 +216,16 @@
             "why": {
               "en": "Eject or safely power off this exact removable drive."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Safely eject or power off removable media"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
           }
         ]
       }

@@ -48,6 +48,15 @@
               "en": "Publish a new OS notification for you, delivered only through your enabled channels and DND policy."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Send 1..4000 plain-text characters through the OS Notification Service. Returns a durable notif- ID and UTC timestamp. Urgent uses warning severity and respects DND; old JSON is untouched."
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -73,6 +82,15 @@
             "why": {
               "en": "Read only your OS notifications sent by notify; this does not read historical JSON or other producers' records."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List your notify-produced OS records, newest publication first, limit 1..100. Total counts all retained unexpired records in this scope. Rows include durable id, message, urgent, UTC timestamp, read and state. Historical JSON, native and other-App/task records are excluded; unavailable service is an error."
+            },
+            "recovery": "unknown"
           }
         ]
       }

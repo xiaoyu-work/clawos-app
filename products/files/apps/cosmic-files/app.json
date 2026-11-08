@@ -10,7 +10,9 @@
   },
   "runtime": "binary",
   "entry": "bin/cosmic-files",
-  "desktop": {"exec": "--gui"},
+  "desktop": {
+    "exec": "--gui"
+  },
   "ai": {
     "budget": {
       "monthly_units": 200000
@@ -51,6 +53,16 @@
               "en": "Read the contents of the directory you asked to list."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List entries under a directory through the capability-gated Files path."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
+          }
         ]
       },
       {
@@ -81,8 +93,24 @@
           },
           {
             "verb": "fs.read",
-            "scope": {"kind": "from-arg", "arg": "path", "transform": "parent"},
-            "why": {"en": "Read tags from the metadata sidecar next to the file."}
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path",
+              "transform": "parent"
+            },
+            "why": {
+              "en": "Read tags from the metadata sidecar next to the file."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Get size, type, modification time, and tags for a path."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
           }
         ]
       },
@@ -138,6 +166,16 @@
               "en": "Walk the directory tree you asked to search."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Recursively find names containing a case-insensitive substring, up to 500 matches."
+            },
+            "recovery": "unknown",
+            "target_arg": "root"
+          }
         ]
       },
       {
@@ -178,6 +216,16 @@
             "why": {
               "en": "Open the native file manager at the requested location."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Open Files at a directory or at the directory containing a file."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
           }
         ]
       },
@@ -229,6 +277,23 @@
               "en": "Remember the summary only in the Files identity's own memory scope."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Summarize one document through the same AI pipeline used by the Files context menu."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -265,6 +330,16 @@
             "why": {
               "en": "Send the document text through the OS AI gate for explanation."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Explain one document in plain language through the OS AI gate."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
           }
         ]
       },
@@ -318,6 +393,23 @@
             "why": {
               "en": "Read the local Recoll index and configuration."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Find documents with similar names or topics through the local Recoll index."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Run the declared bounded document-index query or indexing executable"
+            },
+            "recovery": "unknown"
           }
         ]
       }

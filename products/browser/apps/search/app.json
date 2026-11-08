@@ -123,6 +123,22 @@
               "value": "google"
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Search the web for information through the explicitly selected provider. Returns titles, URLs, and snippets."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -229,6 +245,22 @@
               "arg": "provider",
               "value": "google"
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Search for images through the explicitly selected provider. Returns titles, URLs, thumbnails, and dimensions."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
           }
         ]
       }

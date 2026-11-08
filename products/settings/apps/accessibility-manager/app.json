@@ -37,6 +37,15 @@
               "en": "Read COSMIC accessibility protocol and AT-SPI status."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect accessibility state"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -68,6 +77,15 @@
             "why": {
               "en": "Change AT-SPI IsEnabled and ScreenReaderEnabled together."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Enable or disable screen reader"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -101,6 +119,15 @@
               "en": "Change the COSMIC compositor magnifier state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Enable or disable magnifier"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -132,6 +159,15 @@
             "why": {
               "en": "Change COSMIC screen inversion while preserving the selected filter."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Enable or disable color inversion"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -167,6 +203,15 @@
             "why": {
               "en": "Set or disable the COSMIC greyscale/daltonization filter."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set color-vision filter"
+            },
+            "recovery": "unknown"
           }
         ]
       }

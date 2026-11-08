@@ -37,6 +37,15 @@
               "en": "Read configured printer names, state, and default destination."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List CUPS printers"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -65,6 +74,16 @@
               "en": "Read supported media, duplex, quality, and other CUPS options."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect printer capabilities"
+            },
+            "recovery": "unknown",
+            "target_arg": "printer"
+          }
         ]
       },
       {
@@ -92,6 +111,16 @@
             "why": {
               "en": "Read job IDs, owners, sizes, and submission times."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect queued print jobs"
+            },
+            "recovery": "unknown",
+            "target_arg": "printer"
           }
         ]
       },
@@ -166,6 +195,16 @@
               "en": "Read the exact source file through a pinned file descriptor."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Print a file"
+            },
+            "recovery": "unknown",
+            "target_arg": "source"
+          }
         ]
       },
       {
@@ -202,6 +241,15 @@
             "why": {
               "en": "Cancel the exact queued job after verifying its owner."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Cancel an owned print job"
+            },
+            "recovery": "unknown"
           }
         ]
       }

@@ -11,7 +11,9 @@
   "icon": "📸",
   "runtime": "binary",
   "entry": "bin/cosmic-screenshot",
-  "desktop": {"exec": "--gui"},
+  "desktop": {
+    "exec": "--gui"
+  },
   "mcp": {
     "entry": "bin/cosmic-screenshot",
     "transport": "stdio",
@@ -28,7 +30,9 @@
             "kind": "bool",
             "required": false,
             "default": false,
-            "choices": [false],
+            "choices": [
+              false
+            ],
             "label": {
               "en": "Must be false for MCP. Use the native UI for interactive region and clipboard selection."
             }
@@ -57,9 +61,14 @@
             "verb": "desktop.capture",
             "scope": {
               "kind": "fixed",
-              "scope": {"kind": "name", "value": "screen"}
+              "scope": {
+                "kind": "name",
+                "value": "screen"
+              }
             },
-            "why": {"en": "Capture the authenticated owner's screen without granting clipboard or general desktop access."}
+            "why": {
+              "en": "Capture the authenticated owner's screen without granting clipboard or general desktop access."
+            }
           },
           {
             "verb": "fs.write",
@@ -75,6 +84,15 @@
             "why": {
               "en": "Save a non-interactive screenshot in exactly the resolved destination directory."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Capture the screen through the OS portal service into exactly save_dir and return a path or cancellation. Interactive selection and clipboard capture are human-only."
+            },
+            "recovery": "unknown"
           }
         ]
       }

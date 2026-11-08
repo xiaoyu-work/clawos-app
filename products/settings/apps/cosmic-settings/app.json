@@ -10,7 +10,9 @@
   },
   "runtime": "binary",
   "entry": "bin/cosmic-settings",
-  "desktop": {"exec": "--gui"},
+  "desktop": {
+    "exec": "--gui"
+  },
   "mcp": {
     "entry": "bin/cosmic-settings",
     "transport": "stdio",
@@ -18,34 +20,181 @@
     "tools": [
       {
         "name": "settings.permissions_list",
-        "summary": {"en": "List installed verified Apps visible to this owner, with quarantine errors. Does not grant their permissions."},
+        "summary": {
+          "en": "List installed verified Apps visible to this owner, with quarantine errors. Does not grant their permissions."
+        },
         "args": [],
-        "needs": [{"verb": "sys.permissions", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "manage"}}, "why": {"en": "Inspect and manage owner-scoped App permission policy through the OS; never approve grants."}}]
+        "needs": [
+          {
+            "verb": "sys.permissions",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "manage"
+              }
+            },
+            "why": {
+              "en": "Inspect and manage owner-scoped App permission policy through the OS; never approve grants."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List installed verified Apps visible to this owner, with quarantine errors. Does not grant their permissions."
+            },
+            "recovery": "unknown"
+          }
+        ]
       },
       {
         "name": "settings.permissions_show",
-        "summary": {"en": "Show declared permissions, owner/App enablement, current daemon grants, unsupported direct-resource permissions, and pending/recent changes."},
-        "args": [{"name": "app_id", "kind": "name", "required": true, "label": {"en": "Verified installed App id."}}],
-        "needs": [{"verb": "sys.permissions", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "manage"}}, "why": {"en": "Inspect this owner's App permission policy without inheriting the target's grants."}}]
+        "summary": {
+          "en": "Show declared permissions, owner/App enablement, current daemon grants, unsupported direct-resource permissions, and pending/recent changes."
+        },
+        "args": [
+          {
+            "name": "app_id",
+            "kind": "name",
+            "required": true,
+            "label": {
+              "en": "Verified installed App id."
+            }
+          }
+        ],
+        "needs": [
+          {
+            "verb": "sys.permissions",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "manage"
+              }
+            },
+            "why": {
+              "en": "Inspect this owner's App permission policy without inheriting the target's grants."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Show declared permissions, owner/App enablement, current daemon grants, unsupported direct-resource permissions, and pending/recent changes."
+            },
+            "recovery": "unknown",
+            "target_arg": "app_id"
+          }
+        ]
       },
       {
         "name": "settings.permissions_request",
-        "summary": {"en": "Request restoration of a revoked, declared brokered permission. Returns pending, not granted. A human must use the OS approval gate or cos review; neither Settings GUI nor MCP can approve. Manifest/caller ceilings remain unchanged."},
+        "summary": {
+          "en": "Request restoration of a revoked, declared brokered permission. Returns pending, not granted. A human must use the OS approval gate or cos review; neither Settings GUI nor MCP can approve. Manifest/caller ceilings remain unchanged."
+        },
         "args": [
-          {"name": "app_id", "kind": "name", "required": true, "label": {"en": "Verified installed App id."}},
-          {"name": "permission_id", "kind": "text", "required": true, "label": {"en": "Exact permission_id returned by permissions_show."}},
-          {"name": "reason", "kind": "text", "required": true, "label": {"en": "Why restoration is needed; not an approval."}}
+          {
+            "name": "app_id",
+            "kind": "name",
+            "required": true,
+            "label": {
+              "en": "Verified installed App id."
+            }
+          },
+          {
+            "name": "permission_id",
+            "kind": "text",
+            "required": true,
+            "label": {
+              "en": "Exact permission_id returned by permissions_show."
+            }
+          },
+          {
+            "name": "reason",
+            "kind": "text",
+            "required": true,
+            "label": {
+              "en": "Why restoration is needed; not an approval."
+            }
+          }
         ],
-        "needs": [{"verb": "sys.permissions", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "manage"}}, "why": {"en": "Request trusted human restoration of this owner's declared App permission."}}]
+        "needs": [
+          {
+            "verb": "sys.permissions",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "manage"
+              }
+            },
+            "why": {
+              "en": "Request trusted human restoration of this owner's declared App permission."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Request restoration of a revoked, declared brokered permission. Returns pending, not granted. A human must use the OS approval gate or cos review; neither Settings GUI nor MCP can approve. Manifest/caller ceilings remain unchanged."
+            },
+            "recovery": "unknown",
+            "target_arg": "app_id"
+          }
+        ]
       },
       {
         "name": "settings.permissions_revoke",
-        "summary": {"en": "Revoke one declared brokered permission for this owner and target App. Invalidates that App's live daemon grants; restart/retry is required. Direct-resource permissions are rejected, never reported revoked."},
+        "summary": {
+          "en": "Revoke one declared brokered permission for this owner and target App. Invalidates that App's live daemon grants; restart/retry is required. Direct-resource permissions are rejected, never reported revoked."
+        },
         "args": [
-          {"name": "app_id", "kind": "name", "required": true, "label": {"en": "Verified installed App id."}},
-          {"name": "permission_id", "kind": "text", "required": true, "label": {"en": "Exact permission_id returned by permissions_show."}}
+          {
+            "name": "app_id",
+            "kind": "name",
+            "required": true,
+            "label": {
+              "en": "Verified installed App id."
+            }
+          },
+          {
+            "name": "permission_id",
+            "kind": "text",
+            "required": true,
+            "label": {
+              "en": "Exact permission_id returned by permissions_show."
+            }
+          }
         ],
-        "needs": [{"verb": "sys.permissions", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "manage"}}, "why": {"en": "Revoke only this owner's selected App permission, without a global owner/session wipe."}}]
+        "needs": [
+          {
+            "verb": "sys.permissions",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "manage"
+              }
+            },
+            "why": {
+              "en": "Revoke only this owner's selected App permission, without a global owner/session wipe."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Revoke one declared brokered permission for this owner and target App. Invalidates that App's live daemon grants; restart/retry is required. Direct-resource permissions are rejected, never reported revoked."
+            },
+            "recovery": "unknown",
+            "target_arg": "app_id"
+          }
+        ]
       },
       {
         "name": "settings.list_pages",
@@ -53,7 +202,16 @@
           "en": "List every settings page this build exposes, including its id, label, and hint."
         },
         "args": [],
-        "needs": []
+        "needs": [],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List every settings page this build exposes, including its id, label, and hint."
+            },
+            "recovery": "unknown"
+          }
+        ]
       },
       {
         "name": "settings.search",
@@ -79,7 +237,16 @@
             }
           }
         ],
-        "needs": []
+        "needs": [],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Case-insensitively search settings page ids, labels, and hints."
+            },
+            "recovery": "unknown"
+          }
+        ]
       },
       {
         "name": "settings.open",
@@ -109,6 +276,15 @@
             "why": {
               "en": "Open the native Settings application for the user."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Open Settings, optionally jumping directly to a page."
+            },
+            "recovery": "unknown"
           }
         ]
       }

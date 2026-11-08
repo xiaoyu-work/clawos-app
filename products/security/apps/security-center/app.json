@@ -37,6 +37,15 @@
               "en": "Read sensitive system-wide security configuration and events."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect all security evidence"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -57,6 +66,15 @@
             "why": {
               "en": "Read login, SSH, PAM, root-session, and sudo authentication events."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect authentication events"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -79,6 +97,15 @@
               "en": "Read effective sshd configuration and service state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect effective SSH security"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -99,6 +126,15 @@
             "why": {
               "en": "Read and validate sudoers rules and permissions."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect sudo policy"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -121,6 +157,15 @@
               "en": "Read mandatory-access-control and kernel trust state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect AppArmor, SELinux, Secure Boot, and lockdown"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -142,6 +187,15 @@
               "en": "Read process ownership for listening TCP and UDP sockets."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect listening ports and processes"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -162,6 +216,15 @@
             "why": {
               "en": "Read AppArmor/SELinux denials, audit, lockdown, module-signature, and network-security events."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect kernel security events"
+            },
+            "recovery": "unknown"
           }
         ]
       }

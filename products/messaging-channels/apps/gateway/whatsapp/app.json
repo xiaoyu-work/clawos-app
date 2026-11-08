@@ -78,6 +78,23 @@
             "en": "Remember the successful send so the agent can recall it later."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Send a message through this gateway"
+          },
+          "recovery": "unknown",
+          "target_arg": "recipient_phone"
+        },
+        {
+          "kind": "update",
+          "label": {
+            "en": "May record this App's successful result in its own Agent memory scope"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "status": {
@@ -98,6 +115,15 @@
           "why": {
             "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Show status for the OS-managed Whatsapp channel"
+          },
+          "recovery": "unknown"
         }
       ]
     },
@@ -120,6 +146,15 @@
             "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "update",
+          "label": {
+            "en": "Start the OS-managed Whatsapp channel"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "stop": {
@@ -140,6 +175,15 @@
           "why": {
             "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "update",
+          "label": {
+            "en": "Stop the OS-managed Whatsapp channel"
+          },
+          "recovery": "unknown"
         }
       ]
     },
@@ -181,6 +225,16 @@
           "why": {
             "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Reply once to an authenticated incoming message using its owner-bound receipt"
+          },
+          "recovery": "unknown",
+          "target_arg": "event_id"
         }
       ]
     }
@@ -264,6 +318,23 @@
             "kind": "text",
             "required": true
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Send a message through this gateway"
+            },
+            "recovery": "unknown",
+            "target_arg": "recipient_phone"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -284,6 +355,15 @@
             "why": {
               "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Show status for the OS-managed Whatsapp channel"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -306,6 +386,15 @@
               "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Start the OS-managed Whatsapp channel"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -326,6 +415,15 @@
             "why": {
               "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Stop the OS-managed Whatsapp channel"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -368,6 +466,16 @@
             "choices": [
               true
             ]
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Reply once to an authenticated incoming message using its owner-bound receipt"
+            },
+            "recovery": "unknown",
+            "target_arg": "event_id"
           }
         ]
       }

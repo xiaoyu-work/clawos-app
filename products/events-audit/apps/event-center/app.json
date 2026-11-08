@@ -37,6 +37,15 @@
               "en": "Read watcher status and active pidfd subscriptions."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect event-source health"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -73,6 +82,16 @@
               "en": "Read persistent system event records, including sensitive security/process context."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read recent system events"
+            },
+            "recovery": "unknown",
+            "target_arg": "source"
+          }
         ]
       },
       {
@@ -100,6 +119,15 @@
             "why": {
               "en": "Open a pidfd and emit a race-free event when the selected process exits."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Subscribe to one process exit"
+            },
+            "recovery": "unknown"
           }
         ]
       }
