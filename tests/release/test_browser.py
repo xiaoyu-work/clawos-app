@@ -27,6 +27,7 @@ HOST_COMMAND = '#!/bin/sh\nexec /usr/bin/python3 /usr/lib/cos/apps/browser-attac
 def browser_source(tmp_path, monkeypatch):
     source = tmp_path / "source/products/browser"
     shutil.copytree(ROOT / "products/browser", source, symlinks=True)
+    shutil.copytree(ROOT / "shared/web", tmp_path / "source/shared/web", symlinks=True)
     monkeypatch.setattr(release.stage, "ROOT", tmp_path / "source")
     return source
 

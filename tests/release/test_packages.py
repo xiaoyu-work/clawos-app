@@ -38,9 +38,10 @@ def test_all_identities_have_exactly_one_headless_or_desktop_package_owner():
             destination = agent if entry["variant"] == "agent" else desktop
             assert app_id not in destination
             destination[app_id] = entry["package"]
-    assert len(agent) == 63
+    assert len(agent) == 51
     assert len(desktop) == 12
     assert not set(agent).intersection(desktop)
+    assert len(set(agent) | set(desktop)) == 63
     assert desktop["cosmic-files"] == "claw-app-files-desktop"
     assert agent["db"] == agent["kv"] == "claw-cap-storage-sdk"
     headless = release.dependencies(release.packages_for("sets")[0], "1.0.0")

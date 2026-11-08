@@ -64,9 +64,10 @@ def main():
         if set(plan["selections"]).intersection({"files", "capability:document-engine"}):
             subprocess.run([sys.executable, "-m", "pip", "install",
                             "pymupdf", "python-docx", "openpyxl", "python-pptx"], check=True, env=environment)
-        # This is an ephemeral runner's nested process fixture, never an installed OS gate.
+        # Every release suite uses nested bwrap fixtures, including runs without a selection plan.
+        # This changes only the disposable runner, never an installed OS gate.
         setting = Path("/proc/sys/kernel/apparmor_restrict_unprivileged_userns")
-        if "notifications" in plan["selections"] and setting.exists():
+        if setting.exists():
             subprocess.run([*sudo, "sysctl", "-w", "kernel.apparmor_restrict_unprivileged_userns=0"], check=True)
 
 
