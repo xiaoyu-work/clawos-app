@@ -45,7 +45,7 @@ def test_stages_complete_native_source_separately_from_descriptor(tmp_path):
     native = load_local_module(ROOT / "tools/stage_native.py", "editor_native_stage")
     assert stage.stage("editor", tmp_path / "installed") == ["cosmic-edit"]
     installed = tmp_path / "installed/usr/lib/cos/apps/cosmic-edit"
-    assert {path.name for path in installed.iterdir()} == {"app.json"}
+    assert {path.name for path in installed.iterdir()} == {"app.json", "web", "web-ui.json"}
     assert (installed / "app.json").read_bytes() == MANIFEST.read_bytes()
     assert native.stage("editor", tmp_path / "native") == ["cosmic-edit"]
     staged = tmp_path / "native/cosmic-edit"

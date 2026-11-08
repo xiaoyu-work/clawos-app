@@ -74,6 +74,12 @@ def main():
         assert manifest.read_bytes() == (ROOT / "products/notifications/apps/cosmic-notifications/app.json").read_bytes()
         assert {str(path.relative_to(installed)) for path in installed.rglob("*") if path.is_file()} == {
             "usr/bin/cosmic-notifications", "usr/lib/cos/apps/cosmic-notifications/app.json",
+            "usr/lib/cos/apps/cosmic-notifications/web-ui.json",
+            "usr/lib/cos/apps/cosmic-notifications/web/index.html",
+            "usr/lib/cos/apps/cosmic-notifications/web/app.js",
+            "usr/lib/cos/apps/cosmic-notifications/web/shared/client.js",
+            "usr/lib/cos/apps/cosmic-notifications/web/shared/ui.js",
+            "usr/lib/cos/apps/cosmic-notifications/web/shared/ui.css",
         }
 
         listener = socket.socket(socket.AF_UNIX)

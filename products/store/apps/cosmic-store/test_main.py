@@ -28,5 +28,5 @@ def test_staging_keeps_pkg_and_store_independent(tmp_path):
     stage = load_local_module(ROOT / "tools/stage.py", "store_stage")
     assert set(stage.stage("store", tmp_path)) == {"pkg", "cosmic-store"}
     installed = tmp_path / "usr/lib/cos/apps"
-    assert {path.name for path in (installed / "cosmic-store").iterdir()} == {"app.json"}
+    assert {path.name for path in (installed / "cosmic-store").iterdir()} == {"app.json", "web", "web-ui.json"}
     assert (installed / "pkg/main.py").read_bytes() == (PRODUCT / "apps/pkg/main.py").read_bytes()

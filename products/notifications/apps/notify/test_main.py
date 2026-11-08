@@ -195,7 +195,9 @@ def test_staged_facade_is_complete_and_does_not_package_an_os_provider(tmp_path)
     stage = load_local_module(ROOT / "tools/stage.py", "notify_stage")
     assert stage.stage("notifications", tmp_path, ["notify"]) == ["notify"]
     installed = tmp_path / "usr/lib/cos/apps/notify"
-    assert {path.name for path in installed.iterdir()} == {"app.json", "server.py", "main.py", "client.py"}
+    assert {path.name for path in installed.iterdir()} == {
+        "app.json", "server.py", "main.py", "client.py", "web", "web-ui.json",
+    }
     for name in ("app.json", "server.py", "main.py", "client.py"):
         assert (installed / name).read_bytes() == (APP / name).read_bytes()
         assert (installed / name).stat().st_mode & 0o777 == 0o644
