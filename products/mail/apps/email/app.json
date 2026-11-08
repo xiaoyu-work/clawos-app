@@ -5,32 +5,32 @@
     "en": "Email"
   },
   "summary": {
-    "en": "Email — send, search, and manage email via SMTP or Gmail/Outlook providers"
+    "en": "Email over the owner's existing Thunderbird accounts, shared with its GUI."
   },
   "icon": "✉️",
   "runtime": "python",
   "objects": {
-    "gmail-draft": {
+    "thunderbird-message": {
       "label": {
-        "en": "Gmail draft"
+        "en": "Thunderbird message"
       },
       "summary": {
-        "en": "A saved Gmail draft; its ID is distinct from the draft message ID."
+        "en": "A profile/account/folder/RFC Message-ID reference; not a reusable session-local numeric id."
       },
       "resolve": {
-        "operation": "gmail_draft",
+        "operation": "native_message",
         "id_arg": "id"
       }
     },
-    "outlook-draft": {
+    "thunderbird-draft": {
       "label": {
-        "en": "Outlook draft"
+        "en": "Thunderbird draft"
       },
       "summary": {
-        "en": "A saved Outlook draft; resolution rejects sent messages."
+        "en": "A saved native draft whose mailbox may differ from its sender account; resolution checks current draft state."
       },
       "resolve": {
-        "operation": "outlook_draft",
+        "operation": "native_draft",
         "id_arg": "id"
       }
     },
@@ -45,30 +45,6 @@
         "operation": "attachment_file",
         "id_arg": "path"
       }
-    },
-    "gmail-message": {
-      "label": {
-        "en": "Gmail message"
-      },
-      "summary": {
-        "en": "A message in the owner's authorized Gmail account, addressed by its opaque provider ID."
-      },
-      "resolve": {
-        "operation": "gmail_message",
-        "id_arg": "id"
-      }
-    },
-    "outlook-message": {
-      "label": {
-        "en": "Outlook message"
-      },
-      "summary": {
-        "en": "A message in the owner's authorized Outlook account, addressed by its opaque provider ID."
-      },
-      "resolve": {
-        "operation": "outlook_message",
-        "id_arg": "id"
-      }
     }
   },
   "ai": {
@@ -81,186 +57,19 @@
     ]
   },
   "operations": {
-    "sync": {
+    "accounts": {
       "label": {
-        "en": "Incrementally publish new inbox message events without calling a model"
+        "en": "List the owner's existing Thunderbird accounts and sender identities"
       },
-      "args": [
-        {
-          "name": "provider",
-          "kind": "name",
-          "required": true,
-          "binding": "flag",
-          "choices": [
-            "gmail",
-            "outlook"
-          ]
-        },
-        {
-          "name": "reset",
-          "kind": "bool",
-          "binding": "flag",
-          "default": false
-        }
-      ],
+      "args": [],
       "needs": [
         {
-          "verb": "data.db.read",
+          "verb": "mail.accounts",
           "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "mail-sync"
-            }
+            "kind": "wild"
           },
           "why": {
-            "en": "Read only this App's mailbox continuation."
-          }
-        },
-        {
-          "verb": "data.db.write",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "mail-sync"
-            }
-          },
-          "why": {
-            "en": "Advance a durable mailbox continuation after event publication."
-          }
-        },
-        {
-          "verb": "ipc.publish",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "app:email"
-            }
-          },
-          "why": {
-            "en": "Publish reported new-message references in Mail's own event namespace."
-          }
-        },
-        {
-          "verb": "secret.read",
-          "scope": {
-            "kind": "from-arg-map",
-            "arg": "provider",
-            "values": {
-              "gmail": {
-                "kind": "name",
-                "value": "default/GOOGLE_ACCESS_TOKEN"
-              },
-              "outlook": {
-                "kind": "name",
-                "value": "default/MICROSOFT_ACCESS_TOKEN"
-              }
-            }
-          },
-          "why": {
-            "en": "Read only the selected mailbox credential."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "gmail.googleapis.com"
-            }
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "gmail"
-          },
-          "why": {
-            "en": "Read a bounded Gmail inbox history page."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "graph.microsoft.com"
-            }
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "outlook"
-          },
-          "why": {
-            "en": "Read a bounded Outlook inbox delta page."
-          }
-        }
-      ],
-      "effects": [
-        {
-          "kind": "update",
-          "label": {
-            "en": "Incrementally publish new inbox message events without calling a model"
-          },
-          "recovery": "unknown"
-        },
-        {
-          "kind": "external",
-          "label": {
-            "en": "May contact the explicitly selected remote provider"
-          },
-          "recovery": "unknown"
-        },
-        {
-          "kind": "create",
-          "label": {
-            "en": "May publish new inbox message references after a non-replaying baseline"
-          },
-          "recovery": "unknown"
-        }
-      ]
-    },
-    "gmail_draft": {
-      "label": {
-        "en": "Read a saved Gmail draft and its review fingerprint"
-      },
-      "args": [
-        {
-          "name": "id",
-          "kind": "name",
-          "required": true,
-          "binding": "flag"
-        }
-      ],
-      "needs": [
-        {
-          "verb": "secret.read",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "default/GOOGLE_ACCESS_TOKEN"
-            }
-          },
-          "why": {
-            "en": "Read the owner's Gmail draft credential."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "gmail.googleapis.com"
-            }
-          },
-          "why": {
-            "en": "Read only the requested Gmail draft."
+            "en": "List configured account metadata, not messages or credentials."
           }
         }
       ],
@@ -268,27 +77,33 @@
         {
           "kind": "read",
           "label": {
-            "en": "Read a saved Gmail draft and its review fingerprint"
+            "en": "Read the owner's configured Thunderbird account metadata."
           },
-          "recovery": "unknown",
-          "target_arg": "id"
+          "recovery": "unknown"
+        },
+        {
+          "kind": "execute",
+          "label": {
+            "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+          },
+          "recovery": "unknown"
         },
         {
           "kind": "external",
           "label": {
-            "en": "May contact the explicitly selected remote provider"
+            "en": "May contact the account's existing mail server through Thunderbird."
           },
           "recovery": "unknown"
         }
       ]
     },
-    "outlook_draft": {
+    "folders": {
       "label": {
-        "en": "Read a saved Outlook draft and its review fingerprint"
+        "en": "List folders in an explicitly selected Thunderbird account"
       },
       "args": [
         {
-          "name": "id",
+          "name": "account",
           "kind": "name",
           "required": true,
           "binding": "flag"
@@ -296,409 +111,13 @@
       ],
       "needs": [
         {
-          "verb": "secret.read",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "default/MICROSOFT_ACCESS_TOKEN"
-            }
-          },
-          "why": {
-            "en": "Read the owner's Outlook draft credential."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "graph.microsoft.com"
-            }
-          },
-          "why": {
-            "en": "Read only the requested Outlook draft."
-          }
-        }
-      ],
-      "effects": [
-        {
-          "kind": "read",
-          "label": {
-            "en": "Read a saved Outlook draft and its review fingerprint"
-          },
-          "recovery": "unknown",
-          "target_arg": "id"
-        },
-        {
-          "kind": "external",
-          "label": {
-            "en": "May contact the explicitly selected remote provider"
-          },
-          "recovery": "unknown"
-        }
-      ]
-    },
-    "draft_save": {
-      "label": {
-        "en": "Create or update a provider draft without sending it"
-      },
-      "args": [
-        {
-          "name": "request-id",
-          "kind": "name",
-          "binding": "flag"
-        },
-        {
-          "name": "provider",
-          "kind": "name",
-          "required": true,
-          "binding": "flag",
-          "choices": [
-            "gmail",
-            "outlook"
-          ]
-        },
-        {
-          "name": "id",
-          "kind": "name",
-          "binding": "flag"
-        },
-        {
-          "name": "to",
-          "kind": "text",
-          "required": true,
-          "binding": "flag"
-        },
-        {
-          "name": "subject",
-          "kind": "text",
-          "required": true,
-          "binding": "flag"
-        },
-        {
-          "name": "body",
-          "kind": "text",
-          "required": true,
-          "binding": "flag"
-        },
-        {
-          "name": "cc",
-          "kind": "text",
-          "binding": "flag"
-        }
-      ],
-      "needs": [
-        {
-          "verb": "ipc.publish",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "app:email"
-            }
-          },
-          "why": {
-            "en": "Publish Mail's owner-bound reported operation event."
-          }
-        },
-        {
-          "verb": "data.db.read",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "mail-requests"
-            }
-          },
-          "when": {
-            "kind": "arg-present",
-            "arg": "request-id"
-          },
-          "why": {
-            "en": "Read this owner's existing Mail submission receipt."
-          }
-        },
-        {
-          "verb": "data.db.write",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "mail-requests"
-            }
-          },
-          "when": {
-            "kind": "arg-present",
-            "arg": "request-id"
-          },
-          "why": {
-            "en": "Durably bracket this Mail submission without replaying uncertain effects."
-          }
-        },
-        {
-          "verb": "secret.read",
-          "scope": {
-            "kind": "from-arg-map",
-            "arg": "provider",
-            "values": {
-              "gmail": {
-                "kind": "name",
-                "value": "default/GOOGLE_ACCESS_TOKEN"
-              },
-              "outlook": {
-                "kind": "name",
-                "value": "default/MICROSOFT_ACCESS_TOKEN"
-              }
-            }
-          },
-          "why": {
-            "en": "Use only the selected mailbox's draft credential."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "gmail.googleapis.com"
-            }
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "gmail"
-          },
-          "why": {
-            "en": "Save or update the Gmail draft; never send it."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "graph.microsoft.com"
-            }
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "outlook"
-          },
-          "why": {
-            "en": "Save or update the Outlook draft; never send it."
-          }
-        }
-      ],
-      "effects": [
-        {
-          "kind": "create",
-          "label": {
-            "en": "Create or update a provider draft without sending it"
-          },
-          "recovery": "unknown",
-          "target_arg": "id"
-        },
-        {
-          "kind": "external",
-          "label": {
-            "en": "May contact the explicitly selected remote provider"
-          },
-          "recovery": "unknown"
-        },
-        {
-          "kind": "update",
-          "label": {
-            "en": "May update the explicitly selected existing provider draft"
-          },
-          "recovery": "unknown",
-          "target_arg": "id"
-        }
-      ]
-    },
-    "draft_send": {
-      "label": {
-        "en": "Explicitly send an unchanged reviewed provider draft"
-      },
-      "args": [
-        {
-          "name": "request-id",
-          "kind": "name",
-          "binding": "flag"
-        },
-        {
-          "name": "provider",
-          "kind": "name",
-          "required": true,
-          "binding": "flag",
-          "choices": [
-            "gmail",
-            "outlook"
-          ]
-        },
-        {
-          "name": "id",
-          "kind": "name",
-          "required": true,
-          "binding": "flag"
-        },
-        {
-          "name": "review",
-          "kind": "name",
-          "required": true,
-          "binding": "flag"
-        },
-        {
-          "name": "confirm",
-          "kind": "bool",
-          "required": true,
-          "binding": "flag",
-          "choices": [
-            true
-          ]
-        }
-      ],
-      "needs": [
-        {
-          "verb": "ipc.publish",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "app:email"
-            }
-          },
-          "why": {
-            "en": "Publish Mail's owner-bound reported operation event."
-          }
-        },
-        {
-          "verb": "data.db.read",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "mail-requests"
-            }
-          },
-          "when": {
-            "kind": "arg-present",
-            "arg": "request-id"
-          },
-          "why": {
-            "en": "Read this owner's existing Mail submission receipt."
-          }
-        },
-        {
-          "verb": "data.db.write",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "mail-requests"
-            }
-          },
-          "when": {
-            "kind": "arg-present",
-            "arg": "request-id"
-          },
-          "why": {
-            "en": "Durably bracket this Mail submission without replaying uncertain effects."
-          }
-        },
-        {
-          "verb": "secret.read",
-          "scope": {
-            "kind": "from-arg-map",
-            "arg": "provider",
-            "values": {
-              "gmail": {
-                "kind": "name",
-                "value": "default/GOOGLE_ACCESS_TOKEN"
-              },
-              "outlook": {
-                "kind": "name",
-                "value": "default/MICROSOFT_ACCESS_TOKEN"
-              }
-            }
-          },
-          "why": {
-            "en": "Use only the selected mailbox's reviewed draft credential."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "gmail.googleapis.com"
-            }
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "gmail"
-          },
-          "why": {
-            "en": "Read the current draft and explicitly submit it through Gmail."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "graph.microsoft.com"
-            }
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "outlook"
-          },
-          "why": {
-            "en": "Read the current draft and explicitly submit it through Outlook."
-          }
-        }
-      ],
-      "effects": [
-        {
-          "kind": "external",
-          "label": {
-            "en": "Explicitly send an unchanged reviewed provider draft"
-          },
-          "recovery": "unknown",
-          "target_arg": "id"
-        }
-      ]
-    },
-    "attachment_file": {
-      "label": {
-        "en": "Read metadata for a downloaded Mail attachment file"
-      },
-      "args": [
-        {
-          "name": "path",
-          "kind": "path",
-          "required": true,
-          "binding": "flag"
-        }
-      ],
-      "needs": [
-        {
-          "verb": "fs.meta",
+          "verb": "mail.read",
           "scope": {
             "kind": "from-arg",
-            "arg": "path"
+            "arg": "account"
           },
           "why": {
-            "en": "Inspect only the requested attachment file."
+            "en": "Read only the explicitly selected Thunderbird mailbox."
           }
         }
       ],
@@ -706,581 +125,21 @@
         {
           "kind": "read",
           "label": {
-            "en": "Read metadata for a downloaded Mail attachment file"
-          },
-          "recovery": "unknown",
-          "target_arg": "path"
-        }
-      ]
-    },
-    "attachment_download": {
-      "label": {
-        "en": "Download one attachment to an explicit new private file"
-      },
-      "args": [
-        {
-          "name": "provider",
-          "kind": "name",
-          "required": true,
-          "binding": "flag",
-          "choices": [
-            "gmail",
-            "outlook"
-          ]
-        },
-        {
-          "name": "id",
-          "kind": "name",
-          "required": true,
-          "binding": "flag"
-        },
-        {
-          "name": "attachment",
-          "kind": "name",
-          "required": true,
-          "binding": "flag"
-        },
-        {
-          "name": "output",
-          "kind": "path",
-          "required": true,
-          "binding": "flag"
-        },
-        {
-          "name": "max-bytes",
-          "kind": "integer",
-          "binding": "flag",
-          "default": 16777216
-        }
-      ],
-      "needs": [
-        {
-          "verb": "ipc.publish",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "app:email"
-            }
-          },
-          "why": {
-            "en": "Publish Mail's owner-bound reported operation event."
-          }
-        },
-        {
-          "verb": "fs.write",
-          "scope": {
-            "kind": "from-arg",
-            "arg": "output"
-          },
-          "why": {
-            "en": "Create only the explicitly selected attachment output."
-          }
-        },
-        {
-          "verb": "secret.read",
-          "scope": {
-            "kind": "from-arg-map",
-            "arg": "provider",
-            "values": {
-              "gmail": {
-                "kind": "name",
-                "value": "default/GOOGLE_ACCESS_TOKEN"
-              },
-              "outlook": {
-                "kind": "name",
-                "value": "default/MICROSOFT_ACCESS_TOKEN"
-              }
-            }
-          },
-          "why": {
-            "en": "Read only the selected mailbox credential."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "gmail.googleapis.com"
-            }
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "gmail"
-          },
-          "why": {
-            "en": "Download the requested Gmail attachment."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "graph.microsoft.com"
-            }
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "outlook"
-          },
-          "why": {
-            "en": "Download the requested Outlook attachment."
-          }
-        }
-      ],
-      "effects": [
-        {
-          "kind": "create",
-          "label": {
-            "en": "Download one attachment to an explicit new private file"
-          },
-          "recovery": "unknown",
-          "target_arg": "output"
-        },
-        {
-          "kind": "external",
-          "label": {
-            "en": "May contact the explicitly selected remote provider"
-          },
-          "recovery": "unknown"
-        }
-      ]
-    },
-    "gmail_message": {
-      "label": {
-        "en": "Read a Gmail message object by its provider ID"
-      },
-      "args": [
-        {
-          "name": "id",
-          "kind": "name",
-          "required": true,
-          "binding": "flag"
-        }
-      ],
-      "needs": [
-        {
-          "verb": "secret.read",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "default/GOOGLE_ACCESS_TOKEN"
-            }
-          },
-          "why": {
-            "en": "Read only the owner's Gmail credential."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "gmail.googleapis.com"
-            }
-          },
-          "why": {
-            "en": "Read the requested message through the Gmail API."
-          }
-        }
-      ],
-      "effects": [
-        {
-          "kind": "read",
-          "label": {
-            "en": "Read a Gmail message object by its provider ID"
-          },
-          "recovery": "unknown",
-          "target_arg": "id"
-        },
-        {
-          "kind": "external",
-          "label": {
-            "en": "May contact the explicitly selected remote provider"
-          },
-          "recovery": "unknown"
-        }
-      ]
-    },
-    "outlook_message": {
-      "label": {
-        "en": "Read an Outlook message object by its provider ID"
-      },
-      "args": [
-        {
-          "name": "id",
-          "kind": "name",
-          "required": true,
-          "binding": "flag"
-        }
-      ],
-      "needs": [
-        {
-          "verb": "secret.read",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "default/MICROSOFT_ACCESS_TOKEN"
-            }
-          },
-          "why": {
-            "en": "Read only the owner's Outlook credential."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "graph.microsoft.com"
-            }
-          },
-          "why": {
-            "en": "Read the requested message through the Outlook API."
-          }
-        }
-      ],
-      "effects": [
-        {
-          "kind": "read",
-          "label": {
-            "en": "Read an Outlook message object by its provider ID"
-          },
-          "recovery": "unknown",
-          "target_arg": "id"
-        },
-        {
-          "kind": "external",
-          "label": {
-            "en": "May contact the explicitly selected remote provider"
-          },
-          "recovery": "unknown"
-        }
-      ]
-    },
-    "send": {
-      "label": {
-        "en": "Send an email (--to, --subject, --body, --provider smtp|gmail|outlook; SMTP requires --host host:port)"
-      },
-      "args": [
-        {
-          "name": "request-id",
-          "kind": "name",
-          "binding": "flag"
-        },
-        {
-          "name": "provider",
-          "kind": "name",
-          "required": true,
-          "binding": "flag",
-          "choices": [
-            "smtp",
-            "gmail",
-            "outlook"
-          ]
-        },
-        {
-          "name": "host",
-          "kind": "host",
-          "label": {
-            "en": "SMTP endpoint with an explicit port: mail.example.com:587 (STARTTLS) or mail.example.com:465 (TLS)"
-          },
-          "required": false,
-          "binding": "flag",
-          "required_when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "smtp"
-          }
-        },
-        {
-          "name": "to",
-          "kind": "text",
-          "required": true,
-          "binding": "flag"
-        },
-        {
-          "name": "subject",
-          "kind": "text",
-          "required": true,
-          "binding": "flag"
-        },
-        {
-          "name": "body",
-          "kind": "text",
-          "required": true,
-          "binding": "flag"
-        },
-        {
-          "name": "cc",
-          "kind": "text",
-          "required": false,
-          "binding": "flag"
-        }
-      ],
-      "needs": [
-        {
-          "verb": "ipc.publish",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "app:email"
-            }
-          },
-          "why": {
-            "en": "Publish Mail's owner-bound reported operation event."
-          }
-        },
-        {
-          "verb": "data.db.read",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "mail-requests"
-            }
-          },
-          "when": {
-            "kind": "arg-present",
-            "arg": "request-id"
-          },
-          "why": {
-            "en": "Read this owner's existing Mail submission receipt."
-          }
-        },
-        {
-          "verb": "data.db.write",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "name",
-              "value": "mail-requests"
-            }
-          },
-          "when": {
-            "kind": "arg-present",
-            "arg": "request-id"
-          },
-          "why": {
-            "en": "Durably bracket this Mail submission without replaying uncertain effects."
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "from-arg",
-            "arg": "host"
-          },
-          "why": {
-            "en": "Connect only to the explicit SMTP host and port selected for this message."
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "smtp"
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "gmail.googleapis.com"
-            }
-          },
-          "why": {
-            "en": "Open a network connection to the SMTP server or provider API to deliver the message."
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "gmail"
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "graph.microsoft.com"
-            }
-          },
-          "why": {
-            "en": "Open a network connection to the SMTP server or provider API to deliver the message."
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "outlook"
-          }
-        },
-        {
-          "verb": "secret.read",
-          "scope": {
-            "kind": "from-arg-map",
-            "arg": "provider",
-            "values": {
-              "smtp": {
-                "kind": "name",
-                "value": "default/SMTP_PASSWORD"
-              },
-              "gmail": {
-                "kind": "name",
-                "value": "default/GOOGLE_ACCESS_TOKEN"
-              },
-              "outlook": {
-                "kind": "name",
-                "value": "default/MICROSOFT_ACCESS_TOKEN"
-              }
-            }
-          },
-          "why": {
-            "en": "Read only the credential for the provider selected before dispatch."
-          }
-        },
-        {
-          "verb": "memory.write",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "self-ref",
-              "value": "email"
-            }
-          },
-          "why": {
-            "en": "Remember the sent message so the agent can recall it later."
-          }
-        }
-      ],
-      "effects": [
-        {
-          "kind": "external",
-          "label": {
-            "en": "Send an email (--to, --subject, --body, --provider smtp|gmail|outlook; SMTP requires --host host:port)"
+            "en": "Read folders in the selected mailbox."
           },
           "recovery": "unknown"
         },
         {
-          "kind": "update",
+          "kind": "execute",
           "label": {
-            "en": "May record this App's successful result in its own Agent memory scope"
-          },
-          "recovery": "unknown"
-        }
-      ]
-    },
-    "search": {
-      "label": {
-        "en": "Search emails (--query, --max-results, --provider gmail|outlook)"
-      },
-      "args": [
-        {
-          "name": "provider",
-          "kind": "name",
-          "required": true,
-          "binding": "flag",
-          "choices": [
-            "gmail",
-            "outlook"
-          ]
-        },
-        {
-          "name": "query",
-          "kind": "text",
-          "required": true,
-          "binding": "flag"
-        },
-        {
-          "name": "max-results",
-          "kind": "integer",
-          "required": false,
-          "binding": "flag",
-          "default": 10
-        }
-      ],
-      "needs": [
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "gmail.googleapis.com"
-            }
-          },
-          "why": {
-            "en": "Call the provider's API to search your mailbox."
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "gmail"
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "graph.microsoft.com"
-            }
-          },
-          "why": {
-            "en": "Call the provider's API to search your mailbox."
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "outlook"
-          }
-        },
-        {
-          "verb": "secret.read",
-          "scope": {
-            "kind": "from-arg-map",
-            "arg": "provider",
-            "values": {
-              "gmail": {
-                "kind": "name",
-                "value": "default/GOOGLE_ACCESS_TOKEN"
-              },
-              "outlook": {
-                "kind": "name",
-                "value": "default/MICROSOFT_ACCESS_TOKEN"
-              }
-            }
-          },
-          "why": {
-            "en": "Read only the credential for the provider selected before dispatch."
-          }
-        }
-      ],
-      "effects": [
-        {
-          "kind": "read",
-          "label": {
-            "en": "Search emails (--query, --max-results, --provider gmail|outlook)"
+            "en": "May start the authenticated owner's Thunderbird through the OS service manager."
           },
           "recovery": "unknown"
         },
         {
           "kind": "external",
           "label": {
-            "en": "May contact the explicitly selected remote provider"
+            "en": "May contact the account's existing mail server through Thunderbird."
           },
           "recovery": "unknown"
         }
@@ -1288,18 +147,20 @@
     },
     "list": {
       "label": {
-        "en": "List recent emails (--max-results, --unread, --provider gmail|outlook)"
+        "en": "List messages from the selected Thunderbird inbox or folder"
       },
       "args": [
         {
-          "name": "provider",
+          "name": "account",
           "kind": "name",
           "required": true,
-          "binding": "flag",
-          "choices": [
-            "gmail",
-            "outlook"
-          ]
+          "binding": "flag"
+        },
+        {
+          "name": "folder",
+          "kind": "text",
+          "required": false,
+          "binding": "flag"
         },
         {
           "name": "max-results",
@@ -1318,59 +179,13 @@
       ],
       "needs": [
         {
-          "verb": "net.dial",
+          "verb": "mail.read",
           "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "gmail.googleapis.com"
-            }
+            "kind": "from-arg",
+            "arg": "account"
           },
           "why": {
-            "en": "Call the provider's API to list recent messages."
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "gmail"
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "graph.microsoft.com"
-            }
-          },
-          "why": {
-            "en": "Call the provider's API to list recent messages."
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "outlook"
-          }
-        },
-        {
-          "verb": "secret.read",
-          "scope": {
-            "kind": "from-arg-map",
-            "arg": "provider",
-            "values": {
-              "gmail": {
-                "kind": "name",
-                "value": "default/GOOGLE_ACCESS_TOKEN"
-              },
-              "outlook": {
-                "kind": "name",
-                "value": "default/MICROSOFT_ACCESS_TOKEN"
-              }
-            }
-          },
-          "why": {
-            "en": "Read only the credential for the provider selected before dispatch."
+            "en": "Read only the explicitly selected Thunderbird mailbox."
           }
         }
       ],
@@ -1378,14 +193,88 @@
         {
           "kind": "read",
           "label": {
-            "en": "List recent emails (--max-results, --unread, --provider gmail|outlook)"
+            "en": "Read message metadata in the selected mailbox."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "execute",
+          "label": {
+            "en": "May start the authenticated owner's Thunderbird through the OS service manager."
           },
           "recovery": "unknown"
         },
         {
           "kind": "external",
           "label": {
-            "en": "May contact the explicitly selected remote provider"
+            "en": "May contact the account's existing mail server through Thunderbird."
+          },
+          "recovery": "unknown"
+        }
+      ]
+    },
+    "search": {
+      "label": {
+        "en": "Search Thunderbird mail text in one explicitly selected account"
+      },
+      "args": [
+        {
+          "name": "account",
+          "kind": "name",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "query",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "folder",
+          "kind": "text",
+          "required": false,
+          "binding": "flag"
+        },
+        {
+          "name": "max-results",
+          "kind": "integer",
+          "required": false,
+          "binding": "flag",
+          "default": 10
+        }
+      ],
+      "needs": [
+        {
+          "verb": "mail.read",
+          "scope": {
+            "kind": "from-arg",
+            "arg": "account"
+          },
+          "why": {
+            "en": "Read only the explicitly selected Thunderbird mailbox."
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Search message contents in the selected mailbox."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "execute",
+          "label": {
+            "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the account's existing mail server through Thunderbird."
           },
           "recovery": "unknown"
         }
@@ -1393,18 +282,14 @@
     },
     "read": {
       "label": {
-        "en": "Read a specific email by ID (--id, --provider gmail|outlook)"
+        "en": "Read a stable Thunderbird message reference in its explicit account"
       },
       "args": [
         {
-          "name": "provider",
+          "name": "account",
           "kind": "name",
           "required": true,
-          "binding": "flag",
-          "choices": [
-            "gmail",
-            "outlook"
-          ]
+          "binding": "flag"
         },
         {
           "name": "id",
@@ -1415,59 +300,13 @@
       ],
       "needs": [
         {
-          "verb": "net.dial",
+          "verb": "mail.read",
           "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "gmail.googleapis.com"
-            }
+            "kind": "from-arg",
+            "arg": "account"
           },
           "why": {
-            "en": "Call the provider's API to fetch the message body."
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "gmail"
-          }
-        },
-        {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "graph.microsoft.com"
-            }
-          },
-          "why": {
-            "en": "Call the provider's API to fetch the message body."
-          },
-          "when": {
-            "kind": "arg-equals",
-            "arg": "provider",
-            "value": "outlook"
-          }
-        },
-        {
-          "verb": "secret.read",
-          "scope": {
-            "kind": "from-arg-map",
-            "arg": "provider",
-            "values": {
-              "gmail": {
-                "kind": "name",
-                "value": "default/GOOGLE_ACCESS_TOKEN"
-              },
-              "outlook": {
-                "kind": "name",
-                "value": "default/MICROSOFT_ACCESS_TOKEN"
-              }
-            }
-          },
-          "why": {
-            "en": "Read only the credential for the provider selected before dispatch."
+            "en": "Read only the explicitly selected Thunderbird mailbox."
           }
         }
       ],
@@ -1475,14 +314,829 @@
         {
           "kind": "read",
           "label": {
-            "en": "Read a specific email by ID (--id, --provider gmail|outlook)"
+            "en": "Read the selected message and attachment metadata."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "execute",
+          "label": {
+            "en": "May start the authenticated owner's Thunderbird through the OS service manager."
           },
           "recovery": "unknown"
         },
         {
           "kind": "external",
           "label": {
-            "en": "May contact the explicitly selected remote provider"
+            "en": "May contact the account's existing mail server through Thunderbird."
+          },
+          "recovery": "unknown"
+        }
+      ]
+    },
+    "native_message": {
+      "label": {
+        "en": "Resolve a stable Thunderbird message reference using inherited mailbox rights"
+      },
+      "args": [
+        {
+          "name": "id",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        }
+      ],
+      "needs": [
+        {
+          "verb": "mail.read",
+          "scope": {
+            "kind": "wild"
+          },
+          "why": {
+            "en": "Inherit existing mailbox rights; the OS checks the account encoded in the reference."
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Resolve the message in its referenced mailbox; the account is runtime-derived."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "execute",
+          "label": {
+            "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the account's existing mail server through Thunderbird."
+          },
+          "recovery": "unknown"
+        }
+      ]
+    },
+    "native_draft": {
+      "label": {
+        "en": "Read a saved Thunderbird draft and its complete review fingerprint"
+      },
+      "args": [
+        {
+          "name": "id",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        }
+      ],
+      "needs": [
+        {
+          "verb": "mail.read",
+          "scope": {
+            "kind": "wild"
+          },
+          "why": {
+            "en": "Inherit existing mailbox rights; the OS checks the draft's referenced account."
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Read draft recipients, body and attachment fingerprints; the mailbox is runtime-derived."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "execute",
+          "label": {
+            "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the account's existing mail server through Thunderbird."
+          },
+          "recovery": "unknown"
+        }
+      ]
+    },
+    "send": {
+      "label": {
+        "en": "Send mail through the explicitly selected Thunderbird account"
+      },
+      "args": [
+        {
+          "name": "request-id",
+          "kind": "name",
+          "required": false,
+          "binding": "flag"
+        },
+        {
+          "name": "account",
+          "kind": "name",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "to",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "subject",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "body",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "cc",
+          "kind": "text",
+          "required": false,
+          "binding": "flag"
+        }
+      ],
+      "needs": [
+        {
+          "verb": "mail.send",
+          "scope": {
+            "kind": "from-arg",
+            "arg": "account"
+          },
+          "why": {
+            "en": "Send through this explicitly selected Thunderbird sender account."
+          }
+        },
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "app:email"
+            }
+          },
+          "why": {
+            "en": "Publish reported Mail effects in this App's own namespace."
+          }
+        },
+        {
+          "verb": "data.db.read",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "mail-requests"
+            }
+          },
+          "why": {
+            "en": "Read this App's retained submission receipt."
+          },
+          "when": {
+            "kind": "arg-present",
+            "arg": "request-id"
+          }
+        },
+        {
+          "verb": "data.db.write",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "mail-requests"
+            }
+          },
+          "why": {
+            "en": "Retain this App's submission result without automatic resubmission."
+          },
+          "when": {
+            "kind": "arg-present",
+            "arg": "request-id"
+          }
+        },
+        {
+          "verb": "memory.write",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "self-ref",
+              "value": "email"
+            }
+          },
+          "why": {
+            "en": "Record a sent-message summary in this App's own memory namespace."
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "create",
+          "label": {
+            "en": "Submit a new message and report the returned send outcome."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "execute",
+          "label": {
+            "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the account's existing mail server through Thunderbird."
+          },
+          "recovery": "unknown"
+        }
+      ]
+    },
+    "draft_save": {
+      "label": {
+        "en": "Save a real Thunderbird draft without sending; replacing requires its source account"
+      },
+      "args": [
+        {
+          "name": "request-id",
+          "kind": "name",
+          "required": false,
+          "binding": "flag"
+        },
+        {
+          "name": "account",
+          "kind": "name",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "id",
+          "kind": "text",
+          "required": false,
+          "binding": "flag"
+        },
+        {
+          "name": "source-account",
+          "kind": "name",
+          "required": false,
+          "required_when": {
+            "kind": "arg-present",
+            "arg": "id"
+          },
+          "binding": "flag"
+        },
+        {
+          "name": "to",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "subject",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "body",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "cc",
+          "kind": "text",
+          "required": false,
+          "binding": "flag"
+        }
+      ],
+      "needs": [
+        {
+          "verb": "mail.draft",
+          "scope": {
+            "kind": "from-arg",
+            "arg": "account"
+          },
+          "why": {
+            "en": "Save or replace drafts in the explicitly selected account."
+          }
+        },
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "app:email"
+            }
+          },
+          "why": {
+            "en": "Publish reported Mail effects in this App's own namespace."
+          }
+        },
+        {
+          "verb": "data.db.read",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "mail-requests"
+            }
+          },
+          "why": {
+            "en": "Read this App's retained submission receipt."
+          },
+          "when": {
+            "kind": "arg-present",
+            "arg": "request-id"
+          }
+        },
+        {
+          "verb": "data.db.write",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "mail-requests"
+            }
+          },
+          "why": {
+            "en": "Retain this App's submission result without automatic resubmission."
+          },
+          "when": {
+            "kind": "arg-present",
+            "arg": "request-id"
+          }
+        },
+        {
+          "verb": "mail.read",
+          "scope": {
+            "kind": "from-arg",
+            "arg": "source-account"
+          },
+          "why": {
+            "en": "Read the existing draft only in its declared source mailbox."
+          },
+          "when": {
+            "kind": "arg-present",
+            "arg": "id"
+          }
+        },
+        {
+          "verb": "mail.draft",
+          "scope": {
+            "kind": "from-arg",
+            "arg": "source-account"
+          },
+          "why": {
+            "en": "Replace the old draft only in its declared source mailbox."
+          },
+          "when": {
+            "kind": "arg-present",
+            "arg": "id"
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "create",
+          "label": {
+            "en": "Save a new draft in the sender account's configured Drafts folder."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "delete",
+          "label": {
+            "en": "When replacing, remove only the unchanged source draft after successful saving."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "execute",
+          "label": {
+            "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the account's existing mail server through Thunderbird."
+          },
+          "recovery": "unknown"
+        }
+      ]
+    },
+    "draft_send": {
+      "label": {
+        "en": "Send the reviewed Thunderbird draft using an explicit sender account and confirmation"
+      },
+      "args": [
+        {
+          "name": "request-id",
+          "kind": "name",
+          "required": false,
+          "binding": "flag"
+        },
+        {
+          "name": "account",
+          "kind": "name",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "id",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "sender-account",
+          "kind": "name",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "review",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "confirm",
+          "kind": "bool",
+          "required": true,
+          "choices": [
+            true
+          ],
+          "binding": "flag"
+        }
+      ],
+      "needs": [
+        {
+          "verb": "mail.read",
+          "scope": {
+            "kind": "from-arg",
+            "arg": "account"
+          },
+          "why": {
+            "en": "Read only the explicitly selected Thunderbird mailbox."
+          }
+        },
+        {
+          "verb": "mail.draft",
+          "scope": {
+            "kind": "from-arg",
+            "arg": "account"
+          },
+          "why": {
+            "en": "Save or replace drafts in the explicitly selected account."
+          }
+        },
+        {
+          "verb": "mail.send",
+          "scope": {
+            "kind": "from-arg",
+            "arg": "sender-account"
+          },
+          "why": {
+            "en": "Send only through the explicitly selected sender account."
+          }
+        },
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "app:email"
+            }
+          },
+          "why": {
+            "en": "Publish reported Mail effects in this App's own namespace."
+          }
+        },
+        {
+          "verb": "data.db.read",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "mail-requests"
+            }
+          },
+          "why": {
+            "en": "Read this App's retained submission receipt."
+          },
+          "when": {
+            "kind": "arg-present",
+            "arg": "request-id"
+          }
+        },
+        {
+          "verb": "data.db.write",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "mail-requests"
+            }
+          },
+          "why": {
+            "en": "Retain this App's submission result without automatic resubmission."
+          },
+          "when": {
+            "kind": "arg-present",
+            "arg": "request-id"
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Submit the captured, reviewed message through Thunderbird."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "delete",
+          "label": {
+            "en": "Remove only the unchanged source draft after successful sending."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "execute",
+          "label": {
+            "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the account's existing mail server through Thunderbird."
+          },
+          "recovery": "unknown"
+        }
+      ]
+    },
+    "attachment_download": {
+      "label": {
+        "en": "Save a native Thunderbird MIME attachment to an explicitly authorized new file"
+      },
+      "args": [
+        {
+          "name": "account",
+          "kind": "name",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "id",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "attachment",
+          "kind": "name",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "output",
+          "kind": "path",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "max-bytes",
+          "kind": "integer",
+          "required": false,
+          "binding": "flag",
+          "default": 16777216
+        }
+      ],
+      "needs": [
+        {
+          "verb": "mail.read",
+          "scope": {
+            "kind": "from-arg",
+            "arg": "account"
+          },
+          "why": {
+            "en": "Read only the explicitly selected Thunderbird mailbox."
+          }
+        },
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "app:email"
+            }
+          },
+          "why": {
+            "en": "Publish reported Mail effects in this App's own namespace."
+          }
+        },
+        {
+          "verb": "fs.write",
+          "scope": {
+            "kind": "from-arg",
+            "arg": "output"
+          },
+          "why": {
+            "en": "Create only the exact canonical new attachment output."
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Read only the selected message's MIME attachment."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "create",
+          "label": {
+            "en": "Persist the attachment without overwriting an existing file."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "execute",
+          "label": {
+            "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the account's existing mail server through Thunderbird."
+          },
+          "recovery": "unknown"
+        }
+      ]
+    },
+    "attachment_file": {
+      "label": {
+        "en": "Resolve metadata for an explicitly authorized downloaded attachment path"
+      },
+      "args": [
+        {
+          "name": "path",
+          "kind": "path",
+          "required": true,
+          "binding": "flag"
+        }
+      ],
+      "needs": [
+        {
+          "verb": "fs.meta",
+          "scope": {
+            "kind": "from-arg",
+            "arg": "path"
+          },
+          "why": {
+            "en": "Read metadata only for the exact attachment path."
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Read file metadata; the path does not prove mail origin."
+          },
+          "recovery": "unknown"
+        }
+      ]
+    },
+    "sync": {
+      "label": {
+        "en": "Publish new Thunderbird inbox message references without calling a model"
+      },
+      "args": [
+        {
+          "name": "account",
+          "kind": "name",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "reset",
+          "kind": "bool",
+          "required": false,
+          "binding": "flag",
+          "default": false
+        }
+      ],
+      "needs": [
+        {
+          "verb": "mail.read",
+          "scope": {
+            "kind": "from-arg",
+            "arg": "account"
+          },
+          "why": {
+            "en": "Read only the explicitly selected Thunderbird mailbox."
+          }
+        },
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "app:email"
+            }
+          },
+          "why": {
+            "en": "Publish reported Mail effects in this App's own namespace."
+          }
+        },
+        {
+          "verb": "data.db.read",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "mail-sync"
+            }
+          },
+          "why": {
+            "en": "Read this App's continuation for the selected mailbox."
+          }
+        },
+        {
+          "verb": "data.db.write",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "mail-sync"
+            }
+          },
+          "why": {
+            "en": "Advance the continuation only after event publication."
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Read the selected mailbox's bounded arrival journal."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "update",
+          "label": {
+            "en": "Advance the private mailbox continuation after publication."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "create",
+          "label": {
+            "en": "Publish reported new-message references; first sync establishes a non-replaying baseline."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "execute",
+          "label": {
+            "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the account's existing mail server through Thunderbird."
           },
           "recovery": "unknown"
         }
@@ -1490,19 +1144,8 @@
     },
     "draft": {
       "label": {
-        "en": "Draft an email reply via the AI gate (--context, --style formal|casual|short). Does NOT send."
+        "en": "Generate email reply text using SDK AI; does not save or send mail"
       },
-      "needs": [
-        {
-          "verb": "ai.chat",
-          "scope": {
-            "kind": "wild"
-          },
-          "why": {
-            "en": "Send your context to a model so it can draft an email reply for you."
-          }
-        }
-      ],
       "args": [
         {
           "name": "context",
@@ -1512,7 +1155,7 @@
         },
         {
           "name": "style",
-          "kind": "text",
+          "kind": "name",
           "required": false,
           "binding": "flag",
           "default": "formal",
@@ -1523,11 +1166,22 @@
           ]
         }
       ],
+      "needs": [
+        {
+          "verb": "ai.chat",
+          "scope": {
+            "kind": "wild"
+          },
+          "why": {
+            "en": "Generate text through the existing OS AI gate and this App's budget."
+          }
+        }
+      ],
       "effects": [
         {
           "kind": "external",
           "label": {
-            "en": "Draft an email reply via the AI gate (--context, --style formal|casual|short). Does NOT send."
+            "en": "May request AI-generated draft text; does not save or send it."
           },
           "recovery": "unknown"
         }
@@ -1544,184 +1198,132 @@
     },
     "tools": [
       {
-        "name": "email.sync",
+        "name": "email.accounts",
         "summary": {
-          "en": "Incrementally publish new inbox message events without calling a model"
+          "en": "List the owner's existing Thunderbird accounts and sender identities"
+        },
+        "args": [],
+        "needs": [
+          {
+            "verb": "mail.accounts",
+            "scope": {
+              "kind": "wild"
+            },
+            "why": {
+              "en": "List configured account metadata, not messages or credentials."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read the owner's configured Thunderbird account metadata."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the account's existing mail server through Thunderbird."
+            },
+            "recovery": "unknown"
+          }
+        ]
+      },
+      {
+        "name": "email.folders",
+        "summary": {
+          "en": "List folders in an explicitly selected Thunderbird account"
         },
         "args": [
           {
-            "name": "provider",
+            "name": "account",
             "kind": "name",
-            "required": true,
-            "choices": [
-              "gmail",
-              "outlook"
-            ]
+            "required": true
+          }
+        ],
+        "needs": [
+          {
+            "verb": "mail.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "account"
+            },
+            "why": {
+              "en": "Read only the explicitly selected Thunderbird mailbox."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read folders in the selected mailbox."
+            },
+            "recovery": "unknown"
           },
           {
-            "name": "reset",
+            "kind": "execute",
+            "label": {
+              "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the account's existing mail server through Thunderbird."
+            },
+            "recovery": "unknown"
+          }
+        ]
+      },
+      {
+        "name": "email.list",
+        "summary": {
+          "en": "List messages from the selected Thunderbird inbox or folder"
+        },
+        "args": [
+          {
+            "name": "account",
+            "kind": "name",
+            "required": true
+          },
+          {
+            "name": "folder",
+            "kind": "text",
+            "required": false
+          },
+          {
+            "name": "max-results",
+            "kind": "integer",
+            "required": false,
+            "default": 10
+          },
+          {
+            "name": "unread",
             "kind": "bool",
+            "required": false,
             "default": false
           }
         ],
         "needs": [
           {
-            "verb": "data.db.read",
+            "verb": "mail.read",
             "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "name",
-                "value": "mail-sync"
-              }
+              "kind": "from-arg",
+              "arg": "account"
             },
             "why": {
-              "en": "Read only this App's mailbox continuation."
-            }
-          },
-          {
-            "verb": "data.db.write",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "name",
-                "value": "mail-sync"
-              }
-            },
-            "why": {
-              "en": "Advance a durable mailbox continuation after event publication."
-            }
-          },
-          {
-            "verb": "ipc.publish",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "name",
-                "value": "app:email"
-              }
-            },
-            "why": {
-              "en": "Publish reported new-message references in Mail's own event namespace."
-            }
-          },
-          {
-            "verb": "secret.read",
-            "scope": {
-              "kind": "from-arg-map",
-              "arg": "provider",
-              "values": {
-                "gmail": {
-                  "kind": "name",
-                  "value": "default/GOOGLE_ACCESS_TOKEN"
-                },
-                "outlook": {
-                  "kind": "name",
-                  "value": "default/MICROSOFT_ACCESS_TOKEN"
-                }
-              }
-            },
-            "why": {
-              "en": "Read only the selected mailbox credential."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "gmail.googleapis.com"
-              }
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "gmail"
-            },
-            "why": {
-              "en": "Read a bounded Gmail inbox history page."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "graph.microsoft.com"
-              }
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "outlook"
-            },
-            "why": {
-              "en": "Read a bounded Outlook inbox delta page."
-            }
-          }
-        ],
-        "effects": [
-          {
-            "kind": "update",
-            "label": {
-              "en": "Incrementally publish new inbox message events without calling a model"
-            },
-            "recovery": "unknown"
-          },
-          {
-            "kind": "external",
-            "label": {
-              "en": "May contact the explicitly selected remote provider"
-            },
-            "recovery": "unknown"
-          },
-          {
-            "kind": "create",
-            "label": {
-              "en": "May publish new inbox message references after a non-replaying baseline"
-            },
-            "recovery": "unknown"
-          }
-        ]
-      },
-      {
-        "name": "email.gmail_draft",
-        "summary": {
-          "en": "Read a saved Gmail draft and its review fingerprint"
-        },
-        "args": [
-          {
-            "name": "id",
-            "kind": "name",
-            "required": true
-          }
-        ],
-        "needs": [
-          {
-            "verb": "secret.read",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "name",
-                "value": "default/GOOGLE_ACCESS_TOKEN"
-              }
-            },
-            "why": {
-              "en": "Read the owner's Gmail draft credential."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "gmail.googleapis.com"
-              }
-            },
-            "why": {
-              "en": "Read only the requested Gmail draft."
+              "en": "Read only the explicitly selected Thunderbird mailbox."
             }
           }
         ],
@@ -1729,57 +1331,63 @@
           {
             "kind": "read",
             "label": {
-              "en": "Read a saved Gmail draft and its review fingerprint"
+              "en": "Read message metadata in the selected mailbox."
             },
-            "recovery": "unknown",
-            "target_arg": "id"
+            "recovery": "unknown"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+            },
+            "recovery": "unknown"
           },
           {
             "kind": "external",
             "label": {
-              "en": "May contact the explicitly selected remote provider"
+              "en": "May contact the account's existing mail server through Thunderbird."
             },
             "recovery": "unknown"
           }
         ]
       },
       {
-        "name": "email.outlook_draft",
+        "name": "email.search",
         "summary": {
-          "en": "Read a saved Outlook draft and its review fingerprint"
+          "en": "Search Thunderbird mail text in one explicitly selected account"
         },
         "args": [
           {
-            "name": "id",
+            "name": "account",
             "kind": "name",
             "required": true
+          },
+          {
+            "name": "query",
+            "kind": "text",
+            "required": true
+          },
+          {
+            "name": "folder",
+            "kind": "text",
+            "required": false
+          },
+          {
+            "name": "max-results",
+            "kind": "integer",
+            "required": false,
+            "default": 10
           }
         ],
         "needs": [
           {
-            "verb": "secret.read",
+            "verb": "mail.read",
             "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "name",
-                "value": "default/MICROSOFT_ACCESS_TOKEN"
-              }
+              "kind": "from-arg",
+              "arg": "account"
             },
             "why": {
-              "en": "Read the owner's Outlook draft credential."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "graph.microsoft.com"
-              }
-            },
-            "why": {
-              "en": "Read only the requested Outlook draft."
+              "en": "Read only the explicitly selected Thunderbird mailbox."
             }
           }
         ],
@@ -1787,42 +1395,188 @@
           {
             "kind": "read",
             "label": {
-              "en": "Read a saved Outlook draft and its review fingerprint"
+              "en": "Search message contents in the selected mailbox."
             },
-            "recovery": "unknown",
-            "target_arg": "id"
+            "recovery": "unknown"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+            },
+            "recovery": "unknown"
           },
           {
             "kind": "external",
             "label": {
-              "en": "May contact the explicitly selected remote provider"
+              "en": "May contact the account's existing mail server through Thunderbird."
             },
             "recovery": "unknown"
           }
         ]
       },
       {
-        "name": "email.draft_save",
+        "name": "email.read",
         "summary": {
-          "en": "Create or update a provider draft without sending it"
+          "en": "Read a stable Thunderbird message reference in its explicit account"
+        },
+        "args": [
+          {
+            "name": "account",
+            "kind": "name",
+            "required": true
+          },
+          {
+            "name": "id",
+            "kind": "text",
+            "required": true
+          }
+        ],
+        "needs": [
+          {
+            "verb": "mail.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "account"
+            },
+            "why": {
+              "en": "Read only the explicitly selected Thunderbird mailbox."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read the selected message and attachment metadata."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the account's existing mail server through Thunderbird."
+            },
+            "recovery": "unknown"
+          }
+        ]
+      },
+      {
+        "name": "email.native_message",
+        "summary": {
+          "en": "Resolve a stable Thunderbird message reference using inherited mailbox rights"
+        },
+        "args": [
+          {
+            "name": "id",
+            "kind": "text",
+            "required": true
+          }
+        ],
+        "needs": [
+          {
+            "verb": "mail.read",
+            "scope": {
+              "kind": "wild"
+            },
+            "why": {
+              "en": "Inherit existing mailbox rights; the OS checks the account encoded in the reference."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Resolve the message in its referenced mailbox; the account is runtime-derived."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the account's existing mail server through Thunderbird."
+            },
+            "recovery": "unknown"
+          }
+        ]
+      },
+      {
+        "name": "email.native_draft",
+        "summary": {
+          "en": "Read a saved Thunderbird draft and its complete review fingerprint"
+        },
+        "args": [
+          {
+            "name": "id",
+            "kind": "text",
+            "required": true
+          }
+        ],
+        "needs": [
+          {
+            "verb": "mail.read",
+            "scope": {
+              "kind": "wild"
+            },
+            "why": {
+              "en": "Inherit existing mailbox rights; the OS checks the draft's referenced account."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read draft recipients, body and attachment fingerprints; the mailbox is runtime-derived."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the account's existing mail server through Thunderbird."
+            },
+            "recovery": "unknown"
+          }
+        ]
+      },
+      {
+        "name": "email.send",
+        "summary": {
+          "en": "Send mail through the explicitly selected Thunderbird account"
         },
         "args": [
           {
             "name": "request-id",
-            "kind": "name"
-          },
-          {
-            "name": "provider",
             "kind": "name",
-            "required": true,
-            "choices": [
-              "gmail",
-              "outlook"
-            ]
+            "required": false
           },
           {
-            "name": "id",
-            "kind": "name"
+            "name": "account",
+            "kind": "name",
+            "required": true
           },
           {
             "name": "to",
@@ -1841,10 +1595,21 @@
           },
           {
             "name": "cc",
-            "kind": "text"
+            "kind": "text",
+            "required": false
           }
         ],
         "needs": [
+          {
+            "verb": "mail.send",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "account"
+            },
+            "why": {
+              "en": "Send through this explicitly selected Thunderbird sender account."
+            }
+          },
           {
             "verb": "ipc.publish",
             "scope": {
@@ -1855,7 +1620,7 @@
               }
             },
             "why": {
-              "en": "Publish Mail's owner-bound reported operation event."
+              "en": "Publish reported Mail effects in this App's own namespace."
             }
           },
           {
@@ -1867,12 +1632,12 @@
                 "value": "mail-requests"
               }
             },
+            "why": {
+              "en": "Read this App's retained submission receipt."
+            },
             "when": {
               "kind": "arg-present",
               "arg": "request-id"
-            },
-            "why": {
-              "en": "Read this owner's existing Mail submission receipt."
             }
           },
           {
@@ -1884,68 +1649,25 @@
                 "value": "mail-requests"
               }
             },
+            "why": {
+              "en": "Retain this App's submission result without automatic resubmission."
+            },
             "when": {
               "kind": "arg-present",
               "arg": "request-id"
-            },
-            "why": {
-              "en": "Durably bracket this Mail submission without replaying uncertain effects."
             }
           },
           {
-            "verb": "secret.read",
-            "scope": {
-              "kind": "from-arg-map",
-              "arg": "provider",
-              "values": {
-                "gmail": {
-                  "kind": "name",
-                  "value": "default/GOOGLE_ACCESS_TOKEN"
-                },
-                "outlook": {
-                  "kind": "name",
-                  "value": "default/MICROSOFT_ACCESS_TOKEN"
-                }
-              }
-            },
-            "why": {
-              "en": "Use only the selected mailbox's draft credential."
-            }
-          },
-          {
-            "verb": "net.dial",
+            "verb": "memory.write",
             "scope": {
               "kind": "fixed",
               "scope": {
-                "kind": "host",
-                "value": "gmail.googleapis.com"
+                "kind": "self-ref",
+                "value": "email"
               }
             },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "gmail"
-            },
             "why": {
-              "en": "Save or update the Gmail draft; never send it."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "graph.microsoft.com"
-              }
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "outlook"
-            },
-            "why": {
-              "en": "Save or update the Outlook draft; never send it."
+              "en": "Record a sent-message summary in this App's own memory namespace."
             }
           }
         ],
@@ -1953,499 +1675,54 @@
           {
             "kind": "create",
             "label": {
-              "en": "Create or update a provider draft without sending it"
-            },
-            "recovery": "unknown",
-            "target_arg": "id"
-          },
-          {
-            "kind": "external",
-            "label": {
-              "en": "May contact the explicitly selected remote provider"
+              "en": "Submit a new message and report the returned send outcome."
             },
             "recovery": "unknown"
           },
           {
-            "kind": "update",
+            "kind": "execute",
             "label": {
-              "en": "May update the explicitly selected existing provider draft"
+              "en": "May start the authenticated owner's Thunderbird through the OS service manager."
             },
-            "recovery": "unknown",
-            "target_arg": "id"
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the account's existing mail server through Thunderbird."
+            },
+            "recovery": "unknown"
           }
         ]
       },
       {
-        "name": "email.draft_send",
+        "name": "email.draft_save",
         "summary": {
-          "en": "Explicitly send an unchanged reviewed provider draft"
+          "en": "Save a real Thunderbird draft without sending; replacing requires its source account"
         },
         "args": [
           {
             "name": "request-id",
-            "kind": "name"
+            "kind": "name",
+            "required": false
           },
           {
-            "name": "provider",
+            "name": "account",
             "kind": "name",
-            "required": true,
-            "choices": [
-              "gmail",
-              "outlook"
-            ]
+            "required": true
           },
           {
             "name": "id",
+            "kind": "text",
+            "required": false
+          },
+          {
+            "name": "source-account",
             "kind": "name",
-            "required": true
-          },
-          {
-            "name": "review",
-            "kind": "name",
-            "required": true
-          },
-          {
-            "name": "confirm",
-            "kind": "bool",
-            "required": true,
-            "choices": [
-              true
-            ]
-          }
-        ],
-        "needs": [
-          {
-            "verb": "ipc.publish",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "name",
-                "value": "app:email"
-              }
-            },
-            "why": {
-              "en": "Publish Mail's owner-bound reported operation event."
-            }
-          },
-          {
-            "verb": "data.db.read",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "name",
-                "value": "mail-requests"
-              }
-            },
-            "when": {
-              "kind": "arg-present",
-              "arg": "request-id"
-            },
-            "why": {
-              "en": "Read this owner's existing Mail submission receipt."
-            }
-          },
-          {
-            "verb": "data.db.write",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "name",
-                "value": "mail-requests"
-              }
-            },
-            "when": {
-              "kind": "arg-present",
-              "arg": "request-id"
-            },
-            "why": {
-              "en": "Durably bracket this Mail submission without replaying uncertain effects."
-            }
-          },
-          {
-            "verb": "secret.read",
-            "scope": {
-              "kind": "from-arg-map",
-              "arg": "provider",
-              "values": {
-                "gmail": {
-                  "kind": "name",
-                  "value": "default/GOOGLE_ACCESS_TOKEN"
-                },
-                "outlook": {
-                  "kind": "name",
-                  "value": "default/MICROSOFT_ACCESS_TOKEN"
-                }
-              }
-            },
-            "why": {
-              "en": "Use only the selected mailbox's reviewed draft credential."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "gmail.googleapis.com"
-              }
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "gmail"
-            },
-            "why": {
-              "en": "Read the current draft and explicitly submit it through Gmail."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "graph.microsoft.com"
-              }
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "outlook"
-            },
-            "why": {
-              "en": "Read the current draft and explicitly submit it through Outlook."
-            }
-          }
-        ],
-        "effects": [
-          {
-            "kind": "external",
-            "label": {
-              "en": "Explicitly send an unchanged reviewed provider draft"
-            },
-            "recovery": "unknown",
-            "target_arg": "id"
-          }
-        ]
-      },
-      {
-        "name": "email.attachment_file",
-        "summary": {
-          "en": "Read metadata for a downloaded Mail attachment file"
-        },
-        "args": [
-          {
-            "name": "path",
-            "kind": "path",
-            "required": true
-          }
-        ],
-        "needs": [
-          {
-            "verb": "fs.meta",
-            "scope": {
-              "kind": "from-arg",
-              "arg": "path"
-            },
-            "why": {
-              "en": "Inspect only the requested attachment file."
-            }
-          }
-        ],
-        "effects": [
-          {
-            "kind": "read",
-            "label": {
-              "en": "Read metadata for a downloaded Mail attachment file"
-            },
-            "recovery": "unknown",
-            "target_arg": "path"
-          }
-        ]
-      },
-      {
-        "name": "email.attachment_download",
-        "summary": {
-          "en": "Download one attachment to an explicit new private file"
-        },
-        "args": [
-          {
-            "name": "provider",
-            "kind": "name",
-            "required": true,
-            "choices": [
-              "gmail",
-              "outlook"
-            ]
-          },
-          {
-            "name": "id",
-            "kind": "name",
-            "required": true
-          },
-          {
-            "name": "attachment",
-            "kind": "name",
-            "required": true
-          },
-          {
-            "name": "output",
-            "kind": "path",
-            "required": true
-          },
-          {
-            "name": "max-bytes",
-            "kind": "integer",
-            "default": 16777216
-          }
-        ],
-        "needs": [
-          {
-            "verb": "ipc.publish",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "name",
-                "value": "app:email"
-              }
-            },
-            "why": {
-              "en": "Publish Mail's owner-bound reported operation event."
-            }
-          },
-          {
-            "verb": "fs.write",
-            "scope": {
-              "kind": "from-arg",
-              "arg": "output"
-            },
-            "why": {
-              "en": "Create only the explicitly selected attachment output."
-            }
-          },
-          {
-            "verb": "secret.read",
-            "scope": {
-              "kind": "from-arg-map",
-              "arg": "provider",
-              "values": {
-                "gmail": {
-                  "kind": "name",
-                  "value": "default/GOOGLE_ACCESS_TOKEN"
-                },
-                "outlook": {
-                  "kind": "name",
-                  "value": "default/MICROSOFT_ACCESS_TOKEN"
-                }
-              }
-            },
-            "why": {
-              "en": "Read only the selected mailbox credential."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "gmail.googleapis.com"
-              }
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "gmail"
-            },
-            "why": {
-              "en": "Download the requested Gmail attachment."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "graph.microsoft.com"
-              }
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "outlook"
-            },
-            "why": {
-              "en": "Download the requested Outlook attachment."
-            }
-          }
-        ],
-        "effects": [
-          {
-            "kind": "create",
-            "label": {
-              "en": "Download one attachment to an explicit new private file"
-            },
-            "recovery": "unknown",
-            "target_arg": "output"
-          },
-          {
-            "kind": "external",
-            "label": {
-              "en": "May contact the explicitly selected remote provider"
-            },
-            "recovery": "unknown"
-          }
-        ]
-      },
-      {
-        "name": "email.gmail_message",
-        "summary": {
-          "en": "Read a Gmail message object by its provider ID"
-        },
-        "args": [
-          {
-            "name": "id",
-            "kind": "name",
-            "required": true
-          }
-        ],
-        "needs": [
-          {
-            "verb": "secret.read",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "name",
-                "value": "default/GOOGLE_ACCESS_TOKEN"
-              }
-            },
-            "why": {
-              "en": "Read only the owner's Gmail credential."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "gmail.googleapis.com"
-              }
-            },
-            "why": {
-              "en": "Read the requested message through the Gmail API."
-            }
-          }
-        ],
-        "effects": [
-          {
-            "kind": "read",
-            "label": {
-              "en": "Read a Gmail message object by its provider ID"
-            },
-            "recovery": "unknown",
-            "target_arg": "id"
-          },
-          {
-            "kind": "external",
-            "label": {
-              "en": "May contact the explicitly selected remote provider"
-            },
-            "recovery": "unknown"
-          }
-        ]
-      },
-      {
-        "name": "email.outlook_message",
-        "summary": {
-          "en": "Read an Outlook message object by its provider ID"
-        },
-        "args": [
-          {
-            "name": "id",
-            "kind": "name",
-            "required": true
-          }
-        ],
-        "needs": [
-          {
-            "verb": "secret.read",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "name",
-                "value": "default/MICROSOFT_ACCESS_TOKEN"
-              }
-            },
-            "why": {
-              "en": "Read only the owner's Outlook credential."
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "graph.microsoft.com"
-              }
-            },
-            "why": {
-              "en": "Read the requested message through the Outlook API."
-            }
-          }
-        ],
-        "effects": [
-          {
-            "kind": "read",
-            "label": {
-              "en": "Read an Outlook message object by its provider ID"
-            },
-            "recovery": "unknown",
-            "target_arg": "id"
-          },
-          {
-            "kind": "external",
-            "label": {
-              "en": "May contact the explicitly selected remote provider"
-            },
-            "recovery": "unknown"
-          }
-        ]
-      },
-      {
-        "name": "email.send",
-        "summary": {
-          "en": "Send an email (--to, --subject, --body, --provider smtp|gmail|outlook; SMTP requires --host host:port)"
-        },
-        "args": [
-          {
-            "name": "request-id",
-            "kind": "name"
-          },
-          {
-            "name": "provider",
-            "kind": "name",
-            "required": true,
-            "choices": [
-              "smtp",
-              "gmail",
-              "outlook"
-            ]
-          },
-          {
-            "name": "host",
-            "kind": "host",
-            "label": {
-              "en": "SMTP endpoint with an explicit port: mail.example.com:587 (STARTTLS) or mail.example.com:465 (TLS)"
-            },
             "required": false,
             "required_when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "smtp"
+              "kind": "arg-present",
+              "arg": "id"
             }
           },
           {
@@ -2471,6 +1748,16 @@
         ],
         "needs": [
           {
+            "verb": "mail.draft",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "account"
+            },
+            "why": {
+              "en": "Save or replace drafts in the explicitly selected account."
+            }
+          },
+          {
             "verb": "ipc.publish",
             "scope": {
               "kind": "fixed",
@@ -2480,7 +1767,7 @@
               }
             },
             "why": {
-              "en": "Publish Mail's owner-bound reported operation event."
+              "en": "Publish reported Mail effects in this App's own namespace."
             }
           },
           {
@@ -2492,12 +1779,12 @@
                 "value": "mail-requests"
               }
             },
+            "why": {
+              "en": "Read this App's retained submission receipt."
+            },
             "when": {
               "kind": "arg-present",
               "arg": "request-id"
-            },
-            "why": {
-              "en": "Read this owner's existing Mail submission receipt."
             }
           },
           {
@@ -2509,100 +1796,190 @@
                 "value": "mail-requests"
               }
             },
+            "why": {
+              "en": "Retain this App's submission result without automatic resubmission."
+            },
             "when": {
               "kind": "arg-present",
               "arg": "request-id"
-            },
-            "why": {
-              "en": "Durably bracket this Mail submission without replaying uncertain effects."
             }
           },
           {
-            "verb": "net.dial",
+            "verb": "mail.read",
             "scope": {
               "kind": "from-arg",
-              "arg": "host"
+              "arg": "source-account"
             },
             "why": {
-              "en": "Connect only to the explicit SMTP host and port selected for this message."
+              "en": "Read the existing draft only in its declared source mailbox."
             },
             "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "smtp"
+              "kind": "arg-present",
+              "arg": "id"
             }
           },
           {
-            "verb": "net.dial",
+            "verb": "mail.draft",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "source-account"
+            },
+            "why": {
+              "en": "Replace the old draft only in its declared source mailbox."
+            },
+            "when": {
+              "kind": "arg-present",
+              "arg": "id"
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Save a new draft in the sender account's configured Drafts folder."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "delete",
+            "label": {
+              "en": "When replacing, remove only the unchanged source draft after successful saving."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the account's existing mail server through Thunderbird."
+            },
+            "recovery": "unknown"
+          }
+        ]
+      },
+      {
+        "name": "email.draft_send",
+        "summary": {
+          "en": "Send the reviewed Thunderbird draft using an explicit sender account and confirmation"
+        },
+        "args": [
+          {
+            "name": "request-id",
+            "kind": "name",
+            "required": false
+          },
+          {
+            "name": "account",
+            "kind": "name",
+            "required": true
+          },
+          {
+            "name": "id",
+            "kind": "text",
+            "required": true
+          },
+          {
+            "name": "sender-account",
+            "kind": "name",
+            "required": true
+          },
+          {
+            "name": "review",
+            "kind": "text",
+            "required": true
+          },
+          {
+            "name": "confirm",
+            "kind": "bool",
+            "required": true,
+            "choices": [
+              true
+            ]
+          }
+        ],
+        "needs": [
+          {
+            "verb": "mail.read",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "account"
+            },
+            "why": {
+              "en": "Read only the explicitly selected Thunderbird mailbox."
+            }
+          },
+          {
+            "verb": "mail.draft",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "account"
+            },
+            "why": {
+              "en": "Save or replace drafts in the explicitly selected account."
+            }
+          },
+          {
+            "verb": "mail.send",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "sender-account"
+            },
+            "why": {
+              "en": "Send only through the explicitly selected sender account."
+            }
+          },
+          {
+            "verb": "ipc.publish",
             "scope": {
               "kind": "fixed",
               "scope": {
-                "kind": "host",
-                "value": "gmail.googleapis.com"
+                "kind": "name",
+                "value": "app:email"
               }
             },
             "why": {
-              "en": "Open a network connection to the SMTP server or provider API to deliver the message."
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "gmail"
+              "en": "Publish reported Mail effects in this App's own namespace."
             }
           },
           {
-            "verb": "net.dial",
+            "verb": "data.db.read",
             "scope": {
               "kind": "fixed",
               "scope": {
-                "kind": "host",
-                "value": "graph.microsoft.com"
+                "kind": "name",
+                "value": "mail-requests"
               }
             },
             "why": {
-              "en": "Open a network connection to the SMTP server or provider API to deliver the message."
+              "en": "Read this App's retained submission receipt."
             },
             "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "outlook"
+              "kind": "arg-present",
+              "arg": "request-id"
             }
           },
           {
-            "verb": "secret.read",
-            "scope": {
-              "kind": "from-arg-map",
-              "arg": "provider",
-              "values": {
-                "smtp": {
-                  "kind": "name",
-                  "value": "default/SMTP_PASSWORD"
-                },
-                "gmail": {
-                  "kind": "name",
-                  "value": "default/GOOGLE_ACCESS_TOKEN"
-                },
-                "outlook": {
-                  "kind": "name",
-                  "value": "default/MICROSOFT_ACCESS_TOKEN"
-                }
-              }
-            },
-            "why": {
-              "en": "Read only the credential for the provider selected before dispatch."
-            }
-          },
-          {
-            "verb": "memory.write",
+            "verb": "data.db.write",
             "scope": {
               "kind": "fixed",
               "scope": {
-                "kind": "self-ref",
-                "value": "email"
+                "kind": "name",
+                "value": "mail-requests"
               }
             },
             "why": {
-              "en": "Remember the sent message so the agent can recall it later."
+              "en": "Retain this App's submission result without automatic resubmission."
+            },
+            "when": {
+              "kind": "arg-present",
+              "arg": "request-id"
             }
           }
         ],
@@ -2610,101 +1987,98 @@
           {
             "kind": "external",
             "label": {
-              "en": "Send an email (--to, --subject, --body, --provider smtp|gmail|outlook; SMTP requires --host host:port)"
+              "en": "Submit the captured, reviewed message through Thunderbird."
             },
             "recovery": "unknown"
           },
           {
-            "kind": "update",
+            "kind": "delete",
             "label": {
-              "en": "May record this App's successful result in its own Agent memory scope"
+              "en": "Remove only the unchanged source draft after successful sending."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "May start the authenticated owner's Thunderbird through the OS service manager."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the account's existing mail server through Thunderbird."
             },
             "recovery": "unknown"
           }
         ]
       },
       {
-        "name": "email.search",
+        "name": "email.attachment_download",
         "summary": {
-          "en": "Search emails (--query, --max-results, --provider gmail|outlook)"
+          "en": "Save a native Thunderbird MIME attachment to an explicitly authorized new file"
         },
         "args": [
           {
-            "name": "provider",
+            "name": "account",
             "kind": "name",
-            "required": true,
-            "choices": [
-              "gmail",
-              "outlook"
-            ]
+            "required": true
           },
           {
-            "name": "query",
+            "name": "id",
             "kind": "text",
             "required": true
           },
           {
-            "name": "max-results",
+            "name": "attachment",
+            "kind": "name",
+            "required": true
+          },
+          {
+            "name": "output",
+            "kind": "path",
+            "required": true
+          },
+          {
+            "name": "max-bytes",
             "kind": "integer",
             "required": false,
-            "default": 10
+            "default": 16777216
           }
         ],
         "needs": [
           {
-            "verb": "net.dial",
+            "verb": "mail.read",
             "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "gmail.googleapis.com"
-              }
+              "kind": "from-arg",
+              "arg": "account"
             },
             "why": {
-              "en": "Call the provider's API to search your mailbox."
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "gmail"
+              "en": "Read only the explicitly selected Thunderbird mailbox."
             }
           },
           {
-            "verb": "net.dial",
+            "verb": "ipc.publish",
             "scope": {
               "kind": "fixed",
               "scope": {
-                "kind": "host",
-                "value": "graph.microsoft.com"
+                "kind": "name",
+                "value": "app:email"
               }
             },
             "why": {
-              "en": "Call the provider's API to search your mailbox."
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "outlook"
+              "en": "Publish reported Mail effects in this App's own namespace."
             }
           },
           {
-            "verb": "secret.read",
+            "verb": "fs.write",
             "scope": {
-              "kind": "from-arg-map",
-              "arg": "provider",
-              "values": {
-                "gmail": {
-                  "kind": "name",
-                  "value": "default/GOOGLE_ACCESS_TOKEN"
-                },
-                "outlook": {
-                  "kind": "name",
-                  "value": "default/MICROSOFT_ACCESS_TOKEN"
-                }
-              }
+              "kind": "from-arg",
+              "arg": "output"
             },
             "why": {
-              "en": "Read only the credential for the provider selected before dispatch."
+              "en": "Create only the exact canonical new attachment output."
             }
           }
         ],
@@ -2712,42 +2086,80 @@
           {
             "kind": "read",
             "label": {
-              "en": "Search emails (--query, --max-results, --provider gmail|outlook)"
+              "en": "Read only the selected message's MIME attachment."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "create",
+            "label": {
+              "en": "Persist the attachment without overwriting an existing file."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "May start the authenticated owner's Thunderbird through the OS service manager."
             },
             "recovery": "unknown"
           },
           {
             "kind": "external",
             "label": {
-              "en": "May contact the explicitly selected remote provider"
+              "en": "May contact the account's existing mail server through Thunderbird."
             },
             "recovery": "unknown"
           }
         ]
       },
       {
-        "name": "email.list",
+        "name": "email.attachment_file",
         "summary": {
-          "en": "List recent emails (--max-results, --unread, --provider gmail|outlook)"
+          "en": "Resolve metadata for an explicitly authorized downloaded attachment path"
         },
         "args": [
           {
-            "name": "provider",
+            "name": "path",
+            "kind": "path",
+            "required": true
+          }
+        ],
+        "needs": [
+          {
+            "verb": "fs.meta",
+            "scope": {
+              "kind": "from-arg",
+              "arg": "path"
+            },
+            "why": {
+              "en": "Read metadata only for the exact attachment path."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read file metadata; the path does not prove mail origin."
+            },
+            "recovery": "unknown"
+          }
+        ]
+      },
+      {
+        "name": "email.sync",
+        "summary": {
+          "en": "Publish new Thunderbird inbox message references without calling a model"
+        },
+        "args": [
+          {
+            "name": "account",
             "kind": "name",
-            "required": true,
-            "choices": [
-              "gmail",
-              "outlook"
-            ]
+            "required": true
           },
           {
-            "name": "max-results",
-            "kind": "integer",
-            "required": false,
-            "default": 10
-          },
-          {
-            "name": "unread",
+            "name": "reset",
             "kind": "bool",
             "required": false,
             "default": false
@@ -2755,59 +2167,52 @@
         ],
         "needs": [
           {
-            "verb": "net.dial",
+            "verb": "mail.read",
             "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "gmail.googleapis.com"
-              }
+              "kind": "from-arg",
+              "arg": "account"
             },
             "why": {
-              "en": "Call the provider's API to list recent messages."
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "gmail"
+              "en": "Read only the explicitly selected Thunderbird mailbox."
             }
           },
           {
-            "verb": "net.dial",
+            "verb": "ipc.publish",
             "scope": {
               "kind": "fixed",
               "scope": {
-                "kind": "host",
-                "value": "graph.microsoft.com"
+                "kind": "name",
+                "value": "app:email"
               }
             },
             "why": {
-              "en": "Call the provider's API to list recent messages."
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "outlook"
+              "en": "Publish reported Mail effects in this App's own namespace."
             }
           },
           {
-            "verb": "secret.read",
+            "verb": "data.db.read",
             "scope": {
-              "kind": "from-arg-map",
-              "arg": "provider",
-              "values": {
-                "gmail": {
-                  "kind": "name",
-                  "value": "default/GOOGLE_ACCESS_TOKEN"
-                },
-                "outlook": {
-                  "kind": "name",
-                  "value": "default/MICROSOFT_ACCESS_TOKEN"
-                }
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "mail-sync"
               }
             },
             "why": {
-              "en": "Read only the credential for the provider selected before dispatch."
+              "en": "Read this App's continuation for the selected mailbox."
+            }
+          },
+          {
+            "verb": "data.db.write",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "mail-sync"
+              }
+            },
+            "why": {
+              "en": "Advance the continuation only after event publication."
             }
           }
         ],
@@ -2815,110 +2220,35 @@
           {
             "kind": "read",
             "label": {
-              "en": "List recent emails (--max-results, --unread, --provider gmail|outlook)"
+              "en": "Read the selected mailbox's bounded arrival journal."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "Advance the private mailbox continuation after publication."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "create",
+            "label": {
+              "en": "Publish reported new-message references; first sync establishes a non-replaying baseline."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "May start the authenticated owner's Thunderbird through the OS service manager."
             },
             "recovery": "unknown"
           },
           {
             "kind": "external",
             "label": {
-              "en": "May contact the explicitly selected remote provider"
-            },
-            "recovery": "unknown"
-          }
-        ]
-      },
-      {
-        "name": "email.read",
-        "summary": {
-          "en": "Read a specific email by ID (--id, --provider gmail|outlook)"
-        },
-        "args": [
-          {
-            "name": "provider",
-            "kind": "name",
-            "required": true,
-            "choices": [
-              "gmail",
-              "outlook"
-            ]
-          },
-          {
-            "name": "id",
-            "kind": "text",
-            "required": true
-          }
-        ],
-        "needs": [
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "gmail.googleapis.com"
-              }
-            },
-            "why": {
-              "en": "Call the provider's API to fetch the message body."
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "gmail"
-            }
-          },
-          {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "graph.microsoft.com"
-              }
-            },
-            "why": {
-              "en": "Call the provider's API to fetch the message body."
-            },
-            "when": {
-              "kind": "arg-equals",
-              "arg": "provider",
-              "value": "outlook"
-            }
-          },
-          {
-            "verb": "secret.read",
-            "scope": {
-              "kind": "from-arg-map",
-              "arg": "provider",
-              "values": {
-                "gmail": {
-                  "kind": "name",
-                  "value": "default/GOOGLE_ACCESS_TOKEN"
-                },
-                "outlook": {
-                  "kind": "name",
-                  "value": "default/MICROSOFT_ACCESS_TOKEN"
-                }
-              }
-            },
-            "why": {
-              "en": "Read only the credential for the provider selected before dispatch."
-            }
-          }
-        ],
-        "effects": [
-          {
-            "kind": "read",
-            "label": {
-              "en": "Read a specific email by ID (--id, --provider gmail|outlook)"
-            },
-            "recovery": "unknown"
-          },
-          {
-            "kind": "external",
-            "label": {
-              "en": "May contact the explicitly selected remote provider"
+              "en": "May contact the account's existing mail server through Thunderbird."
             },
             "recovery": "unknown"
           }
@@ -2927,7 +2257,7 @@
       {
         "name": "email.draft",
         "summary": {
-          "en": "Draft an email reply via the AI gate (--context, --style formal|casual|short). Does NOT send."
+          "en": "Generate email reply text using SDK AI; does not save or send mail"
         },
         "args": [
           {
@@ -2937,7 +2267,7 @@
           },
           {
             "name": "style",
-            "kind": "text",
+            "kind": "name",
             "required": false,
             "default": "formal",
             "choices": [
@@ -2954,7 +2284,7 @@
               "kind": "wild"
             },
             "why": {
-              "en": "Send your context to a model so it can draft an email reply for you."
+              "en": "Generate text through the existing OS AI gate and this App's budget."
             }
           }
         ],
@@ -2962,7 +2292,7 @@
           {
             "kind": "external",
             "label": {
-              "en": "Draft an email reply via the AI gate (--context, --style formal|casual|short). Does NOT send."
+              "en": "May request AI-generated draft text; does not save or send it."
             },
             "recovery": "unknown"
           }

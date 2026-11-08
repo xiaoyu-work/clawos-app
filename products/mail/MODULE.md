@@ -10,62 +10,65 @@ model policy and signed installation.
 | --- | --- |
 | `comm/` | Full Thunderbird source; native account, message and compose engine |
 | `apps/mail-ai/` | Existing six shared AI operations and manifest |
-| `apps/email/` | Legacy SMTP/Gmail/Outlook operations, preserving provider-specific grants until the native-engine cutover |
+| `apps/email/` | Thunderbird-backed Agent operations, account-scoped needs, stable objects, arrival cursors and submission receipts |
 | `apps/gateway/email/` | Restricted outbound SMTP delivery; keeps the nested installed path and `gateway-email` identity |
-| `extension/` | Thunderbird UI using those operations |
+| `extension/` | AI UI plus native mailbox business operations using Thunderbird's existing account/message APIs |
 | `build.py`, `mozconfig`, `upstream.json` | Matched native source build |
 | `build-extension.py`, `package.json` | Deterministic XPI and installed asset ownership |
 | `PROVENANCE.md` | Upstream revisions, licenses and trademark obligations |
 
 The native product build is independent of the OS Rust workspace. Keep
 provider credentials and authorization in the OS; importing source does not
-grant access to a user's profile. The repository move preserves installed
-`mail-ai`, `email` and `gateway-email` identities, paths, grants and protocols.
-All legacy identities still await product consolidation.
+grant access to a user's profile. Installed `mail-ai`, `email` and
+`gateway-email` identities and paths remain separate. The Email backend cutover
+does not merge them or move credentials/account data. Its newly declared mail
+permissions require the normal owner authorization; old provider grants are
+not converted into mailbox or sender authority.
 
 ## Activity message objects
 
-`email` declares separate `gmail-message` and `outlook-message` object types.
-Their `gmail_message` and `outlook_message` resolvers take only the opaque
-message ID; the declaration fixes the provider and its exact credential/host
-needs. A resolver cannot borrow the other provider's authority through a flag.
+`email` declares `thunderbird-message` and `thunderbird-draft` object types.
+Their IDs encode the profile-qualified account, native folder and RFC Message-ID,
+not Thunderbird's numeric IDs, which change on restart or movement.
+`native_message` and `native_draft` resolve through the ordinary mailbox client.
+Their wildcard declarations inherit already bounded mailbox rights; the OS
+checks the exact account encoded in the ID. They do not grant all-account access.
 Read/search/list results include canonical `app://email/TYPE?id=...` references.
-Opaque provider IDs are percent-encoded independently in references and API
-path segments. References do not fetch data, grant access or merge accounts.
-Existing `email.read --provider ... --id ...` remains supported.
+References do not fetch data, grant access or merge accounts. Moved, missing
+or ambiguous messages fail explicitly. Old provider object types/arguments
+are retired, not aliased to unrelated Thunderbird messages.
 
 ```bash
-cos app email gmail_message --id MESSAGE_ID
+cos app email read --account ACCOUNT_ID --id MESSAGE_REFERENCE_ID
 cos activity attach-object ACTIVITY_ID --label "Source email" \
-  --app email --type gmail-message --object-id MESSAGE_ID
+  --app email --type thunderbird-message --object-id MESSAGE_REFERENCE_ID
 ```
 
 ## Existing transport and packaging
 
-`sync` reads one bounded Gmail inbox history or Outlook Inbox delta page
-without calling a model. Its first pass records a baseline without replaying
-old mail; subsequent passes publish `message.received` references and advance
-the private cursor only afterward. Continuations remain owner/App-scoped and
-Outlook links must stay on the authorized Inbox delta endpoint. Expired
-provider history requires explicit `--reset`; corrupt state is never repaired
-or silently replaced. An OS cron can poll this App independently of Agent
-execution; existing authorized Activity triggers consume `app:email` events.
+`sync` reads the extension's bounded native inbox-arrival journal without a
+model request. The first pass records a non-replaying baseline; subsequent
+passes publish `message.received` references before advancing the App-private
+account cursor. Expired history requires explicit `--reset`; corrupt state
+is not repaired or silently replaced. The old provider continuation files
+remain untouched. An OS cron can poll independently of Agent execution;
+authorized Activity triggers still consume `app:email` events.
 Mail mutations publish reported events through the same SDK namespace.
 Event failures preserve the original operation result and never repeat its
 external effect. Exact `ipc.publish:app:email` needs are disclosed separately.
 
-`draft_save` creates or updates a real Gmail/Outlook draft without sending.
-The provider-specific `gmail-draft` and `outlook-draft` references resolve
-through `gmail_draft` and `outlook_draft`; Outlook resolution rejects sent
-messages. Reads expose To/Cc/Bcc and a fingerprint of the returned provider
-data. `draft_send` requires that fingerprint and explicit confirmation, reads
-the current draft again and refuses a mismatch before submission.
-This is not a provider-wide compare-and-swap guarantee against edits after
-the final read. Confirmation is not an OS permission grant or delivery proof.
+`draft_save` saves a real draft through Thunderbird's background message API.
+Replacing a draft additionally requires its explicit `source-account` and
+separate read/draft rights there. The sender's configured Drafts folder can
+belong to another mailbox; returned references identify that actual mailbox.
+`native_draft` exposes To/Cc/Bcc, text/HTML and attachment byte fingerprints.
+`draft_send` requires the complete current review, explicit confirmation,
+mailbox read/draft rights and independent `sender-account` send authority.
+The bytes and recipients sent come from the captured reviewed snapshot.
+Only an unchanged source draft is removed after successful save/send;
+concurrent edits or cleanup failures retain it and are reported explicitly.
+Confirmation is neither an OS permission grant nor delivery proof.
 The existing `email.draft` remains an AI text helper and never saves or sends.
-Gmail draft operations require OAuth `gmail.compose`; Outlook needs
-`Mail.ReadWrite`. Existing tokens are not silently upgraded; use the normal
-OS browser authorization to consent to these scopes.
 
 Outbound `send`, `draft_save` and `draft_send` optionally accept a canonical
 UUID `request-id`. The owned `mail-requests` partition durably records the
@@ -73,34 +76,30 @@ canonical operation/argument fingerprint before submission and the result
 afterward. Identical retries return the retained result; different arguments,
 corruption and interrupted in-flight requests never resubmit. Read/write
 authority for this store is conditional on supplying the flag. Without it,
-legacy behavior is unchanged. This is an App request receipt, not provider
+the operation has no retained request receipt. This is an App request receipt, not provider
 exactly-once delivery or an OS-confirmed effect. Activity workflows should
 retain one request ID per reviewed outward action.
 
-`attachment_download` takes an explicit provider, message/attachment ID and
-absolute output path. It supports Gmail attachment bodies (including nested
-inline MIME parts) and Outlook file attachments, bounded to 16 MiB. Output
+`attachment_download` takes an explicit mailbox account, stable message ID,
+native MIME-part ID and canonical output path, bounded to 16 MiB. Output
 parents must exist; private atomic creation never overwrites an existing
 entry. Failed durability after creation is reported as indeterminate.
 Attachment filenames never select a destination. `attachment-file` references
 resolve through `attachment_file` with only exact metadata authority, while
-downloads retain their provider credential/host and exact output-write grants.
-MCP snapshots use the authenticated call session, never ambient service state.
+downloads require `mail.read` plus exact `fs.write`. The OS persists bytes
+through its existing pinned non-overwriting filesystem target and task-bound
+snapshot path. Attachment bytes do not cross the Python SDK response limit.
 
-Email's SMTP `send` operation and `email.send` MCP tool require an explicit
-`host:port`, such as `mail.example.com:587` or `mail.example.com:465`. That
-same argument supplies the manifest's `net.dial` scope, the policy check and
-the actual connection. Bare hosts are rejected before policy or credential
-access: the worker's exact-endpoint policy otherwise selects port 443, which
-is not an SMTP default. `SMTP_PORT` no longer changes Email's destination.
-Use `--host server:587` for STARTTLS or `--host server:465` for implicit TLS;
-custom explicit ports retain their existing TLS behavior. SMTP credentials,
-sender configuration, Gmail/Outlook and the separate gateway configuration
-are unchanged. No wildcard grant or sandbox networking exception is added.
-The Email process fixture uses OpenSSL, public MCP and a private Unix egress
-peer to exercise real STARTTLS/implicit TLS and endpoint refusal. Its policy
-responses and messages are synthetic; it sends no real mail and grants no
-production authority.
+Email uses the published SDK's explicit-binary/cancellable kernel transport
+for `cos __mail request --request-stdin`. The ordinary Host supplies the real
+session. `clawd` validates closed requests, account grants and owner identity;
+no caller can choose a provider socket, UID, profile path or executable.
+When needed it starts fixed Thunderbird through the owner's service manager,
+without the Agent UI or model loop. Installed session/display prerequisites
+still apply; unavailable services are explicit errors.
+The OS-owned Native Messaging multiplexer admits only root broker mailbox
+requests. AI App stdout can return only correlated AI responses, never mailbox
+commands. The `mail-ai` host's standing AI/memory ceiling stays unchanged.
 Email's `_shared` dependency is an App-owned common library under
 [`shared/python`](../../shared/MODULE.md), not another App or an OS export.
 The delivery adapter uses the separately named `gateway._shared` library

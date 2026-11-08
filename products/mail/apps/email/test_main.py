@@ -1,1079 +1,171 @@
-"""Tests for email app."""
+"""Thunderbird-backed Email contracts; no real accounts, messages or models."""
 
 import base64
-import io
 import json
 import os
-import pathlib
-import sys
+from pathlib import Path
 import tempfile
 import unittest
 import uuid
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-sys.path.insert(0, os.path.dirname(__file__))
-from test_support import load_local_module, unit_policy_bridge
+from test_support import load_local_module
 
-email_main = load_local_module(
-    pathlib.Path(__file__).with_name("main.py"),
-    "claw_test_email_main",
-    clear_modules=("_shared",),
+
+email = load_local_module(
+    Path(__file__).with_name("main.py"), "claw_test_email_main", clear_modules=("_shared",),
 )
-_gmail_token = email_main._gmail_token
-_parse_gmail_message = email_main._parse_gmail_message
-_parse_outlook_message = email_main._parse_outlook_message
-run = email_main.run
+ACCOUNT = "00000000-0000-4000-8000-000000000001:account1"
+OTHER = "00000000-0000-4000-8000-000000000001:account2"
 
 
-# ---------------------------------------------------------------------------
-# Helpers — clear all provider env vars between tests
-# ---------------------------------------------------------------------------
-
-PROVIDER_ENV_KEYS = [
-    "GOOGLE_ACCESS_TOKEN",
-    "GMAIL_ACCESS_TOKEN",
-    "GOOGLE_OAUTH_TOKEN",
-    "MICROSOFT_ACCESS_TOKEN",
-    "MICROSOFT_OAUTH_TOKEN",
-    "SMTP_HOST",
-    "SMTP_PORT",
-    "SMTP_USER",
-    "SMTP_PASSWORD",
-    "SMTP_FROM",
-]
+def reference(account=ACCOUNT):
+    return base64.urlsafe_b64encode(
+        json.dumps([account, "native-folder", "public@example.invalid"], separators=(",", ":")).encode()
+    ).decode().rstrip("=")
 
 
-def _clear_provider_env():
-    for key in PROVIDER_ENV_KEYS:
-        os.environ.pop(key, None)
-
-
-class TestCredentialStoreIntegration(unittest.TestCase):
+class TestThunderbirdEmail(unittest.TestCase):
     def setUp(self):
-        _clear_provider_env()
+        self.policy_patch = patch.object(email.policy, "require")
+        self.require = self.policy_patch.start()
+        self.kernel_patch = patch.object(email.kernel, "call_json_with_stdin_binary")
+        self.call = self.kernel_patch.start()
+        self.memory_patch = patch.object(email.memory, "remember")
+        self.memory_patch.start()
+        self.events_patch = patch.object(email.events, "publish")
+        self.publish = self.events_patch.start()
+        self.addCleanup(patch.stopall)
 
-    def tearDown(self):
-        _clear_provider_env()
+    def request(self):
+        binary, argv, data = self.call.call_args.args
+        self.assertTrue(os.path.isabs(binary))
+        self.assertEqual(argv, ["__mail", "request", "--request-stdin"])
+        return json.loads(data)
 
-    @patch(
-        "claw_test_email_main.load_credential",
-        return_value=("stored-token", None),
-    )
-    def test_gmail_loads_canonical_access_token_from_store(self, load):
-
-        token, error = _gmail_token()
-
-        self.assertEqual(token, "stored-token")
-        self.assertIsNone(error)
-        load.assert_called_once_with("GOOGLE_ACCESS_TOKEN")
-
-    @patch("claw_test_email_main.open_url")
-    def test_gmail_request_sends_bearer_token(self, open_url):
-        os.environ["GOOGLE_ACCESS_TOKEN"] = "access-token"
-        response = MagicMock()
-        response.__enter__.return_value.read.return_value = b"{}"
-        open_url.return_value = (response, "https://gmail.googleapis.com/test", [])
-
-        result = email_main._gmail_request("https://gmail.googleapis.com/test")
-
-        self.assertEqual(result, {})
-        request = open_url.call_args.args[0]
-        self.assertEqual(request.get_header("Authorization"), "Bearer access-token")
-
-    @patch("claw_test_email_main.open_url")
-    def test_gmail_401_returns_non_retryable_auth_guidance(self, open_url):
-        os.environ["GOOGLE_ACCESS_TOKEN"] = "expired-token"
-        open_url.side_effect = email_main.urllib.error.HTTPError(
-            "https://gmail.googleapis.com/test",
-            401,
-            "Unauthorized",
-            {},
-            io.BytesIO(b'{"error":"invalid_grant"}'),
-        )
-
-        result = email_main._gmail_request("https://gmail.googleapis.com/test")
-
-        self.assertEqual(result["status"], 401)
-        self.assertTrue(result["auth_required"])
-        self.assertFalse(result["retryable"])
-        self.assertTrue(result["setup"]["interactive_oauth_available"])
-        self.assertEqual(
-            result["setup"]["login_command"],
-            "cos credential oauth-login google",
-        )
-        self.assertEqual(
-            result["setup"]["agent_action"],
-            {
-                "tool": "cos_oauth_login",
-                "input": {"provider": "google"},
-            },
-        )
-        self.assertIn("system Agent should start", result["setup"]["message"])
-
-    @patch(
-        "claw_test_email_main.load_credential",
-        return_value=(None, "credential not found"),
-    )
-    def test_missing_gmail_login_returns_single_non_retryable_action(self, _load):
-        result = email_main._gmail_request("https://gmail.googleapis.com/test")
-
-        self.assertTrue(result["auth_required"])
-        self.assertFalse(result["retryable"])
-        self.assertTrue(result["setup"]["interactive_oauth_available"])
-        self.assertEqual(
-            result["setup"]["login_command"],
-            "cos credential oauth-login google",
-        )
-        self.assertEqual(
-            result["setup"]["agent_action"],
-            {
-                "tool": "cos_oauth_login",
-                "input": {"provider": "google"},
-            },
-        )
-        self.assertIn("system Agent should start", result["setup"]["message"])
-
-    def test_missing_outlook_login_returns_agent_action(self):
-        result = email_main._outlook_auth_error("credential not found")
-
-        self.assertTrue(result["auth_required"])
-        self.assertFalse(result["retryable"])
-        self.assertEqual(
-            result["setup"]["login_command"],
-            "cos credential oauth-login microsoft",
-        )
-        self.assertEqual(
-            result["setup"]["agent_action"],
-            {
-                "tool": "cos_oauth_login",
-                "input": {"provider": "microsoft"},
-            },
-        )
-
-
-# ---------------------------------------------------------------------------
-# Unknown command
-# ---------------------------------------------------------------------------
-
-
-class TestUnknownCommand(unittest.TestCase):
-    def test_unknown_command(self):
-        result = run("bogus", [])
-        self.assertIn("error", result)
-        self.assertIn("unknown command", result["error"])
-
-
-class TestCanonicalArguments(unittest.TestCase):
-    def test_explicit_false_reaches_argparse_handler(self):
-        with patch.object(email_main.policy, "require"), patch.object(
-            email_main,
-            "_list_gmail",
-            side_effect=lambda max_results, unread: {
-                "max_results": max_results,
-                "unread": unread,
-            },
-        ):
-            result = run(
-                "list",
-                ["--provider=gmail", "--max-results=3", "--unread=false"],
-            )
-        self.assertEqual(result, {"max_results": 3, "unread": False})
-
-
-# ---------------------------------------------------------------------------
-# Send command
-# ---------------------------------------------------------------------------
-
-
-class TestSendCommand(unittest.TestCase):
-    def setUp(self):
-        _clear_provider_env()
-
-    def tearDown(self):
-        _clear_provider_env()
-
-    def test_inline_option_shaped_value_is_preserved(self):
-        options = email_main._build_send_parser().parse_args(
-            [
-                "--to=x@y.com",
-                "--subject=--urgent",
-                "--body=hello",
-                "--provider=smtp",
-            ]
-        )
-        self.assertEqual(options.subject, "--urgent")
-
-    def test_send_no_provider(self):
-        result = run("send", ["--to", "x@y.com", "--subject", "hi", "--body", "hello"])
-        self.assertIn("error", result)
-        self.assertIn("missing required arguments", result["error"])
-
-    def test_send_missing_to(self):
-        os.environ["SMTP_HOST"] = "localhost"
-        result = run("send", ["--subject", "hi", "--body", "hello", "--provider", "smtp"])
-        self.assertIn("error", result)
-
-    def test_send_missing_subject(self):
-        os.environ["SMTP_HOST"] = "localhost"
-        result = run("send", ["--to", "x@y.com", "--body", "hello", "--provider", "smtp"])
-        self.assertIn("error", result)
-
-    def test_send_missing_body(self):
-        os.environ["SMTP_HOST"] = "localhost"
-        result = run("send", ["--to", "x@y.com", "--subject", "hi", "--provider", "smtp"])
-        self.assertIn("error", result)
-
-    @patch("claw_test_email_main.cos_smtp.connect")
-    def test_send_smtp_success(self, mock_connect):
-        os.environ["SMTP_HOST"] = "mail.example.com"
-        os.environ["SMTP_PORT"] = "587"
-        os.environ["SMTP_USER"] = "user"
-        os.environ["SMTP_PASSWORD"] = "pass"
-        os.environ["SMTP_FROM"] = "me@example.com"
-
-        mock_server = MagicMock()
-        mock_connect.return_value.__enter__ = MagicMock(return_value=mock_server)
-        mock_connect.return_value.__exit__ = MagicMock(return_value=False)
-
-        result = run(
-            "send",
-            [
-                "--to", "x@y.com",
-                "--subject", "hi",
-                "--body", "hello",
-                "--provider", "smtp",
-                "--host", "mail.example.com:587",
-            ],
-        )
-        self.assertTrue(result.get("sent"))
-        self.assertEqual(result["to"], "x@y.com")
-        self.assertEqual(result["provider"], "smtp")
-        self.assertTrue(mock_connect.call_args.kwargs["starttls"])
-        self.assertFalse(mock_connect.call_args.kwargs["implicit_tls"])
-        mock_server.login.assert_called_once_with("user", "pass")
-        mock_server.send_message.assert_called_once()
-
-    @patch("claw_test_email_main.cos_smtp.connect")
-    def test_send_smtp_with_cc(self, mock_connect):
-        os.environ["SMTP_HOST"] = "localhost"
-        os.environ["SMTP_PORT"] = "25"
-
-        mock_server = MagicMock()
-        mock_connect.return_value.__enter__ = MagicMock(return_value=mock_server)
-        mock_connect.return_value.__exit__ = MagicMock(return_value=False)
-
-        result = run(
-            "send",
-            [
-                "--to", "x@y.com",
-                "--subject", "hi",
-                "--body", "hello",
-                "--cc", "z@y.com",
-                "--provider", "smtp",
-                "--host", "localhost:25",
-            ],
-        )
-        self.assertTrue(result.get("sent"))
-        # Verify the message was sent (cc handled in MIME message)
-        mock_server.send_message.assert_called_once()
-        msg = mock_server.send_message.call_args[0][0]
-        self.assertEqual(msg["Cc"], "z@y.com")
-
-    @patch("claw_test_email_main.cos_smtp.connect")
-    def test_send_smtp_no_starttls_on_port_25(self, mock_connect):
-        os.environ["SMTP_HOST"] = "localhost"
-        os.environ["SMTP_PORT"] = "25"
-
-        mock_server = MagicMock()
-        mock_connect.return_value.__enter__ = MagicMock(return_value=mock_server)
-        mock_connect.return_value.__exit__ = MagicMock(return_value=False)
-
-        result = run(
-            "send",
-            [
-                "--to", "x@y.com",
-                "--subject", "hi",
-                "--body", "hello",
-                "--provider", "smtp",
-                "--host", "localhost:25",
-            ],
-        )
-        self.assertTrue(result.get("sent"))
-        self.assertFalse(mock_connect.call_args.kwargs["starttls"])
-
-    @patch("claw_test_email_main.cos_smtp.connect")
-    def test_send_smtp_no_login_without_credentials(self, mock_connect):
-        os.environ["SMTP_HOST"] = "localhost"
-        os.environ["SMTP_PORT"] = "25"
-
-        mock_server = MagicMock()
-        mock_connect.return_value.__enter__ = MagicMock(return_value=mock_server)
-        mock_connect.return_value.__exit__ = MagicMock(return_value=False)
-
-        result = run(
-            "send",
-            [
-                "--to", "x@y.com",
-                "--subject", "hi",
-                "--body", "hello",
-                "--provider", "smtp",
-                "--host", "localhost:25",
-            ],
-        )
-        self.assertTrue(result.get("sent"))
-        mock_server.login.assert_not_called()
-
-    @patch("claw_test_email_main._remember_sent")
-    @patch("claw_test_email_main.policy.require")
-    @patch("claw_test_email_main.cos_smtp.connect")
-    def test_smtp_checks_and_connects_to_the_declared_endpoint(self, connect, require, remember):
-        os.environ["SMTP_PORT"] = "invalid-undisclosed-port"
-        os.environ["SMTP_PASSWORD"] = "fixture-password"
-        for port in (587, 465, 25, 2525):
-            with self.subTest(port=port):
-                connect.reset_mock()
-                require.reset_mock()
-                endpoint = f"Mail.Example.com:{port}"
-                result = run("send", [
-                    "--to", "recipient@example.com", "--subject", "hi", "--body", "hello",
-                    "--provider", "smtp", "--host", endpoint,
-                ])
-                self.assertTrue(result.get("sent"), result)
-                require.assert_any_call("net.dial", host=endpoint)
-                connect.assert_called_once_with(
-                    "mail.example.com", port, timeout=30,
-                    implicit_tls=port == 465, starttls=port == 587,
-                )
-
-    @patch("claw_test_email_main.load_credential")
-    @patch("claw_test_email_main.cos_smtp.connect")
-    @patch("claw_test_email_main.policy.require")
-    def test_invalid_smtp_endpoint_is_rejected_before_policy_or_credentials(self, require, connect, load):
-        for endpoint in (
-            "mail.example.com", "mail.example.com:", "mail.example.com:0",
-            "mail.example.com:65536", "mail.example.com:+587", "mail.example.com:abc",
-            "mail.example.com:587/path", "mail.example.com:587?query",
-            "mail.example.com:587#fragment", "mail.example.com: 587",
-            "mail.example.com:587\n", "mail.example.com.:587", "-bad.example.com:587",
-            "mail..example.com:587", "user@host.example.com:587",
-            "user:password@host.example.com:587", "https://mail.example.com:587",
-            "[2001:db8::1]:587", "m\u00e4il.example.com:587", "mail.example.com:\uff15\uff18\uff17",
-        ):
-            with self.subTest(endpoint=endpoint):
-                result = run("send", [
-                    "--to", "recipient@example.com", "--subject", "hi", "--body", "hello",
-                    "--provider", "smtp", f"--host={endpoint}",
-                ])
-                self.assertIn("invalid SMTP --host", result.get("error", ""))
-        require.assert_not_called()
-        connect.assert_not_called()
-        load.assert_not_called()
-
-    @patch("claw_test_email_main.load_credential")
-    @patch("claw_test_email_main.cos_smtp.connect")
-    @patch("claw_test_email_main.policy.require")
-    def test_smtp_policy_failure_never_connects_or_loads_credentials(self, require, connect, load):
-        require.side_effect = email_main.policy.PolicyUnavailable("fixture policy unavailable")
-        result = run("send", [
-            "--to", "recipient@example.com", "--subject", "hi", "--body", "hello",
-            "--provider", "smtp", "--host", "mail.example.com:587",
+    def test_accounts_and_message_operations_use_the_sdk_mail_bridge(self):
+        self.call.return_value = {"accounts": [{"id": ACCOUNT}], "backend": "thunderbird"}
+        self.assertEqual(email.run("accounts", [])["accounts"], [{"id": ACCOUNT}])
+        self.assertNotIn("account", self.request())
+        self.require.assert_called_with("mail.accounts", wild=True)
+        self.call.return_value = {"account": ACCOUNT, "messages": [{"id": reference()}]}
+        result = email.run("list", [
+            f"--account={ACCOUNT}", "--max-results=3", "--unread=false",
         ])
-        self.assertIn("capability check failed", result.get("error", ""))
-        connect.assert_not_called()
-        load.assert_not_called()
+        self.assertEqual(self.request()["args"], {"max_results": 3, "unread": False})
+        self.assertIn("thunderbird-message", result["messages"][0]["object"])
+        self.require.assert_called_with("mail.read", name=ACCOUNT)
+        self.call.return_value = {"account": ACCOUNT, "id": reference(), "body": "Native body"}
+        result = email.run("read", [f"--account={ACCOUNT}", f"--id={reference()}"])
+        self.assertEqual(result["body"], "Native body")
+        self.assertEqual(self.request()["action"], "read")
 
-    @patch("claw_test_email_main._gmail_request")
-    def test_send_gmail_success(self, mock_req):
-        os.environ["GMAIL_ACCESS_TOKEN"] = "test-token"
-        mock_req.return_value = {"id": "msg123", "threadId": "t1", "labelIds": ["SENT"]}
-
-        result = run(
-            "send",
-            [
-                "--to", "x@y.com",
-                "--subject", "hi",
-                "--body", "hello",
-                "--provider", "gmail",
-            ],
-        )
-        self.assertTrue(result.get("sent"))
-        self.assertEqual(result["provider"], "gmail")
-        self.assertEqual(result["id"], "msg123")
-        mock_req.assert_called_once()
-
-    @patch("claw_test_email_main._outlook_request")
-    def test_send_outlook_success(self, mock_req):
-        os.environ["MICROSOFT_ACCESS_TOKEN"] = "test-token"
-        mock_req.return_value = {}
-
-        result = run(
-            "send",
-            [
-                "--to", "x@y.com",
-                "--subject", "hi",
-                "--body", "hello",
-                "--provider", "outlook",
-            ],
-        )
-        self.assertTrue(result.get("sent"))
-        self.assertEqual(result["provider"], "outlook")
-        mock_req.assert_called_once()
-
-    @patch("claw_test_email_main._outlook_request")
-    def test_send_outlook_with_cc(self, mock_req):
-        os.environ["MICROSOFT_ACCESS_TOKEN"] = "test-token"
-        mock_req.return_value = {}
-
-        result = run(
-            "send",
-            [
-                "--to", "x@y.com",
-                "--subject", "hi",
-                "--body", "hello",
-                "--cc", "z@y.com",
-                "--provider", "outlook",
-            ],
-        )
-        self.assertTrue(result.get("sent"))
-        # Verify cc was included in the request payload
-        call_kwargs = mock_req.call_args
-        payload = call_kwargs[1]["data"] if "data" in (call_kwargs[1] or {}) else call_kwargs[0][2]
-        self.assertIn("ccRecipients", payload["message"])
-
-
-# ---------------------------------------------------------------------------
-# Search command
-# ---------------------------------------------------------------------------
-
-
-class TestSearchCommand(unittest.TestCase):
-    def setUp(self):
-        _clear_provider_env()
-
-    def tearDown(self):
-        _clear_provider_env()
-
-    def test_search_no_provider(self):
-        result = run("search", ["--query", "test"])
-        self.assertIn("error", result)
-
-    def test_search_smtp_only(self):
-        os.environ["SMTP_HOST"] = "localhost"
-        result = run("search", ["--query", "test"])
-        self.assertIn("error", result)
-
-    @patch("claw_test_email_main._gmail_request")
-    def test_search_gmail(self, mock_req):
-        os.environ["GMAIL_ACCESS_TOKEN"] = "tok"
-        # First call: list messages, subsequent calls: get each message
-        mock_req.side_effect = [
-            {"messages": [{"id": "m1"}, {"id": "m2"}]},
-            {
-                "id": "m1",
-                "snippet": "Hello",
-                "labelIds": ["UNREAD"],
-                "payload": {
-                    "headers": [
-                        {"name": "From", "value": "a@b.com"},
-                        {"name": "Subject", "value": "Test"},
-                        {"name": "Date", "value": "2026-03-25"},
-                    ],
-                    "parts": [],
-                },
-            },
-            {
-                "id": "m2",
-                "snippet": "World",
-                "labelIds": [],
-                "payload": {
-                    "headers": [
-                        {"name": "From", "value": "c@d.com"},
-                        {"name": "Subject", "value": "Re: Test"},
-                        {"name": "Date", "value": "2026-03-26"},
-                    ],
-                    "parts": [],
-                },
-            },
-        ]
-
-        result = run("search", ["--query", "test", "--provider", "gmail"])
-        self.assertEqual(result["provider"], "gmail")
-        self.assertEqual(result["count"], 2)
-        self.assertEqual(result["emails"][0]["id"], "m1")
-        self.assertTrue(result["emails"][0]["unread"])
-        self.assertFalse(result["emails"][1]["unread"])
-
-    @patch("claw_test_email_main._outlook_request")
-    def test_search_outlook(self, mock_req):
-        os.environ["MICROSOFT_ACCESS_TOKEN"] = "tok"
-        mock_req.return_value = {
-            "value": [
-                {
-                    "id": "o1",
-                    "from": {"emailAddress": {"address": "a@b.com"}},
-                    "subject": "Test",
-                    "bodyPreview": "Hello",
-                    "receivedDateTime": "2026-03-25T10:00:00Z",
-                    "isRead": False,
-                    "toRecipients": [],
-                },
-            ],
-        }
-
-        result = run("search", ["--query", "test", "--provider", "outlook"])
-        self.assertEqual(result["provider"], "outlook")
-        self.assertEqual(result["count"], 1)
-        self.assertEqual(result["emails"][0]["id"], "o1")
-        self.assertTrue(result["emails"][0]["unread"])
-
-
-# ---------------------------------------------------------------------------
-# List command
-# ---------------------------------------------------------------------------
-
-
-class TestListCommand(unittest.TestCase):
-    def setUp(self):
-        _clear_provider_env()
-
-    def tearDown(self):
-        _clear_provider_env()
-
-    def test_list_no_provider(self):
-        result = run("list", [])
-        self.assertIn("error", result)
-
-    def test_list_smtp_only(self):
-        os.environ["SMTP_HOST"] = "localhost"
-        result = run("list", [])
-        self.assertIn("error", result)
-
-    @patch("claw_test_email_main._gmail_request")
-    def test_list_gmail(self, mock_req):
-        os.environ["GMAIL_ACCESS_TOKEN"] = "tok"
-        mock_req.side_effect = [
-            {"messages": [{"id": "m1"}]},
-            {
-                "id": "m1",
-                "snippet": "Recent",
-                "labelIds": [],
-                "payload": {
-                    "headers": [
-                        {"name": "From", "value": "x@y.com"},
-                        {"name": "Subject", "value": "Hello"},
-                        {"name": "Date", "value": "2026-03-25"},
-                    ],
-                    "parts": [],
-                },
-            },
-        ]
-        result = run("list", ["--max-results", "5", "--provider", "gmail"])
-        self.assertEqual(result["provider"], "gmail")
-        self.assertEqual(result["count"], 1)
-
-    @patch("claw_test_email_main._outlook_request")
-    def test_list_outlook_unread(self, mock_req):
-        os.environ["MICROSOFT_ACCESS_TOKEN"] = "tok"
-        mock_req.return_value = {"value": []}
-
-        result = run("list", ["--unread", "--provider", "outlook"])
-        self.assertEqual(result["provider"], "outlook")
-        self.assertEqual(result["count"], 0)
-        # Verify the filter was applied in the URL
-        call_url = mock_req.call_args[0][0]
-        self.assertIn("isRead", call_url)
-
-
-# ---------------------------------------------------------------------------
-# Read command
-# ---------------------------------------------------------------------------
-
-
-class TestReadCommand(unittest.TestCase):
-    def setUp(self):
-        _clear_provider_env()
-
-    def tearDown(self):
-        _clear_provider_env()
-
-    def test_message_objects_bind_the_provider_and_encode_opaque_ids(self):
-        message_id = "message/with?reserved&id"
-        for provider, request_name, host in [
-            ("gmail", "_gmail_request", email_main.GMAIL_API_HOST),
-            ("outlook", "_outlook_request", email_main.OUTLOOK_API_HOST),
+    def test_missing_account_legacy_providers_and_cross_account_ids_do_not_dispatch(self):
+        for command, args in [
+            ("list", []),
+            ("read", [f"--account={ACCOUNT}", f"--id={reference(OTHER)}"]),
+            ("send", ["--provider=gmail", "--to=public@example.invalid", "--subject=Hi", "--body=Hello"]),
         ]:
-            with self.subTest(provider=provider), patch.object(
-                email_main, request_name, return_value={"id": message_id}
-            ) as request, patch.object(email_main.policy, "require"):
-                result = run(f"{provider}_message", ["--id", message_id])
-            self.assertEqual(result["id"], message_id)
-            self.assertEqual(
-                result["object"],
-                f"app://email/{provider}-message?id=message%2Fwith%3Freserved%26id",
-            )
-            self.assertIn(host, request.call_args.args[0])
-            self.assertIn("message%2Fwith%3Freserved%26id", request.call_args.args[0])
+            self.assertIn("error", email.run(command, args))
+        self.call.assert_not_called()
+        self.require.assert_not_called()
 
-    def test_message_object_cannot_override_its_declared_provider(self):
-        with patch.object(email_main.policy, "require") as require:
-            result = run(
-                "gmail_message", ["--id", "msg123", "--provider", "outlook"]
-            )
-        self.assertIn("error", result)
-        require.assert_not_called()
-
-    def test_invalid_message_identity_is_rejected_before_authority(self):
-        with patch.object(email_main.policy, "require") as require:
-            result = run("outlook_message", ["--id", "message\nid"])
-        self.assertIn("invalid message ID", result["error"])
-        require.assert_not_called()
-
-    def test_read_no_provider(self):
-        result = run("read", ["--id", "msg123"])
-        self.assertIn("error", result)
-
-    def test_read_smtp_only(self):
-        os.environ["SMTP_HOST"] = "localhost"
-        result = run("read", ["--id", "msg123"])
-        self.assertIn("error", result)
-
-    @patch("claw_test_email_main._gmail_request")
-    def test_read_gmail(self, mock_req):
-        os.environ["GMAIL_ACCESS_TOKEN"] = "tok"
-        body_b64 = base64.urlsafe_b64encode(b"Hello world").decode()
-        mock_req.return_value = {
-            "id": "msg123",
-            "snippet": "Hello world",
-            "labelIds": ["UNREAD", "INBOX"],
-            "payload": {
-                "headers": [
-                    {"name": "From", "value": "boss@co.com"},
-                    {"name": "To", "value": "me@co.com"},
-                    {"name": "Subject", "value": "Urgent"},
-                    {"name": "Date", "value": "2026-03-25T10:00:00Z"},
-                ],
-                "body": {"data": body_b64},
-                "parts": [
-                    {
-                        "mimeType": "application/pdf",
-                        "filename": "doc.pdf",
-                        "body": {"size": 52400},
-                    },
-                ],
-            },
-        }
-
-        result = run("read", ["--id", "msg123", "--provider", "gmail"])
-        self.assertEqual(result["id"], "msg123")
-        self.assertEqual(result["from"], "boss@co.com")
-        self.assertEqual(result["to"], ["me@co.com"])
-        self.assertEqual(result["subject"], "Urgent")
-        self.assertEqual(result["body"], "Hello world")
-        self.assertTrue(result["unread"])
-        self.assertEqual(len(result["attachments"]), 1)
-        self.assertEqual(result["attachments"][0]["name"], "doc.pdf")
-
-    @patch("claw_test_email_main._outlook_request")
-    def test_read_outlook(self, mock_req):
-        os.environ["MICROSOFT_ACCESS_TOKEN"] = "tok"
-        mock_req.return_value = {
-            "id": "o123",
-            "from": {"emailAddress": {"address": "boss@co.com"}},
-            "toRecipients": [{"emailAddress": {"address": "me@co.com"}}],
-            "subject": "Urgent",
-            "body": {"contentType": "Text", "content": "Please review"},
-            "bodyPreview": "Please review",
-            "receivedDateTime": "2026-03-25T10:00:00Z",
-            "isRead": False,
-            "attachments": [{"name": "doc.pdf", "size": 52400}],
-        }
-
-        result = run("read", ["--id", "o123", "--provider", "outlook"])
-        self.assertEqual(result["id"], "o123")
-        self.assertEqual(result["from"], "boss@co.com")
-        self.assertEqual(result["to"], ["me@co.com"])
-        self.assertEqual(result["subject"], "Urgent")
-        self.assertEqual(result["body"], "Please review")
-        self.assertTrue(result["unread"])
-        self.assertEqual(len(result["attachments"]), 1)
-
-
-# ---------------------------------------------------------------------------
-# Parser edge-cases
-# ---------------------------------------------------------------------------
-
-
-class TestMailboxEvents(unittest.TestCase):
-    def test_gmail_baselines_without_backlog_and_advances_after_publication(self):
-        with tempfile.TemporaryDirectory() as directory, patch.dict(
-            os.environ, {"COS_DATA_DIR": directory}
-        ), patch.object(email_main.policy, "require"), patch.object(
-            email_main, "_gmail_request",
-            side_effect=[
-                {"historyId": "100"},
-                {"historyId": "110", "history": [{"messagesAdded": [
-                    {"message": {"id": "new-message"}}
-                ]}]},
-            ],
-        ) as request, patch.object(email_main.events, "publish", return_value={"accepted": True}) as publish:
-            baseline = run("sync", ["--provider", "gmail"])
-            self.assertEqual(baseline["events_emitted"], 0)
-            publish.assert_not_called()
-            updated = run("sync", ["--provider", "gmail"])
-            self.assertEqual(updated["events_emitted"], 1)
-            self.assertEqual(publish.call_args.args[0], "message.received")
-            self.assertEqual(
-                publish.call_args.kwargs["payload"]["object"],
-                "app://email/gmail-message?id=new-message",
-            )
-            cursor = json.loads((pathlib.Path(directory) / "mail-sync/gmail.json").read_text())
-            self.assertEqual(cursor["cursor"], "110")
-            self.assertIn("startHistoryId=100", request.call_args.args[0])
-
-    def test_sync_does_not_advance_an_event_that_was_not_published(self):
-        with tempfile.TemporaryDirectory() as directory, patch.dict(
-            os.environ, {"COS_DATA_DIR": directory}
-        ), patch.object(email_main.policy, "require"), patch.object(
-            email_main, "_gmail_request", side_effect=[
-                {"historyId": "100"},
-                {"historyId": "110", "history": [{"messagesAdded": [
-                    {"message": {"id": "new"}}
-                ]}]},
-            ],
-        ), patch.object(email_main.events, "publish", side_effect=RuntimeError("journal unavailable")):
-            run("sync", ["--provider", "gmail"])
-            with self.assertRaises(RuntimeError):
-                run("sync", ["--provider", "gmail"])
-            cursor = json.loads((pathlib.Path(directory) / "mail-sync/gmail.json").read_text())
-            self.assertEqual(cursor["cursor"], "100")
-
-    def test_outlook_baseline_is_inert_and_rejects_foreign_delta_continuations(self):
-        delta = "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta?$deltatoken=one"
-        with tempfile.TemporaryDirectory() as directory, patch.dict(
-            os.environ, {"COS_DATA_DIR": directory}
-        ), patch.object(email_main.policy, "require"), patch.object(
-            email_main, "_outlook_request",
-            side_effect=[
-                {"value": [{"id": "old"}], "@odata.deltaLink": delta},
-                {"value": [{"id": "new"}], "@odata.deltaLink": "https://foreign.invalid/messages/delta"},
-            ],
-        ) as request, patch.object(email_main.events, "publish", return_value={"accepted": True}) as publish:
-            run("sync", ["--provider", "outlook"])
-            publish.assert_not_called()
-            run("sync", ["--provider", "outlook"])
-            self.assertEqual(publish.call_count, 1)
-            result = run("sync", ["--provider", "outlook"])
-            self.assertIn("not an authorized inbox endpoint", result["error"])
-            self.assertEqual(request.call_count, 2)
-
-
-class TestSubmissionRequestIds(unittest.TestCase):
-    def arguments(self, request_id):
-        return [
-            "--provider", "gmail", "--to", "recipient@example.invalid",
-            "--subject", "Report", "--body", "Reviewed content",
-            "--request-id", request_id,
+    def test_draft_confirmation_and_source_account_are_validated_before_policy(self):
+        args = [
+            f"--account={ACCOUNT}", f"--sender-account={OTHER}",
+            f"--id={reference()}", "--review=sha256:" + "a" * 64,
         ]
+        self.assertIn("error", email.run("draft_send", [*args, "--confirm=false"]))
+        self.require.assert_not_called()
+        self.call.return_value = {"account": ACCOUNT, "error": "draft changed", "conflicted": True}
+        result = email.run("draft_send", [*args, "--confirm=true"])
+        self.assertTrue(result["conflicted"])
+        self.assertEqual(self.request()["args"]["sender_account"], OTHER)
+        self.assertEqual(self.require.call_args_list[-3].args, ("mail.read",))
+        self.assertEqual(self.require.call_args_list[-2].args, ("mail.draft",))
+        self.assertEqual(self.require.call_args_list[-1].kwargs, {"name": OTHER})
+        self.publish.assert_not_called()
+        self.require.reset_mock()
+        self.call.reset_mock()
+        result = email.run("draft_save", [
+            f"--account={OTHER}", f"--id={reference()}",
+            "--to=public@example.invalid", "--subject=Review", "--body=Draft",
+        ])
+        self.assertIn("source-account", result["error"])
+        self.require.assert_not_called()
+        self.call.assert_not_called()
 
-    def test_identical_request_returns_the_original_result_without_resending(self):
-        request_id = str(uuid.uuid4())
-        with tempfile.TemporaryDirectory() as directory, patch.dict(
-            os.environ, {"COS_DATA_DIR": directory}
-        ), patch.object(email_main.policy, "require"), patch.object(
-            email_main, "_send_gmail", return_value={"sent": True, "provider": "gmail", "id": "message"}
-        ) as send, patch.object(email_main.memory, "remember"):
-            first = run("send", self.arguments(request_id))
-            second = run("send", self.arguments(request_id))
-            self.assertEqual(first, second)
-            self.assertEqual(send.call_count, 1)
-            stored = pathlib.Path(directory) / "mail-requests" / (request_id + ".json")
-            self.assertEqual(stored.stat().st_mode & 0o777, 0o600)
-            changed = self.arguments(request_id)
-            changed[changed.index("--body") + 1] = "Different content"
-            self.assertIn("different Mail operation", run("send", changed)["error"])
-            self.assertEqual(send.call_count, 1)
-
-    def test_interrupted_request_never_replays_an_uncertain_effect(self):
-        request_id = str(uuid.uuid4())
-        with tempfile.TemporaryDirectory() as directory, patch.dict(
-            os.environ, {"COS_DATA_DIR": directory}
-        ), patch.object(email_main.policy, "require"), patch.object(
-            email_main, "_send_gmail", side_effect=RuntimeError("lost response")
-        ) as send:
-            with self.assertRaises(RuntimeError):
-                run("send", self.arguments(request_id))
-            send.side_effect = None
-            result = run("send", self.arguments(request_id))
-            self.assertTrue(result["indeterminate"])
-            self.assertFalse(result["retryable"])
-            self.assertEqual(send.call_count, 1)
-
-    def test_corrupt_request_history_is_not_repaired_or_replayed(self):
-        request_id = str(uuid.uuid4())
-        with tempfile.TemporaryDirectory() as directory, patch.dict(
-            os.environ, {"COS_DATA_DIR": directory}
-        ), patch.object(email_main.policy, "require"), patch.object(
-            email_main, "_send_gmail"
-        ) as send:
-            store = pathlib.Path(directory) / "mail-requests"
-            store.mkdir(mode=0o700)
-            record = store / (request_id + ".json")
-            record.write_text("corrupt")
-            record.chmod(0o600)
-            result = run("send", self.arguments(request_id))
-            self.assertIn("corrupt", result["error"])
-            self.assertEqual(record.read_text(), "corrupt")
-            send.assert_not_called()
-
-
-class TestProviderDrafts(unittest.TestCase):
-    def test_save_creates_provider_drafts_without_sending(self):
-        for provider, helper, suffix in [
-            ("gmail", "_gmail_request", "/drafts"),
-            ("outlook", "_outlook_request", "/me/messages"),
-        ]:
-            with self.subTest(provider=provider), patch.object(
-                email_main, helper, return_value={"id": "saved/draft", "isDraft": True}
-            ) as request, patch.object(email_main.policy, "require"):
-                result = run(
-                    "draft_save",
-                    ["--provider", provider, "--to", "recipient@example.invalid",
-                     "--subject", "Review", "--body", "Explicit draft content"],
-                )
-            self.assertTrue(result["saved"])
-            self.assertFalse(result["sent"])
-            self.assertEqual(
-                result["draft"]["object"],
-                f"app://email/{provider}-draft?id=saved%2Fdraft",
-            )
-            self.assertTrue(request.call_args.args[0].endswith(suffix))
-            self.assertEqual(request.call_args.kwargs["method"], "POST")
-
-    def test_outlook_draft_operations_never_update_a_sent_message(self):
-        with patch.object(
-            email_main, "_outlook_request", return_value={"id": "sent", "isDraft": False}
-        ) as request, patch.object(email_main.policy, "require"):
-            result = run(
-                "draft_save",
-                ["--provider", "outlook", "--id", "sent", "--to", "a@example.invalid",
-                 "--subject", "New subject", "--body", "New body"],
-            )
-        self.assertIn("not a draft", result["error"])
-        self.assertEqual(request.call_count, 1)
-        self.assertEqual(request.call_args.kwargs, {})
-
-    def test_send_checks_the_reviewed_provider_data_before_submitting(self):
-        original = {
-            "id": "draft", "message": {"id": "message", "payload": {"headers": [
-                {"name": "Subject", "value": "Reviewed subject"},
-                {"name": "Bcc", "value": "hidden@example.invalid"},
-            ]}},
-        }
-        with patch.object(
-            email_main, "_gmail_request", return_value=original
-        ) as request, patch.object(email_main.policy, "require"):
-            viewed = run("gmail_draft", ["--id", "draft"])["draft"]
-            self.assertEqual(viewed["message"]["bcc"], ["hidden@example.invalid"])
-            changed = json.loads(json.dumps(original))
-            changed["message"]["payload"]["headers"][0]["value"] = "Changed subject"
-            request.return_value = changed
-            request.reset_mock()
-            result = run(
-                "draft_send",
-                ["--provider", "gmail", "--id", "draft",
-                 "--review", viewed["review"], "--confirm"],
-            )
-            self.assertTrue(result["conflicted"])
-            self.assertEqual(request.call_count, 1)
-            request.side_effect = [original, {"id": "sent-message"}]
-            result = run(
-                "draft_send",
-                ["--provider", "gmail", "--id", "draft",
-                 "--review", viewed["review"], "--confirm"],
-            )
-        self.assertTrue(result["sent"])
-        self.assertFalse(result["delivery_confirmed"])
-        self.assertTrue(request.call_args.args[0].endswith("/drafts/send"))
-
-    def test_draft_send_requires_confirmation_before_any_authority(self):
-        with patch.object(email_main.policy, "require") as require:
-            result = run(
-                "draft_send",
-                ["--provider", "gmail", "--id", "draft", "--review", "sha256:review"],
-            )
-        self.assertIn("error", result)
-        require.assert_not_called()
-
-
-class TestAttachmentDownloads(unittest.TestCase):
-    def arguments(self, provider, output, attachment="attachment/one"):
-        return [
-            "--provider", provider, "--id", "message/one",
-            "--attachment", attachment, "--output", str(output),
-        ]
-
-    def test_nested_inline_attachment_is_discoverable_and_saved_privately(self):
-        data = b"%PDF-1.7 synthetic attachment"
-        part = {
-            "partId": "1.2", "filename": "agenda.pdf", "mimeType": "application/pdf",
-            "body": {"data": base64.urlsafe_b64encode(data).decode().rstrip("=")},
-        }
-        message = {"id": "message/one", "payload": {"parts": [{"parts": [part]}]}}
-        self.assertEqual(_parse_gmail_message(message)["attachments"][0]["id"], "part:1.2")
-        with tempfile.TemporaryDirectory() as directory, patch.object(
-            email_main, "_gmail_request", return_value=message
-        ), patch.object(email_main.policy, "require"), patch.object(
-            email_main, "current_context", return_value=MagicMock(session_id="call-session")
-        ), patch.object(email_main.snapshot, "snapshot") as snapshot:
-            output = pathlib.Path(directory) / "agenda.pdf"
-            result = run("attachment_download", self.arguments("gmail", output, "part:1.2"))
-            self.assertEqual(output.read_bytes(), data)
-            self.assertEqual(output.stat().st_mode & 0o777, 0o600)
-            self.assertEqual(run("attachment_file", ["--path", str(output)])["object"], result["object"])
-        snapshot.assert_called_once_with(
-            str(output), "attachment_download", session_id="call-session"
-        )
-        self.assertTrue(result["source_message"].startswith("app://email/gmail-message?id="))
-
-    def test_outlook_attachment_download_encodes_both_provider_ids(self):
-        data = b"synthetic document"
-        with tempfile.TemporaryDirectory() as directory, patch.object(
-            email_main, "_outlook_request",
-            return_value={"contentBytes": base64.b64encode(data).decode()},
-        ) as request, patch.object(email_main.policy, "require"):
-            output = pathlib.Path(directory) / "document.bin"
-            result = run("attachment_download", self.arguments("outlook", output))
-            self.assertEqual(output.read_bytes(), data)
-        self.assertEqual(result["bytes"], len(data))
-        self.assertTrue(
-            request.call_args.args[0].endswith(
-                "/messages/message%2Fone/attachments/attachment%2Fone"
-            )
-        )
-
-    def test_existing_outputs_and_oversized_or_invalid_data_are_preserved(self):
-        with tempfile.TemporaryDirectory() as directory, patch.object(
-            email_main, "_gmail_request",
-            return_value={"data": base64.b64encode(b"too large").decode()},
-        ) as request, patch.object(email_main.policy, "require"):
-            output = pathlib.Path(directory) / "attachment.bin"
-            output.write_bytes(b"original")
-            result = run("attachment_download", self.arguments("gmail", output))
-            self.assertIn("already exists", result["error"])
-            self.assertEqual(output.read_bytes(), b"original")
-            request.assert_not_called()
-            output.unlink()
-            result = run(
-                "attachment_download", self.arguments("gmail", output) + ["--max-bytes", "2"]
-            )
-            self.assertIn("size limit", result["error"])
-            self.assertFalse(output.exists())
-            request.return_value = {"data": "not%base64"}
-            result = run("attachment_download", self.arguments("gmail", output))
+    def test_attachment_bytes_stay_in_the_os_and_only_the_exact_new_path_is_requested(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = os.path.join(root, "attachment.pdf")
+            self.call.return_value = {
+                "account": ACCOUNT, "id": reference(), "path": path, "bytes": 3,
+                "sha256": "sha256:" + "a" * 64,
+            }
+            result = email.run("attachment_download", [
+                f"--account={ACCOUNT}", f"--id={reference()}", "--attachment=1.2", f"--output={path}",
+            ])
+            self.assertNotIn("error", result)
+            self.assertEqual(self.request()["args"]["output"], path)
+            self.assertEqual(self.request()["args"]["max_bytes"], 16777216)
+            self.require.assert_any_call("fs.write", path=path)
+            self.assertNotIn("data", result)
+            self.call.reset_mock()
+            result = email.run("attachment_download", [
+                f"--account={ACCOUNT}", f"--id={reference()}", "--attachment=../../other",
+                f"--output={path}",
+            ])
             self.assertIn("error", result)
-            self.assertEqual(list(pathlib.Path(directory).iterdir()), [])
+            self.call.assert_not_called()
 
+    def test_repeated_submission_returns_its_receipt_without_sending_again(self):
+        with tempfile.TemporaryDirectory() as root, patch.dict(os.environ, {"COS_DATA_DIR": root}):
+            request_id = str(uuid.uuid4())
+            args = [
+                f"--account={ACCOUNT}", "--to=public@example.invalid",
+                "--subject=Report", "--body=Review this", f"--request-id={request_id}",
+            ]
+            self.call.return_value = {"account": ACCOUNT, "sent": True, "id": reference()}
+            first = email.run("send", args)
+            self.assertEqual(first, email.run("send", args))
+            self.call.assert_called_once()
+            changed = email.run("send", [*args[:-1], "--cc=other@example.invalid", args[-1]])
+            self.assertIn("different Mail operation", changed["error"])
+            self.call.assert_called_once()
 
-class TestParseGmailMessage(unittest.TestCase):
-    def test_empty_payload(self):
-        result = _parse_gmail_message({"id": "x", "payload": {}, "labelIds": []})
-        self.assertEqual(result["id"], "x")
-        self.assertEqual(result["body"], "")
-        self.assertEqual(result["attachments"], [])
+    def test_indeterminate_transport_failure_cannot_resubmit_and_has_no_provider_fallback(self):
+        with tempfile.TemporaryDirectory() as root, patch.dict(os.environ, {
+            "COS_DATA_DIR": root, "GOOGLE_ACCESS_TOKEN": "synthetic-unused-token",
+            "SMTP_HOST": "unused.example.invalid",
+        }):
+            args = [
+                f"--account={ACCOUNT}", "--to=public@example.invalid",
+                "--subject=Hi", "--body=Hello", f"--request-id={uuid.uuid4()}",
+            ]
+            self.call.side_effect = email.kernel.KernelUnavailable("accepted outcome is unknown")
+            self.assertTrue(email.run("send", args)["indeterminate"])
+            self.assertTrue(email.run("send", args)["indeterminate"])
+            self.call.assert_called_once()
 
-    def test_body_from_parts(self):
-        body_b64 = base64.urlsafe_b64encode(b"Part body").decode()
-        msg = {
-            "id": "x",
-            "snippet": "snip",
-            "labelIds": [],
-            "payload": {
-                "headers": [],
-                "body": {},
-                "parts": [
-                    {"mimeType": "text/html", "body": {"data": "ignored"}},
-                    {"mimeType": "text/plain", "body": {"data": body_b64}},
-                ],
-            },
-        }
-        result = _parse_gmail_message(msg)
-        self.assertEqual(result["body"], "Part body")
-
-
-class TestParseOutlookMessage(unittest.TestCase):
-    def test_minimal_message(self):
-        result = _parse_outlook_message({"id": "o1"})
-        self.assertEqual(result["id"], "o1")
-        self.assertEqual(result["from"], "")
-        self.assertEqual(result["to"], [])
-        self.assertEqual(result["body"], "")
-        self.assertFalse(result["unread"])
-
-
-# ---------------------------------------------------------------------------
-# API error propagation
-# ---------------------------------------------------------------------------
-
-
-class TestApiErrors(unittest.TestCase):
-    def setUp(self):
-        _clear_provider_env()
-
-    def tearDown(self):
-        _clear_provider_env()
-
-    @patch("claw_test_email_main._gmail_request")
-    def test_gmail_send_api_error(self, mock_req):
-        os.environ["GMAIL_ACCESS_TOKEN"] = "tok"
-        mock_req.return_value = {"error": "Invalid token", "status": 401}
-
-        result = run(
-            "send",
-            ["--to", "x@y.com", "--subject", "hi", "--body", "test", "--provider", "gmail"],
-        )
-        self.assertIn("error", result)
-        self.assertEqual(result["status"], 401)
-
-    @patch("claw_test_email_main._outlook_request")
-    def test_outlook_search_api_error(self, mock_req):
-        os.environ["MICROSOFT_ACCESS_TOKEN"] = "tok"
-        mock_req.return_value = {"error": "Forbidden", "status": 403}
-
-        result = run("search", ["--query", "test", "--provider", "outlook"])
-        self.assertIn("error", result)
-        self.assertEqual(result["status"], 403)
-
-    @patch("claw_test_email_main._gmail_request")
-    def test_gmail_search_propagates_detail_auth_failure(self, request):
-        request.side_effect = [
-            {"messages": [{"id": "m1"}]},
-            {
-                "error": "authorization required",
-                "auth_required": True,
-                "retryable": False,
-            },
-        ]
-
-        result = email_main._search_gmail("test", 10)
-
-        self.assertTrue(result["auth_required"])
-        self.assertFalse(result["retryable"])
-
-    @patch("claw_test_email_main._gmail_request")
-    def test_gmail_list_propagates_detail_auth_failure(self, request):
-        request.side_effect = [
-            {"messages": [{"id": "m1"}]},
-            {
-                "error": "authorization required",
-                "auth_required": True,
-                "retryable": False,
-            },
-        ]
-
-        result = email_main._list_gmail(10, False)
-
-        self.assertTrue(result["auth_required"])
-        self.assertFalse(result["retryable"])
+    def test_mailbox_baseline_and_event_failure_do_not_replay_or_advance_the_cursor(self):
+        with tempfile.TemporaryDirectory() as root, patch.dict(os.environ, {"COS_DATA_DIR": root}):
+            self.call.return_value = {"account": ACCOUNT, "cursor": 10, "messages": [], "baseline": True}
+            first = email.run("sync", [f"--account={ACCOUNT}"])
+            self.assertEqual(first["events_emitted"], 0)
+            self.publish.assert_not_called()
+            self.call.return_value = {
+                "account": ACCOUNT, "cursor": 11, "baseline": False,
+                "messages": [{"sequence": 11, "id": reference()}],
+            }
+            self.publish.side_effect = RuntimeError("synthetic event service unavailable")
+            with self.assertRaises(RuntimeError):
+                email.run("sync", [f"--account={ACCOUNT}"])
+            self.publish.side_effect = None
+            result = email.run("sync", [f"--account={ACCOUNT}"])
+            self.assertEqual(self.request()["args"]["cursor"], 10)
+            self.assertEqual(result["events_emitted"], 1)
+            self.assertEqual(self.publish.call_args.kwargs["payload"]["account"], ACCOUNT)
+            self.assertIn("thunderbird-message", self.publish.call_args.kwargs["payload"]["object"])
 
 
 if __name__ == "__main__":

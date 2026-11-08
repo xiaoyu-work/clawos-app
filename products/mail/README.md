@@ -2,8 +2,8 @@
 
 This product owns the complete Thunderbird **153.2.0esr** source at `comm/`,
 the existing shared Mail AI business implementation at `apps/mail-ai/`,
-its Thunderbird UI at `extension/`, and the legacy SMTP/Gmail/Outlook
-transport at `apps/email/`, plus restricted delivery at `apps/gateway/email/`.
+its Thunderbird UI at `extension/`, and the Thunderbird-backed Agent
+client at `apps/email/`, plus restricted delivery at `apps/gateway/email/`.
 
 The source moved from Claw OS commit
 `0492ea6c13cca3213b1b1bafabeed5e6074ebb44`. See
@@ -15,12 +15,35 @@ The native source is not a submodule or a second IMAP/SMTP client.
 The six existing AI operations share one implementation between UI and MCP.
 Their installed identity remains `mail-ai`; moving repositories does not
 change user consent, accounts, installed paths or native-host authority.
-The legacy transport retains the separate installed `email` identity and
-provider-specific grants until the explicit product cutover.
+The Agent client retains the installed `email` identity but now reads and sends
+through Thunderbird's existing accounts. `email.accounts` lists profile-qualified
+account IDs; mailbox operations require an explicit `--account`, without
+credential detection or Gmail/Outlook API/SMTP fallback. Separate `mail.read`,
+`mail.draft` and `mail.send` grants replace those operation needs; existing
+credentials and grants are not copied, deleted or silently converted.
 Delivery keeps `gateway-email` at `/usr/lib/cos/apps/gateway/email` and uses
 the required OS runtime, with no unguarded SMTP fallback when it is missing.
-Native mailbox/MCP integration, product branding and the later consolidation
-of the old `email` and `gateway-email` identities are not complete.
+The OS broker starts the owner's Thunderbird through its user-session service
+manager when necessary. The extension uses native background send/save APIs,
+not a model request or a compose-window automation loop.
+Product branding, identity consolidation and installed native/GUI acceptance
+remain separate; this source change does not publish or install a release.
+
+```bash
+cos app email accounts
+cos app email folders --account ACCOUNT_ID
+cos app email list --account ACCOUNT_ID --unread --max-results 10
+cos app email read --account ACCOUNT_ID --id MESSAGE_REFERENCE_ID
+cos app email draft_save --account SENDER_ACCOUNT_ID \
+  --to user@example.com --subject "Report" --body "Please review."
+```
+
+Copy returned IDs rather than Thunderbird's session-local numeric message IDs.
+`native_draft --id DRAFT_REFERENCE_ID` returns a complete review fingerprint.
+Sending it requires the draft's mailbox `--account`, an explicit
+`--sender-account`, the current `--review` and `--confirm`.
+These accounts can differ when Thunderbird stores drafts in Local Folders;
+rights remain independent. See [MODULE.md](MODULE.md).
 
 The OS repository retains the native authority launcher, SDK/runtime,
 Thunderbird registration and signed package installation. It pins this

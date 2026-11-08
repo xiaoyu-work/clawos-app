@@ -132,8 +132,10 @@ with its declared App fixture sources/staging. OS production must consume
 general versioned service interfaces, not compile product UI/private business
 libraries. Fixture archives are not runtime download or update dependencies.
 
-Mail preserves `mail-ai` and its six AI operations, plus the existing `email`
-SMTP/Gmail/Outlook implementation. Native Thunderbird source is also owned
+Mail preserves `mail-ai` and its six AI operations, plus the `email` identity
+now backed by Thunderbird's existing accounts through the account-scoped OS
+mail service. Independent Gmail/Outlook API and SMTP backends are not Email
+fallbacks. Native Thunderbird source is also owned
 here, along with the restricted `gateway-email` delivery adapter. These source moves do not merge
 legacy identities or account state; completing that product cutover requires
 explicit account, consent and installation changes.
@@ -145,8 +147,8 @@ inventory on every cache use. It selects named SDK/runtime/toolkit exports;
 there is no Git, sibling-checkout or unverified-cache fallback. The SDK artifact
 contains OS libraries, not App helpers or private OS providers.
 Historical platform `1.0.0`/`1.1.0` releases remain withdrawn. The explicitly
-approved `app-platform-v0.1.0` release now supplies the verified development pin,
-including public event/channel and object/effect contracts; see
+approved `app-platform-v0.2.0` release now supplies the verified development pin,
+including account-scoped Mail permissions, public event/channel and object/effect contracts; see
 [publication status](docs/releases.md#platform-publication-status).
 Developer commands can explicitly supply a local archive, expected version
 and SHA-256 through the same public artifact verifier. This uses a separate

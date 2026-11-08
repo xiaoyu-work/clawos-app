@@ -1,9 +1,4 @@
-"""Legacy Mail SMTP/Gmail/Outlook operations, pending the native-engine cutover.
-
-This implementation belongs to the Mail product, not an independent Agent
-mailbox product. Source relocation preserves its existing identity and grants;
-sharing Thunderbird account/object state requires the separate product cutover.
-"""
+"""Agent Mail operations over the owner's existing Thunderbird accounts."""
 
 import argparse
 import base64
@@ -11,599 +6,425 @@ import fcntl
 import hashlib
 import json
 import os
-import smtplib
 import stat
-import sys
-import urllib.error
-import urllib.parse
-import urllib.request
+import time
 import uuid
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
-import idna
-
-from _shared.credentials import load_credential  # noqa: E402
-from _shared.atomic import atomic_create_bytes, atomic_write_json, _fsync_dir  # noqa: E402
-from _shared.paths import safe_realpath  # noqa: E402
-from _shared.safe_http import open_url  # noqa: E402
-from claw_os_sdk import ai, events  # noqa: E402
-from claw_os_sdk.objects import ObjectRefError, format_reference  # noqa: E402
-from claw_os_sdk.mcp import current_context  # noqa: E402
-from cos_runtime import memory, policy, snapshot  # noqa: E402
-from cos_runtime import smtp as cos_smtp  # noqa: E402
+from _shared.atomic import atomic_write_json, _fsync_dir
+from _shared.paths import safe_realpath
+from claw_os_sdk import ai, events, kernel
+from claw_os_sdk.mcp import current_context
+from claw_os_sdk.objects import format_reference
+from cos_runtime import memory, policy
 
 
-# ---------------------------------------------------------------------------
-# Provider host map — used for fine-grained net.dial scoping
-# ---------------------------------------------------------------------------
-
-GMAIL_API_HOST = "gmail.googleapis.com"
-OUTLOOK_API_HOST = "graph.microsoft.com"
-GOOGLE_ACCESS_TOKEN = "GOOGLE_ACCESS_TOKEN"
-MICROSOFT_ACCESS_TOKEN = "MICROSOFT_ACCESS_TOKEN"
 MAX_ATTACHMENT_BYTES = 16 * 1024 * 1024
+MAX_BODY_BYTES = 256 * 1024
 
 
-def _credential_value(store_name, *legacy_env_names):
-    value = os.environ.get(store_name)
-    if value:
-        return value, None
-    for name in legacy_env_names:
-        value = os.environ.get(name)
-        if value:
-            return value, None
-    return load_credential(store_name)
+def _account(value):
+    profile, separator, native = value.partition(":")
+    if (
+        not separator or str(uuid.UUID(profile)) != profile
+        or not 1 <= len(native) <= 64
+        or not all(character.isascii() and (character.isalnum() or character in "_-") for character in native)
+    ):
+        raise ValueError("use a Thunderbird account id returned by email.accounts")
+    return value
 
 
-def _gmail_auth_error(detail, status=None):
-    result = {
-        "error": "Gmail authorization is required or has expired",
-        "provider": "gmail",
-        "auth_required": True,
-        "retryable": False,
-        "credential": f"default/{GOOGLE_ACCESS_TOKEN}",
-        "detail": detail,
-        "setup": {
-            "interactive_oauth_available": True,
-            "agent_action": {
-                "tool": "cos_oauth_login",
-                "input": {"provider": "google"},
-            },
-            "login_command": "cos credential oauth-login google",
-            "message": (
-                "The system Agent should start the trusted browser authorization "
-                "with setup.agent_action. The login command is a terminal fallback."
-            ),
-        },
-    }
-    if status is not None:
-        result["status"] = status
-    return result
+def _message_account(value):
+    if not isinstance(value, str) or not 1 <= len(value) <= 8192:
+        raise ValueError("invalid Thunderbird message reference")
+    raw = base64.b64decode(value + "=" * (-len(value) % 4), altchars=b"-_", validate=True)
+    parts = json.loads(raw)
+    if (
+        not isinstance(parts, list) or len(parts) != 3
+        or any(not isinstance(part, str) or not 1 <= len(part) <= 4096 for part in parts)
+    ):
+        raise ValueError("invalid Thunderbird message reference")
+    return _account(parts[0])
 
 
-def _outlook_auth_error(detail, status=None):
-    result = {
-        "error": "Outlook authorization is required or has expired",
-        "provider": "outlook",
-        "auth_required": True,
-        "retryable": False,
-        "credential": f"default/{MICROSOFT_ACCESS_TOKEN}",
-        "detail": detail,
-        "setup": {
-            "interactive_oauth_available": True,
-            "agent_action": {
-                "tool": "cos_oauth_login",
-                "input": {"provider": "microsoft"},
-            },
-            "login_command": "cos credential oauth-login microsoft",
-            "message": (
-                "The system Agent should start the trusted browser authorization "
-                "with setup.agent_action. The login command is a terminal fallback."
-            ),
-        },
-    }
-    if status is not None:
-        result["status"] = status
-    return result
-
-
-# ---------------------------------------------------------------------------
-# Argument parsers
-# ---------------------------------------------------------------------------
-
-def _build_send_parser():
-    p = argparse.ArgumentParser(prog="cos email send", add_help=False)
-    p.add_argument("--to", required=True)
-    p.add_argument("--subject", required=True)
-    p.add_argument("--body", required=True)
-    p.add_argument("--cc", default=None)
-    p.add_argument("--provider", required=True, choices=["smtp", "gmail", "outlook"])
-    p.add_argument("--host", default=None, help="SMTP endpoint, e.g. mail.example.com:587")
-    p.add_argument("--request-id")
-    return p
-
-
-def _build_search_parser():
-    p = argparse.ArgumentParser(prog="cos email search", add_help=False)
-    p.add_argument("--query", required=True)
-    p.add_argument("--max-results", type=int, default=10)
-    p.add_argument("--provider", required=True, choices=["gmail", "outlook"])
-    return p
-
-
-def _build_list_parser():
-    p = argparse.ArgumentParser(prog="cos email list", add_help=False)
-    p.add_argument("--max-results", type=int, default=10)
-    p.add_argument("--unread", action="store_true")
-    p.add_argument("--provider", required=True, choices=["gmail", "outlook"])
-    return p
-
-
-def cmd_sync(args):
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--provider", required=True, choices=["gmail", "outlook"])
-    parser.add_argument("--reset", action="store_true")
-    try:
-        options = parser.parse_args(args)
-    except SystemExit:
-        return {"error": "usage: email sync --provider gmail|outlook [--reset]"}
-    policy.require("data.db.read", name="mail-sync")
-    policy.require("data.db.write", name="mail-sync")
-    policy.require("ipc.publish", name="app:email")
-    _authorize_mailbox(options.provider)
-    root = os.environ.get("COS_DATA_DIR")
-    if not root or not os.path.isabs(root):
-        return {"error": "Mail sync requires the authenticated App data partition"}
-    directory = os.path.join(root, "mail-sync")
-    os.makedirs(directory, mode=0o700, exist_ok=True)
-    metadata = os.stat(directory, follow_symlinks=False)
-    if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077:
-        return {"error": "Mail sync state must be a private owner-owned directory"}
-    path = os.path.join(directory, options.provider + ".json")
-    lock = os.open(path + ".lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
-    try:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        try:
-            descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
-        except FileNotFoundError:
-            state = None
-        else:
-            with os.fdopen(descriptor, "rb") as file:
-                metadata = os.fstat(file.fileno())
-                if (
-                    not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1
-                    or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077
-                ):
-                    return {"error": "Mail sync record must be a private owner-owned file"}
-                data = file.read(32769)
-            if len(data) > 32768:
-                return {"error": "Mail sync state exceeds its bound"}
-            state = json.loads(data)
-            if not isinstance(state, dict) or set(state) != {"cursor", "page", "initialised"}:
-                return {"error": "Mail sync state is corrupt"}
-            if not isinstance(state["cursor"], str) or type(state["initialised"]) is not bool:
-                return {"error": "Mail sync continuation is corrupt"}
-        if options.reset:
-            state = None
-        if options.provider == "gmail" and state is None:
-            profile = _gmail_request("https://gmail.googleapis.com/gmail/v1/users/me/profile")
-            if "error" in profile:
-                return profile
-            cursor = profile.get("historyId")
-            if not isinstance(cursor, str) or not cursor.isdecimal():
-                return {"error": "Gmail did not return a valid history baseline"}
-            atomic_write_json(path, {"cursor": cursor, "page": None, "initialised": True}, mode=0o600, strict=True)
-            return {"provider": "gmail", "initialised": True, "events_emitted": 0, "more": False}
-        if options.provider == "gmail":
-            query = {"startHistoryId": state["cursor"], "historyTypes": "messageAdded", "labelId": "INBOX", "maxResults": 500}
-            if state["page"]:
-                query["pageToken"] = state["page"]
-            result = _gmail_request(
-                "https://gmail.googleapis.com/gmail/v1/users/me/history?" + urllib.parse.urlencode(query)
-            )
-            if "error" in result:
-                return {**result, "reset_required": result.get("status") == 404}
-            ids = {
-                message["message"]["id"] for entry in result.get("history", [])
-                for message in entry.get("messagesAdded", [])
-            }
-            next_page = result.get("nextPageToken")
-            next_cursor = state["cursor"] if next_page else result.get("historyId")
-            if not isinstance(next_cursor, str) or not next_cursor.isdecimal():
-                return {"error": "Gmail did not return a valid history continuation"}
-            next_state = {"cursor": next_cursor, "page": next_page, "initialised": True}
-            emit = True
-            more = next_page is not None
-        else:
-            initial = state is None or not state["initialised"]
-            url = state["cursor"] if state is not None else (
-                "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta?changeType=created&$select=id"
-            )
-            parsed = urllib.parse.urlsplit(url)
-            if (
-                parsed.scheme != "https" or parsed.hostname != OUTLOOK_API_HOST
-                or parsed.username is not None or parsed.password is not None
-                or parsed.fragment or parsed.port not in (None, 443)
-                or not parsed.path.lower().startswith("/v1.0/me/mailfolders")
-                or not parsed.path.lower().endswith("/messages/delta")
-            ):
-                return {"error": "Outlook delta cursor is not an authorized inbox endpoint"}
-            result = _outlook_request(url)
-            if "error" in result:
-                return {**result, "reset_required": result.get("status") in (404, 410)}
-            next_page = result.get("@odata.nextLink")
-            next_cursor = next_page or result.get("@odata.deltaLink")
-            if not isinstance(next_cursor, str):
-                return {"error": "Outlook did not return a delta continuation"}
-            ids = {message["id"] for message in result.get("value", []) if "@removed" not in message}
-            next_state = {"cursor": next_cursor, "page": None, "initialised": next_page is None}
-            emit = not initial
-            more = next_page is not None
-        if len(ids) > 1000:
-            return {"error": "Mailbox sync page exceeds the bounded event count"}
-        emitted = 0
-        if emit:
-            for message_id in sorted(ids):
-                reference = _message_reference(options.provider, message_id)
-                key = "received-" + hashlib.sha256(f"{options.provider}\0{message_id}".encode()).hexdigest()
-                events.publish("message.received", key, entity_id=message_id, payload={"object": reference})
-                emitted += 1
-        atomic_write_json(path, next_state, mode=0o600, strict=True)
-        return {
-            "provider": options.provider, "initialised": next_state["initialised"],
-            "events_emitted": emitted, "more": more,
-        }
-    finally:
-        os.close(lock)
-
-
-def _build_read_parser():
-    p = argparse.ArgumentParser(prog="cos email read", add_help=False)
-    p.add_argument("--id", required=True, dest="message_id")
-    p.add_argument("--provider", required=True, choices=["gmail", "outlook"])
-    return p
-
-
-def _message_reference(provider, message_id):
+def _reference(kind, value):
     return format_reference({
-        "app_id": "email",
-        "object_type": f"{provider}-message",
-        "object_id": message_id,
+        "app_id": "email", "object_type": kind, "object_id": value,
     })
 
 
-def _read_message_object(provider, args):
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--id", required=True)
+def _context():
     try:
-        opts = parser.parse_args(args)
-    except SystemExit:
-        return {"error": f"usage: email {provider}_message --id <message-id>"}
-    return cmd_read(["--provider", provider, f"--id={opts.id}"])
-
-
-def cmd_gmail_message(args):
-    return _read_message_object("gmail", args)
-
-
-def cmd_outlook_message(args):
-    return _read_message_object("outlook", args)
-
-
-def _message_parts(payload):
-    pending = [payload]
-    count = 0
-    while pending:
-        part = pending.pop()
-        count += 1
-        if count > 1000:
-            raise ValueError("message exceeds the 1000-part MIME limit")
-        yield part
-        pending.extend(reversed(part.get("parts", [])))
-
-
-def _decode_attachment(encoded, limit):
-    if not isinstance(encoded, str) or len(encoded) > ((limit + 2) // 3) * 4 + 4:
-        raise ValueError("attachment exceeds its size limit")
-    data = base64.b64decode(
-        encoded + "=" * (-len(encoded) % 4), altchars=b"-_", validate=True,
-    )
-    if len(data) > limit:
-        raise ValueError("attachment exceeds its size limit")
-    return data
-
-
-def _attachment_file_reference(path):
-    return format_reference({
-        "app_id": "email", "object_type": "attachment-file", "object_id": path,
-    })
-
-
-def cmd_attachment_file(args):
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--path", required=True)
-    try:
-        options = parser.parse_args(args)
-    except SystemExit:
-        return {"error": "usage: email attachment_file --path <absolute-path>"}
-    path = safe_realpath(options.path)
-    if not os.path.isabs(options.path) or path != options.path:
-        return {"error": "attachment file path must be absolute and canonical"}
-    policy.require("fs.meta", path=path)
-    metadata = os.stat(path, follow_symlinks=False)
-    if not stat.S_ISREG(metadata.st_mode):
-        return {"error": "attachment path is not a regular file"}
-    return {
-        "path": path, "size": metadata.st_size, "modified_ns": metadata.st_mtime_ns,
-        "object": _attachment_file_reference(path),
-    }
-
-
-def cmd_attachment_download(args):
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--provider", choices=["gmail", "outlook"], required=True)
-    parser.add_argument("--id", required=True)
-    parser.add_argument("--attachment", required=True)
-    parser.add_argument("--output", required=True)
-    parser.add_argument("--max-bytes", dest="max_bytes", type=int, default=MAX_ATTACHMENT_BYTES)
-    try:
-        options = parser.parse_args(args)
-    except SystemExit:
-        return {"error": "usage: email attachment_download --provider gmail|outlook --id MESSAGE --attachment ID --output PATH"}
-    try:
-        _message_reference(options.provider, options.id)
-        format_reference({
-            "app_id": "email", "object_type": "attachment", "object_id": options.attachment,
-        })
-        if not 1 <= options.max_bytes <= MAX_ATTACHMENT_BYTES:
-            raise ValueError("max-bytes must be between 1 and 16777216")
-        path = safe_realpath(options.output)
-        if not os.path.isabs(options.output) or path != options.output:
-            raise ValueError("output must be an absolute canonical path")
-        _attachment_file_reference(path)
-    except ValueError as error:
-        return {"error": str(error)}
-    policy.require("fs.write", path=path)
-    if os.path.lexists(path):
-        return {"error": "attachment output already exists; it will not be overwritten"}
-    if not os.path.isdir(os.path.dirname(path)):
-        return {"error": "attachment output parent must already exist"}
-    message = urllib.parse.quote(options.id, safe="")
-    attachment = urllib.parse.quote(options.attachment, safe="")
-    if options.provider == "gmail":
-        policy.require("secret.read", name="default/GOOGLE_ACCESS_TOKEN")
-        policy.require("net.dial", host=GMAIL_API_HOST)
-        if options.attachment.startswith("part:"):
-            result = _gmail_request(
-                f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{message}?format=full"
-            )
-            if "error" in result:
-                return result
-            result = next(
-                (part["body"] for part in _message_parts(result.get("payload", {}))
-                 if part.get("filename") and f"part:{part.get('partId')}" == options.attachment),
-                {"error": "inline attachment part was not found"},
-            )
-        else:
-            result = _gmail_request(
-                f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{message}/attachments/{attachment}"
-            )
-        encoded = result.get("data")
-    else:
-        policy.require("secret.read", name="default/MICROSOFT_ACCESS_TOKEN")
-        policy.require("net.dial", host=OUTLOOK_API_HOST)
-        result = _outlook_request(
-            f"https://graph.microsoft.com/v1.0/me/messages/{message}/attachments/{attachment}"
-        )
-        if result.get("@odata.type", "#microsoft.graph.fileAttachment") != "#microsoft.graph.fileAttachment":
-            return {"error": "only Outlook file attachments can be downloaded"}
-        encoded = result.get("contentBytes")
-    if "error" in result:
-        return result
-    try:
-        data = _decode_attachment(encoded, options.max_bytes)
-    except ValueError as error:
-        return {"error": str(error)}
-    try:
-        context = current_context()
+        return current_context()
     except RuntimeError:
-        context = None
-    if context is not None and context.session_id:
-        snapshot.snapshot(path, "attachment_download", session_id=context.session_id)
-    try:
-        atomic_create_bytes(path, data, mode=0o600)
-        _fsync_dir(os.path.dirname(path), strict=True)
-    except FileExistsError:
-        return {"error": "attachment output already exists; it will not be overwritten"}
-    except OSError as error:
-        return {
-            "error": f"attachment persistence failed: {error}",
-            "indeterminate": os.path.lexists(path), "path": path,
-        }
-    return {
-        "provider": options.provider, "id": options.id, "attachment": options.attachment,
-        "path": path, "bytes": len(data), "sha256": "sha256:" + hashlib.sha256(data).hexdigest(),
-        "object": _attachment_file_reference(path),
-        "source_message": _message_reference(options.provider, options.id),
+        return None
+
+
+def _mail(action, account=None, **arguments):
+    context = _context()
+    deadline = time.time_ns() // 1_000_000 + 55_000
+    if context is not None and context.deadline_unix_ms is not None:
+        deadline = min(deadline, context.deadline_unix_ms)
+    request = {
+        "action": action,
+        "args": {key: value for key, value in arguments.items() if value is not None},
+        "deadline_unix_ms": deadline,
     }
-
-
-def _build_draft_parser():
-    p = argparse.ArgumentParser(prog="cos email draft", add_help=False)
-    p.add_argument("--context", required=True)
-    p.add_argument(
-        "--style",
-        default="formal",
-        choices=["formal", "casual", "short"],
+    if account is not None:
+        request["account"] = account
+    return kernel.call_json_with_stdin_binary(
+        os.environ.get("CLAW_COS_BIN", "/usr/local/bin/cos"),
+        ["__mail", "request", "--request-stdin"],
+        json.dumps(request, ensure_ascii=False, allow_nan=False).encode("utf-8"),
+        deadline_unix_ms=deadline,
+        check_cancelled=context.raise_if_cancelled if context is not None else None,
     )
-    return p
 
 
-def _draft_reference(provider, draft_id):
-    return format_reference({
-        "app_id": "email", "object_type": f"{provider}-draft", "object_id": draft_id,
-    })
+def _parser(command):
+    return argparse.ArgumentParser(prog=f"email {command}", add_help=False)
 
 
-def _authorize_mailbox(provider):
-    if provider == "gmail":
-        policy.require("secret.read", name="default/GOOGLE_ACCESS_TOKEN")
-        policy.require("net.dial", host=GMAIL_API_HOST)
-    else:
-        policy.require("secret.read", name="default/MICROSOFT_ACCESS_TOKEN")
-        policy.require("net.dial", host=OUTLOOK_API_HOST)
+def _account_parser(command):
+    parser = _parser(command)
+    parser.add_argument("--account", required=True, type=_account)
+    return parser
 
 
-def _draft_view(provider, draft_id, message):
-    raw = json.dumps(message, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
-    parsed = _parse_gmail_message(message) if provider == "gmail" else _parse_outlook_message(message)
-    return {
-        "id": draft_id, "object": _draft_reference(provider, draft_id),
-        "review": "sha256:" + hashlib.sha256(raw).hexdigest(), "message": parsed,
-    }
+def _headers(options):
+    for value in (options.to, options.subject, options.cc or ""):
+        if any(character in value for character in "\r\n\0") or len(value.encode("utf-8")) > 4096:
+            raise ValueError("mail recipient and subject headers must be bounded and contain no newlines")
+    if not options.to.strip():
+        raise ValueError("mail recipient list cannot be empty")
+    if "\0" in options.body or len(options.body.encode("utf-8")) > MAX_BODY_BYTES:
+        raise ValueError("mail body exceeds the Thunderbird request limit")
 
 
-def _fetch_draft(provider, draft_id):
-    encoded = urllib.parse.quote(draft_id, safe="")
-    if provider == "gmail":
-        result = _gmail_request(
-            f"https://gmail.googleapis.com/gmail/v1/users/me/drafts/{encoded}?format=full"
-        )
-        if "error" in result:
-            return result
-        message = result.get("message", {})
-    else:
-        result = _outlook_request(
-            f"https://graph.microsoft.com/v1.0/me/messages/{encoded}?$expand=attachments"
-        )
-        if "error" in result:
-            return result
-        if result.get("isDraft") is not True:
-            return {"error": "the selected Outlook message is not a draft"}
-        message = result
-    return {"provider": provider, "draft": _draft_view(provider, draft_id, message)}
+def _message(result):
+    if "error" not in result and result.get("id"):
+        result = {**result, "object": _reference("thunderbird-message", result["id"])}
+    if "messages" in result:
+        result = {**result, "messages": [
+            {**item, "object": _reference("thunderbird-message", item["id"])}
+            for item in result["messages"]
+        ]}
+    return result
 
 
-def _read_draft_object(provider, args):
-    parser = argparse.ArgumentParser(add_help=False)
+def cmd_accounts(args):
+    _parser("accounts").parse_args(args)
+    policy.require("mail.accounts", wild=True)
+    return _mail("accounts")
+
+
+def cmd_folders(args):
+    options = _account_parser("folders").parse_args(args)
+    policy.require("mail.read", name=options.account)
+    return _mail("folders", options.account)
+
+
+def cmd_list(args):
+    parser = _account_parser("list")
+    parser.add_argument("--folder")
+    parser.add_argument("--max-results", type=int, default=10)
+    parser.add_argument("--unread", action="store_true")
+    options = parser.parse_args(args)
+    if not 1 <= options.max_results <= 100:
+        raise ValueError("max-results must be between 1 and 100")
+    policy.require("mail.read", name=options.account)
+    return _message(_mail(
+        "list", options.account, folder=options.folder,
+        max_results=options.max_results, unread=options.unread,
+    ))
+
+
+def cmd_search(args):
+    parser = _account_parser("search")
+    parser.add_argument("--query", required=True)
+    parser.add_argument("--folder")
+    parser.add_argument("--max-results", type=int, default=10)
+    options = parser.parse_args(args)
+    if not options.query.strip() or len(options.query.encode("utf-8")) > 4096:
+        raise ValueError("query must be bounded nonempty Thunderbird search text")
+    if not 1 <= options.max_results <= 100:
+        raise ValueError("max-results must be between 1 and 100")
+    policy.require("mail.read", name=options.account)
+    return _message(_mail(
+        "search", options.account, query=options.query,
+        folder=options.folder, max_results=options.max_results,
+    ))
+
+
+def cmd_read(args):
+    parser = _account_parser("read")
     parser.add_argument("--id", required=True)
+    options = parser.parse_args(args)
+    if _message_account(options.id) != options.account:
+        raise ValueError("message reference belongs to a different Thunderbird account")
+    policy.require("mail.read", name=options.account)
+    return _message(_mail("read", options.account, id=options.id))
+
+
+def cmd_native_message(args):
+    parser = _parser("native_message")
+    parser.add_argument("--id", required=True)
+    options = parser.parse_args(args)
+    account = _message_account(options.id)
+    return cmd_read([f"--account={account}", f"--id={options.id}"])
+
+
+def cmd_native_draft(args):
+    parser = _parser("native_draft")
+    parser.add_argument("--id", required=True)
+    options = parser.parse_args(args)
+    account = _message_account(options.id)
+    policy.require("mail.read", name=account)
+    result = _mail("native_draft", account, id=options.id)
+    if "error" not in result:
+        draft = result["draft"]
+        result = {**result, "draft": {
+            **draft, "object": _reference("thunderbird-draft", draft["id"]),
+            "message": _message(draft["message"]),
+        }}
+    return result
+
+
+def _remember_sent(result, to, subject, body, cc=None):
+    first = (body or "").strip().splitlines()
+    snippet = first[0][:200] if first else ""
+    text = f"Sent email to {to}: {subject}"
+    if snippet:
+        text += f" — {snippet}"
+    tags = ["email", "sent", "thunderbird"]
+    if cc:
+        tags.append("cc")
     try:
-        options = parser.parse_args(args)
-        _draft_reference(provider, options.id)
-    except (SystemExit, ValueError):
-        return {"error": f"usage: email {provider}_draft --id <draft-id>"}
-    _authorize_mailbox(provider)
-    return _fetch_draft(provider, options.id)
+        memory.remember(
+            source="email", text=text, kind="event",
+            entity_id=result.get("id"), tags=tags,
+            link=_reference("thunderbird-message", result["id"]) if result.get("id") else None,
+        )
+    except memory.MemoryError:
+        pass
 
 
-def cmd_gmail_draft(args):
-    return _read_draft_object("gmail", args)
-
-
-def cmd_outlook_draft(args):
-    return _read_draft_object("outlook", args)
-
-
-def cmd_draft_save(args):
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--provider", required=True, choices=["gmail", "outlook"])
-    parser.add_argument("--id")
+def _outgoing_parser(command):
+    parser = _account_parser(command)
     parser.add_argument("--to", required=True)
     parser.add_argument("--subject", required=True)
     parser.add_argument("--body", required=True)
     parser.add_argument("--cc")
     parser.add_argument("--request-id")
-    try:
-        options = parser.parse_args(args)
-        if any("\r" in value or "\n" in value for value in (options.to, options.subject, options.cc or "")):
-            raise ValueError("draft address and subject headers must not contain newlines")
-        if options.id is not None:
-            _draft_reference(options.provider, options.id)
-    except (SystemExit, ValueError) as error:
-        return {"error": f"invalid draft save arguments: {error}"}
-    _authorize_mailbox(options.provider)
-    if options.provider == "gmail":
-        message = MIMEMultipart()
-        message["To"] = options.to
-        message["Subject"] = options.subject
-        if options.cc:
-            message["Cc"] = options.cc
-        message.attach(MIMEText(options.body, "plain"))
-        data = {"message": {"raw": base64.urlsafe_b64encode(message.as_bytes()).decode()}}
-        url = "https://gmail.googleapis.com/gmail/v1/users/me/drafts"
-        if options.id is not None:
-            data["id"] = options.id
-            url += "/" + urllib.parse.quote(options.id, safe="")
-        result = _gmail_request(url, method="PUT" if options.id is not None else "POST", data=data)
-    else:
-        data = {
-            "subject": options.subject,
-            "body": {"contentType": "Text", "content": options.body},
-            "toRecipients": [
-                {"emailAddress": {"address": address.strip()}}
-                for address in options.to.split(",") if address.strip()
-            ],
-        }
-        if options.cc:
-            data["ccRecipients"] = [
-                {"emailAddress": {"address": address.strip()}}
-                for address in options.cc.split(",") if address.strip()
-            ]
-        url = "https://graph.microsoft.com/v1.0/me/messages"
-        if options.id is not None:
-            existing = _fetch_draft(options.provider, options.id)
-            if "error" in existing:
-                return existing
-            url += "/" + urllib.parse.quote(options.id, safe="")
-        result = _outlook_request(url, method="PATCH" if options.id is not None else "POST", data=data)
-    if "error" in result:
-        return result
-    draft_id = result.get("id")
-    if not draft_id:
-        return {"error": "provider did not return a saved draft ID", "indeterminate": True}
-    return {
-        "saved": True, "sent": False, "provider": options.provider,
-        "draft": {"id": draft_id, "object": _draft_reference(options.provider, draft_id)},
-    }
+    return parser
+
+
+def cmd_send(args):
+    options = _outgoing_parser("send").parse_args(args)
+    _headers(options)
+    policy.require("mail.send", name=options.account)
+    result = _mail(
+        "send", options.account, to=options.to, subject=options.subject,
+        body=options.body, cc=options.cc,
+    )
+    if result.get("sent"):
+        _remember_sent(result, options.to, options.subject, options.body, options.cc)
+    return _message(result)
+
+
+def cmd_draft_save(args):
+    parser = _outgoing_parser("draft_save")
+    parser.add_argument("--id")
+    parser.add_argument("--source-account", type=_account)
+    options = parser.parse_args(args)
+    _headers(options)
+    if options.id:
+        if not options.source_account or _message_account(options.id) != options.source_account:
+            raise ValueError("draft replacement requires its explicit matching source-account")
+        if options.source_account.partition(":")[0] != options.account.partition(":")[0]:
+            raise ValueError("draft and sender must use the same Thunderbird profile")
+    elif options.source_account:
+        raise ValueError("source-account requires the stored draft id")
+    policy.require("mail.draft", name=options.account)
+    if options.id:
+        policy.require("mail.read", name=options.source_account)
+        policy.require("mail.draft", name=options.source_account)
+    result = _mail(
+        "draft_save", options.account, id=options.id, source_account=options.source_account,
+        to=options.to, subject=options.subject, body=options.body, cc=options.cc,
+    )
+    if "error" not in result:
+        result = {**result, "draft": {
+            **result["draft"], "object": _reference("thunderbird-draft", result["draft"]["id"]),
+        }}
+    return result
 
 
 def cmd_draft_send(args):
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--provider", required=True, choices=["gmail", "outlook"])
+    parser = _account_parser("draft_send")
     parser.add_argument("--id", required=True)
+    parser.add_argument("--sender-account", required=True, type=_account)
     parser.add_argument("--review", required=True)
-    parser.add_argument("--confirm", nargs="?", const=True, required=True)
+    parser.add_argument("--confirm", nargs="?", const=True, required=True, choices=[True])
     parser.add_argument("--request-id")
-    try:
-        options = parser.parse_args(args)
-        _draft_reference(options.provider, options.id)
-        if options.confirm is not True:
-            raise ValueError("draft send requires explicit confirmation")
-    except (SystemExit, ValueError) as error:
-        return {"error": f"invalid draft send arguments: {error}"}
-    _authorize_mailbox(options.provider)
-    current = _fetch_draft(options.provider, options.id)
-    if "error" in current:
-        return current
-    if options.review != current["draft"]["review"]:
-        return {"error": "draft changed; read and review it again before sending", "conflicted": True}
-    if options.provider == "gmail":
-        result = _gmail_request(
-            "https://gmail.googleapis.com/gmail/v1/users/me/drafts/send",
-            method="POST", data={"id": options.id},
-        )
-    else:
-        result = _outlook_request(
-            f"https://graph.microsoft.com/v1.0/me/messages/{urllib.parse.quote(options.id, safe='')}/send",
-            method="POST",
-        )
-    if "error" in result:
-        return result
+    options = parser.parse_args(args)
+    if _message_account(options.id) != options.account:
+        raise ValueError("draft belongs to a different mailbox account")
+    if options.account.partition(":")[0] != options.sender_account.partition(":")[0]:
+        raise ValueError("draft and sender must use the same Thunderbird profile")
+    if options.confirm is not True:
+        raise ValueError("sending a saved draft requires explicit confirmation")
+    if (
+        len(options.review) != 71 or not options.review.startswith("sha256:")
+        or any(character not in "0123456789abcdef" for character in options.review[7:])
+    ):
+        raise ValueError("draft send requires its current SHA-256 review fingerprint")
+    policy.require("mail.read", name=options.account)
+    policy.require("mail.draft", name=options.account)
+    policy.require("mail.send", name=options.sender_account)
+    return _message(_mail(
+        "draft_send", options.account, id=options.id, sender_account=options.sender_account,
+        review=options.review, confirm=True,
+    ))
+
+
+def cmd_attachment_file(args):
+    parser = _parser("attachment_file")
+    parser.add_argument("--path", required=True)
+    options = parser.parse_args(args)
+    path = safe_realpath(options.path)
+    if not os.path.isabs(options.path) or path != options.path:
+        raise ValueError("attachment file path must be absolute and canonical")
+    policy.require("fs.meta", path=path)
+    metadata = os.stat(path, follow_symlinks=False)
+    if not stat.S_ISREG(metadata.st_mode):
+        raise ValueError("attachment path is not a regular file")
     return {
-        "sent": True, "provider": options.provider, "draft_id": options.id,
-        "id": result.get("id"), "delivery_confirmed": False,
+        "path": path, "size": metadata.st_size, "modified_ns": metadata.st_mtime_ns,
+        "object": _reference("attachment-file", path),
     }
+
+
+def cmd_attachment_download(args):
+    parser = _account_parser("attachment_download")
+    parser.add_argument("--id", required=True)
+    parser.add_argument("--attachment", required=True)
+    parser.add_argument("--output", required=True)
+    parser.add_argument("--max-bytes", type=int, default=MAX_ATTACHMENT_BYTES)
+    options = parser.parse_args(args)
+    if _message_account(options.id) != options.account:
+        raise ValueError("attachment message belongs to a different account")
+    if not options.attachment.split(".") or any(
+        not part or not part.isascii() or not part.isdigit()
+        for part in options.attachment.split(".")
+    ):
+        raise ValueError("attachment must be its native MIME part identifier")
+    if not 1 <= options.max_bytes <= MAX_ATTACHMENT_BYTES:
+        raise ValueError("max-bytes must be between 1 and 16777216")
+    path = safe_realpath(options.output)
+    if not os.path.isabs(options.output) or path != options.output:
+        raise ValueError("attachment output must be absolute and canonical")
+    policy.require("mail.read", name=options.account)
+    policy.require("fs.write", path=path)
+    result = _mail(
+        "attachment_download", options.account, id=options.id,
+        attachment=options.attachment, output=path, max_bytes=options.max_bytes,
+    )
+    if "error" not in result:
+        result = {**result, "object": _reference("attachment-file", result["path"]),
+                  "source_message": _reference("thunderbird-message", options.id)}
+    return result
+
+
+def _private_directory(name):
+    root = os.environ.get("COS_DATA_DIR")
+    if not root or not os.path.isabs(root):
+        raise ValueError("Mail storage requires the authenticated App data partition")
+    directory = os.path.join(root, name)
+    try:
+        os.mkdir(directory, 0o700)
+        _fsync_dir(root, strict=True)
+    except FileExistsError:
+        pass
+    metadata = os.stat(directory, follow_symlinks=False)
+    if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077:
+        raise ValueError("Mail storage must be a private owner-owned directory")
+    return directory
+
+
+def _read_record(path, limit=65536):
+    try:
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    except FileNotFoundError:
+        return None
+    with os.fdopen(descriptor, "rb") as source:
+        metadata = os.fstat(source.fileno())
+        if (
+            not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1
+            or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077
+        ):
+            raise ValueError("Mail storage record must be a private regular file")
+        encoded = source.read(limit + 1)
+    if len(encoded) > limit:
+        raise ValueError("Mail storage record exceeds its bound")
+    return json.loads(encoded)
+
+
+def _lock(path):
+    descriptor = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    metadata = os.fstat(descriptor)
+    if (
+        not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1
+        or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077
+    ):
+        os.close(descriptor)
+        raise ValueError("Mail storage lock must be a private regular file")
+    fcntl.flock(descriptor, fcntl.LOCK_EX)
+    return descriptor
+
+
+def cmd_sync(args):
+    parser = _account_parser("sync")
+    parser.add_argument("--reset", action="store_true")
+    options = parser.parse_args(args)
+    policy.require("mail.read", name=options.account)
+    policy.require("data.db.read", name="mail-sync")
+    policy.require("data.db.write", name="mail-sync")
+    directory = _private_directory("mail-sync")
+    path = os.path.join(directory, "thunderbird-" + hashlib.sha256(options.account.encode()).hexdigest() + ".json")
+    descriptor = _lock(path + ".lock")
+    try:
+        previous = _read_record(path, 8192)
+        if previous is not None and (
+            not isinstance(previous, dict) or set(previous) != {"account", "cursor"}
+            or previous["account"] != options.account or type(previous["cursor"]) is not int
+            or previous["cursor"] < 0
+        ):
+            raise ValueError("Thunderbird mailbox continuation is corrupt")
+        result = _mail(
+            "sync", options.account, reset=options.reset,
+            cursor=previous["cursor"] if previous is not None and not options.reset else None,
+        )
+        if "error" in result:
+            return result
+        count = 0
+        for item in result["messages"]:
+            if _message_account(item["id"]) != options.account:
+                raise ValueError("Thunderbird journal returned another account")
+            reference = _reference("thunderbird-message", item["id"])
+            key = "message-" + hashlib.sha256(
+                json.dumps([options.account, item["sequence"], item["id"]]).encode()
+            ).hexdigest()
+            events.publish("message.received", key, payload={
+                "provider": "thunderbird", "account": options.account, "object": reference,
+            })
+            count += 1
+        atomic_write_json(path, {"account": options.account, "cursor": result["cursor"]}, mode=0o600, strict=True)
+        return {
+            "provider": "thunderbird", "account": options.account,
+            "initialised": result["baseline"], "events_emitted": count, "more": False,
+        }
+    finally:
+        os.close(descriptor)
 
 
 _DRAFT_SYSTEMS = {
@@ -625,638 +446,45 @@ _DRAFT_SYSTEMS = {
 }
 
 
-# ---------------------------------------------------------------------------
-# SMTP send
-# ---------------------------------------------------------------------------
-
-def _smtp_connection(host, port, timeout=30):
-    """Open an SMTP session over whatever transport this worker has.
-
-    Inside a sandbox the process cannot dial TCP at all, so the session
-    is carried by the brokered egress tunnel: the broker checks
-    ``host:port`` against the operation's exact ``net.dial`` grant,
-    resolves the name itself and refuses any address that is not
-    globally routable. `cos_runtime.smtp` substitutes the transport at
-    `smtplib`'s own extension point, so there is no path left that could
-    fall back to a direct dial. Outside a sandbox it is the ordinary
-    :class:`smtplib.SMTP` dial, unchanged.
-    """
-    return cos_smtp.connect(
-        host,
-        port,
-        timeout=timeout,
-        implicit_tls=port == 465,
-        starttls=port == 587,
-    )
-
-
-def _smtp_endpoint(value):
-    host, separator, port = value.rpartition(":")
-    if (
-        not separator
-        or not host
-        or ":" in host
-        or not value.isascii()
-        or not port.isdecimal()
-        or len(port) > 5
-    ):
-        raise ValueError("SMTP requires an explicit host:port")
-    port = int(port)
-    if not 1 <= port <= 65535 or host.endswith("."):
-        raise ValueError("invalid SMTP host or port")
-    host = idna.encode(host, uts46=True, std3_rules=True).decode("ascii")
-    return host.lower(), port
-
-
-def _send_smtp(to, subject, body, host, port, cc=None):
-    """Send an email via SMTP."""
-    user = os.environ.get("SMTP_USER", "")
-    password, _ = _credential_value("SMTP_PASSWORD")
-    password = password or ""
-    from_addr = os.environ.get("SMTP_FROM", user)
-
-    msg = MIMEMultipart()
-    msg["From"] = from_addr
-    msg["To"] = to
-    msg["Subject"] = subject
-    if cc:
-        msg["Cc"] = cc
-    msg.attach(MIMEText(body, "plain"))
-
-    with _smtp_connection(host, port) as server:
-        if user and password:
-            server.login(user, password)
-        server.send_message(msg)
-
-    return {"sent": True, "to": to, "subject": subject, "provider": "smtp"}
-
-
-# ---------------------------------------------------------------------------
-# Gmail helpers
-# ---------------------------------------------------------------------------
-
-def _gmail_token():
-    return _credential_value(
-        GOOGLE_ACCESS_TOKEN,
-        "GMAIL_ACCESS_TOKEN",
-        "GOOGLE_OAUTH_TOKEN",
-    )
-
-
-def _gmail_request(url, method="GET", data=None):
-    """Make an authenticated request to the Gmail API."""
-    token, credential_error = _gmail_token()
-    if not token:
-        return _gmail_auth_error(
-            credential_error or f"missing default/{GOOGLE_ACCESS_TOKEN}"
-        )
-    headers = {"Authorization": f"Bearer {token}"}
-    if data is not None:
-        headers["Content-Type"] = "application/json"
-        data = json.dumps(data).encode("utf-8") if isinstance(data, dict) else data
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    try:
-        with open_url(req, timeout=30)[0] as resp:
-            raw = resp.read().decode("utf-8", errors="replace")
-            return json.loads(raw) if raw.strip() else {}
-    except urllib.error.HTTPError as e:
-        err_body = ""
-        try:
-            err_body = e.read().decode("utf-8", errors="replace")
-        except Exception:
-            pass
-        finally:
-            e.close()
-        if e.code == 401:
-            return _gmail_auth_error(err_body or str(e), status=e.code)
-        return {"error": err_body or str(e), "status": e.code}
-    except urllib.error.URLError as e:
-        return {"error": str(e.reason)}
-    except Exception as e:
-        return {"error": str(e)}
-
-
-def _send_gmail(to, subject, body, cc=None):
-    """Send an email via the Gmail API."""
-    msg = MIMEMultipart()
-    msg["To"] = to
-    msg["Subject"] = subject
-    if cc:
-        msg["Cc"] = cc
-    msg.attach(MIMEText(body, "plain"))
-
-    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
-    result = _gmail_request(
-        "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
-        method="POST",
-        data={"raw": raw},
-    )
-    if "error" in result:
-        return result
-    return {
-        "sent": True,
-        "to": to,
-        "subject": subject,
-        "provider": "gmail",
-        "id": result.get("id", ""),
-    }
-
-
-def _parse_gmail_message(msg_data):
-    """Extract structured fields from a Gmail API message resource."""
-    headers = {}
-    for h in msg_data.get("payload", {}).get("headers", []):
-        headers[h["name"].lower()] = h["value"]
-
-    snippet = msg_data.get("snippet", "")
-    labels = msg_data.get("labelIds", [])
-    unread = "UNREAD" in labels
-
-    # Extract plain-text body from parts or payload body
-    body = ""
-    payload = msg_data.get("payload", {})
-    if payload.get("body", {}).get("data"):
-        body = _decode_attachment(payload["body"]["data"], MAX_ATTACHMENT_BYTES).decode(
-            "utf-8", errors="replace"
-        )
-    else:
-        for part in _message_parts(payload):
-            if part.get("mimeType") == "text/plain" and part.get("body", {}).get("data"):
-                body = _decode_attachment(part["body"]["data"], MAX_ATTACHMENT_BYTES).decode(
-                    "utf-8", errors="replace"
-                )
-                break
-
-    # Attachments
-    attachments = []
-    for part in _message_parts(payload):
-        filename = part.get("filename")
-        if filename:
-            attachments.append({
-                "name": filename,
-                "size": part.get("body", {}).get("size", 0),
-                "id": part.get("body", {}).get("attachmentId") or (
-                    f"part:{part['partId']}" if part.get("partId") is not None else None
-                ),
-                "content_type": part.get("mimeType", ""),
-            })
-
-    result = {
-        "id": msg_data.get("id", ""),
-        "from": headers.get("from", ""),
-        "to": [a.strip() for a in headers.get("to", "").split(",") if a.strip()],
-        "cc": [a.strip() for a in headers.get("cc", "").split(",") if a.strip()],
-        "bcc": [a.strip() for a in headers.get("bcc", "").split(",") if a.strip()],
-        "subject": headers.get("subject", ""),
-        "snippet": snippet,
-        "body": body,
-        "date": headers.get("date", ""),
-        "unread": unread,
-        "attachments": attachments,
-    }
-    if result["id"]:
-        result["object"] = _message_reference("gmail", result["id"])
-    return result
-
-
-def _search_gmail(query, max_results):
-    """Search emails via the Gmail API."""
-    url = (
-        f"https://gmail.googleapis.com/gmail/v1/users/me/messages"
-        f"?q={urllib.request.quote(query)}&maxResults={max_results}"
-    )
-    result = _gmail_request(url)
-    if "error" in result:
-        return result
-
-    messages = result.get("messages", [])
-    emails = []
-    for m in messages:
-        detail = _gmail_request(
-            f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{m['id']}"
-            f"?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date"
-        )
-        if "error" in detail:
-            if detail.get("auth_required") or detail.get("retryable") is False:
-                return detail
-            continue
-        parsed = _parse_gmail_message(detail)
-        emails.append({
-            "id": parsed["id"],
-            "from": parsed["from"],
-            "subject": parsed["subject"],
-            "snippet": parsed["snippet"],
-            "date": parsed["date"],
-            "unread": parsed["unread"],
-            "object": parsed.get("object"),
-        })
-
-    return {"query": query, "provider": "gmail", "emails": emails, "count": len(emails)}
-
-
-def _list_gmail(max_results, unread):
-    """List recent emails via the Gmail API."""
-    query = "is:unread" if unread else ""
-    url = (
-        f"https://gmail.googleapis.com/gmail/v1/users/me/messages"
-        f"?maxResults={max_results}"
-    )
-    if query:
-        url += f"&q={urllib.request.quote(query)}"
-    result = _gmail_request(url)
-    if "error" in result:
-        return result
-
-    messages = result.get("messages", [])
-    emails = []
-    for m in messages:
-        detail = _gmail_request(
-            f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{m['id']}"
-            f"?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date"
-        )
-        if "error" in detail:
-            if detail.get("auth_required") or detail.get("retryable") is False:
-                return detail
-            continue
-        parsed = _parse_gmail_message(detail)
-        emails.append({
-            "id": parsed["id"],
-            "from": parsed["from"],
-            "subject": parsed["subject"],
-            "snippet": parsed["snippet"],
-            "date": parsed["date"],
-            "unread": parsed["unread"],
-            "object": parsed.get("object"),
-        })
-
-    return {"provider": "gmail", "emails": emails, "count": len(emails)}
-
-
-def _read_gmail(message_id):
-    """Read a specific email via the Gmail API."""
-    url = (
-        f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{urllib.parse.quote(message_id, safe='')}"
-        f"?format=full"
-    )
-    result = _gmail_request(url)
-    if "error" in result:
-        return result
-    return _parse_gmail_message(result)
-
-
-# ---------------------------------------------------------------------------
-# Outlook helpers
-# ---------------------------------------------------------------------------
-
-def _outlook_token():
-    return _credential_value(MICROSOFT_ACCESS_TOKEN, "MICROSOFT_OAUTH_TOKEN")
-
-
-def _outlook_request(url, method="GET", data=None):
-    """Make an authenticated request to the Microsoft Graph API."""
-    token, credential_error = _outlook_token()
-    if not token:
-        return _outlook_auth_error(
-            credential_error or f"missing default/{MICROSOFT_ACCESS_TOKEN}"
-        )
-    headers = {"Authorization": f"Bearer {token}"}
-    if data is not None:
-        headers["Content-Type"] = "application/json"
-        data = json.dumps(data).encode("utf-8") if isinstance(data, dict) else data
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    try:
-        with open_url(req, timeout=30)[0] as resp:
-            raw = resp.read().decode("utf-8", errors="replace")
-            return json.loads(raw) if raw.strip() else {}
-    except urllib.error.HTTPError as e:
-        err_body = ""
-        try:
-            err_body = e.read().decode("utf-8", errors="replace")
-        except Exception:
-            pass
-        finally:
-            e.close()
-        if e.code == 401:
-            return _outlook_auth_error(err_body or str(e), status=e.code)
-        return {"error": err_body or str(e), "status": e.code}
-    except urllib.error.URLError as e:
-        return {"error": str(e.reason)}
-    except Exception as e:
-        return {"error": str(e)}
-
-
-def _send_outlook(to, subject, body, cc=None):
-    """Send an email via the Microsoft Graph API."""
-    payload = {
-        "message": {
-            "subject": subject,
-            "body": {"contentType": "Text", "content": body},
-            "toRecipients": [{"emailAddress": {"address": to}}],
-        }
-    }
-    if cc:
-        payload["message"]["ccRecipients"] = [{"emailAddress": {"address": cc}}]
-
-    result = _outlook_request(
-        "https://graph.microsoft.com/v1.0/me/sendMail",
-        method="POST",
-        data=payload,
-    )
-    if "error" in result:
-        return result
-    return {"sent": True, "to": to, "subject": subject, "provider": "outlook"}
-
-
-def _parse_outlook_message(msg_data):
-    """Extract structured fields from an Outlook Graph API message resource."""
-    from_field = msg_data.get("from", {}).get("emailAddress", {})
-    to_list = [
-        r.get("emailAddress", {}).get("address", "")
-        for r in msg_data.get("toRecipients", [])
-    ]
-    attachments = [
-        {"id": a.get("id"), "name": a.get("name", ""), "size": a.get("size", 0),
-         "content_type": a.get("contentType", "")}
-        for a in msg_data.get("attachments", [])
-    ]
-    result = {
-        "id": msg_data.get("id", ""),
-        "from": from_field.get("address", ""),
-        "to": to_list,
-        "cc": [r.get("emailAddress", {}).get("address", "") for r in msg_data.get("ccRecipients", [])],
-        "bcc": [r.get("emailAddress", {}).get("address", "") for r in msg_data.get("bccRecipients", [])],
-        "subject": msg_data.get("subject", ""),
-        "snippet": msg_data.get("bodyPreview", ""),
-        "body": msg_data.get("body", {}).get("content", ""),
-        "date": msg_data.get("receivedDateTime", ""),
-        "unread": not msg_data.get("isRead", True),
-        "attachments": attachments,
-    }
-    if result["id"]:
-        result["object"] = _message_reference("outlook", result["id"])
-    return result
-
-
-def _search_outlook(query, max_results):
-    """Search emails via the Microsoft Graph API."""
-    encoded_query = urllib.request.quote(query)
-    url = (
-        f"https://graph.microsoft.com/v1.0/me/messages"
-        f"?$search=%22{encoded_query}%22&$top={max_results}"
-    )
-    result = _outlook_request(url)
-    if "error" in result:
-        return result
-
-    messages = result.get("value", [])
-    emails = []
-    for m in messages:
-        parsed = _parse_outlook_message(m)
-        emails.append({
-            "id": parsed["id"],
-            "from": parsed["from"],
-            "subject": parsed["subject"],
-            "snippet": parsed["snippet"],
-            "date": parsed["date"],
-            "unread": parsed["unread"],
-            "object": parsed.get("object"),
-        })
-
-    return {"query": query, "provider": "outlook", "emails": emails, "count": len(emails)}
-
-
-def _list_outlook(max_results, unread):
-    """List recent emails via the Microsoft Graph API."""
-    url = f"https://graph.microsoft.com/v1.0/me/messages?$top={max_results}"
-    if unread:
-        url += "&$filter=isRead%20eq%20false"
-    url += "&$orderby=receivedDateTime%20desc"
-    result = _outlook_request(url)
-    if "error" in result:
-        return result
-
-    messages = result.get("value", [])
-    emails = []
-    for m in messages:
-        parsed = _parse_outlook_message(m)
-        emails.append({
-            "id": parsed["id"],
-            "from": parsed["from"],
-            "subject": parsed["subject"],
-            "snippet": parsed["snippet"],
-            "date": parsed["date"],
-            "unread": parsed["unread"],
-            "object": parsed.get("object"),
-        })
-
-    return {"provider": "outlook", "emails": emails, "count": len(emails)}
-
-
-def _read_outlook(message_id):
-    """Read a specific email via the Microsoft Graph API."""
-    url = (
-        f"https://graph.microsoft.com/v1.0/me/messages/{urllib.parse.quote(message_id, safe='')}"
-        "?$expand=attachments($select=id,name,size,contentType)"
-    )
-    result = _outlook_request(url)
-    if "error" in result:
-        return result
-    return _parse_outlook_message(result)
-
-
-# ---------------------------------------------------------------------------
-# Command handlers
-# ---------------------------------------------------------------------------
-
-def _remember_sent(result, to, subject, body, cc=None):
-    """Push a one-line summary of a sent email into the agent's memory."""
-    try:
-        provider = result.get("provider") or "smtp"
-        message_id = result.get("id") or ""
-        snippet = (body or "").strip().splitlines()
-        first = snippet[0] if snippet else ""
-        if len(first) > 200:
-            first = first[:197] + "..."
-        text = f"Sent email to {to}: {subject}".strip()
-        if first:
-            text += f" — {first}"
-        tags = ["email", "sent", provider]
-        if cc:
-            tags.append("cc")
-        memory.remember(
-            source="email",
-            text=text,
-            kind="event",
-            entity_id=message_id or None,
-            tags=tags,
-            link=_message_reference(provider, message_id) if message_id else None,
-        )
-    except memory.MemoryError:
-        pass
-
-
-def cmd_send(args):
-    parser = _build_send_parser()
-    try:
-        opts = parser.parse_args(args)
-    except SystemExit:
-        return {"error": "missing required arguments: --to, --subject, --body"}
-
-    provider = opts.provider
-    if provider == "smtp":
-        if not opts.host:
-            return {"error": "missing required argument: --host for smtp provider"}
-        try:
-            host, port = _smtp_endpoint(opts.host)
-        except ValueError:
-            return {
-                "error": "invalid SMTP --host: use an explicit DNS name or IPv4 address "
-                "and port, e.g. mail.example.com:587 (STARTTLS) or mail.example.com:465 (TLS)"
-            }
-        policy.require("secret.read", name="default/SMTP_PASSWORD")
-        policy.require("net.dial", host=opts.host)
-        result = _send_smtp(
-            opts.to, opts.subject, opts.body, host, port, cc=opts.cc
-        )
-    elif provider == "gmail":
-        policy.require("secret.read", name="default/GOOGLE_ACCESS_TOKEN")
-        policy.require("net.dial", host=GMAIL_API_HOST)
-        result = _send_gmail(opts.to, opts.subject, opts.body, cc=opts.cc)
-    elif provider == "outlook":
-        policy.require("secret.read", name="default/MICROSOFT_ACCESS_TOKEN")
-        policy.require("net.dial", host=OUTLOOK_API_HOST)
-        result = _send_outlook(opts.to, opts.subject, opts.body, cc=opts.cc)
-    else:
-        return {"error": f"unknown provider: {provider}"}
-
-    if isinstance(result, dict) and result.get("sent"):
-        _remember_sent(result, opts.to, opts.subject, opts.body, cc=opts.cc)
-    return result
-
-
-def cmd_search(args):
-    parser = _build_search_parser()
-    try:
-        opts = parser.parse_args(args)
-    except SystemExit:
-        return {"error": "missing required argument: --query"}
-
-    provider = opts.provider
-    if provider == "gmail":
-        policy.require("secret.read", name="default/GOOGLE_ACCESS_TOKEN")
-        policy.require("net.dial", host=GMAIL_API_HOST)
-        return _search_gmail(opts.query, opts.max_results)
-    elif provider == "outlook":
-        policy.require("secret.read", name="default/MICROSOFT_ACCESS_TOKEN")
-        policy.require("net.dial", host=OUTLOOK_API_HOST)
-        return _search_outlook(opts.query, opts.max_results)
-    else:
-        return {"error": f"unknown provider: {provider}"}
-
-
-def cmd_list(args):
-    parser = _build_list_parser()
-    try:
-        opts = parser.parse_args(args)
-    except SystemExit:
-        return {"error": "invalid arguments for list command"}
-
-    provider = opts.provider
-    if provider == "gmail":
-        policy.require("secret.read", name="default/GOOGLE_ACCESS_TOKEN")
-        policy.require("net.dial", host=GMAIL_API_HOST)
-        return _list_gmail(opts.max_results, opts.unread)
-    elif provider == "outlook":
-        policy.require("secret.read", name="default/MICROSOFT_ACCESS_TOKEN")
-        policy.require("net.dial", host=OUTLOOK_API_HOST)
-        return _list_outlook(opts.max_results, opts.unread)
-    else:
-        return {"error": f"unknown provider: {provider}"}
-
-
-def cmd_read(args):
-    parser = _build_read_parser()
-    try:
-        opts = parser.parse_args(args)
-    except SystemExit:
-        return {"error": "missing required argument: --id"}
-
-    provider = opts.provider
-    try:
-        _message_reference(provider, opts.message_id)
-    except ObjectRefError as error:
-        return {"error": f"invalid message ID: {error}"}
-    if provider == "gmail":
-        policy.require("secret.read", name="default/GOOGLE_ACCESS_TOKEN")
-        policy.require("net.dial", host=GMAIL_API_HOST)
-        return _read_gmail(opts.message_id)
-    elif provider == "outlook":
-        policy.require("secret.read", name="default/MICROSOFT_ACCESS_TOKEN")
-        policy.require("net.dial", host=OUTLOOK_API_HOST)
-        return _read_outlook(opts.message_id)
-    else:
-        return {"error": f"unknown provider: {provider}"}
-
-
 def cmd_draft(args):
-    """Draft an email reply via the AI gate. Pure text — does NOT send."""
-    parser = _build_draft_parser()
-    try:
-        opts = parser.parse_args(args)
-    except SystemExit:
-        return {"error": "usage: cos email draft --context <text> [--style formal|casual|short]"}
-
-    if not opts.context.strip():
-        return {"error": "--context must be non-empty"}
-
-    # Coarse-grained capability check — fail fast on a denied agent.
+    parser = _parser("draft")
+    parser.add_argument("--context", required=True)
+    parser.add_argument("--style", default="formal", choices=["formal", "casual", "short"])
+    options = parser.parse_args(args)
+    if not options.context.strip():
+        raise ValueError("context must be nonempty")
     policy.require("ai.chat", wild=True)
-
-    system_prompt = _DRAFT_SYSTEMS.get(opts.style, _DRAFT_SYSTEMS["formal"])
-
     try:
         response = ai.chat(
-            prompt=opts.context,
-            origin="trusted",
-            system=system_prompt,
-            max_units=3000,
+            prompt=options.context, origin="trusted",
+            system=_DRAFT_SYSTEMS[options.style], max_units=3000,
         )
-    except ai.AiBudgetExceeded as exc:
-        return {"error": "AI budget exceeded for this app", "detail": exc.payload}
-    except ai.AiSafetyViolation as exc:
-        return {"error": "safety violation", "detail": exc.payload}
-    except ai.AiDenied as exc:
-        return {"error": "AI call denied", "detail": exc.payload}
-    except ai.AiUnavailable as exc:
-        return {"error": f"AI unavailable: {exc}"}
-    except ai.AiError as exc:
-        return {"error": str(exc)}
-
+    except ai.AiBudgetExceeded as error:
+        return {"error": "AI budget exceeded for this app", "detail": error.payload}
+    except ai.AiSafetyViolation as error:
+        return {"error": "safety violation", "detail": error.payload}
+    except ai.AiDenied as error:
+        return {"error": "AI call denied", "detail": error.payload}
+    except ai.AiUnavailable as error:
+        return {"error": f"AI unavailable: {error}"}
+    except ai.AiError as error:
+        return {"error": str(error)}
     return {
-        "draft": response.text,
-        "style": opts.style,
-        "model": response.model,
-        "provider": response.provider,
+        "draft": response.text, "style": options.style,
+        "model": response.model, "provider": response.provider,
         "usage": {
             "input_tokens": response.usage.input_tokens,
-            "output_tokens": response.usage.output_tokens,
-            "units": response.usage.units,
+            "output_tokens": response.usage.output_tokens, "units": response.usage.units,
         },
         "budget": {
-            "period": response.budget.period,
-            "units_used": response.budget.units_used,
+            "period": response.budget.period, "units_used": response.budget.units_used,
             "units_cap": response.budget.units_cap,
         },
         "review": {
-            "safety": response.review.safety,
-            "prompt_redacted": response.review.prompt_redacted,
+            "safety": response.review.safety, "prompt_redacted": response.review.prompt_redacted,
         },
     }
 
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
 
 def _request_guard(command, args, handler):
     request_id = None
@@ -1266,11 +494,11 @@ def _request_guard(command, args, handler):
         token = args[index]
         if token == "--request-id" or token.startswith("--request-id="):
             if request_id is not None:
-                return {"error": "request-id must occur only once"}
+                raise ValueError("request-id must occur only once")
             if token == "--request-id":
                 index += 1
                 if index == len(args):
-                    return {"error": "request-id requires a canonical UUID"}
+                    raise ValueError("request-id requires a canonical UUID")
                 request_id = args[index]
             else:
                 request_id = token.partition("=")[2]
@@ -1279,63 +507,24 @@ def _request_guard(command, args, handler):
         index += 1
     if request_id is None:
         return handler(args)
-    try:
-        if str(uuid.UUID(request_id)) != request_id:
-            raise ValueError("noncanonical UUID")
-    except ValueError:
-        return {"error": "request-id must be a canonical UUID"}
+    if str(uuid.UUID(request_id)) != request_id:
+        raise ValueError("request-id must be a canonical UUID")
     policy.require("data.db.read", name="mail-requests")
     policy.require("data.db.write", name="mail-requests")
-    root = os.environ.get("COS_DATA_DIR")
-    if not root or not os.path.isabs(root):
-        return {"error": "Mail request storage requires the authenticated App data partition"}
-    directory = os.path.join(root, "mail-requests")
-    try:
-        os.mkdir(directory, 0o700)
-        _fsync_dir(root, strict=True)
-    except FileExistsError:
-        pass
-    metadata = os.stat(directory, follow_symlinks=False)
-    if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077:
-        return {"error": "Mail request directory must be a private owner-owned directory"}
+    directory = _private_directory("mail-requests")
     fingerprint = hashlib.sha256(json.dumps(
         {"operation": command, "arguments": filtered}, ensure_ascii=False,
         sort_keys=True, separators=(",", ":"),
     ).encode()).hexdigest()
     path = os.path.join(directory, request_id + ".json")
-    lock = os.open(path + ".lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    descriptor = _lock(path + ".lock")
     try:
-        lock_metadata = os.fstat(lock)
-        if (
-            not stat.S_ISREG(lock_metadata.st_mode) or lock_metadata.st_nlink != 1
-            or lock_metadata.st_uid != os.geteuid() or lock_metadata.st_mode & 0o077
-        ):
-            return {"error": "Mail request lock must be a private owner-owned regular file"}
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        try:
-            descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
-        except FileNotFoundError:
-            previous = None
-        else:
-            with os.fdopen(descriptor, "rb") as source:
-                metadata = os.fstat(source.fileno())
-                if (
-                    not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1
-                    or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077
-                ):
-                    return {"error": "Mail request record must be a private regular file"}
-                encoded = source.read(65537)
-            if len(encoded) > 65536:
-                return {"error": "Mail request record exceeds its bound"}
-            try:
-                previous = json.loads(encoded)
-            except ValueError:
-                return {"error": "Mail request record is corrupt"}
-            if not isinstance(previous, dict) or set(previous) != {"fingerprint", "state", "result"}:
-                return {"error": "Mail request record is corrupt"}
+        previous = _read_record(path)
         if previous is not None:
+            if not isinstance(previous, dict) or set(previous) != {"fingerprint", "state", "result"}:
+                raise ValueError("Mail request record is corrupt")
             if previous["fingerprint"] != fingerprint:
-                return {"error": "request-id is already bound to a different Mail operation"}
+                raise ValueError("request-id is already bound to a different Mail operation")
             if previous["state"] != "returned":
                 return {
                     "error": "the previous Mail request outcome is unknown; inspect it before a new request",
@@ -1343,7 +532,7 @@ def _request_guard(command, args, handler):
                 }
             return previous["result"]
         if sum(name.endswith(".json") for name in os.listdir(directory)) >= 10000:
-            return {"error": "Mail submission history reached its retained request limit"}
+            raise ValueError("Mail submission history reached its retained request limit")
         record = {"fingerprint": fingerprint, "state": "in_flight", "result": None}
         atomic_write_json(path, record, mode=0o600, strict=True)
         result = handler(filtered)
@@ -1359,45 +548,41 @@ def _request_guard(command, args, handler):
             }
         return result
     finally:
-        os.close(lock)
+        os.close(descriptor)
 
 
 def run(command, args):
-    """Entry point called by cos."""
     from canonical_argv import normalize_argparse_booleans
     args = normalize_argparse_booleans(args, bool_flags={"unread", "confirm", "reset"})
     handlers = {
-        "sync": cmd_sync,
-        "draft_save": cmd_draft_save,
-        "draft_send": cmd_draft_send,
-        "gmail_draft": cmd_gmail_draft,
-        "outlook_draft": cmd_outlook_draft,
-        "attachment_file": cmd_attachment_file,
-        "attachment_download": cmd_attachment_download,
-        "gmail_message": cmd_gmail_message,
-        "outlook_message": cmd_outlook_message,
-        "send": cmd_send,
-        "search": cmd_search,
-        "list": cmd_list,
-        "read": cmd_read,
+        "accounts": cmd_accounts, "folders": cmd_folders,
+        "sync": cmd_sync, "native_message": cmd_native_message, "native_draft": cmd_native_draft,
+        "send": cmd_send, "search": cmd_search, "list": cmd_list, "read": cmd_read,
+        "draft_save": cmd_draft_save, "draft_send": cmd_draft_send,
+        "attachment_file": cmd_attachment_file, "attachment_download": cmd_attachment_download,
         "draft": cmd_draft,
     }
     handler = handlers.get(command)
     if handler is None:
         return {"error": f"unknown command: {command}"}
+    if any(
+        token.startswith("--") and token[2:].partition("=")[0] in {"provider", "host"}
+        for token in args
+    ):
+        return {"error": "Email now uses Thunderbird; use email.accounts and an explicit --account"}
     try:
         result = _request_guard(command, args, handler) if command in {
-            "send", "draft_save", "draft_send"
+            "send", "draft_save", "draft_send",
         } else handler(args)
+        if command != "draft" and isinstance(result, dict):
+            result = {**result, "provider": "thunderbird"}
         kinds = {
             "send": "message.sent", "draft_send": "message.sent",
             "draft_save": "draft.saved", "attachment_download": "attachment.downloaded",
         }
-        if command in kinds and isinstance(result, dict) and "error" not in result:
+        if command in kinds and "error" not in result:
             reference = result.get("object") or result.get("draft", {}).get("object")
-            if reference is None and result.get("id") and result.get("provider") in {"gmail", "outlook"}:
-                reference = _message_reference(result["provider"], result["id"])
-            payload = {"provider": result.get("provider"), "object": reference}
+            payload = {"provider": "thunderbird", "account": result.get("account"), "object": reference}
             request_key = next(
                 (token.partition("=")[2] for token in args if token.startswith("--request-id=")),
                 None,
@@ -1415,7 +600,15 @@ def run(command, args):
             except Exception as error:
                 result = {**result, "event_error": str(error), "effects_not_repeated": True}
         return result
-    except policy.PermissionDenied as denied:
-        return {"error": str(denied), "denial": denied.denial}
-    except policy.PolicyUnavailable as exc:
-        return {"error": f"capability check failed: {exc}"}
+    except SystemExit:
+        return {"error": "invalid Email arguments; use the declared Thunderbird tool schema"}
+    except (ValueError, OSError) as error:
+        return {"error": str(error)}
+    except policy.PermissionDenied as error:
+        return {"error": str(error), "denial": error.denial}
+    except policy.PolicyUnavailable as error:
+        return {"error": f"capability check failed: {error}"}
+    except kernel.KernelDenied as error:
+        return {"error": str(error), "denied": True}
+    except kernel.KernelUnavailable as error:
+        return {"error": str(error), "indeterminate": command in {"send", "draft_save", "draft_send"}, "retryable": False}

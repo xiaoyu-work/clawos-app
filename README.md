@@ -25,7 +25,7 @@ merged; source ownership is not backend consolidation or visual acceptance.
 
 | Product | Source | Migration state |
 | --- | --- | --- |
-| Mail | [products/mail](products/mail/README.md) | Native Thunderbird source, Mail AI/UI, legacy email and restricted delivery have moved; product consolidation remains pending |
+| Mail | [products/mail](products/mail/README.md) | Native Thunderbird source, AI/UI and account-scoped Agent Email share native mailbox operations; restricted delivery remains separate; installed acceptance and identity consolidation remain pending |
 | Calendar | [products/calendar](products/calendar/README.md) | Event operations, provider integration and complete native panel UI/build have moved; OS policy and data paths remain unchanged |
 | Files | [products/files](products/files/README.md) | Complete native UI/library/companion, filesystem and Recoll MCP, shared document parsing and SDK AI; source moved, identities/data remain separate |
 | Browser | [products/browser](products/browser/README.md) | `search`, `web`, `browser-attached`, Native Host and MV3 extension have moved; native browser UI remains pending |
