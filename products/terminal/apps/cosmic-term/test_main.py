@@ -33,6 +33,6 @@ def test_staging_keeps_exec_and_native_terminal_separate(tmp_path):
     stage = load_local_module(ROOT / "tools/stage.py", "terminal_stage")
     assert set(stage.stage("terminal", tmp_path)) == {"exec", "cosmic-term"}
     installed = tmp_path / "usr/lib/cos/apps"
-    assert {p.name for p in (installed / "cosmic-term").iterdir()} == {"app.json"}
+    assert {p.name for p in (installed / "cosmic-term").iterdir()} == {"app.json", "web", "web-ui.json"}
     assert (installed / "exec/main.py").read_bytes() == (PRODUCT / "apps/exec/main.py").read_bytes()
     assert not (installed / "cosmic-term/proc").exists()
