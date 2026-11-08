@@ -27,7 +27,7 @@ from _shared.credentials import load_credential  # noqa: E402
 from _shared.atomic import atomic_create_bytes, atomic_write_json, _fsync_dir  # noqa: E402
 from _shared.paths import safe_realpath  # noqa: E402
 from _shared.safe_http import open_url  # noqa: E402
-from claw_os_sdk import ai  # noqa: E402
+from claw_os_sdk import ai, events  # noqa: E402
 from claw_os_sdk.objects import ObjectRefError, format_reference  # noqa: E402
 from claw_os_sdk.mcp import current_context  # noqa: E402
 from cos_runtime import memory, policy, snapshot  # noqa: E402
@@ -138,6 +138,124 @@ def _build_list_parser():
     p.add_argument("--unread", action="store_true")
     p.add_argument("--provider", required=True, choices=["gmail", "outlook"])
     return p
+
+
+def cmd_sync(args):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--provider", required=True, choices=["gmail", "outlook"])
+    parser.add_argument("--reset", action="store_true")
+    try:
+        options = parser.parse_args(args)
+    except SystemExit:
+        return {"error": "usage: email sync --provider gmail|outlook [--reset]"}
+    policy.require("data.db.read", name="mail-sync")
+    policy.require("data.db.write", name="mail-sync")
+    policy.require("ipc.publish", name="app:email")
+    _authorize_mailbox(options.provider)
+    root = os.environ.get("COS_DATA_DIR")
+    if not root or not os.path.isabs(root):
+        return {"error": "Mail sync requires the authenticated App data partition"}
+    directory = os.path.join(root, "mail-sync")
+    os.makedirs(directory, mode=0o700, exist_ok=True)
+    metadata = os.stat(directory, follow_symlinks=False)
+    if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077:
+        return {"error": "Mail sync state must be a private owner-owned directory"}
+    path = os.path.join(directory, options.provider + ".json")
+    lock = os.open(path + ".lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        except FileNotFoundError:
+            state = None
+        else:
+            with os.fdopen(descriptor, "rb") as file:
+                metadata = os.fstat(file.fileno())
+                if (
+                    not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1
+                    or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077
+                ):
+                    return {"error": "Mail sync record must be a private owner-owned file"}
+                data = file.read(32769)
+            if len(data) > 32768:
+                return {"error": "Mail sync state exceeds its bound"}
+            state = json.loads(data)
+            if not isinstance(state, dict) or set(state) != {"cursor", "page", "initialised"}:
+                return {"error": "Mail sync state is corrupt"}
+            if not isinstance(state["cursor"], str) or type(state["initialised"]) is not bool:
+                return {"error": "Mail sync continuation is corrupt"}
+        if options.reset:
+            state = None
+        if options.provider == "gmail" and state is None:
+            profile = _gmail_request("https://gmail.googleapis.com/gmail/v1/users/me/profile")
+            if "error" in profile:
+                return profile
+            cursor = profile.get("historyId")
+            if not isinstance(cursor, str) or not cursor.isdecimal():
+                return {"error": "Gmail did not return a valid history baseline"}
+            atomic_write_json(path, {"cursor": cursor, "page": None, "initialised": True}, mode=0o600, strict=True)
+            return {"provider": "gmail", "initialised": True, "events_emitted": 0, "more": False}
+        if options.provider == "gmail":
+            query = {"startHistoryId": state["cursor"], "historyTypes": "messageAdded", "labelId": "INBOX", "maxResults": 500}
+            if state["page"]:
+                query["pageToken"] = state["page"]
+            result = _gmail_request(
+                "https://gmail.googleapis.com/gmail/v1/users/me/history?" + urllib.parse.urlencode(query)
+            )
+            if "error" in result:
+                return {**result, "reset_required": result.get("status") == 404}
+            ids = {
+                message["message"]["id"] for entry in result.get("history", [])
+                for message in entry.get("messagesAdded", [])
+            }
+            next_page = result.get("nextPageToken")
+            next_cursor = state["cursor"] if next_page else result.get("historyId")
+            if not isinstance(next_cursor, str) or not next_cursor.isdecimal():
+                return {"error": "Gmail did not return a valid history continuation"}
+            next_state = {"cursor": next_cursor, "page": next_page, "initialised": True}
+            emit = True
+            more = next_page is not None
+        else:
+            initial = state is None or not state["initialised"]
+            url = state["cursor"] if state is not None else (
+                "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta?changeType=created&$select=id"
+            )
+            parsed = urllib.parse.urlsplit(url)
+            if (
+                parsed.scheme != "https" or parsed.hostname != OUTLOOK_API_HOST
+                or parsed.username is not None or parsed.password is not None
+                or parsed.fragment or parsed.port not in (None, 443)
+                or not parsed.path.lower().startswith("/v1.0/me/mailfolders")
+                or not parsed.path.lower().endswith("/messages/delta")
+            ):
+                return {"error": "Outlook delta cursor is not an authorized inbox endpoint"}
+            result = _outlook_request(url)
+            if "error" in result:
+                return {**result, "reset_required": result.get("status") in (404, 410)}
+            next_page = result.get("@odata.nextLink")
+            next_cursor = next_page or result.get("@odata.deltaLink")
+            if not isinstance(next_cursor, str):
+                return {"error": "Outlook did not return a delta continuation"}
+            ids = {message["id"] for message in result.get("value", []) if "@removed" not in message}
+            next_state = {"cursor": next_cursor, "page": None, "initialised": next_page is None}
+            emit = not initial
+            more = next_page is not None
+        if len(ids) > 1000:
+            return {"error": "Mailbox sync page exceeds the bounded event count"}
+        emitted = 0
+        if emit:
+            for message_id in sorted(ids):
+                reference = _message_reference(options.provider, message_id)
+                key = "received-" + hashlib.sha256(f"{options.provider}\0{message_id}".encode()).hexdigest()
+                events.publish("message.received", key, entity_id=message_id, payload={"object": reference})
+                emitted += 1
+        atomic_write_json(path, next_state, mode=0o600, strict=True)
+        return {
+            "provider": options.provider, "initialised": next_state["initialised"],
+            "events_emitted": emitted, "more": more,
+        }
+    finally:
+        os.close(lock)
 
 
 def _build_read_parser():
@@ -1247,8 +1365,9 @@ def _request_guard(command, args, handler):
 def run(command, args):
     """Entry point called by cos."""
     from canonical_argv import normalize_argparse_booleans
-    args = normalize_argparse_booleans(args, bool_flags={"unread", "confirm"})
+    args = normalize_argparse_booleans(args, bool_flags={"unread", "confirm", "reset"})
     handlers = {
+        "sync": cmd_sync,
         "draft_save": cmd_draft_save,
         "draft_send": cmd_draft_send,
         "gmail_draft": cmd_gmail_draft,
@@ -1267,9 +1386,35 @@ def run(command, args):
     if handler is None:
         return {"error": f"unknown command: {command}"}
     try:
-        if command in {"send", "draft_save", "draft_send"}:
-            return _request_guard(command, args, handler)
-        return handler(args)
+        result = _request_guard(command, args, handler) if command in {
+            "send", "draft_save", "draft_send"
+        } else handler(args)
+        kinds = {
+            "send": "message.sent", "draft_send": "message.sent",
+            "draft_save": "draft.saved", "attachment_download": "attachment.downloaded",
+        }
+        if command in kinds and isinstance(result, dict) and "error" not in result:
+            reference = result.get("object") or result.get("draft", {}).get("object")
+            if reference is None and result.get("id") and result.get("provider") in {"gmail", "outlook"}:
+                reference = _message_reference(result["provider"], result["id"])
+            payload = {"provider": result.get("provider"), "object": reference}
+            request_key = next(
+                (token.partition("=")[2] for token in args if token.startswith("--request-id=")),
+                None,
+            )
+            if request_key is None and "--request-id" in args:
+                request_key = args[args.index("--request-id") + 1]
+            if request_key is None and result.get("id") is None and reference is None:
+                request_key = str(uuid.uuid4())
+            key = "mutation-" + hashlib.sha256(json.dumps(
+                {"operation": command, "payload": payload, "id": result.get("id"),
+                 "draft_id": result.get("draft_id"), "request": request_key}, sort_keys=True,
+            ).encode()).hexdigest()
+            try:
+                events.publish(kinds[command], key, payload=payload)
+            except Exception as error:
+                result = {**result, "event_error": str(error), "effects_not_repeated": True}
+        return result
     except policy.PermissionDenied as denied:
         return {"error": str(denied), "denial": denied.denial}
     except policy.PolicyUnavailable as exc:

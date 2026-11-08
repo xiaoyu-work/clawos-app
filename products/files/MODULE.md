@@ -43,6 +43,13 @@ embedding this same source through its existing native asset declaration.
 
 ## Reviewed file plans and object metadata
 
+The `fs` MCP entry publishes reported `app:fs` change/proposal events after
+successful mutations using the public SDK and a separate exact IPC grant.
+Its authenticated call ID distinguishes ordinary mutations; plan IDs supply
+stable proposal/apply event keys. Returned artifacts identify files without
+reading them or granting access. The native UI's shared filesystem
+implementation does not inherit this MCP publication path or grant.
+
 `fs.plan_write`, `fs.plan_show`, `fs.plan_apply` and `fs.plan_prune` are ordinary
 manifest-bound MCP tools, also reached through the existing human CLI command
 mapping. Like current `fs.write`, preparation requires explicit text `content`

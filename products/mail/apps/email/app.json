@@ -46,6 +46,21 @@
     ]
   },
   "operations": {
+    "sync": {
+      "label": {"en": "Incrementally publish new inbox message events without calling a model"},
+      "args": [
+        {"name": "provider", "kind": "name", "required": true, "binding": "flag", "choices": ["gmail", "outlook"]},
+        {"name": "reset", "kind": "bool", "binding": "flag", "default": false}
+      ],
+      "needs": [
+        {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-sync"}}, "why": {"en": "Read only this App's mailbox continuation."}},
+        {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-sync"}}, "why": {"en": "Advance a durable mailbox continuation after event publication."}},
+        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:email"}}, "why": {"en": "Publish reported new-message references in Mail's own event namespace."}},
+        {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Read only the selected mailbox credential."}},
+        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "gmail"}, "why": {"en": "Read a bounded Gmail inbox history page."}},
+        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Read a bounded Outlook inbox delta page."}}
+      ]
+    },
     "gmail_draft": {
       "label": {"en": "Read a saved Gmail draft and its review fingerprint"},
       "args": [{"name": "id", "kind": "name", "required": true, "binding": "flag"}],
@@ -74,6 +89,7 @@
         {"name": "cc", "kind": "text", "binding": "flag"}
       ],
       "needs": [
+        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:email"}}, "why": {"en": "Publish Mail's owner-bound reported operation event."}},
         {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Read this owner's existing Mail submission receipt."}},
         {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Durably bracket this Mail submission without replaying uncertain effects."}},
         {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected mailbox's draft credential."}},
@@ -91,6 +107,7 @@
         {"name": "confirm", "kind": "bool", "required": true, "binding": "flag", "choices": [true]}
       ],
       "needs": [
+        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:email"}}, "why": {"en": "Publish Mail's owner-bound reported operation event."}},
         {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Read this owner's existing Mail submission receipt."}},
         {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Durably bracket this Mail submission without replaying uncertain effects."}},
         {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected mailbox's reviewed draft credential."}},
@@ -115,6 +132,7 @@
         {"name": "max-bytes", "kind": "integer", "binding": "flag", "default": 16777216}
       ],
       "needs": [
+        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:email"}}, "why": {"en": "Publish Mail's owner-bound reported operation event."}},
         {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "output"}, "why": {"en": "Create only the explicitly selected attachment output."}},
         {
           "verb": "secret.read",
@@ -221,6 +239,7 @@
         }
       ],
       "needs": [
+        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:email"}}, "why": {"en": "Publish Mail's owner-bound reported operation event."}},
         {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Read this owner's existing Mail submission receipt."}},
         {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Durably bracket this Mail submission without replaying uncertain effects."}},
         {
@@ -618,6 +637,22 @@
     },
     "tools": [
       {
+        "name": "email.sync",
+        "summary": {"en": "Incrementally publish new inbox message events without calling a model"},
+        "args": [
+          {"name": "provider", "kind": "name", "required": true, "choices": ["gmail", "outlook"]},
+          {"name": "reset", "kind": "bool", "default": false}
+        ],
+        "needs": [
+          {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-sync"}}, "why": {"en": "Read only this App's mailbox continuation."}},
+          {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-sync"}}, "why": {"en": "Advance a durable mailbox continuation after event publication."}},
+          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:email"}}, "why": {"en": "Publish reported new-message references in Mail's own event namespace."}},
+          {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Read only the selected mailbox credential."}},
+          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "gmail.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "gmail"}, "why": {"en": "Read a bounded Gmail inbox history page."}},
+          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Read a bounded Outlook inbox delta page."}}
+        ]
+      },
+      {
         "name": "email.gmail_draft",
         "summary": {"en": "Read a saved Gmail draft and its review fingerprint"},
         "args": [{"name": "id", "kind": "name", "required": true}],
@@ -648,6 +683,7 @@
           {"name": "cc", "kind": "text"}
         ],
         "needs": [
+          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:email"}}, "why": {"en": "Publish Mail's owner-bound reported operation event."}},
           {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Read this owner's existing Mail submission receipt."}},
           {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Durably bracket this Mail submission without replaying uncertain effects."}},
           {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected mailbox's draft credential."}},
@@ -666,6 +702,7 @@
           {"name": "confirm", "kind": "bool", "required": true, "choices": [true]}
         ],
         "needs": [
+          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:email"}}, "why": {"en": "Publish Mail's owner-bound reported operation event."}},
           {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Read this owner's existing Mail submission receipt."}},
           {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Durably bracket this Mail submission without replaying uncertain effects."}},
           {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"gmail": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected mailbox's reviewed draft credential."}},
@@ -692,6 +729,7 @@
           {"name": "max-bytes", "kind": "integer", "default": 16777216}
         ],
         "needs": [
+          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:email"}}, "why": {"en": "Publish Mail's owner-bound reported operation event."}},
           {"verb": "fs.write", "scope": {"kind": "from-arg", "arg": "output"}, "why": {"en": "Create only the explicitly selected attachment output."}},
           {
             "verb": "secret.read",
@@ -791,6 +829,7 @@
           }
         ],
         "needs": [
+          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:email"}}, "why": {"en": "Publish Mail's owner-bound reported operation event."}},
           {"verb": "data.db.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Read this owner's existing Mail submission receipt."}},
           {"verb": "data.db.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "mail-requests"}}, "when": {"kind": "arg-present", "arg": "request-id"}, "why": {"en": "Durably bracket this Mail submission without replaying uncertain effects."}},
           {

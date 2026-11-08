@@ -42,6 +42,18 @@ cos activity attach-object ACTIVITY_ID --label "Source email" \
 
 ## Existing transport and packaging
 
+`sync` reads one bounded Gmail inbox history or Outlook Inbox delta page
+without calling a model. Its first pass records a baseline without replaying
+old mail; subsequent passes publish `message.received` references and advance
+the private cursor only afterward. Continuations remain owner/App-scoped and
+Outlook links must stay on the authorized Inbox delta endpoint. Expired
+provider history requires explicit `--reset`; corrupt state is never repaired
+or silently replaced. An OS cron can poll this App independently of Agent
+execution; existing authorized Activity triggers consume `app:email` events.
+Mail mutations publish reported events through the same SDK namespace.
+Event failures preserve the original operation result and never repeat its
+external effect. Exact `ipc.publish:app:email` needs are disclosed separately.
+
 `draft_save` creates or updates a real Gmail/Outlook draft without sending.
 The provider-specific `gmail-draft` and `outlook-draft` references resolve
 through `gmail_draft` and `outlook_draft`; Outlook resolution rejects sent

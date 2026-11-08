@@ -40,6 +40,7 @@
         {"name": "confirm", "kind": "bool", "required": true, "binding": "flag", "choices": [true]}
       ],
       "needs": [
+        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
         {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"google": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected calendar's authorized account."}},
         {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "www.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "google"}, "why": {"en": "Create the Google meeting and request invitations for its supplied attendees."}},
         {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Create the Outlook meeting and request invitations for its supplied attendees."}}
@@ -55,6 +56,7 @@
         {"name": "confirm", "kind": "bool", "required": true, "binding": "flag", "choices": [true]}
       ],
       "needs": [
+        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
         {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"google": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected calendar owner's account."}},
         {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "www.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "google"}, "why": {"en": "Update only the owner's attendee response and notify the organizer."}},
         {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Submit the owner's Outlook meeting response."}}
@@ -275,6 +277,7 @@
         }
       ],
       "needs": [
+        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
         {
           "verb": "data.db.write",
           "scope": {
@@ -434,6 +437,7 @@
         }
       ],
       "needs": [
+        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
         {
           "verb": "data.db.write",
           "scope": {
@@ -563,6 +567,7 @@
         }
       ],
       "needs": [
+        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
         {
           "verb": "data.db.write",
           "scope": {
@@ -802,6 +807,7 @@
           {"name": "confirm", "kind": "bool", "required": true, "choices": [true]}
         ],
         "needs": [
+          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
           {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"google": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected calendar's authorized account."}},
           {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "www.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "google"}, "why": {"en": "Create the Google meeting and request invitations for its supplied attendees."}},
           {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Create the Outlook meeting and request invitations for its supplied attendees."}}
@@ -818,6 +824,7 @@
           {"name": "confirm", "kind": "bool", "required": true, "choices": [true]}
         ],
         "needs": [
+          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
           {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"google": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected calendar owner's account."}},
           {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "www.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "google"}, "why": {"en": "Update only the owner's attendee response and notify the organizer."}},
           {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Submit the owner's Outlook meeting response."}}
@@ -1034,6 +1041,7 @@
           }
         ],
         "needs": [
+          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
           {
             "verb": "data.db.write",
             "scope": {
@@ -1187,6 +1195,7 @@
           }
         ],
         "needs": [
+          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
           {
             "verb": "data.db.write",
             "scope": {
@@ -1315,6 +1324,7 @@
           }
         ],
         "needs": [
+          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
           {
             "verb": "data.db.write",
             "scope": {

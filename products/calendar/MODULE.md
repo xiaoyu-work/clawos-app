@@ -54,6 +54,11 @@ App, copying account data or treating an object reference as permission.
 
 ## Provider invitations and responses
 
+Successful mutations publish owner-bound `app:calendar` events through the
+public SDK and exact named IPC grant. References remain reported data; an
+event does not prove guest delivery or supply task authority. Publication
+failures preserve the original result without repeating the calendar effect.
+
 `invite` explicitly creates a Google/Outlook meeting with 1..100 distinct
 attendee addresses and requests provider delivery. `respond` accepts,
 tentatively accepts or declines as the authorized calendar owner. Both require
