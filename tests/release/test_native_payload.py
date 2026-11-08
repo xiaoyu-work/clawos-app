@@ -296,7 +296,9 @@ def test_wrapper_preserves_public_cli_arguments_and_host_error_without_executing
     wrapper = tmp_path / "wrapper"
     wrapper.write_bytes(native_payload.compatibility_launcher(selected))
     wrapper.chmod(0o755)
-    recorder = tmp_path / "cos-argv-recorder"
+    host_bin = tmp_path / "host-bin"
+    host_bin.mkdir()
+    recorder = host_bin / "cos"
     recorder.write_text("#!/usr/bin/python3\nimport json,sys\nprint(json.dumps(sys.argv[1:]))\nsys.exit(23)\n")
     recorder.chmod(0o755)
     arguments = ["network", "--new-window", "file:///tmp/a b", "$(not-a-command)", "--", "-leading"]
@@ -305,7 +307,7 @@ def test_wrapper_preserves_public_cli_arguments_and_host_error_without_executing
         "--ro-bind", "/usr", "/usr", "--ro-bind", "/bin", "/bin",
         "--ro-bind", "/lib", "/lib", "--ro-bind", "/lib64", "/lib64",
         "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp",
-        "--ro-bind", recorder, "/usr/local/bin/cos", "--ro-bind", wrapper, "/wrapper",
+        "--ro-bind", host_bin, "/usr/local/bin", "--ro-bind", wrapper, "/wrapper",
         "/wrapper", *arguments,
     ], check=False)
     assert result.returncode == 23
