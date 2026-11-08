@@ -190,7 +190,23 @@ def _gateway_list_contract(tree: ast.Module):
 
 def _normalized_bool_flags(tree: ast.Module) -> set[str]:
     flags = set()
+    channel_client = any(
+        isinstance(node, ast.ImportFrom)
+        and node.module == "gateway._shared"
+        and any(alias.name == "channels" and alias.asname is None for alias in node.names)
+        for node in tree.body
+    )
     for node in ast.walk(tree):
+        if (
+            channel_client
+            and isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == "channels"
+            and node.func.attr == "run"
+        ):
+            helper = APPS_ROOT / "shared/python/gateway/_shared/channels.py"
+            flags.update(_normalized_bool_flags(ast.parse(helper.read_text(encoding="utf-8"))))
         if not (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Name)

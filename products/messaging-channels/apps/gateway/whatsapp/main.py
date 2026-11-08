@@ -1,9 +1,9 @@
 """WhatsApp Cloud API gateway app.
 
-Outbound-only baseline: ``send`` POSTs a text message via the Meta
+``send`` preserves the direct text-message client via the Meta
 Graph API at ``/{api_version}/{phone_number_id}/messages`` with a
 Bearer access token.  Inbound (the verify-token + webhook receiver
-HTTP server) is still a stub.
+HTTP server), lifecycle, Activity admission and safe replies are Root-owned.
 
 Credentials needed:
   * ``whatsapp_access_token``        — Meta system-user / app token
@@ -26,7 +26,7 @@ import sys
 import urllib.error
 
 
-from gateway._shared import gateway_memory, safe_egress, safe_subprocess
+from gateway._shared import channels, gateway_memory, safe_egress, safe_subprocess
 
 
 PLATFORM = "whatsapp"
@@ -149,17 +149,9 @@ def _send(recipient_phone: str, text: str) -> dict:
         raise
 
 
-def _status() -> dict:
-    return {
-        "ok": True,
-        "platform": PLATFORM,
-        "running": False,
-        "api_version": API_VERSION,
-        "note": "Outbound-only mode. Webhook receiver not yet implemented.",
-    }
-
-
 def run(command: str, args):
+    if command in {"status", "start", "stop", "reply"}:
+        return channels.run(PLATFORM, command, args)
     from canonical_argv import normalize_canonical_argv
     if isinstance(args, list):
         args = normalize_canonical_argv(args)
@@ -175,8 +167,6 @@ def run(command: str, args):
         result = _send(str(recipient), str(text))
         gateway_memory.remember_send(PLATFORM, result, channel_id=str(recipient), text=str(text))
         return result
-    if command == "status":
-        return _status()
     return {"ok": False, "error": f"unknown command: {command}"}
 
 

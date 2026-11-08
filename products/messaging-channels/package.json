@@ -1,4 +1,4 @@
 {
   "apps": ["apps/gateway/discord", "apps/gateway/slack", "apps/gateway/telegram", "apps/gateway/whatsapp"],
-  "tests": []
+  "tests": ["test_channels.py"]
 }

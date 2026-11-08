@@ -10,6 +10,7 @@ not an App-data migration.
 | --- | --- |
 | `python/_shared/` | `_shared.atomic`, `.credentials`, `.env_scrub`, `.paths`, `.safe_http` |
 | `python/gateway/_shared/` | `gateway._shared` argument, transport, memory, inbound and subprocess helpers |
+| `python/gateway/_shared/channels.py` | Presentation-only public channel SDK client; Root retains owner/sender binding, credentials, replay and receiver lifetime |
 | `python/canonical_argv.py` | `canonical_argv` parsing and normalization |
 | `rust/gui-argv/` | Private std-only `claw-app-gui-argv` compile-time dependency for native CLI adaptation |
 | `../tests/shared/` | Helper behavior, staging/import isolation and App transport contracts |

@@ -5,7 +5,7 @@
     "en": "Telegram Gateway"
   },
   "summary": {
-    "en": "Telegram bot gateway. Long-polls the Telegram Bot API, forwards inbound messages to an agent, and replies with its response."
+    "en": "Telegram outbound client and authenticated owner-bound Activity channel through the OS service."
   },
   "runtime": "python",
   "operations": {
@@ -70,104 +70,104 @@
     },
     "status": {
       "label": {
-        "en": "Show gateway configuration and status"
+        "en": "Show status for the OS-managed Telegram channel"
       },
       "args": [],
       "needs": [
         {
-          "verb": "proc.observe",
+          "verb": "ipc.publish",
           "scope": {
-            "kind": "wild"
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "channel:gateway-telegram"
+            }
           },
           "why": {
-            "en": "Observe the Telegram gateway process to report its running state."
+            "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
         }
       ]
     },
     "start": {
       "label": {
-        "en": "Start the Telegram long-poll gateway"
+        "en": "Start the OS-managed Telegram channel"
       },
       "args": [],
       "needs": [
         {
-          "verb": "net.dial",
-          "scope": {
-            "kind": "fixed",
-            "scope": {
-              "kind": "host",
-              "value": "api.telegram.org"
-            }
-          },
-          "why": {
-            "en": "Connect to the Telegram Bot API for long polling and replies."
-          }
-        },
-        {
-          "verb": "secret.read",
+          "verb": "ipc.publish",
           "scope": {
             "kind": "fixed",
             "scope": {
               "kind": "name",
-              "value": "default/telegram_bot_token"
+              "value": "channel:gateway-telegram"
             }
           },
           "why": {
-            "en": "Read the configured telegram_bot_token secret required by this gateway."
-          }
-        },
-        {
-          "verb": "data.inbox.write",
-          "scope": {
-            "kind": "wild"
-          },
-          "why": {
-            "en": "Store inbound Telegram messages in the data inbox."
-          }
-        },
-        {
-          "verb": "agent.spawn",
-          "scope": {
-            "kind": "wild"
-          },
-          "why": {
-            "en": "Spawn an agent to answer inbound Telegram messages."
-          }
-        },
-        {
-          "verb": "proc.observe",
-          "scope": {
-            "kind": "wild"
-          },
-          "why": {
-            "en": "Check whether an existing Telegram gateway process is already running."
+            "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
         }
       ]
     },
     "stop": {
       "label": {
-        "en": "Stop the Telegram gateway"
+        "en": "Stop the OS-managed Telegram channel"
       },
       "args": [],
       "needs": [
         {
-          "verb": "proc.signal",
+          "verb": "ipc.publish",
           "scope": {
-            "kind": "wild"
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "channel:gateway-telegram"
+            }
           },
           "why": {
-            "en": "Signal the running Telegram gateway process to stop."
+            "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
+        }
+      ]
+    },
+    "reply": {
+      "label": {
+        "en": "Reply once to an authenticated incoming message using its owner-bound receipt"
+      },
+      "args": [
+        {
+          "name": "event_id",
+          "kind": "name",
+          "required": true
         },
         {
-          "verb": "proc.observe",
+          "name": "text",
+          "kind": "text",
+          "required": true,
+          "repeatable": true
+        },
+        {
+          "name": "confirm",
+          "kind": "bool",
+          "required": true,
+          "choices": [
+            true
+          ]
+        }
+      ],
+      "needs": [
+        {
+          "verb": "ipc.publish",
           "scope": {
-            "kind": "wild"
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "channel:gateway-telegram"
+            }
           },
           "why": {
-            "en": "Check whether the Telegram gateway process is still running."
+            "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
           }
         }
       ]
@@ -187,19 +187,6 @@
         "summary": {
           "en": "Send a message through this gateway"
         },
-        "args": [
-          {
-            "name": "chat_id",
-            "kind": "name",
-            "required": true
-          },
-          {
-            "name": "text",
-            "kind": "text",
-            "required": true,
-            "repeatable": true
-          }
-        ],
         "needs": [
           {
             "verb": "net.dial",
@@ -240,21 +227,38 @@
               "en": "Remember the successful send so the agent can recall it later."
             }
           }
+        ],
+        "args": [
+          {
+            "name": "chat_id",
+            "kind": "name",
+            "required": true
+          },
+          {
+            "name": "text",
+            "kind": "text",
+            "required": true,
+            "repeatable": true
+          }
         ]
       },
       {
         "name": "gateway-telegram.status",
         "summary": {
-          "en": "Show gateway configuration and status"
+          "en": "Show status for the OS-managed Telegram channel"
         },
         "needs": [
           {
-            "verb": "proc.observe",
+            "verb": "ipc.publish",
             "scope": {
-              "kind": "wild"
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "channel:gateway-telegram"
+              }
             },
             "why": {
-              "en": "Observe the Telegram gateway process to report its running state."
+              "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
             }
           }
         ]
@@ -262,60 +266,20 @@
       {
         "name": "gateway-telegram.start",
         "summary": {
-          "en": "Start the Telegram long-poll gateway"
+          "en": "Start the OS-managed Telegram channel"
         },
         "needs": [
           {
-            "verb": "net.dial",
-            "scope": {
-              "kind": "fixed",
-              "scope": {
-                "kind": "host",
-                "value": "api.telegram.org"
-              }
-            },
-            "why": {
-              "en": "Connect to the Telegram Bot API for long polling and replies."
-            }
-          },
-          {
-            "verb": "secret.read",
+            "verb": "ipc.publish",
             "scope": {
               "kind": "fixed",
               "scope": {
                 "kind": "name",
-                "value": "default/telegram_bot_token"
+                "value": "channel:gateway-telegram"
               }
             },
             "why": {
-              "en": "Read the configured telegram_bot_token secret required by this gateway."
-            }
-          },
-          {
-            "verb": "data.inbox.write",
-            "scope": {
-              "kind": "wild"
-            },
-            "why": {
-              "en": "Store inbound Telegram messages in the data inbox."
-            }
-          },
-          {
-            "verb": "agent.spawn",
-            "scope": {
-              "kind": "wild"
-            },
-            "why": {
-              "en": "Spawn an agent to answer inbound Telegram messages."
-            }
-          },
-          {
-            "verb": "proc.observe",
-            "scope": {
-              "kind": "wild"
-            },
-            "why": {
-              "en": "Check whether an existing Telegram gateway process is already running."
+              "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
             }
           }
         ]
@@ -323,26 +287,63 @@
       {
         "name": "gateway-telegram.stop",
         "summary": {
-          "en": "Stop the Telegram gateway"
+          "en": "Stop the OS-managed Telegram channel"
         },
         "needs": [
           {
-            "verb": "proc.signal",
+            "verb": "ipc.publish",
             "scope": {
-              "kind": "wild"
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "channel:gateway-telegram"
+              }
             },
             "why": {
-              "en": "Signal the running Telegram gateway process to stop."
+              "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
             }
+          }
+        ]
+      },
+      {
+        "name": "gateway-telegram.reply",
+        "summary": {
+          "en": "Reply once to an authenticated incoming message using its owner-bound receipt"
+        },
+        "needs": [
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "channel:gateway-telegram"
+              }
+            },
+            "why": {
+              "en": "Control only this owner's explicitly configured channel through the authenticated OS service."
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "event_id",
+            "kind": "name",
+            "required": true
           },
           {
-            "verb": "proc.observe",
-            "scope": {
-              "kind": "wild"
-            },
-            "why": {
-              "en": "Check whether the Telegram gateway process is still running."
-            }
+            "name": "text",
+            "kind": "text",
+            "required": true,
+            "repeatable": true
+          },
+          {
+            "name": "confirm",
+            "kind": "bool",
+            "required": true,
+            "choices": [
+              true
+            ]
           }
         ]
       }

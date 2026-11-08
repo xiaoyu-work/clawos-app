@@ -1,9 +1,7 @@
 """Slack gateway app.
 
-Outbound-only baseline: ``send`` POSTs a message via Slack Web API
-``chat.postMessage`` using a bot token (``xoxb-...``).  Inbound (Socket
-Mode / Events HTTP) is still a stub - landing it requires real
-WebSocket / HTTP server plumbing.  Stdlib only.
+``send`` preserves the direct Web API client. Signed inbound reception,
+Activity admission, lifecycle and safe replies use the Root channel service.
 
 Credentials: ``cos credential store slack_bot_token`` (or env
 ``COS_SLACK_TOKEN``).
@@ -17,7 +15,7 @@ import sys
 import urllib.error
 
 
-from gateway._shared import gateway_memory, safe_egress, safe_subprocess
+from gateway._shared import channels, gateway_memory, safe_egress, safe_subprocess
 
 
 PLATFORM = "slack"
@@ -111,16 +109,9 @@ def _send(channel_id: str, text: str) -> dict:
     }
 
 
-def _status() -> dict:
-    return {
-        "ok": True,
-        "platform": PLATFORM,
-        "running": False,
-        "note": "Outbound-only mode. Socket Mode / Events HTTP not yet implemented.",
-    }
-
-
 def run(command: str, args):
+    if command in {"status", "start", "stop", "reply"}:
+        return channels.run(PLATFORM, command, args)
     from canonical_argv import normalize_canonical_argv
     if isinstance(args, list):
         args = normalize_canonical_argv(args)
@@ -136,8 +127,6 @@ def run(command: str, args):
         result = _send(str(channel_id), str(text))
         gateway_memory.remember_send(PLATFORM, result, channel_id=str(channel_id), text=str(text))
         return result
-    if command == "status":
-        return _status()
     return {"ok": False, "error": f"unknown command: {command}"}
 
 
