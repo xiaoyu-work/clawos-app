@@ -10,7 +10,9 @@
   },
   "runtime": "binary",
   "entry": "bin/cosmic-store",
-  "desktop": {"exec": "--gui"},
+  "desktop": {
+    "exec": "--gui"
+  },
   "mcp": {
     "entry": "bin/cosmic-store",
     "transport": "stdio",
@@ -50,6 +52,15 @@
               "en": "Browse the local apt package catalog."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Search the local apt package catalog for installable packages."
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -67,6 +78,15 @@
             "why": {
               "en": "Enumerate installed system packages."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List packages that dpkg considers installed."
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -95,6 +115,16 @@
             "why": {
               "en": "Read catalog metadata for the named package."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Show version, description, dependencies, and other metadata for one package."
+            },
+            "recovery": "unknown",
+            "target_arg": "name"
           }
         ]
       },
@@ -126,6 +156,16 @@
             "why": {
               "en": "Open the native App Store for the user."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Open the App Store, optionally focused on one package."
+            },
+            "recovery": "unknown",
+            "target_arg": "name"
           }
         ]
       }

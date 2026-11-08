@@ -1331,6 +1331,28 @@ def test_mcp_only_apps_bind_direct_sdk_handlers() -> None:
     assert not drift, drift
 
 
+def test_active_commands_declare_effects_with_only_real_resource_arguments() -> None:
+    for path in _manifests():
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        operations = manifest.get("operations", {})
+        declarations = [
+            *operations.items(),
+            *((tool["name"], tool) for tool in manifest.get("mcp", {}).get("tools", [])),
+        ]
+        for name, declaration in declarations:
+            effects = declaration.get("effects")
+            assert effects, f"{path}:{name} has unknown undeclared effects"
+            targets = {
+                arg["name"] for arg in declaration.get("args", [])
+                if arg["kind"] in {"path", "host", "name"}
+            }
+            for effect in effects:
+                assert effect.get("target_arg") is None or effect["target_arg"] in targets
+            operation = operations.get(name.removeprefix(manifest["id"] + "."))
+            if operation is not None:
+                assert effects == operation["effects"], f"{path}:{name} has different CLI/MCP effects"
+
+
 def test_published_schema_rejects_removed_app_contracts() -> None:
     from jsonschema import Draft202012Validator
 

@@ -37,6 +37,15 @@
               "en": "Read Video/Source nodes and portal/GStreamer availability."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List PipeWire camera nodes"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -107,6 +116,16 @@
             "why": {
               "en": "Persist the image to this exact new path without overwriting."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Capture one still image"
+            },
+            "recovery": "unknown",
+            "target_arg": "destination"
           }
         ]
       }

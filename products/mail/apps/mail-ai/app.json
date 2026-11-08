@@ -48,6 +48,29 @@
             "en": "Remember summaries and notable triage results only in Mail AI's own memory scope."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Mail Native Messaging"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "Request SDK AI processing under existing consent and budget"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "update",
+          "label": {
+            "en": "May record this App's successful result in its own Agent memory scope"
+          },
+          "recovery": "unknown"
+        }
       ]
     }
   },
@@ -126,6 +149,22 @@
               "en": "Remember the email summary so the agent can recall it later."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Summarize an email body into a one-line summary, key points, and action items"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -178,6 +217,15 @@
             "why": {
               "en": "Send the thread context to a model and get back three reply drafts."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Generate three reply suggestions (formal / casual / short) for an email thread"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -244,6 +292,15 @@
               "en": "Send the intent and current draft to a model and get back a completion."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Continue or complete a draft from a brief intent (e.g. 'decline politely')"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -274,6 +331,15 @@
             "why": {
               "en": "Send the source text and target language to a model for translation."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Translate email text into a target language"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -335,6 +401,22 @@
               "en": "Remember high-priority triage decisions so the agent can recall what mattered."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Classify an incoming email into a category and propose tags"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -373,6 +455,15 @@
             "why": {
               "en": "Send the question and surrounding messages to a model for a grounded answer."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Answer a question grounded in supplied email context"
+            },
+            "recovery": "unknown"
           }
         ]
       }

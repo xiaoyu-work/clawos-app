@@ -42,6 +42,15 @@
               "en": "Read which tabs are open in your browser."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List open tabs with their ids, titles, URLs, and active state."
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -66,6 +75,15 @@
             "why": {
               "en": "Switch focus between tabs you already have open."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Bring an open tab to the foreground."
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -113,6 +131,22 @@
               "en": "Remember the completed navigation for later recall."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Navigate a tab to an HTTP or HTTPS URL."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -152,6 +186,15 @@
               "en": "Read the rendered DOM only while the target tab remains on the declared host."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Find page elements by CSS selector after binding the request to the tab's current URL."
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -190,6 +233,15 @@
             "why": {
               "en": "Click a page element only while the target tab remains on the declared host."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Click an element returned by dom.query on the declared page host."
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -236,6 +288,15 @@
               "en": "Type into a non-secret field only while the target tab remains on the declared host."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Fill a non-secret page field on the declared page host."
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -281,6 +342,15 @@
               "en": "Enter a credential or other secret only while the target tab remains on the declared host."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Fill a password, payment, or OTP field on the declared page host after explicit approval."
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -324,6 +394,15 @@
             "why": {
               "en": "Read page content only while the target tab remains on the declared host."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Return a bounded accessibility or text snapshot from the declared page host."
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -374,6 +453,16 @@
               "en": "Create the screenshot at the new path you specified without replacing an existing file."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Capture the visible portion of a tab on the declared page host and atomically create a new PNG."
+            },
+            "recovery": "unknown",
+            "target_arg": "output"
+          }
         ]
       },
       {
@@ -412,6 +501,15 @@
             "why": {
               "en": "Run JavaScript only while the target tab remains on the declared host."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Run JavaScript in the declared page host after admin approval."
+            },
+            "recovery": "unknown"
           }
         ]
       }

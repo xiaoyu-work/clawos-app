@@ -48,6 +48,15 @@
               "en": "Request geographic coordinates from the system GeoClue service."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Request current location"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -79,6 +88,15 @@
             "why": {
               "en": "Use a GeoClue fix to suggest nearby IANA timezone regions."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Suggest the current timezone"
+            },
+            "recovery": "unknown"
           }
         ]
       }

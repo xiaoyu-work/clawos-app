@@ -37,6 +37,15 @@
               "en": "Read local passwd/group state without password hashes."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List local users and groups"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -83,6 +92,16 @@
               "en": "Create a home-backed regular user and private primary group."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Create a regular local user"
+            },
+            "recovery": "unknown",
+            "target_arg": "user"
+          }
         ]
       },
       {
@@ -119,6 +138,16 @@
               "en": "Delete the account while deliberately retaining its home directory."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Delete a regular user account"
+            },
+            "recovery": "unknown",
+            "target_arg": "user"
+          }
         ]
       },
       {
@@ -147,6 +176,16 @@
               "en": "Lock password authentication for this regular user."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Lock a user password"
+            },
+            "recovery": "unknown",
+            "target_arg": "user"
+          }
         ]
       },
       {
@@ -174,6 +213,16 @@
             "why": {
               "en": "Unlock the existing password hash for this regular user."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Unlock a user password"
+            },
+            "recovery": "unknown",
+            "target_arg": "user"
           }
         ]
       },
@@ -207,6 +256,16 @@
             "why": {
               "en": "Change the user's shell to one listed in /etc/shells."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set a user's login shell"
+            },
+            "recovery": "unknown",
+            "target_arg": "user"
           }
         ]
       },
@@ -251,6 +310,16 @@
               "en": "Read the password without placing plaintext in argv."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Set a user password from a credential"
+            },
+            "recovery": "unknown",
+            "target_arg": "user"
+          }
         ]
       },
       {
@@ -278,6 +347,16 @@
             "why": {
               "en": "Create a regular local group."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Create a regular group"
+            },
+            "recovery": "unknown",
+            "target_arg": "group"
           }
         ]
       },
@@ -315,6 +394,16 @@
               "en": "Delete a non-system group with no group admins/password."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Delete a regular group"
+            },
+            "recovery": "unknown",
+            "target_arg": "group"
+          }
         ]
       },
       {
@@ -348,6 +437,16 @@
               "en": "Grant this supplementary group membership."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Add a user to a group"
+            },
+            "recovery": "unknown",
+            "target_arg": "user"
+          }
         ]
       },
       {
@@ -380,6 +479,16 @@
             "why": {
               "en": "Remove this supplementary group membership."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Remove a user from a group"
+            },
+            "recovery": "unknown",
+            "target_arg": "user"
           }
         ]
       },
@@ -416,6 +525,15 @@
             "why": {
               "en": "Restore the previous exact identity state if no newer change exists."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Restore an identity backup"
+            },
+            "recovery": "unknown"
           }
         ]
       }

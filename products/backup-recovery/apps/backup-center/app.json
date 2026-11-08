@@ -56,6 +56,16 @@
               "en": "Use the repository password without exposing it in argv."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Initialize a Restic repository"
+            },
+            "recovery": "unknown",
+            "target_arg": "repo"
+          }
         ]
       },
       {
@@ -96,6 +106,16 @@
               "en": "Unlock the repository."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List Restic snapshots"
+            },
+            "recovery": "unknown",
+            "target_arg": "repo"
+          }
         ]
       },
       {
@@ -135,6 +155,16 @@
             "why": {
               "en": "Unlock the repository."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Check Restic repository integrity"
+            },
+            "recovery": "unknown",
+            "target_arg": "repo"
           }
         ]
       },
@@ -195,6 +225,16 @@
             "why": {
               "en": "Unlock the repository."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Back up a source tree"
+            },
+            "recovery": "unknown",
+            "target_arg": "repo"
           }
         ]
       },
@@ -264,6 +304,16 @@
               "en": "Unlock the repository."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Restore a snapshot to an empty destination"
+            },
+            "recovery": "unknown",
+            "target_arg": "destination"
+          }
         ]
       },
       {
@@ -316,6 +366,16 @@
             "why": {
               "en": "Unlock the repository."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Forget one snapshot"
+            },
+            "recovery": "unknown",
+            "target_arg": "repo"
           }
         ]
       },
@@ -379,6 +439,16 @@
             "why": {
               "en": "Unlock the repository."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Apply retention and prune"
+            },
+            "recovery": "unknown",
+            "target_arg": "repo"
           }
         ]
       }

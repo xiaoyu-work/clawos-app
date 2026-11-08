@@ -27,6 +27,13 @@ Product MCP --+                                             |
 Applications do not call one another. One product can have multiple entry
 points without duplicating its account state or inheriting a union of grants.
 
+Every retained operation and MCP tool declares expected effect metadata for
+non-executing Activity previews. CLI/MCP pairs share the same declarations;
+targets bind only declared resource arguments, and runtime-derived targets
+remain unresolved. Reads, creates, updates, deletes, external requests and
+execution are App claims, never purity, authority or confirmed outcomes.
+Recovery stays unknown unless an existing contract explicitly declares more.
+
 ## App lifecycle and AI independence
 
 An App must run without opening the Agent UI, running an AI Agent task or

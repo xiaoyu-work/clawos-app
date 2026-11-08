@@ -10,7 +10,9 @@
   },
   "runtime": "binary",
   "entry": "bin/cosmic-launcher",
-  "desktop": {"exec": "--gui"},
+  "desktop": {
+    "exec": "--gui"
+  },
   "mcp": {
     "entry": "bin/cosmic-launcher",
     "transport": "stdio",
@@ -80,6 +82,15 @@
               "en": "Read desktop entries installed in the user's home directory."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Fuzzy-search installed desktop applications and return ranked AppIDs."
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -137,6 +148,15 @@
             "why": {
               "en": "Read desktop entries installed in the user's home directory."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List installed visible desktop entries, optionally including hidden entries."
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -215,6 +235,16 @@
               "en": "Read desktop entries installed in the user's home directory."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Launch an installed application by AppID with optional file, URI, or other text arguments."
+            },
+            "recovery": "unknown",
+            "target_arg": "app_id"
+          }
         ]
       },
       {
@@ -233,7 +263,16 @@
             }
           }
         ],
-        "needs": []
+        "needs": [],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read the recent-launch journal, newest first."
+            },
+            "recovery": "unknown"
+          }
+        ]
       }
     ]
   }

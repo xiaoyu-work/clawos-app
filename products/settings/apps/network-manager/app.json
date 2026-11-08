@@ -37,6 +37,15 @@
               "en": "Read general connectivity and radio state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect NetworkManager state"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -57,6 +66,15 @@
             "why": {
               "en": "Scan and read nearby Wi-Fi access points."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List nearby Wi-Fi networks"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -79,6 +97,15 @@
               "en": "Read saved and active connection profiles."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List NetworkManager connections"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -99,6 +126,15 @@
             "why": {
               "en": "Read VPN and WireGuard connection profiles."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List VPN profiles"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -147,6 +183,15 @@
               "arg": "credential"
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Connect to Wi-Fi"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -175,6 +220,16 @@
               "en": "Disconnect a Wi-Fi network device."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Disconnect a Wi-Fi device"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
+          }
         ]
       },
       {
@@ -202,6 +257,15 @@
             "why": {
               "en": "Delete a saved Wi-Fi connection profile."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Forget a Wi-Fi connection"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -235,6 +299,15 @@
               "en": "Change the global Wi-Fi radio state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Turn Wi-Fi on or off"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -267,6 +340,15 @@
               "en": "Change all NetworkManager radio state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Turn airplane mode on or off"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -295,6 +377,15 @@
               "en": "Activate a VPN or WireGuard profile."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Activate a VPN profile"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -322,6 +413,15 @@
             "why": {
               "en": "Deactivate a VPN or WireGuard profile."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Deactivate a VPN profile"
+            },
+            "recovery": "unknown"
           }
         ]
       }

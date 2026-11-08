@@ -37,6 +37,15 @@
               "en": "Read UPower device state and logind power capabilities."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect batteries and power capabilities"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -64,6 +73,15 @@
             "why": {
               "en": "Suspend the whole computer immediately."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Suspend the computer"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -93,6 +111,15 @@
               "en": "Write memory to disk and power off the whole computer."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Hibernate the computer"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -120,6 +147,15 @@
             "why": {
               "en": "Suspend while preserving a hibernation image."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Enter hybrid sleep"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -149,6 +185,15 @@
               "en": "Suspend now and hibernate later according to logind policy."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Suspend then hibernate"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -177,6 +222,15 @@
               "en": "Restart the whole computer immediately."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Reboot the computer"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -204,6 +258,15 @@
             "why": {
               "en": "Shut down and power off the whole computer immediately."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Power off the computer"
+            },
+            "recovery": "unknown"
           }
         ]
       }

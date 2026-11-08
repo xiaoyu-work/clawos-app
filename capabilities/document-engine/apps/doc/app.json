@@ -41,6 +41,16 @@
             "en": "Read the contents of the file you asked to open."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Read document content (PDF, DOCX, XLSX, PPTX, CSV, etc.)"
+          },
+          "recovery": "unknown",
+          "target_arg": "path"
+        }
       ]
     },
     "info": {
@@ -64,6 +74,16 @@
           "why": {
             "en": "Inspect the file's metadata (size, format) without reading its content."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Get document metadata without reading full content"
+          },
+          "recovery": "unknown",
+          "target_arg": "path"
         }
       ]
     },
@@ -103,6 +123,15 @@
           "why": {
             "en": "Write the converted document to disk."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "create",
+          "label": {
+            "en": "Convert document to another format"
+          },
+          "recovery": "unknown"
         }
       ]
     },
@@ -162,6 +191,22 @@
             "en": "Remember the document summary so the agent can recall it later."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Summarize a document into 5 short bullet lines via the AI gate"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "update",
+          "label": {
+            "en": "May record this App's successful result in its own Agent memory scope"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "explain": {
@@ -206,6 +251,15 @@
           "why": {
             "en": "Send the content to a model so it can be explained for you."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Explain the supplied content in plain prose via the AI gate"
+          },
+          "recovery": "unknown"
         }
       ]
     },
@@ -258,6 +312,15 @@
             "en": "Send the content to a model to be rewritten per your instruction."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Rewrite the supplied content following an instruction"
+          },
+          "recovery": "unknown"
+        }
       ]
     }
   },
@@ -301,6 +364,16 @@
               "en": "Read the contents of the file you asked to open."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read document content (PDF, DOCX, XLSX, PPTX, CSV, etc.)"
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
+          }
         ]
       },
       {
@@ -325,6 +398,16 @@
             "why": {
               "en": "Inspect the file's metadata (size, format) without reading its content."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Get document metadata without reading full content"
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
           }
         ]
       },
@@ -364,6 +447,15 @@
             "why": {
               "en": "Write the converted document to disk."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Convert document to another format"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -422,6 +514,22 @@
               "en": "Remember the document summary so the agent can recall it later."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Summarize a document into 5 short bullet lines via the AI gate"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -465,6 +573,15 @@
             "why": {
               "en": "Send the content to a model so it can be explained for you."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Explain the supplied content in plain prose via the AI gate"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -514,6 +631,15 @@
             "why": {
               "en": "Send the content to a model to be rewritten per your instruction."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Rewrite the supplied content following an instruction"
+            },
+            "recovery": "unknown"
           }
         ]
       }

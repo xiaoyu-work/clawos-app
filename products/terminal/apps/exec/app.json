@@ -56,6 +56,15 @@
             "en": "Start a new process to run the command you asked to run."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Run a shell command"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "script": {
@@ -103,6 +112,15 @@
             "en": "Start a new process for the interpreter to run your script."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Run a script file or inline code in any language"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "which": {
@@ -126,6 +144,16 @@
           "why": {
             "en": "Look up where the command lives on the filesystem."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Check if a command exists"
+          },
+          "recovery": "unknown",
+          "target_arg": "name"
         }
       ]
     },
@@ -157,6 +185,15 @@
             "en": "Start a new background process for the command you asked to run."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Start a command in the background"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "stop": {
@@ -180,6 +217,15 @@
             "en": "Send a termination signal to the process you asked to stop."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "update",
+          "label": {
+            "en": "Stop a background process by PID"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "ps": {
@@ -197,7 +243,16 @@
           }
         }
       ],
-      "args": []
+      "args": [],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "List running background processes"
+          },
+          "recovery": "unknown"
+        }
+      ]
     }
   },
   "dependencies": {
@@ -257,6 +312,15 @@
               "en": "Start a new process to run the command you asked to run."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Run a shell command"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -299,6 +363,15 @@
               "en": "Start a new process for the interpreter to run your script."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Run a script file or inline code in any language"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -323,6 +396,16 @@
             "why": {
               "en": "Look up where the command lives on the filesystem."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Check if a command exists"
+            },
+            "recovery": "unknown",
+            "target_arg": "name"
           }
         ]
       },
@@ -355,6 +438,15 @@
               "en": "Start a new background process for the command you asked to run."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Start a command in the background"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -379,6 +471,15 @@
               "en": "Send a termination signal to the process you asked to stop."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Stop a background process by PID"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -395,6 +496,15 @@
             "why": {
               "en": "Read the list of background processes started by this app."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List running background processes"
+            },
+            "recovery": "unknown"
           }
         ]
       }

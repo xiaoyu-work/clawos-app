@@ -29,6 +29,15 @@
             "en": "Read local calendar events for the selected-day agenda."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Open the calendar panel applet"
+          },
+          "recovery": "unknown"
+        }
       ]
     }
   },

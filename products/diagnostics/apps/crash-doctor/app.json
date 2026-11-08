@@ -53,6 +53,15 @@
               "en": "Read sensitive system-wide coredump metadata."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List recent system coredumps"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -90,6 +99,15 @@
               "en": "Correlate system-wide coredumps with kernel and service journal events."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Diagnose recent crashes"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -118,6 +136,16 @@
             "why": {
               "en": "Extract and inspect a selected system coredump using a constrained debugger."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect a coredump backtrace"
+            },
+            "recovery": "unknown",
+            "target_arg": "id"
           }
         ]
       }

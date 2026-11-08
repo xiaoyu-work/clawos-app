@@ -46,6 +46,15 @@
               "en": "Inspect offered clipboard MIME types and provider capabilities."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect clipboard provider and types"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -75,6 +84,15 @@
             "why": {
               "en": "Read the MIME types currently offered by the selection owner."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List clipboard MIME types"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -110,6 +128,15 @@
             "why": {
               "en": "Read potentially sensitive clipboard bytes."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read clipboard content"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -161,6 +188,16 @@
               "en": "Read the exact source file through a pinned descriptor."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Write clipboard content from a file"
+            },
+            "recovery": "unknown",
+            "target_arg": "source"
+          }
         ]
       },
       {
@@ -199,6 +236,15 @@
             "why": {
               "en": "Clear the current clipboard selection."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Clear the clipboard"
+            },
+            "recovery": "unknown"
           }
         ]
       }

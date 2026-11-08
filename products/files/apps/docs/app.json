@@ -67,6 +67,22 @@
               "en": "Read the local Recoll index files and config to satisfy the query."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Run a full-text query against the user's Recoll index. Returns matching file paths, MIME types, modification times, and snippet abstracts ranked by relevance."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Run the declared bounded document-index query or indexing executable"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -110,6 +126,22 @@
               "en": "Write the updated Xapian index files."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Run an incremental Recoll indexing pass over the configured top directories. Safe to call repeatedly; only files changed since the last run are re-indexed."
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Run the declared bounded document-index query or indexing executable"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -131,6 +163,15 @@
               "en": "Read the Recoll config and index metadata under ~/.recoll."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Report whether a Recoll index exists, when it was last updated, and which top directories are configured."
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -151,6 +192,15 @@
             "why": {
               "en": "Write the default ~/.recoll/recoll.conf."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Create ~/.recoll/recoll.conf with a sensible topdirs default (~/Documents, ~/Desktop, ~/Downloads) if no config exists yet. Idempotent: never overwrites a user-edited config."
+            },
+            "recovery": "unknown"
           }
         ]
       }

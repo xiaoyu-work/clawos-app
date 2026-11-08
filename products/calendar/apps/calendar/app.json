@@ -11,97 +11,480 @@
   "runtime": "python",
   "objects": {
     "local-event": {
-      "label": {"en": "Local calendar event"},
-      "summary": {"en": "An event in the owner's local Calendar data partition."},
-      "resolve": {"operation": "local_event", "id_arg": "id"}
+      "label": {
+        "en": "Local calendar event"
+      },
+      "summary": {
+        "en": "An event in the owner's local Calendar data partition."
+      },
+      "resolve": {
+        "operation": "local_event",
+        "id_arg": "id"
+      }
     },
     "google-event": {
-      "label": {"en": "Google Calendar event"},
-      "summary": {"en": "An event in the owner's authorized Google primary calendar."},
-      "resolve": {"operation": "google_event", "id_arg": "id"}
+      "label": {
+        "en": "Google Calendar event"
+      },
+      "summary": {
+        "en": "An event in the owner's authorized Google primary calendar."
+      },
+      "resolve": {
+        "operation": "google_event",
+        "id_arg": "id"
+      }
     },
     "outlook-event": {
-      "label": {"en": "Outlook Calendar event"},
-      "summary": {"en": "An event in the owner's authorized Outlook calendar."},
-      "resolve": {"operation": "outlook_event", "id_arg": "id"}
+      "label": {
+        "en": "Outlook Calendar event"
+      },
+      "summary": {
+        "en": "An event in the owner's authorized Outlook calendar."
+      },
+      "resolve": {
+        "operation": "outlook_event",
+        "id_arg": "id"
+      }
     }
   },
   "operations": {
     "invite": {
-      "label": {"en": "Create a provider meeting and explicitly request attendee invitations"},
+      "label": {
+        "en": "Create a provider meeting and explicitly request attendee invitations"
+      },
       "args": [
-        {"name": "provider", "kind": "name", "required": true, "binding": "flag", "choices": ["google", "outlook"]},
-        {"name": "title", "kind": "text", "required": true, "binding": "flag"},
-        {"name": "start", "kind": "text", "required": true, "binding": "flag"},
-        {"name": "end", "kind": "text", "required": true, "binding": "flag"},
-        {"name": "attendees", "kind": "text", "required": true, "binding": "flag"},
-        {"name": "description", "kind": "text", "binding": "flag", "default": ""},
-        {"name": "location", "kind": "text", "binding": "flag", "default": ""},
-        {"name": "confirm", "kind": "bool", "required": true, "binding": "flag", "choices": [true]}
+        {
+          "name": "provider",
+          "kind": "name",
+          "required": true,
+          "binding": "flag",
+          "choices": [
+            "google",
+            "outlook"
+          ]
+        },
+        {
+          "name": "title",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "start",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "end",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "attendees",
+          "kind": "text",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "description",
+          "kind": "text",
+          "binding": "flag",
+          "default": ""
+        },
+        {
+          "name": "location",
+          "kind": "text",
+          "binding": "flag",
+          "default": ""
+        },
+        {
+          "name": "confirm",
+          "kind": "bool",
+          "required": true,
+          "binding": "flag",
+          "choices": [
+            true
+          ]
+        }
       ],
       "needs": [
-        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
-        {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"google": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected calendar's authorized account."}},
-        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "www.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "google"}, "why": {"en": "Create the Google meeting and request invitations for its supplied attendees."}},
-        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Create the Outlook meeting and request invitations for its supplied attendees."}}
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "app:calendar"
+            }
+          },
+          "why": {
+            "en": "Publish Calendar's owner-bound reported event change."
+          }
+        },
+        {
+          "verb": "secret.read",
+          "scope": {
+            "kind": "from-arg-map",
+            "arg": "provider",
+            "values": {
+              "google": {
+                "kind": "name",
+                "value": "default/GOOGLE_ACCESS_TOKEN"
+              },
+              "outlook": {
+                "kind": "name",
+                "value": "default/MICROSOFT_ACCESS_TOKEN"
+              }
+            }
+          },
+          "why": {
+            "en": "Use only the selected calendar's authorized account."
+          }
+        },
+        {
+          "verb": "net.dial",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "host",
+              "value": "www.googleapis.com"
+            }
+          },
+          "when": {
+            "kind": "arg-equals",
+            "arg": "provider",
+            "value": "google"
+          },
+          "why": {
+            "en": "Create the Google meeting and request invitations for its supplied attendees."
+          }
+        },
+        {
+          "verb": "net.dial",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "host",
+              "value": "graph.microsoft.com"
+            }
+          },
+          "when": {
+            "kind": "arg-equals",
+            "arg": "provider",
+            "value": "outlook"
+          },
+          "why": {
+            "en": "Create the Outlook meeting and request invitations for its supplied attendees."
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "create",
+          "label": {
+            "en": "Create a provider meeting and explicitly request attendee invitations"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the explicitly selected remote provider"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "respond": {
-      "label": {"en": "Explicitly respond to a meeting as the authorized calendar owner"},
+      "label": {
+        "en": "Explicitly respond to a meeting as the authorized calendar owner"
+      },
       "args": [
-        {"name": "provider", "kind": "name", "required": true, "binding": "flag", "choices": ["google", "outlook"]},
-        {"name": "id", "kind": "name", "required": true, "binding": "flag"},
-        {"name": "response", "kind": "name", "required": true, "binding": "flag", "choices": ["accepted", "tentative", "declined"]},
-        {"name": "comment", "kind": "text", "binding": "flag", "default": ""},
-        {"name": "confirm", "kind": "bool", "required": true, "binding": "flag", "choices": [true]}
+        {
+          "name": "provider",
+          "kind": "name",
+          "required": true,
+          "binding": "flag",
+          "choices": [
+            "google",
+            "outlook"
+          ]
+        },
+        {
+          "name": "id",
+          "kind": "name",
+          "required": true,
+          "binding": "flag"
+        },
+        {
+          "name": "response",
+          "kind": "name",
+          "required": true,
+          "binding": "flag",
+          "choices": [
+            "accepted",
+            "tentative",
+            "declined"
+          ]
+        },
+        {
+          "name": "comment",
+          "kind": "text",
+          "binding": "flag",
+          "default": ""
+        },
+        {
+          "name": "confirm",
+          "kind": "bool",
+          "required": true,
+          "binding": "flag",
+          "choices": [
+            true
+          ]
+        }
       ],
       "needs": [
-        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
-        {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"google": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected calendar owner's account."}},
-        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "www.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "google"}, "why": {"en": "Update only the owner's attendee response and notify the organizer."}},
-        {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Submit the owner's Outlook meeting response."}}
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "app:calendar"
+            }
+          },
+          "why": {
+            "en": "Publish Calendar's owner-bound reported event change."
+          }
+        },
+        {
+          "verb": "secret.read",
+          "scope": {
+            "kind": "from-arg-map",
+            "arg": "provider",
+            "values": {
+              "google": {
+                "kind": "name",
+                "value": "default/GOOGLE_ACCESS_TOKEN"
+              },
+              "outlook": {
+                "kind": "name",
+                "value": "default/MICROSOFT_ACCESS_TOKEN"
+              }
+            }
+          },
+          "why": {
+            "en": "Use only the selected calendar owner's account."
+          }
+        },
+        {
+          "verb": "net.dial",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "host",
+              "value": "www.googleapis.com"
+            }
+          },
+          "when": {
+            "kind": "arg-equals",
+            "arg": "provider",
+            "value": "google"
+          },
+          "why": {
+            "en": "Update only the owner's attendee response and notify the organizer."
+          }
+        },
+        {
+          "verb": "net.dial",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "host",
+              "value": "graph.microsoft.com"
+            }
+          },
+          "when": {
+            "kind": "arg-equals",
+            "arg": "provider",
+            "value": "outlook"
+          },
+          "why": {
+            "en": "Submit the owner's Outlook meeting response."
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "update",
+          "label": {
+            "en": "Explicitly respond to a meeting as the authorized calendar owner"
+          },
+          "recovery": "unknown",
+          "target_arg": "id"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the explicitly selected remote provider"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "local_event": {
-      "label": {"en": "Read a local Calendar event by its ID"},
-      "args": [{"name": "id", "kind": "name", "required": true, "binding": "flag"}],
+      "label": {
+        "en": "Read a local Calendar event by its ID"
+      },
+      "args": [
+        {
+          "name": "id",
+          "kind": "name",
+          "required": true,
+          "binding": "flag"
+        }
+      ],
       "needs": [
         {
           "verb": "data.db.read",
-          "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "calendar"}},
-          "why": {"en": "Read this event from the owner's existing Calendar database."}
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "calendar"
+            }
+          },
+          "why": {
+            "en": "Read this event from the owner's existing Calendar database."
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Read a local Calendar event by its ID"
+          },
+          "recovery": "unknown",
+          "target_arg": "id"
         }
       ]
     },
     "google_event": {
-      "label": {"en": "Read a Google Calendar event by its ID"},
-      "args": [{"name": "id", "kind": "name", "required": true, "binding": "flag"}],
+      "label": {
+        "en": "Read a Google Calendar event by its ID"
+      },
+      "args": [
+        {
+          "name": "id",
+          "kind": "name",
+          "required": true,
+          "binding": "flag"
+        }
+      ],
       "needs": [
         {
           "verb": "secret.read",
-          "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}},
-          "why": {"en": "Read only the owner's Google Calendar credential."}
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "default/GOOGLE_ACCESS_TOKEN"
+            }
+          },
+          "why": {
+            "en": "Read only the owner's Google Calendar credential."
+          }
         },
         {
           "verb": "net.dial",
-          "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "www.googleapis.com"}},
-          "why": {"en": "Read the requested event through the Google Calendar API."}
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "host",
+              "value": "www.googleapis.com"
+            }
+          },
+          "why": {
+            "en": "Read the requested event through the Google Calendar API."
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Read a Google Calendar event by its ID"
+          },
+          "recovery": "unknown",
+          "target_arg": "id"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the explicitly selected remote provider"
+          },
+          "recovery": "unknown"
         }
       ]
     },
     "outlook_event": {
-      "label": {"en": "Read an Outlook Calendar event by its ID"},
-      "args": [{"name": "id", "kind": "name", "required": true, "binding": "flag"}],
+      "label": {
+        "en": "Read an Outlook Calendar event by its ID"
+      },
+      "args": [
+        {
+          "name": "id",
+          "kind": "name",
+          "required": true,
+          "binding": "flag"
+        }
+      ],
       "needs": [
         {
           "verb": "secret.read",
-          "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}},
-          "why": {"en": "Read only the owner's Outlook Calendar credential."}
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "default/MICROSOFT_ACCESS_TOKEN"
+            }
+          },
+          "why": {
+            "en": "Read only the owner's Outlook Calendar credential."
+          }
         },
         {
           "verb": "net.dial",
-          "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}},
-          "why": {"en": "Read the requested event through the Outlook Calendar API."}
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "host",
+              "value": "graph.microsoft.com"
+            }
+          },
+          "why": {
+            "en": "Read the requested event through the Outlook Calendar API."
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Read an Outlook Calendar event by its ID"
+          },
+          "recovery": "unknown",
+          "target_arg": "id"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the explicitly selected remote provider"
+          },
+          "recovery": "unknown"
         }
       ]
     },
@@ -225,6 +608,22 @@
             "en": "Read only the Outlook calendar credential when selected."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "List events in a time range (--from, --to, --provider local|google|outlook)"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the explicitly selected remote provider"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "create": {
@@ -277,7 +676,19 @@
         }
       ],
       "needs": [
-        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "app:calendar"
+            }
+          },
+          "why": {
+            "en": "Publish Calendar's owner-bound reported event change."
+          }
+        },
         {
           "verb": "data.db.write",
           "scope": {
@@ -381,6 +792,29 @@
             "en": "Read only the Outlook calendar credential when selected."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "create",
+          "label": {
+            "en": "Create an event (--title, --start, --end, --description, --provider)"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the explicitly selected remote provider"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "update",
+          "label": {
+            "en": "May record this App's successful result in its own Agent memory scope"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "update": {
@@ -437,7 +871,19 @@
         }
       ],
       "needs": [
-        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "app:calendar"
+            }
+          },
+          "why": {
+            "en": "Publish Calendar's owner-bound reported event change."
+          }
+        },
         {
           "verb": "data.db.write",
           "scope": {
@@ -541,6 +987,29 @@
             "en": "Read only the Outlook calendar credential when selected."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "update",
+          "label": {
+            "en": "Update an event (--id, --title, --start, --end, --description, --provider)"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the explicitly selected remote provider"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "update",
+          "label": {
+            "en": "May record this App's successful result in its own Agent memory scope"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "delete": {
@@ -567,7 +1036,19 @@
         }
       ],
       "needs": [
-        {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
+        {
+          "verb": "ipc.publish",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "app:calendar"
+            }
+          },
+          "why": {
+            "en": "Publish Calendar's owner-bound reported event change."
+          }
+        },
         {
           "verb": "data.db.write",
           "scope": {
@@ -670,6 +1151,29 @@
           "why": {
             "en": "Read only the Outlook calendar credential when selected."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "delete",
+          "label": {
+            "en": "Delete an event (--id, --provider)"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the explicitly selected remote provider"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "update",
+          "label": {
+            "en": "May record this App's successful result in its own Agent memory scope"
+          },
+          "recovery": "unknown"
         }
       ]
     },
@@ -781,6 +1285,22 @@
             "en": "Read only the Outlook calendar credential when selected."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Show today's events (shortcut for list --from today --to tomorrow)"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "external",
+          "label": {
+            "en": "May contact the explicitly selected remote provider"
+          },
+          "recovery": "unknown"
+        }
       ]
     }
   },
@@ -795,84 +1315,430 @@
     "tools": [
       {
         "name": "calendar.invite",
-        "summary": {"en": "Create a provider meeting and explicitly request attendee invitations"},
+        "summary": {
+          "en": "Create a provider meeting and explicitly request attendee invitations"
+        },
         "args": [
-          {"name": "provider", "kind": "name", "required": true, "choices": ["google", "outlook"]},
-          {"name": "title", "kind": "text", "required": true},
-          {"name": "start", "kind": "text", "required": true},
-          {"name": "end", "kind": "text", "required": true},
-          {"name": "attendees", "kind": "text", "required": true},
-          {"name": "description", "kind": "text", "default": ""},
-          {"name": "location", "kind": "text", "default": ""},
-          {"name": "confirm", "kind": "bool", "required": true, "choices": [true]}
+          {
+            "name": "provider",
+            "kind": "name",
+            "required": true,
+            "choices": [
+              "google",
+              "outlook"
+            ]
+          },
+          {
+            "name": "title",
+            "kind": "text",
+            "required": true
+          },
+          {
+            "name": "start",
+            "kind": "text",
+            "required": true
+          },
+          {
+            "name": "end",
+            "kind": "text",
+            "required": true
+          },
+          {
+            "name": "attendees",
+            "kind": "text",
+            "required": true
+          },
+          {
+            "name": "description",
+            "kind": "text",
+            "default": ""
+          },
+          {
+            "name": "location",
+            "kind": "text",
+            "default": ""
+          },
+          {
+            "name": "confirm",
+            "kind": "bool",
+            "required": true,
+            "choices": [
+              true
+            ]
+          }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
-          {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"google": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected calendar's authorized account."}},
-          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "www.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "google"}, "why": {"en": "Create the Google meeting and request invitations for its supplied attendees."}},
-          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Create the Outlook meeting and request invitations for its supplied attendees."}}
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:calendar"
+              }
+            },
+            "why": {
+              "en": "Publish Calendar's owner-bound reported event change."
+            }
+          },
+          {
+            "verb": "secret.read",
+            "scope": {
+              "kind": "from-arg-map",
+              "arg": "provider",
+              "values": {
+                "google": {
+                  "kind": "name",
+                  "value": "default/GOOGLE_ACCESS_TOKEN"
+                },
+                "outlook": {
+                  "kind": "name",
+                  "value": "default/MICROSOFT_ACCESS_TOKEN"
+                }
+              }
+            },
+            "why": {
+              "en": "Use only the selected calendar's authorized account."
+            }
+          },
+          {
+            "verb": "net.dial",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "host",
+                "value": "www.googleapis.com"
+              }
+            },
+            "when": {
+              "kind": "arg-equals",
+              "arg": "provider",
+              "value": "google"
+            },
+            "why": {
+              "en": "Create the Google meeting and request invitations for its supplied attendees."
+            }
+          },
+          {
+            "verb": "net.dial",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "host",
+                "value": "graph.microsoft.com"
+              }
+            },
+            "when": {
+              "kind": "arg-equals",
+              "arg": "provider",
+              "value": "outlook"
+            },
+            "why": {
+              "en": "Create the Outlook meeting and request invitations for its supplied attendees."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Create a provider meeting and explicitly request attendee invitations"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the explicitly selected remote provider"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
         "name": "calendar.respond",
-        "summary": {"en": "Explicitly respond to a meeting as the authorized calendar owner"},
+        "summary": {
+          "en": "Explicitly respond to a meeting as the authorized calendar owner"
+        },
         "args": [
-          {"name": "provider", "kind": "name", "required": true, "choices": ["google", "outlook"]},
-          {"name": "id", "kind": "name", "required": true},
-          {"name": "response", "kind": "name", "required": true, "choices": ["accepted", "tentative", "declined"]},
-          {"name": "comment", "kind": "text", "default": ""},
-          {"name": "confirm", "kind": "bool", "required": true, "choices": [true]}
+          {
+            "name": "provider",
+            "kind": "name",
+            "required": true,
+            "choices": [
+              "google",
+              "outlook"
+            ]
+          },
+          {
+            "name": "id",
+            "kind": "name",
+            "required": true
+          },
+          {
+            "name": "response",
+            "kind": "name",
+            "required": true,
+            "choices": [
+              "accepted",
+              "tentative",
+              "declined"
+            ]
+          },
+          {
+            "name": "comment",
+            "kind": "text",
+            "default": ""
+          },
+          {
+            "name": "confirm",
+            "kind": "bool",
+            "required": true,
+            "choices": [
+              true
+            ]
+          }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
-          {"verb": "secret.read", "scope": {"kind": "from-arg-map", "arg": "provider", "values": {"google": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}, "outlook": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}}}, "why": {"en": "Use only the selected calendar owner's account."}},
-          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "www.googleapis.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "google"}, "why": {"en": "Update only the owner's attendee response and notify the organizer."}},
-          {"verb": "net.dial", "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}}, "when": {"kind": "arg-equals", "arg": "provider", "value": "outlook"}, "why": {"en": "Submit the owner's Outlook meeting response."}}
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:calendar"
+              }
+            },
+            "why": {
+              "en": "Publish Calendar's owner-bound reported event change."
+            }
+          },
+          {
+            "verb": "secret.read",
+            "scope": {
+              "kind": "from-arg-map",
+              "arg": "provider",
+              "values": {
+                "google": {
+                  "kind": "name",
+                  "value": "default/GOOGLE_ACCESS_TOKEN"
+                },
+                "outlook": {
+                  "kind": "name",
+                  "value": "default/MICROSOFT_ACCESS_TOKEN"
+                }
+              }
+            },
+            "why": {
+              "en": "Use only the selected calendar owner's account."
+            }
+          },
+          {
+            "verb": "net.dial",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "host",
+                "value": "www.googleapis.com"
+              }
+            },
+            "when": {
+              "kind": "arg-equals",
+              "arg": "provider",
+              "value": "google"
+            },
+            "why": {
+              "en": "Update only the owner's attendee response and notify the organizer."
+            }
+          },
+          {
+            "verb": "net.dial",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "host",
+                "value": "graph.microsoft.com"
+              }
+            },
+            "when": {
+              "kind": "arg-equals",
+              "arg": "provider",
+              "value": "outlook"
+            },
+            "why": {
+              "en": "Submit the owner's Outlook meeting response."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Explicitly respond to a meeting as the authorized calendar owner"
+            },
+            "recovery": "unknown",
+            "target_arg": "id"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the explicitly selected remote provider"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
         "name": "calendar.local_event",
-        "summary": {"en": "Read a local Calendar event by its ID"},
-        "args": [{"name": "id", "kind": "name", "required": true}],
+        "summary": {
+          "en": "Read a local Calendar event by its ID"
+        },
+        "args": [
+          {
+            "name": "id",
+            "kind": "name",
+            "required": true
+          }
+        ],
         "needs": [
           {
             "verb": "data.db.read",
-            "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "calendar"}},
-            "why": {"en": "Read this event from the owner's existing Calendar database."}
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "calendar"
+              }
+            },
+            "why": {
+              "en": "Read this event from the owner's existing Calendar database."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read a local Calendar event by its ID"
+            },
+            "recovery": "unknown",
+            "target_arg": "id"
           }
         ]
       },
       {
         "name": "calendar.google_event",
-        "summary": {"en": "Read a Google Calendar event by its ID"},
-        "args": [{"name": "id", "kind": "name", "required": true}],
+        "summary": {
+          "en": "Read a Google Calendar event by its ID"
+        },
+        "args": [
+          {
+            "name": "id",
+            "kind": "name",
+            "required": true
+          }
+        ],
         "needs": [
           {
             "verb": "secret.read",
-            "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/GOOGLE_ACCESS_TOKEN"}},
-            "why": {"en": "Read only the owner's Google Calendar credential."}
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "default/GOOGLE_ACCESS_TOKEN"
+              }
+            },
+            "why": {
+              "en": "Read only the owner's Google Calendar credential."
+            }
           },
           {
             "verb": "net.dial",
-            "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "www.googleapis.com"}},
-            "why": {"en": "Read the requested event through the Google Calendar API."}
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "host",
+                "value": "www.googleapis.com"
+              }
+            },
+            "why": {
+              "en": "Read the requested event through the Google Calendar API."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read a Google Calendar event by its ID"
+            },
+            "recovery": "unknown",
+            "target_arg": "id"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the explicitly selected remote provider"
+            },
+            "recovery": "unknown"
           }
         ]
       },
       {
         "name": "calendar.outlook_event",
-        "summary": {"en": "Read an Outlook Calendar event by its ID"},
-        "args": [{"name": "id", "kind": "name", "required": true}],
+        "summary": {
+          "en": "Read an Outlook Calendar event by its ID"
+        },
+        "args": [
+          {
+            "name": "id",
+            "kind": "name",
+            "required": true
+          }
+        ],
         "needs": [
           {
             "verb": "secret.read",
-            "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "default/MICROSOFT_ACCESS_TOKEN"}},
-            "why": {"en": "Read only the owner's Outlook Calendar credential."}
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "default/MICROSOFT_ACCESS_TOKEN"
+              }
+            },
+            "why": {
+              "en": "Read only the owner's Outlook Calendar credential."
+            }
           },
           {
             "verb": "net.dial",
-            "scope": {"kind": "fixed", "scope": {"kind": "host", "value": "graph.microsoft.com"}},
-            "why": {"en": "Read the requested event through the Outlook Calendar API."}
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "host",
+                "value": "graph.microsoft.com"
+              }
+            },
+            "why": {
+              "en": "Read the requested event through the Outlook Calendar API."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read an Outlook Calendar event by its ID"
+            },
+            "recovery": "unknown",
+            "target_arg": "id"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the explicitly selected remote provider"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -994,6 +1860,22 @@
               "en": "Read only the Outlook calendar credential when selected."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List events in a time range (--from, --to, --provider local|google|outlook)"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the explicitly selected remote provider"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -1041,7 +1923,19 @@
           }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:calendar"
+              }
+            },
+            "why": {
+              "en": "Publish Calendar's owner-bound reported event change."
+            }
+          },
           {
             "verb": "data.db.write",
             "scope": {
@@ -1145,6 +2039,29 @@
               "en": "Read only the Outlook calendar credential when selected."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Create an event (--title, --start, --end, --description, --provider)"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the explicitly selected remote provider"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -1195,7 +2112,19 @@
           }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:calendar"
+              }
+            },
+            "why": {
+              "en": "Publish Calendar's owner-bound reported event change."
+            }
+          },
           {
             "verb": "data.db.write",
             "scope": {
@@ -1299,6 +2228,29 @@
               "en": "Read only the Outlook calendar credential when selected."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Update an event (--id, --title, --start, --end, --description, --provider)"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the explicitly selected remote provider"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -1324,7 +2276,19 @@
           }
         ],
         "needs": [
-          {"verb": "ipc.publish", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "app:calendar"}}, "why": {"en": "Publish Calendar's owner-bound reported event change."}},
+          {
+            "verb": "ipc.publish",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "app:calendar"
+              }
+            },
+            "why": {
+              "en": "Publish Calendar's owner-bound reported event change."
+            }
+          },
           {
             "verb": "data.db.write",
             "scope": {
@@ -1427,6 +2391,29 @@
             "why": {
               "en": "Read only the Outlook calendar credential when selected."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Delete an event (--id, --provider)"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the explicitly selected remote provider"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -1537,6 +2524,22 @@
             "why": {
               "en": "Read only the Outlook calendar credential when selected."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Show today's events (shortcut for list --from today --to tomorrow)"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the explicitly selected remote provider"
+            },
+            "recovery": "unknown"
           }
         ]
       }

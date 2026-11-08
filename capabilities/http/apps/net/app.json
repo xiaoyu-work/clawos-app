@@ -82,6 +82,15 @@
               "en": "Open a network connection to the URL you asked to fetch."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Make HTTP request (GET/POST/PUT/DELETE)"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -124,6 +133,23 @@
             "why": {
               "en": "Save the downloaded file to the path you specified."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Download file from URL"
+            },
+            "recovery": "unknown",
+            "target_arg": "output"
+          },
+          {
+            "kind": "external",
+            "label": {
+              "en": "May contact the explicitly selected remote provider"
+            },
+            "recovery": "unknown"
           }
         ]
       }

@@ -81,6 +81,15 @@
               "en": "Read `.desktop` entries installed in your home directory."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Enumerate every `.desktop` entry installed under the standard XDG application directories. Returns AppID, localized name, comment, categories, keywords, and icon."
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -142,6 +151,15 @@
             "why": {
               "en": "Read `.desktop` entries installed in your home directory."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Fuzzy-search installed apps by localized name, generic name, comment, or keywords. Returns the top matches ranked by relevance."
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -236,6 +254,16 @@
               "en": "Read `.desktop` entries installed in your home directory."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Launch an installed graphical app. `app_id` is the AppID — the `.desktop` filename without extension (e.g. `com.clawos.Files`, `org.mozilla.firefox`). Repeat `--uri` for absolute non-file URIs and `--path` for exact local files the app should open."
+            },
+            "recovery": "unknown",
+            "target_arg": "path"
+          }
         ]
       },
       {
@@ -250,6 +278,15 @@
             "required": false,
             "binding": "flag",
             "default": 20
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Show desktop apps the agent has launched recently, newest first. Useful for re-opening the last app the user worked with."
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -314,6 +351,16 @@
             "why": {
               "en": "Read `.desktop` entries installed in your home directory."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Look for live processes whose executable matches the AppID's `Exec=` binary. Returns the list of matching PIDs (empty if the app is not running)."
+            },
+            "recovery": "unknown",
+            "target_arg": "app_id"
           }
         ]
       }

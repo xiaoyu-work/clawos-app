@@ -51,6 +51,15 @@
             "en": "Read the agent task list for the AI Tasks card."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Open the desktop widget rail"
+          },
+          "recovery": "unknown"
+        }
       ]
     }
   },

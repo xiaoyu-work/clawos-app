@@ -37,6 +37,15 @@
               "en": "Detect the root filesystem and available snapshot backend."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect snapshot support"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -57,6 +66,15 @@
             "why": {
               "en": "Read Claw-managed snapshot metadata."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List system recovery points"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -82,6 +100,15 @@
               "en": "Capture the current root filesystem state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "create",
+            "label": {
+              "en": "Create a system recovery point"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -105,6 +132,16 @@
             "why": {
               "en": "Delete this managed recovery point."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Delete a system recovery point"
+            },
+            "recovery": "unknown",
+            "target_arg": "id"
           }
         ]
       },
@@ -138,6 +175,16 @@
             "why": {
               "en": "Schedule the root filesystem to return to this recovery point."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Schedule a system rollback"
+            },
+            "recovery": "unknown",
+            "target_arg": "id"
           }
         ]
       }

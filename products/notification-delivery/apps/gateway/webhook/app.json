@@ -107,6 +107,22 @@
             "en": "Remember the successful send so the agent can recall it later."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "external",
+          "label": {
+            "en": "Send a message through this gateway"
+          },
+          "recovery": "unknown"
+        },
+        {
+          "kind": "update",
+          "label": {
+            "en": "May record this App's successful result in its own Agent memory scope"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "status": {
@@ -140,6 +156,15 @@
           "why": {
             "en": "Read the configured webhook_default_secret secret required by this gateway."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Show gateway configuration and status"
+          },
+          "recovery": "unknown"
         }
       ]
     }
@@ -245,6 +270,22 @@
               "en": "Remember the successful send so the agent can recall it later."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "external",
+            "label": {
+              "en": "Send a message through this gateway"
+            },
+            "recovery": "unknown"
+          },
+          {
+            "kind": "update",
+            "label": {
+              "en": "May record this App's successful result in its own Agent memory scope"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -278,6 +319,15 @@
             "why": {
               "en": "Read the configured webhook_default_secret secret required by this gateway."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Show gateway configuration and status"
+            },
+            "recovery": "unknown"
           }
         ]
       }

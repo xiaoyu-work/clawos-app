@@ -35,6 +35,15 @@
           "required": true,
           "repeatable": true
         }
+      ],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Ensure packages are installed"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "has": {
@@ -59,6 +68,16 @@
             "en": "Look up whether the named package or command is installed."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Check if a capability is available"
+          },
+          "recovery": "unknown",
+          "target_arg": "name"
+        }
       ]
     },
     "list": {
@@ -76,7 +95,16 @@
           }
         }
       ],
-      "args": []
+      "args": [],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "List installed packages"
+          },
+          "recovery": "unknown"
+        }
+      ]
     },
     "search": {
       "label": {
@@ -106,6 +134,15 @@
             "en": "Browse the local apt package catalog to find software that matches the user's intent."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Search the apt catalog for installable packages"
+          },
+          "recovery": "unknown"
+        }
       ]
     },
     "show": {
@@ -129,6 +166,16 @@
           "why": {
             "en": "Read catalog metadata (description, homepage, dependencies, size) for the named package."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "read",
+          "label": {
+            "en": "Show metadata for a specific apt package"
+          },
+          "recovery": "unknown",
+          "target_arg": "name"
         }
       ]
     },
@@ -154,6 +201,16 @@
             "en": "Remove this package while retaining configuration."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Remove a package"
+          },
+          "recovery": "unknown",
+          "target_arg": "package"
+        }
       ]
     },
     "purge": {
@@ -178,6 +235,16 @@
             "en": "Remove this package and its system configuration."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Purge a package"
+          },
+          "recovery": "unknown",
+          "target_arg": "package"
+        }
       ]
     },
     "upgrade": {
@@ -201,6 +268,16 @@
           "why": {
             "en": "Upgrade this package to the candidate version."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Upgrade a package"
+          },
+          "recovery": "unknown",
+          "target_arg": "package"
         }
       ]
     },
@@ -231,6 +308,16 @@
             "en": "Install or downgrade this package to the requested version."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Install an exact package version"
+          },
+          "recovery": "unknown",
+          "target_arg": "package"
+        }
       ]
     },
     "hold": {
@@ -254,6 +341,16 @@
           "why": {
             "en": "Prevent automatic upgrades of this package."
           }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "update",
+          "label": {
+            "en": "Hold a package version"
+          },
+          "recovery": "unknown",
+          "target_arg": "package"
         }
       ]
     },
@@ -279,6 +376,16 @@
             "en": "Allow this package to be upgraded again."
           }
         }
+      ],
+      "effects": [
+        {
+          "kind": "update",
+          "label": {
+            "en": "Release a package hold"
+          },
+          "recovery": "unknown",
+          "target_arg": "package"
+        }
       ]
     },
     "update": {
@@ -296,7 +403,16 @@
           }
         }
       ],
-      "args": []
+      "args": [],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Refresh package indexes"
+          },
+          "recovery": "unknown"
+        }
+      ]
     },
     "upgrade-all": {
       "label": {
@@ -313,7 +429,16 @@
           }
         }
       ],
-      "args": []
+      "args": [],
+      "effects": [
+        {
+          "kind": "execute",
+          "label": {
+            "en": "Upgrade all packages"
+          },
+          "recovery": "unknown"
+        }
+      ]
     }
   },
   "schema_version": 2,
@@ -348,6 +473,15 @@
               "en": "Install or upgrade system packages on this machine."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Ensure packages are installed"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -373,6 +507,16 @@
               "en": "Look up whether the named package or command is installed."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Check if a capability is available"
+            },
+            "recovery": "unknown",
+            "target_arg": "name"
+          }
         ]
       },
       {
@@ -389,6 +533,15 @@
             "why": {
               "en": "Enumerate every system package currently installed."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List installed packages"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -420,6 +573,15 @@
               "en": "Browse the local apt package catalog to find software that matches the user's intent."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Search the apt catalog for installable packages"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -444,6 +606,16 @@
             "why": {
               "en": "Read catalog metadata (description, homepage, dependencies, size) for the named package."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Show metadata for a specific apt package"
+            },
+            "recovery": "unknown",
+            "target_arg": "name"
           }
         ]
       },
@@ -470,6 +642,16 @@
               "en": "Remove this package while retaining configuration."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Remove a package"
+            },
+            "recovery": "unknown",
+            "target_arg": "package"
+          }
         ]
       },
       {
@@ -495,6 +677,16 @@
               "en": "Remove this package and its system configuration."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Purge a package"
+            },
+            "recovery": "unknown",
+            "target_arg": "package"
+          }
         ]
       },
       {
@@ -519,6 +711,16 @@
             "why": {
               "en": "Upgrade this package to the candidate version."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Upgrade a package"
+            },
+            "recovery": "unknown",
+            "target_arg": "package"
           }
         ]
       },
@@ -550,6 +752,16 @@
               "en": "Install or downgrade this package to the requested version."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Install an exact package version"
+            },
+            "recovery": "unknown",
+            "target_arg": "package"
+          }
         ]
       },
       {
@@ -574,6 +786,16 @@
             "why": {
               "en": "Prevent automatic upgrades of this package."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Hold a package version"
+            },
+            "recovery": "unknown",
+            "target_arg": "package"
           }
         ]
       },
@@ -600,6 +822,16 @@
               "en": "Allow this package to be upgraded again."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Release a package hold"
+            },
+            "recovery": "unknown",
+            "target_arg": "package"
+          }
         ]
       },
       {
@@ -617,6 +849,15 @@
               "en": "Refresh package metadata from all configured repositories."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Refresh package indexes"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -633,6 +874,15 @@
             "why": {
               "en": "Upgrade every package with an available candidate."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Upgrade all packages"
+            },
+            "recovery": "unknown"
           }
         ]
       }

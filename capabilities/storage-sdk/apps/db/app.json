@@ -48,6 +48,16 @@
               "en": "Read rows from the database you asked to query."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Run a SELECT query on a database"
+            },
+            "recovery": "unknown",
+            "target_arg": "database"
+          }
         ]
       },
       {
@@ -80,6 +90,16 @@
               "en": "Modify the database you asked to execute SQL on."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "execute",
+            "label": {
+              "en": "Execute one SQL statement (CREATE, INSERT, UPDATE, DELETE)"
+            },
+            "recovery": "unknown",
+            "target_arg": "database"
+          }
         ]
       },
       {
@@ -105,6 +125,16 @@
             "why": {
               "en": "Read the schema of the database to list its tables."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List tables in a database"
+            },
+            "recovery": "unknown",
+            "target_arg": "database"
           }
         ]
       },
@@ -138,6 +168,16 @@
               "en": "Read the schema of the named table from the database."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Show schema of a table"
+            },
+            "recovery": "unknown",
+            "target_arg": "database"
+          }
         ]
       },
       {
@@ -154,6 +194,15 @@
             "why": {
               "en": "Enumerate every database stored on this machine."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List available databases"
+            },
+            "recovery": "unknown"
           }
         ]
       }

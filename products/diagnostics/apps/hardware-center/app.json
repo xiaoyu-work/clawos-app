@@ -37,6 +37,15 @@
               "en": "Read system-wide hardware and firmware inventory."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect all hardware"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -57,6 +66,15 @@
             "why": {
               "en": "Read CPU topology, features, microcode, and vulnerability state."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect CPU topology and mitigations"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -79,6 +97,15 @@
               "en": "Read graphics devices, DRM nodes, and bound drivers."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect GPUs and graphics drivers"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -99,6 +126,15 @@
             "why": {
               "en": "Read PCI identifiers, classes, drivers, and IOMMU groups."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect PCI devices"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -121,6 +157,15 @@
               "en": "Read USB identifiers, names, serials, authorization, speed, and drivers."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect USB devices"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -141,6 +186,15 @@
             "why": {
               "en": "Read memory totals and SMBIOS memory-device metadata."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect memory and DIMMs"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -163,6 +217,15 @@
               "en": "Read block-device topology, models, serials, transports, filesystems, and mounts."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect storage hardware"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -184,6 +247,15 @@
               "en": "Read loaded kernel modules, dependencies, versions, state, and taint."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect loaded kernel drivers"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -204,6 +276,15 @@
             "why": {
               "en": "Read kernel thermal zones, hwmon temperatures, limits, and fan speed."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect temperature and fan sensors"
+            },
+            "recovery": "unknown"
           }
         ]
       }

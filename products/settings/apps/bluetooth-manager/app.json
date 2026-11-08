@@ -37,6 +37,15 @@
               "en": "Read BlueZ adapter and device state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "List Bluetooth adapters and devices"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -74,6 +83,15 @@
               "en": "Change global Bluetooth adapter power state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Power a Bluetooth adapter on or off"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -108,6 +126,15 @@
               "en": "Temporarily enable discovery on a Bluetooth adapter."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Scan for nearby Bluetooth devices"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -141,6 +168,16 @@
               "en": "Start BlueZ pairing; the desktop agent may request confirmation or a passkey."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Pair a Bluetooth device"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
+          }
         ]
       },
       {
@@ -168,6 +205,15 @@
             "why": {
               "en": "Read the state and pending prompt of an active pairing session."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Check a Bluetooth pairing session"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -202,6 +248,15 @@
               "en": "Confirm, reject, or provide the PIN/passkey requested by BlueZ."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Respond to a Bluetooth pairing prompt"
+            },
+            "recovery": "unknown"
+          }
         ]
       },
       {
@@ -229,6 +284,15 @@
             "why": {
               "en": "Cancel the selected active BlueZ pairing transaction."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Cancel a Bluetooth pairing session"
+            },
+            "recovery": "unknown"
           }
         ]
       },
@@ -263,6 +327,16 @@
               "en": "Connect the selected Bluetooth device."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Connect a Bluetooth device"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
+          }
         ]
       },
       {
@@ -295,6 +369,16 @@
             "why": {
               "en": "Disconnect the selected Bluetooth device."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Disconnect a Bluetooth device"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
           }
         ]
       },
@@ -329,6 +413,16 @@
               "en": "Allow future automatic connections from this device."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Trust a Bluetooth device"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
+          }
         ]
       },
       {
@@ -362,6 +456,16 @@
               "en": "Disable trusted automatic connections for this device."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Remove trust from a Bluetooth device"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
+          }
         ]
       },
       {
@@ -394,6 +498,16 @@
             "why": {
               "en": "Remove pairing and saved state for this device."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "delete",
+            "label": {
+              "en": "Forget a Bluetooth device"
+            },
+            "recovery": "unknown",
+            "target_arg": "device"
           }
         ]
       }

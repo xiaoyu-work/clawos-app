@@ -42,6 +42,16 @@
               "en": "Read the unit's load, active, sub-state, and enablement state."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Inspect a systemd unit"
+            },
+            "recovery": "unknown",
+            "target_arg": "unit"
+          }
         ]
       },
       {
@@ -67,6 +77,16 @@
             "why": {
               "en": "Start this native system service."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Start a systemd unit"
+            },
+            "recovery": "unknown",
+            "target_arg": "unit"
           }
         ]
       },
@@ -94,6 +114,16 @@
               "en": "Stop this native system service."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Stop a systemd unit"
+            },
+            "recovery": "unknown",
+            "target_arg": "unit"
+          }
         ]
       },
       {
@@ -119,6 +149,16 @@
             "why": {
               "en": "Restart this native system service."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Restart a systemd unit"
+            },
+            "recovery": "unknown",
+            "target_arg": "unit"
           }
         ]
       },
@@ -146,6 +186,16 @@
               "en": "Ask this service to reload its configuration."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Reload a systemd unit"
+            },
+            "recovery": "unknown",
+            "target_arg": "unit"
+          }
         ]
       },
       {
@@ -172,6 +222,16 @@
               "en": "Enable this unit for future boots."
             }
           }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Enable a systemd unit"
+            },
+            "recovery": "unknown",
+            "target_arg": "unit"
+          }
         ]
       },
       {
@@ -197,6 +257,16 @@
             "why": {
               "en": "Disable this unit for future boots."
             }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "update",
+            "label": {
+              "en": "Disable a systemd unit"
+            },
+            "recovery": "unknown",
+            "target_arg": "unit"
           }
         ]
       }
