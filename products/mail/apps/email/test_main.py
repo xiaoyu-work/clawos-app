@@ -703,6 +703,70 @@ class TestReadCommand(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
+class TestMailboxEvents(unittest.TestCase):
+    def test_gmail_baselines_without_backlog_and_advances_after_publication(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"COS_DATA_DIR": directory}
+        ), patch.object(email_main.policy, "require"), patch.object(
+            email_main, "_gmail_request",
+            side_effect=[
+                {"historyId": "100"},
+                {"historyId": "110", "history": [{"messagesAdded": [
+                    {"message": {"id": "new-message"}}
+                ]}]},
+            ],
+        ) as request, patch.object(email_main.events, "publish", return_value={"accepted": True}) as publish:
+            baseline = run("sync", ["--provider", "gmail"])
+            self.assertEqual(baseline["events_emitted"], 0)
+            publish.assert_not_called()
+            updated = run("sync", ["--provider", "gmail"])
+            self.assertEqual(updated["events_emitted"], 1)
+            self.assertEqual(publish.call_args.args[0], "message.received")
+            self.assertEqual(
+                publish.call_args.kwargs["payload"]["object"],
+                "app://email/gmail-message?id=new-message",
+            )
+            cursor = json.loads((pathlib.Path(directory) / "mail-sync/gmail.json").read_text())
+            self.assertEqual(cursor["cursor"], "110")
+            self.assertIn("startHistoryId=100", request.call_args.args[0])
+
+    def test_sync_does_not_advance_an_event_that_was_not_published(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"COS_DATA_DIR": directory}
+        ), patch.object(email_main.policy, "require"), patch.object(
+            email_main, "_gmail_request", side_effect=[
+                {"historyId": "100"},
+                {"historyId": "110", "history": [{"messagesAdded": [
+                    {"message": {"id": "new"}}
+                ]}]},
+            ],
+        ), patch.object(email_main.events, "publish", side_effect=RuntimeError("journal unavailable")):
+            run("sync", ["--provider", "gmail"])
+            with self.assertRaises(RuntimeError):
+                run("sync", ["--provider", "gmail"])
+            cursor = json.loads((pathlib.Path(directory) / "mail-sync/gmail.json").read_text())
+            self.assertEqual(cursor["cursor"], "100")
+
+    def test_outlook_baseline_is_inert_and_rejects_foreign_delta_continuations(self):
+        delta = "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta?$deltatoken=one"
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"COS_DATA_DIR": directory}
+        ), patch.object(email_main.policy, "require"), patch.object(
+            email_main, "_outlook_request",
+            side_effect=[
+                {"value": [{"id": "old"}], "@odata.deltaLink": delta},
+                {"value": [{"id": "new"}], "@odata.deltaLink": "https://foreign.invalid/messages/delta"},
+            ],
+        ) as request, patch.object(email_main.events, "publish", return_value={"accepted": True}) as publish:
+            run("sync", ["--provider", "outlook"])
+            publish.assert_not_called()
+            run("sync", ["--provider", "outlook"])
+            self.assertEqual(publish.call_count, 1)
+            result = run("sync", ["--provider", "outlook"])
+            self.assertIn("not an authorized inbox endpoint", result["error"])
+            self.assertEqual(request.call_count, 2)
+
+
 class TestSubmissionRequestIds(unittest.TestCase):
     def arguments(self, request_id):
         return [

@@ -1134,6 +1134,11 @@ def test_file_plan_manifest_keeps_exact_authority_and_explicit_confirmation():
         for need in tool["needs"]:
             if need["verb"].startswith("fs."):
                 assert need["scope"] == {"kind": "from-arg", "arg": "path"}
+            elif need["verb"] == "ipc.publish":
+                assert name in {"plan_write", "plan_apply"}
+                assert need["scope"] == {
+                    "kind": "fixed", "scope": {"kind": "name", "value": "app:fs"},
+                }
             else:
                 assert need["scope"] == {
                     "kind": "fixed", "scope": {"kind": "name", "value": "fs-change-plans"},
@@ -1153,10 +1158,10 @@ def test_file_plan_manifest_keeps_exact_authority_and_explicit_confirmation():
             assert args["confirm"]["choices"][0] is True
     assert {
         need["verb"] for need in tools["fs.plan_write"]["needs"]
-    } == {"fs.read", "data.db.write"}
+    } == {"fs.read", "data.db.write", "ipc.publish"}
     assert {
         need["verb"] for need in tools["fs.plan_apply"]["needs"]
-    } == {"fs.read", "fs.write", "data.db.read", "data.db.write"}
+    } == {"fs.read", "fs.write", "data.db.read", "data.db.write", "ipc.publish"}
     content = next(
         arg for arg in tools["fs.plan_write"]["args"] if arg["name"] == "content"
     )

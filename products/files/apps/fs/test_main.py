@@ -59,6 +59,15 @@ def call(server, name, arguments):
         True,
     )
 
+def test_mcp_write_publishes_a_reported_file_reference_without_a_second_write(file, server):
+    with mock.patch.object(server.events, "publish", return_value={"accepted": True}) as publish:
+        result = call(server, "write", {"path": file, "content": "changed by the App"})
+    assert Path(file).read_text() == "changed by the App"
+    assert publish.call_args.args[0] == "file.changed"
+    reference = publish.call_args.kwargs["payload"]["object"]
+    assert reference.startswith("app://fs/file?id=")
+    assert result["structuredContent"]["artifacts"] == [reference]
+
 
 @pytest.mark.parametrize("reader", [main.read, main.read_bytes])
 @pytest.mark.parametrize(

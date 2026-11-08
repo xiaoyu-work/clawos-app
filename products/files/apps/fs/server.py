@@ -1,3 +1,8 @@
+import hashlib
+import json
+
+from claw_os_sdk import events
+from claw_os_sdk.objects import format_reference
 from claw_os_sdk.mcp import App, ToolResult, current_context
 
 import file_plans
@@ -5,6 +10,36 @@ import main
 
 
 app = App.from_manifest()
+
+def _changed(result, path, operation):
+    path = main._abs(path)
+    reference = format_reference({"app_id": "fs", "object_type": "file", "object_id": path})
+    key = "file-" + hashlib.sha256(json.dumps(
+        {"operation": operation, "object": reference, "call": current_context().call_id}, sort_keys=True,
+    ).encode()).hexdigest()
+    try:
+        events.publish("file.changed", key, entity_id=path, payload={
+            "object": reference, "operation": operation,
+        })
+    except Exception as error:
+        result = {**result, "event_error": str(error), "effects_not_repeated": True}
+    return {**result, "artifacts": [reference]}
+
+def _plan_event(result, event_type):
+    if result.is_error:
+        return result
+    value = result.structured_content
+    try:
+        events.publish(
+            event_type, "plan-" + value["plan_id"] + "-" + event_type,
+            entity_id=value["path"], payload={"object": value["reference"]},
+        )
+    except Exception as error:
+        result.content.append({
+            "type": "text",
+            "text": f"Plan operation returned; event publication failed: {error}. Do not repeat the file effect.",
+        })
+    return result
 
 
 def _plan_result(handler, *args, **kwargs) -> ToolResult:
@@ -22,7 +57,9 @@ def _plan_result(handler, *args, **kwargs) -> ToolResult:
 
 @app.tool("fs.plan_write")
 def plan_write(path: str, content: str, ttl_seconds: int = 3600) -> ToolResult:
-    return _plan_result(file_plans.plan_write, path, content, ttl_seconds)
+    return _plan_event(
+        _plan_result(file_plans.plan_write, path, content, ttl_seconds), "file.plan.created",
+    )
 
 
 @app.tool("fs.plan_show")
@@ -32,10 +69,10 @@ def plan_show(path: str, plan: str | None = None) -> ToolResult:
 
 @app.tool("fs.plan_apply")
 def plan_apply(path: str, plan: str, review: str, confirm: bool) -> ToolResult:
-    return _plan_result(
+    return _plan_event(_plan_result(
         file_plans.plan_apply, path, plan, review, confirm,
         session_id=current_context().session_id,
-    )
+    ), "file.changed")
 
 
 @app.tool("fs.plan_prune")
@@ -61,17 +98,17 @@ def read(
 
 @app.tool("fs.write")
 def write(path: str, content: str) -> dict:
-    return main.write(path, content, session_id=current_context().session_id)
+    return _changed(main.write(path, content, session_id=current_context().session_id), path, "write")
 
 
 @app.tool("fs.rm")
 def rm(path: str) -> dict:
-    return main.rm(path, session_id=current_context().session_id)
+    return _changed(main.rm(path, session_id=current_context().session_id), path, "remove")
 
 
 @app.tool("fs.mkdir")
 def mkdir(path: str) -> dict:
-    return main.mkdir(path, session_id=current_context().session_id)
+    return _changed(main.mkdir(path, session_id=current_context().session_id), path, "mkdir")
 
 
 @app.tool("fs.stat")
@@ -86,7 +123,7 @@ def search(query: str, path: str = "/workspace") -> dict:
 
 @app.tool("fs.tag")
 def tag(path: str, tags: list[str]) -> dict:
-    return main.tag(path, tags, session_id=current_context().session_id)
+    return _changed(main.tag(path, tags, session_id=current_context().session_id), path, "tag")
 
 
 @app.tool("fs.recent")
@@ -96,17 +133,17 @@ def recent(n: int = 10) -> dict:
 
 @app.tool("fs.rename")
 def rename(src: str, dst: str) -> dict:
-    return main.rename(src, dst, session_id=current_context().session_id)
+    return _changed(main.rename(src, dst, session_id=current_context().session_id), dst, "rename")
 
 
 @app.tool("fs.move")
 def move(src: str, dst: str) -> dict:
-    return main.move(src, dst, session_id=current_context().session_id)
+    return _changed(main.move(src, dst, session_id=current_context().session_id), dst, "move")
 
 
 @app.tool("fs.copy")
 def copy(src: str, dst: str) -> dict:
-    return main.copy(src, dst, session_id=current_context().session_id)
+    return _changed(main.copy(src, dst, session_id=current_context().session_id), dst, "copy")
 
 
 @app.tool("fs.read_bytes")
@@ -116,7 +153,7 @@ def read_bytes(path: str, offset: int = 0, limit: int = 4_194_304) -> dict:
 
 @app.tool("fs.write_bytes")
 def write_bytes(path: str, content: str) -> dict:
-    return main.write_bytes(path, content, session_id=current_context().session_id)
+    return _changed(main.write_bytes(path, content, session_id=current_context().session_id), path, "write_bytes")
 
 
 if __name__ == "__main__":

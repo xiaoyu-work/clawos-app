@@ -5,6 +5,7 @@ Outlook providers when credentials are configured.
 """
 
 import argparse
+import hashlib
 import json
 import os
 import random
@@ -19,6 +20,7 @@ from datetime import datetime, timedelta, timezone
 from _shared.credentials import load_credential  # noqa: E402
 from _shared.safe_http import open_url  # noqa: E402
 from claw_os_sdk.objects import format_reference  # noqa: E402
+from claw_os_sdk import events  # noqa: E402
 from cos_runtime import memory, policy  # noqa: E402
 
 # Ceiling on one provider request. Bounded here rather than left to the
@@ -927,7 +929,25 @@ def run(command, args):
     if handler is None:
         return {"error": f"unknown command: {command}"}
     try:
-        return handler(args)
+        result = handler(args)
+        kinds = {
+            "create": "event.created", "update": "event.updated",
+            "delete": "event.deleted", "invite": "event.invited", "respond": "event.responded",
+        }
+        if command in kinds and isinstance(result, dict) and "error" not in result:
+            provider = result["provider"]
+            event = result.get("event", {})
+            event_id = event.get("id") or result.get("id")
+            reference = _event_reference(provider, event_id) if event_id else None
+            key = "calendar-" + hashlib.sha256(json.dumps(
+                {"operation": command, "object": reference, "event": event,
+                 "response": result.get("response")}, sort_keys=True,
+            ).encode()).hexdigest()
+            try:
+                events.publish(kinds[command], key, entity_id=event_id, payload={"object": reference})
+            except Exception as error:
+                result = {**result, "event_error": str(error), "effects_not_repeated": True}
+        return result
     except policy.PermissionDenied as denied:
         return {"error": str(denied), "denial": denied.denial}
     except policy.PolicyUnavailable as exc:
