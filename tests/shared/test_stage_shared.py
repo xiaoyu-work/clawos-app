@@ -132,6 +132,7 @@ def test_shared_cli_and_isolated_imports_need_no_sibling_os_checkout(source, tmp
     tools = repository / "tools"
     tools.mkdir()
     shutil.copy2(ROOT / "tools/stage.py", tools / "stage.py")
+    shutil.copy2(ROOT / "tools/web_ui.py", tools / "web_ui.py")
     root = tmp_path / "installed"
     assert not (repository.parent / "claw-os").exists()
     assert not (repository / "apps").exists()

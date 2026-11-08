@@ -179,7 +179,7 @@ def stage_source_platform_fixture(destination):
     tools = destination / "tools"
     tools.mkdir(parents=True)
     root = Path(__file__).resolve().parents[1]
-    for name in ("platform_dependency.py", "platform_archive.py", "stage.py"):
+    for name in ("platform_dependency.py", "platform_archive.py", "stage.py", "web_ui.py"):
         shutil.copy2(root / "tools" / name, tools / name)
     (destination / "platform.lock.json").write_text(json.dumps({
         "version": identity["version"], "sha256": identity["sha256"],

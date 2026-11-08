@@ -15,7 +15,7 @@ path = "src/main.rs"
 xdgen = "0.1"
 
 [dependencies]
-claw-os-sdk = { path = "../../../claw-os-sdk/rust", version = "0.1" }
+claw-os-sdk = { path = "../../../claw-os-sdk/rust", version = "0.2" }
 i18n-embed-fl = "0.10"
 i18n-embed = { version = "0.16.0", features = ["fluent-system", "desktop-requester"] }
 jiff = "0.2"
