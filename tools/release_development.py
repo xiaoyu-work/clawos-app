@@ -18,7 +18,7 @@ import stage
 import stage_native
 
 FORMAT = "claw.app-development/v1"
-STAGING_FIELDS = {"apps", "kind", "extension", "python_library", "python_dependencies", "installed_assets"}
+STAGING_FIELDS = {"apps", "kind", "extension", "python_library", "python_dependencies", "installed_assets", "web_ui"}
 SOURCE_IGNORE = shutil.ignore_patterns(".git", "target", "build", "node_modules", "__pycache__",
                                       ".pytest_cache", "*.pyc", "*.pyo")
 MAX_FILES = 20_000
@@ -126,7 +126,9 @@ def prepare_sources(selection, destination):
     copy_source(ROOT / "LICENSE", destination / "LICENSE", boundary=ROOT)
     copy_source(ROOT / "tools/stage.py", destination / "tools/stage.py", boundary=ROOT)
     copy_source(ROOT / "tools/package_assets.py", destination / "tools/package_assets.py", boundary=ROOT)
+    copy_source(ROOT / "tools/web_ui.py", destination / "tools/web_ui.py", boundary=ROOT)
     copy_source(ROOT / "shared/python", destination / "shared/python", boundary=ROOT / "shared")
+    copy_source(ROOT / "shared/web", destination / "shared/web", boundary=ROOT / "shared")
     for group in groups:
         source = ROOT / group["path"]
         target = destination / group["path"]
@@ -137,6 +139,8 @@ def prepare_sources(selection, destination):
         write_json(target / "package.json", projection)
         for relative in package["apps"]:
             copy_source(source / relative, target / relative, boundary=source)
+        if "web_ui" in package:
+            copy_source(source / package["web_ui"]["source"], target / package["web_ui"]["source"], boundary=source)
         if "python_library" in package:
             relative = package["python_library"]["path"]
             copy_source(source / relative, target / relative, boundary=source)

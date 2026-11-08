@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["accessibility-manager", "audio-manager", "bluetooth-manager", "camera-manager", "display-manager", "desktop-manager", "location-manager", "network-manager", "power-manager", "printer-manager", "user-manager", "cosmic-settings"]},
   "apps": ["apps/accessibility-manager", "apps/audio-manager", "apps/bluetooth-manager", "apps/camera-manager", "apps/display-manager", "apps/desktop-manager", "apps/location-manager", "apps/network-manager", "apps/power-manager", "apps/printer-manager", "apps/user-manager", "apps/cosmic-settings"],
   "tests": ["native/test_build.py"],
   "native": {"cosmic-settings": "native/cosmic-settings"},

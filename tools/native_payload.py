@@ -209,6 +209,8 @@ def prepare(selected, installed, destination, architecture):
         destination.mkdir(mode=0o755)
         created = True
         shutil.copytree(selected.source, destination, dirs_exist_ok=True, symlinks=True, ignore=stage.IGNORE)
+        source, package = stage.load_package(selected.product)
+        stage.stage_ui(source, package, selected.app_id, destination)
         destination.chmod(0o755)
         source_inventory = tree_inventory(destination, architecture)
         for reserved in ("bin", "resources", "licenses", ".provenance.json"):

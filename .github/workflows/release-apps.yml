@@ -19,6 +19,18 @@ on:
         description: "Also publish optional complete source/staging fixture archives"
         default: false
         type: boolean
+      provenance_cli_url:
+        description: "Owner-approved published provenance-capable cos executable URL"
+        required: true
+        type: string
+      provenance_cli_sha256:
+        description: "Exact SHA256 of that public signing tool"
+        required: true
+        type: string
+      publisher_key_id:
+        description: "Trusted App package Ed25519 publisher key ID (sha256:...)"
+        required: true
+        type: string
   workflow_call:
     inputs:
       select:
@@ -33,10 +45,21 @@ on:
       fixtures:
         default: false
         type: boolean
+      provenance_cli_url:
+        required: true
+        type: string
+      provenance_cli_sha256:
+        required: true
+        type: string
+      publisher_key_id:
+        required: true
+        type: string
     secrets:
       CLAW_APPS_APT_SIGNING_PRIVATE_KEY:
         required: true
       CLAW_APPS_APT_SIGNING_PASSPHRASE:
+        required: true
+      CLAW_APPS_PROVENANCE_SIGNING_PRIVATE_KEY:
         required: true
 
 permissions:
@@ -167,11 +190,51 @@ jobs:
           CLAW_APPS_APT_SIGNING_PRIVATE_KEY: ${{ secrets.CLAW_APPS_APT_SIGNING_PRIVATE_KEY }}
           CLAW_APPS_APT_SIGNING_PASSPHRASE: ${{ secrets.CLAW_APPS_APT_SIGNING_PASSPHRASE }}
           INITIALIZE: ${{ inputs.initialize }}
+          PROVENANCE_URL: ${{ inputs.provenance_cli_url }}
+          PROVENANCE_SHA256: ${{ inputs.provenance_cli_sha256 }}
+          PROVENANCE_KEY_ID: ${{ inputs.publisher_key_id }}
+          PROVENANCE_PUBLISHER: ${{ vars.CLAW_APPS_PROVENANCE_PUBLISHER_JSON }}
+          CLAW_APPS_PROVENANCE_SIGNING_PRIVATE_KEY: ${{ secrets.CLAW_APPS_PROVENANCE_SIGNING_PRIVATE_KEY }}
         run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          import sys
+          from urllib.parse import urlsplit
+          sys.path.insert(0, "tools")
+          from platform_dependency import _download
+          from release_common import digest, run
+          from release_publish import require_publication_contract
+          from release_common import config
+          require_publication_contract(config())
+          url = os.environ["PROVENANCE_URL"]
+          parsed = urlsplit(url)
+          checksum = os.environ["PROVENANCE_SHA256"]
+          if parsed.scheme != "https" or parsed.hostname != "github.com" or not parsed.path.startswith(
+              "/xiaoyu-work/claw-os/releases/download/"
+          ) or not re.fullmatch(r"[0-9a-f]{64}", checksum):
+              raise ValueError("A pinned published OS provenance tool is required")
+          tool = Path("build/provenance-cos")
+          _download(url, tool)
+          if digest(tool) != checksum:
+              raise ValueError("Public provenance tool SHA256 mismatch")
+          tool.chmod(0o755)
+          publisher = json.loads(os.environ["PROVENANCE_PUBLISHER"])
+          trust = Path("build/provenance-publisher.json")
+          trust.write_text(json.dumps(publisher))
+          run([tool, "provenance", "trust", "add", "--file", trust])
+          key = Path("build/provenance-signing-key.json")
+          descriptor = os.open(key, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+          with os.fdopen(descriptor, "w") as output:
+              output.write(os.environ.pop("CLAW_APPS_PROVENANCE_SIGNING_PRIVATE_KEY"))
+          PY
+          trap 'rm -f build/provenance-signing-key.json' EXIT
           args=()
           if [ "$INITIALIZE" = true ]; then args+=(--initialize); fi
           python3 tools/release_publish.py publish --plan build/release-plan.json \
-            --artifacts build/release "${args[@]}"
+            --artifacts build/release "${args[@]}" \
+            --cos build/provenance-cos --cos-sha256 "$PROVENANCE_SHA256" \
+            --publisher-key-id "$PROVENANCE_KEY_ID" --app-signing-key build/provenance-signing-key.json
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/apt-publication

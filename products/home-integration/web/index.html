@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Home Integration</title><link rel="stylesheet" href="shared/ui.css"></head><body>
+<header><div><h1>Home Integration</h1><p data-app-label>Home Assistant service control through the existing adapter</p></div></header>
+<main class="stack"><div id="status-actions" class="toolbar"></div><section class="card"><h2>Connection</h2><div id="status" style="margin-top:12px"></div></section>
+<section class="card stack"><h2>Run a Home Assistant service</h2><label>Service<input id="service" placeholder="light.turn_on"></label>
+<div id="actions" class="toolbar"></div><p class="muted small">Accounts, devices and automation state remain in the external Home Assistant server.</p></section>
+<section class="card"><h2>Service result</h2><div id="result" style="margin-top:12px"></div></section><div id="more"></div></main>
+<script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

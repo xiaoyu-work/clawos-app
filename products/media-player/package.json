@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["cosmic-player"]},
   "apps": ["apps/cosmic-player"],
   "tests": [],
   "native": {"cosmic-player": "native/cosmic-player"},

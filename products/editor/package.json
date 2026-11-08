@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["cosmic-edit"]},
   "apps": ["apps/cosmic-edit"],
   "tests": [],
   "native": {"cosmic-edit": "native/cosmic-edit"},

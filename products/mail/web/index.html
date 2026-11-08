@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mail</title><link rel="stylesheet" href="shared/ui.css"></head><body>
+<header><div><h1>Mail</h1><p data-app-label>Mailboxes, drafts and account-scoped delivery</p></div></header>
+<main class="stack"><div class="toolbar"><select id="accounts" style="width:220px"></select>
+<select id="folders" style="width:180px"><option value="INBOX">Inbox</option></select>
+<input id="query" placeholder="Search messages"><button id="search">Search</button><button id="refresh">Refresh</button>
+<button id="compose" class="primary">Compose</button></div><p id="notice" class="notice"></p>
+<div class="split"><section id="messages" class="card list"></section>
+<section class="card stack"><h2 id="subject">Message</h2><p id="sender" class="muted small"></p>
+<div id="message" class="code muted">Select a message to read it.</div><div id="message-actions" class="toolbar"></div></section></div>
+<section class="card stack" id="ai"><h2>Mail AI</h2><p class="muted small">Explicit text assistance uses this App's own AI consent and budget.</p>
+<div id="ai-actions" class="toolbar"></div><div id="ai-result"></div></section><div id="more"></div></main>
+<script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

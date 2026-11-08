@@ -157,6 +157,10 @@ def verify_repository(root, signing, *, now=None):
         *(prefix + name for name in catalog["indexes"]),
         *(record["filename"] for record in records),
     }
+    if (root / "store").exists():
+        from release_store import verified_index
+        verified_index(root / "store", signing, now=current)
+        allowed.update({"store/index.json", "store/index.json.asc"})
     actual = {
         path.relative_to(root).as_posix() for path in root.rglob("*")
         if path.is_file() and path.relative_to(root).parts[0] != ".git"

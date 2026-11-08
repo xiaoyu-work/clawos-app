@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["cosmic-notifications", "notify"]},
   "apps": ["apps/cosmic-notifications", "apps/notify"],
   "tests": ["test_notify_process.py"],
   "native": {"cosmic-notifications": "native/cosmic-notifications"},

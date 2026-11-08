@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["gateway-discord", "gateway-slack", "gateway-telegram", "gateway-whatsapp"]},
   "apps": ["apps/gateway/discord", "apps/gateway/slack", "apps/gateway/telegram", "apps/gateway/whatsapp"],
   "tests": ["test_channels.py"]
 }

@@ -1,0 +1,75 @@
+:root {
+  color-scheme: dark;
+  --bg: #111318;
+  --panel: #191c23;
+  --line: #2b303b;
+  --text: #eef0f5;
+  --muted: #969faf;
+  --accent: #6697ff;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #fafbfe;
+  --panel: #fff;
+  --line: #e2e6ef;
+  --text: #172033;
+  --muted: #657087;
+  --accent: #315ee8;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, sans-serif; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); padding: 8px 13px; }
+button:hover { border-color: var(--accent); }
+button:disabled { cursor: wait; opacity: .5; }
+button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+input, textarea, select { width: 100%; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 8px; padding: 9px 11px; }
+textarea { min-height: 100px; resize: vertical; }
+label { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: 23px; letter-spacing: -.6px; }
+h2 { font-size: 16px; }
+h3 { font-size: 14px; }
+a { color: var(--accent); }
+header { min-height: 76px; padding: 20px 24px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 14px; }
+header p { color: var(--muted); font-size: 12px; margin-top: 3px; }
+main { padding: 24px; }
+.toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.toolbar input { flex: 1; min-width: 160px; }
+.split { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(300px, 2fr); gap: 18px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.card { border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 18px; }
+.card > p { color: var(--muted); font-size: 12px; margin-top: 5px; }
+.stack { display: grid; gap: 12px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.row > :first-child { flex: 1; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.pill { display: inline-flex; border: 1px solid var(--line); padding: 2px 8px; border-radius: 20px; font-size: 11px; color: var(--muted); }
+.notice { margin: 12px 0; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
+.notice.error { color: #f48b8b; }
+.list { display: grid; gap: 1px; }
+.list > button { text-align: left; padding: 14px; border-radius: 0; border-width: 0 0 1px; }
+.list > button.selected { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+td, th { text-align: left; border-bottom: 1px solid var(--line); padding: 10px; vertical-align: top; }
+th { color: var(--muted); font-weight: 500; }
+pre, .code { font: 12px/1.6 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.editor { font: 13px/1.7 ui-monospace, monospace; min-height: 340px; }
+.empty { padding: 36px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; }
+.calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.day { min-height: 100px; background: var(--panel); padding: 9px; }
+.day.today { background: color-mix(in srgb, var(--accent) 12%, var(--panel)); }
+.day button { display: block; width: 100%; margin-top: 6px; padding: 4px 6px; text-align: left; font-size: 11px; }
+form { display: grid; gap: 12px; }
+dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: var(--text); max-width: 560px; width: calc(100% - 36px); padding: 24px; }
+dialog::backdrop { background: #0008; }
+dialog h2 { margin-bottom: 18px; }
+dialog .toolbar { justify-content: flex-end; margin: 18px 0 0; }
+.metric { font-size: 27px; font-weight: 650; margin-top: 10px; }
+@media (max-width: 650px) {
+  header, main { padding: 16px; }
+  .split { grid-template-columns: 1fr; }
+  .calendar { font-size: 11px; }
+  .day { min-height: 75px; padding: 5px; }
+}

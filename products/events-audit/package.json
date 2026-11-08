@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["event-center", "log"]},
   "apps": ["apps/event-center", "apps/log"],
   "tests": []
 }

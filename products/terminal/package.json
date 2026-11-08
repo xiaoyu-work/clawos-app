@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["exec", "cosmic-term"]},
   "apps": ["apps/exec", "apps/cosmic-term"],
   "tests": ["native/test_build.py"],
   "native": {"cosmic-term": "native/cosmic-term"},

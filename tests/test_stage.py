@@ -21,6 +21,26 @@ stage = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(stage)
 
 
+def test_product_web_interfaces_are_owned_staged_and_do_not_change_app_manifests(tmp_path):
+    for kind in ("product", "capability"):
+        for name in stage.sources(kind):
+            source, package = stage.load_package(name, kind)
+            entries = stage.app_entries(source, package)
+            assert set(package["web_ui"]["apps"]) <= set(entries)
+            for app_id in package["web_ui"]["apps"]:
+                app_source = entries[app_id]
+                target = tmp_path / kind / name / app_id
+                shutil.copytree(app_source, target, ignore=stage.IGNORE)
+                before = (target / "app.json").read_bytes()
+                stage.stage_ui(source, package, app_id, target, kind=kind)
+                descriptor = json.loads((target / "web-ui.json").read_text())
+                assert descriptor["app_id"] == app_id
+                assert descriptor["source_name"] == name and descriptor["source_kind"] == kind
+                assert (target / descriptor["entry"]).is_file()
+                assert (target / "web/app.js").read_bytes() == (source / "web/app.js").read_bytes()
+                assert (target / "web/shared/client.js").is_file()
+                assert (target / "app.json").read_bytes() == before
+
 def test_staged_calendar_files_mail_chain_uses_public_mcp_and_isolated_wire(tmp_path):
     """Protocol acceptance only; OS Host/authority acceptance remains separate."""
     import textwrap

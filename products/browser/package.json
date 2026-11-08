@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["search", "web", "browser-attached"]},
   "apps": ["apps/search", "apps/web", "apps/browser-attached"],
   "installed_assets": [
     {

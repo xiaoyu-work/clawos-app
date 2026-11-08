@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Widget Rail</title><link rel="stylesheet" href="shared/ui.css"></head><body>
+<header><div><h1>Widget Rail</h1><p data-app-label>Clock and calendar presentation</p></div></header>
+<main class="stack"><div class="cards"><section class="card"><h2>Browser-local clock</h2><div id="clock" class="metric"></div><p id="zone"></p></section>
+<section class="card"><h2>Today</h2><div id="date" class="metric"></div><p id="weekday"></p></section></div>
+<section class="card stack"><h2>Month</h2><div id="calendar" class="calendar"></div></section>
+<section class="card"><h2>Desktop data integration</h2><p class="muted small">This retained native identity does not declare MCP tools.
+Calendar events, task data and system telemetry require its independently authorized desktop provider integration;
+browser-local date/time is not OS telemetry.</p></section><div id="more"></div></main>
+<script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

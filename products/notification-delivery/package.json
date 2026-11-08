@@ -1,4 +1,5 @@
 {
+  "web_ui": {"source": "web", "apps": ["gateway-ntfy", "gateway-pushover", "gateway-webhook"]},
   "apps": ["apps/gateway/ntfy", "apps/gateway/pushover", "apps/gateway/webhook"],
   "tests": []
 }
