@@ -1,5 +1,4 @@
 import base64
-import importlib.util
 import json
 import os
 import pathlib
@@ -16,17 +15,6 @@ main = load_local_module(
     "claw_test_browser_attached_main",
     clear_modules=("_shared",),
 )
-
-
-def _load_native_host():
-    spec = importlib.util.spec_from_file_location(
-        "browser_attached_native_host",
-        APP_DIR / "native_host.py",
-    )
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
 
 
 class ManifestContractTests(unittest.TestCase):
@@ -223,41 +211,6 @@ class BrowserOperationTests(unittest.TestCase):
             with self.assertRaises(FileExistsError):
                 main.atomic_create_bytes(str(output), b"second", mode=0o600)
             self.assertEqual(output.read_bytes(), b"first")
-
-
-class NativeHostTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.host = _load_native_host()
-
-    def test_socket_override_is_not_accepted(self) -> None:
-        with mock.patch.dict(
-            "os.environ",
-            {
-                "XDG_RUNTIME_DIR": "/tmp/not-the-runtime-dir",
-                "CLAW_BROWSER_SOCK": "/tmp/attacker.sock",
-            },
-            clear=True,
-        ):
-            with self.assertRaisesRegex(RuntimeError, "must resolve"):
-                self.host._socket_path()
-
-    def test_request_schema_is_closed(self) -> None:
-        self.host._validate_request({"id": "1", "verb": "tabs.list", "args": {}})
-        with self.assertRaisesRegex(ValueError, "unexpected fields"):
-            self.host._validate_request(
-                {
-                    "id": "1",
-                    "verb": "tabs.list",
-                    "args": {},
-                    "allow_eval": True,
-                }
-            )
-
-    def test_peer_uid_comes_from_kernel_credentials(self) -> None:
-        conn = mock.Mock()
-        conn.getsockopt.return_value = __import__("struct").pack("3i", 123, 0, 456)
-        self.assertEqual(self.host._peer_uid(conn), 0)
 
 
 if __name__ == "__main__":

@@ -64,7 +64,7 @@ package has completed that migration.
 | `capabilities/storage-sdk/` | Legacy `db` SQLite and `kv` JSON clients, independent MCP/CLI contracts and state; separate from the Storage business product and OS SDK/providers |
 | `capabilities/http/` | Complete `net` HTTP client and MCP contract; shared transport, egress authority, SDK/runtime and installation remain OS-owned |
 | `capabilities/ai-helpers/` | Complete `summarize` presentation/MCP client and tests; Agent, AI/provider/consent/budget/safety/audit and memory authority remain OS-owned |
-| `products/browser/` | Search, headless browsing and attached-browser Apps, MV3 extension and Native Host; privileged provider and native engine remain OS-owned |
+| `products/browser/` | Search, headless browsing and attached-browser Apps, MV3 extension and transport launchers; Native Messaging transport, privileged provider and native engine remain OS-owned |
 | `products/terminal/` | Complete native Terminal UI/MCP/resources and command/script/background App operations; sandbox, snapshots and process authority remain OS-owned |
 | `products/containers/` | Container-management App contract and typed broker client; privileged backend remains OS-owned |
 | `products/backup-recovery/` | Data-backup and whole-system recovery App contracts; backend execution, credentials, mount authorization and snapshot index remain OS-owned |
@@ -105,8 +105,10 @@ explicit cross-repository fixtures, never installed-system update code.
 Browser's base package owns its declared WebExtension and unprivileged
 canonical-host launcher together with its Apps. OS integration only configures
 Chromium Native Messaging/policy registration from those installed assets; it
-does not fetch product source or duplicate the Native Host. Updating Browser
-updates both halves through the same APT transaction, without moving profiles,
+does not fetch product source or duplicate the Native Host. The owner-bound
+socket transport is an OS service supplied by the versioned Agent ABI, not
+privileged App code. Updating Browser updates its extension and launchers
+through the same APT transaction, without moving profiles,
 grants or privileged browser authority.
 See [Independent App releases](docs/releases.md) for package ownership, public
 ABI dependencies, the bounded initial file transfer and publication prerequisites.

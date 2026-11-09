@@ -18,6 +18,7 @@
   "headless_set": "claw-apps-agent",
   "desktop_set": "claw-apps-desktop",
   "dependencies": {
+    "browser": ["claw-os-browser-bridge-v1 (= 1)"],
     "files": ["coreutils", "ripgrep", "recollcmd", "python3-fitz", "python3-docx", "python3-openpyxl", "python3-lxml", "python3-pil", "python3-xlsxwriter", "python3-typing-extensions (>= 4.9)"],
     "terminal": ["bash"],
     "notifications": ["claw-os-notifications-v1"],

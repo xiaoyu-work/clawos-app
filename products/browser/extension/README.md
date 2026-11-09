@@ -38,9 +38,11 @@ The OS-owned
 checks the installed `claw-app-browser` package assets and configures the
 extension allowlist and Native Messaging registration. The package owns this
 complete directory at `/usr/share/claw/extensions/claw-agent-browser` and
-`/usr/lib/cos/claw-browser-host`, which executes the single canonical host at
-`/usr/lib/cos/apps/browser-attached/native_host.py` with `/usr/bin/python3`.
-Independent Browser APT upgrades update these together; the OS registration
+`/usr/lib/cos/claw-browser-host`, which executes the OS-owned transport at
+`/usr/lib/cos/browser-native-host.py` with isolated `/usr/bin/python3`.
+The matching Agent provides `claw-os-browser-bridge-v1`; this is transport
+availability, not an App grant. Independent Browser APT upgrades update the
+extension and its launcher together; the OS registration
 command never clones App source or copies a second Native Host. It does not
 force-install an extension, kill a running browser, or modify browser profiles.
 Reload the extension/browser normally after an update.

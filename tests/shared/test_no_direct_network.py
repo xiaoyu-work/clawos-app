@@ -142,8 +142,6 @@ EXCEPTIONS: dict[str, set[str]] = {
         "http.client.HTTPSConnection",
         "urllib.request.build_opener",
     },
-    # AF_UNIX only: the Native Messaging host's owner-checked local bridge.
-    "products/browser/apps/browser-attached/native_host.py": {"socket.socket"},
 }
 
 

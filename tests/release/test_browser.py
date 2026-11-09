@@ -20,7 +20,7 @@ EXTENSION = Path("usr/share/claw/extensions/claw-agent-browser")
 LAUNCHER = Path("usr/lib/cos/claw-browser-host")
 HOST = Path("usr/lib/cos/apps/browser-attached/native_host.py")
 RESOURCES = {"manifest.json", "background.js", "content.js", "popup.html", "popup.js", "README.md"}
-HOST_COMMAND = '#!/bin/sh\nexec /usr/bin/python3 /usr/lib/cos/apps/browser-attached/native_host.py "$@"\n'
+HOST_COMMAND = '#!/bin/sh\nexec /usr/bin/python3 -I /usr/lib/cos/browser-native-host.py "$@"\n'
 
 
 @pytest.fixture
@@ -108,7 +108,7 @@ def test_real_browser_apt_upgrade_updates_extension_and_host_together_without_re
     release.build(release.make_plan("browser", "1.0.0"), "all", tmp_path / "first")
     platform = [
         deb("claw-app-fixture-platform", extra={
-            "Provides": "claw-os-app-runtime-v1, claw-app-support-v1, python3 (= 3.13)",
+            "Provides": "claw-os-app-runtime-v1, claw-os-browser-bridge-v1 (= 1), claw-app-support-v1, python3 (= 3.13)",
         }),
         deb("claw-app-unrelated"),
     ]
