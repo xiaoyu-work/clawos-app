@@ -745,6 +745,7 @@
           {
             "name": "tags",
             "kind": "text",
+            "repeatable": true,
             "required": true,
             "binding": "positional",
             "repeatable": true

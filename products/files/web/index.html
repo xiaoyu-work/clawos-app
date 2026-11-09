@@ -2,10 +2,17 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Files</title><link rel="stylesheet" href="shared/ui.css"></head><body>
 <header><div><h1>Files</h1><p data-app-label>Files, search and reviewed changes</p></div></header>
-<main class="stack"><div class="toolbar"><input id="path" value="." aria-label="Directory">
+<main class="stack"><div class="toolbar"><button id="parent">Parent folder</button>
+<input id="path" placeholder="/home/user/Documents" aria-label="Absolute directory path">
 <button id="open" class="primary">Open directory</button><input id="query" placeholder="Search files">
 <button id="search">Search</button></div><p id="notice" class="notice"></p>
-<div class="toolbar" id="actions"></div><section id="files" class="card"></section>
+<div class="toolbar" id="actions"></div><p id="list-state" class="muted small"></p><section id="files" class="card scroll"></section>
 <section class="card stack"><h2>Selection</h2><div id="selection" class="small muted">Choose a file.</div>
-<div id="file-actions" class="toolbar"></div><div id="result"></div></section><div id="more"></div></main>
+<div id="file-actions" class="toolbar"></div><div id="result"></div></section>
+<section id="text-file" class="card stack" hidden><h2 id="file-title">Text file</h2>
+<p id="edit-state" class="muted small"></p><textarea id="editor" class="editor" aria-label="File content"></textarea>
+<div class="toolbar"><button id="prepare" class="primary">Review changes</button></div></section>
+<section id="plan" class="card stack" hidden><h2>Reviewed file changes</h2><p id="plan-state" class="small muted"></p>
+<pre id="diff"></pre><div id="plan-warnings" class="stack"></div><div id="plan-actions" class="toolbar"></div></section>
+<div id="more"></div></main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
