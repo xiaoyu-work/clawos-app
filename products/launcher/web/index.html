@@ -2,7 +2,19 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Launcher</title><link rel="stylesheet" href="shared/ui.css"></head><body>
 <header><div><h1>Launcher</h1><p data-app-label>Desktop application discovery and controlled OS launch</p></div></header>
-<main class="stack"><form id="search"><div class="toolbar"><input id="query" placeholder="Find a desktop application">
-<button type="submit" class="primary">Search</button><button type="button" id="all">All applications</button></div></form>
-<p id="notice" class="notice"></p><section id="apps" class="cards"></section><section class="card"><h2>Launch result</h2><div id="result"></div></section>
-<div id="actions" class="toolbar"></div><div id="more"></div></main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
+<main class="stack"><form id="search" class="card"><label>Find an installed desktop application<input id="query" placeholder="Name, category or keyword" maxlength="512"></label>
+<div class="toolbar"><button type="submit" class="primary">Search</button><button type="button" id="all">All applications</button>
+<button id="recent" type="button">Recent launches</button><label>Search limit<input id="limit" type="number" min="1" max="50" step="1" value="10" required></label></div>
+<details><summary>All-app visibility options</summary><label><span><input id="hidden" type="checkbox"> Include hidden desktop entries</span></label>
+<label id="no-display-option"><span><input id="no-display" type="checkbox"> Include entries marked NoDisplay</span></label>
+<p class="small muted">These options apply to All applications, not ranked search or recent history.</p></details></form>
+<p id="notice" class="notice" role="status" aria-live="polite"></p><p id="outcome" class="notice" aria-live="polite"></p>
+<div class="split"><section class="card stack"><div class="row"><h2 id="list-title">Applications</h2><span id="count" class="pill"></span></div>
+<div id="apps" class="list"></div></section><section class="card stack"><h2 id="selected-name" class="prose">Select an application</h2>
+<p id="selected-id" class="code"></p><p id="description" class="prose"></p><dl id="metadata" class="detail-grid"></dl>
+<div class="toolbar"><button id="launch" type="button" class="primary" disabled>Review launch</button>
+<button id="running" type="button" hidden>Check running processes</button></div>
+<p class="muted small">Selecting never launches. Launch sends the exact desktop AppID and optional file/URI targets to the OS desktop service,
+not another App's business or MCP interface. Permission and session checks remain authoritative.</p><p id="running-state" class="prose"></p></section></div>
+<details class="card"><summary>Latest backend response</summary><div id="raw"></div></details>
+</main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

@@ -2,8 +2,32 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Text Editor</title><link rel="stylesheet" href="shared/ui.css"></head><body>
 <header><div><h1>Text Editor</h1><p data-app-label>Read, edit and save through the App's controlled filesystem</p></div></header>
-<main class="stack"><div class="toolbar"><input id="path" placeholder="Authorized file path"><button id="open">Open</button>
-<button id="save" class="primary">Save</button><span id="state" class="pill">No file loaded</span></div>
-<p id="notice" class="notice"></p><textarea id="editor" class="editor" spellcheck="false" aria-label="File content"></textarea>
-<section class="card stack"><h2>Editing tools</h2><div id="actions" class="toolbar"></div><div id="result"></div></section>
-<div id="more"></div></main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
+<main class="stack">
+<form id="file-form"><label>File to open<input id="path" placeholder="/authorized/path/document.txt" required autocomplete="off"></label>
+<div class="toolbar"><button id="open" type="submit">Open file</button><button id="new" type="button">New buffer</button>
+<button id="reload" type="button">Reload saved file</button><button id="desktop" type="button" hidden>Open native editor</button></div></form>
+<section class="stack"><div class="row"><h2 id="bound-path" class="prose">Untitled buffer</h2><span id="state" class="pill">New buffer</span></div>
+<p class="small muted">The path above selects a file to open. Save always targets the bound file shown here; Save as explicitly chooses a new target.
+Buffers exist only in this page until saved. No autosave.</p>
+<div class="toolbar"><button id="save" class="primary" type="button">Review save</button>
+<button id="save-as" type="button">Save as...</button><button id="check" type="button">Check saved file</button>
+<span id="counts" class="muted small"></span></div>
+<p id="notice" class="notice" role="status" aria-live="polite"></p>
+<p id="outcome" class="notice" aria-live="polite"></p>
+<textarea id="editor" class="editor" spellcheck="false" aria-label="Document buffer"></textarea></section>
+<section class="card stack"><h2>Find and replace in this buffer</h2>
+<form id="find-form"><div class="toolbar"><label>Find literal text<input id="find" required></label>
+<label>Replace with<input id="replacement"></label></div>
+<div class="toolbar"><button id="find-next" type="submit">Find next</button><button id="replace-next" type="button">Replace next</button>
+<button id="replace-all" type="button">Replace all in buffer</button><span id="matches" class="muted small"></span></div></form>
+<p class="small muted">Case-sensitive text matching. Replacements edit only the buffer; review and save separately.</p></section>
+<section class="card stack"><h2>Saved-file AI assistance</h2>
+<p>These tools read the saved file, not an unsaved Web buffer. Save or discard edits before requesting AI.
+Requests use this entry's own consent and budget; nothing runs automatically.</p>
+<div id="ai-actions" class="toolbar"></div><div id="analysis" class="prose"></div>
+<section id="proposal" class="stack" hidden><h3>Proposed complete document - not saved</h3>
+<textarea id="proposal-text" class="editor" aria-label="Proposed complete document" readonly></textarea>
+<div class="toolbar"><button id="accept-proposal" type="button">Use proposal in buffer</button>
+<button id="discard-proposal" type="button">Discard proposal</button></div><p id="proposal-state" class="small muted"></p></section></section>
+<details class="card"><summary>Latest backend response</summary><div id="raw"></div></details>
+</main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

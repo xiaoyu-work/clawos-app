@@ -2,6 +2,18 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Media Player</title><link rel="stylesheet" href="shared/ui.css"></head><body>
 <header><div><h1>Media Player</h1><p data-app-label>Owner-bound native playback observation and control</p></div></header>
-<main class="stack"><section class="card stack"><h2>Now playing</h2><div id="status"></div><p class="muted small">Playback remains in the installed native Player.
-This view does not invent a separate browser playback state.</p><div id="controls" class="toolbar"></div></section>
-<p id="notice" class="notice"></p><div id="more"></div></main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
+<main class="stack"><div class="split"><section class="card stack"><div class="row"><h2 id="observation">Native playback</h2>
+<span id="state" class="pill">Not observed</span></div>
+<h2 id="title" class="prose">No current track observed</h2><p id="artist" class="prose"></p><p id="album" class="prose"></p>
+<dl class="detail-grid"><dt>Reported duration</dt><dd id="duration">Not reported</dd>
+<dt>Media URL (metadata only)</dt><dd id="url">Not reported</dd></dl>
+<div id="controls" class="toolbar"></div><button id="refresh" type="button">Refresh live state</button>
+<p id="observed-at" class="muted small">No successful observation yet.</p></section>
+<section class="card stack"><h2>Native playlist</h2><div id="current-item" class="empty prose">No current item observed.</div>
+<p class="small muted">Previous and Next operate the native player's existing queue. This entry does not expose playlist enumeration,
+adding files, reorder, seek, position, volume or a file-open tool. Only the current item's returned metadata is shown; no playlist is simulated.</p>
+<p class="small muted">Choose media in the installed native Player separately. Playback stays there, not in this Web view.
+No native player is launched automatically and no browser video or audio stream is fetched.</p></section></div>
+<p id="notice" class="notice" role="status" aria-live="polite"></p><p id="outcome" class="notice" aria-live="polite"></p>
+<details class="card"><summary>Latest backend response</summary><div id="raw"></div></details>
+</main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
