@@ -114,13 +114,15 @@ platform archive selected by the developer test command. The fixture's synthetic
 pin is private test data, never a production pin or runtime override; the actual
 Native Host continues to exercise its unchanged pinned-source bootstrap.
 
-That current launcher is a remaining integration exception, not a privilege
-Mail should inherit: OS `TrustedNativeHost` admission is still tied to
-`mail-ai`, fixed paths and a Thunderbird parent, with a recorded sandbox
-exemption. Replacing it belongs to the generic App Host contract and must retain
-authenticated ownership/session/audit binding, provenance, capability checks
-and equivalent sandbox protections. Do not delete those checks or treat the
-source-bootstrap/protocol tests as proof of a completed unified integration.
+The OS launcher now runs the existing declared `native-host` stdin operation
+through the ordinary authenticated App Host and sandbox. The original protected
+launcher/interpreter/Thunderbird-parent checks remain at the OS transport
+boundary; they confer no App privilege. The App receives only its operation's
+declared AI/memory needs, never a union of MCP tools or mailbox rights.
+Legacy native registration is retired. The OS-owned mailbox multiplexer
+retains root-peer admission and correlated AI-only child output. This cutover
+does not make the source-bootstrap/protocol tests full installed Mail, desktop
+or publication acceptance.
 
 From the repository root, use `python3 tools/test.py mail`. For native tests,
 build first and use `python3 products/mail/build.py test comm/path/to/test.js`.
