@@ -4,6 +4,9 @@
 <header><div><h1>Summarize</h1><p data-app-label>Explicit-text AI presentation client</p></div></header>
 <main class="stack"><form id="summarize" class="card"><label>Text to summarize<textarea name="text" class="editor" required></textarea></label>
 <div class="toolbar" style="margin-top:16px"><button class="primary" type="submit">Summarize text</button></div>
+<p id="input-state" class="muted small">0 characters</p>
 <p class="muted small">Uses this App's AI consent, policy and budget. No model is contacted until you submit.</p></form>
-<p id="notice" class="notice"></p><section class="card stack"><h2>Summary</h2><div id="result"></div></section><div id="more"></div></main>
+<p id="notice" class="notice" role="status"></p><section class="card stack"><h2>Summary</h2>
+<p id="summary-source" class="small muted">No text submitted.</p><div id="result" class="prose"></div>
+<div id="usage" class="small muted"></div></section><div id="more"></div></main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
