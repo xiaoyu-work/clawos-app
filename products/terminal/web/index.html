@@ -2,9 +2,35 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Terminal</title><link rel="stylesheet" href="shared/ui.css"></head><body>
 <header><div><h1>Terminal</h1><p data-app-label>Authorized commands and process control</p></div></header>
-<main class="stack"><form id="command"><div class="toolbar"><input name="command" placeholder="Executable" required>
-<input name="arguments" placeholder='Arguments as JSON, e.g. ["--version"]'><button class="primary" type="submit">Run</button></div></form>
-<p class="muted small">This is a structured command runner, not an interactive PTY or an unrestricted host shell.</p>
-<p id="notice" class="notice"></p><section class="card"><pre id="output" aria-live="polite"></pre></section>
-<section class="card stack"><h2>Scripts and background processes</h2><div id="actions" class="toolbar"></div><div id="processes"></div></section>
-<div id="more"></div></main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
+<main class="stack"><p class="muted small">A structured, authorized command runner, not an interactive PTY.
+Nothing executes until you submit it. There is no live stdin or output stream. A Web timeout may leave an outcome unknown; never blindly rerun a mutation.</p>
+<section class="card stack"><h2>Run a program</h2><form id="command">
+<label>Executable or program name<input id="program" required autocomplete="off" placeholder="Program to execute"></label>
+<label>Ordered arguments - one field per argument, including empty arguments</label>
+<div id="arguments" class="stack"></div><div><button id="add-argument" type="button">Add argument</button></div>
+<div class="toolbar"><label>Run mode<select id="mode"><option value="run">Capture output</option></select></label>
+<label id="timeout-label">Timeout (seconds)<input id="timeout" type="number" min="1" step="1" value="30" required></label></div>
+<label id="shell-option" hidden><span><input id="shell" type="checkbox"> Use shell syntax (explicit opt-in)</span>
+<span>Shell mode joins the command and arguments with spaces and permits substitutions, pipelines and redirects. Argument boundaries are not preserved.</span></label>
+<div class="toolbar"><button id="run" type="submit" class="primary">Run program</button>
+<button id="which" type="button">Locate executable only</button><button id="desktop" type="button" hidden>Open native terminal</button></div></form>
+<p id="lookup" class="prose"></p></section>
+<p id="notice" class="notice" role="status" aria-live="polite"></p><p id="outcome" class="notice" aria-live="polite"></p>
+<section class="card stack"><div class="row"><h2>Captured output</h2><span id="exit" class="pill">No command run</span></div>
+<h3>Standard output</h3><pre id="stdout">No output yet.</pre><h3>Standard error</h3><pre id="stderr">No output yet.</pre>
+<p id="output-info" class="muted small"></p></section>
+<section id="scripts" class="card stack" hidden><h2>Run a script explicitly</h2>
+<form id="script-form"><label>Source<select id="script-source"><option value="inline">Inline code</option>
+<option value="file">Authorized script file</option></select></label>
+<label id="code-label">Code<textarea id="code" spellcheck="false" class="editor"></textarea></label>
+<label id="script-file-label" hidden>Script file<input id="script-file" placeholder="/authorized/path/script.py"></label>
+<div class="toolbar"><label>Interpreter<select id="language"><option value="bash">Bash</option><option value="python">Python</option>
+<option value="node">Node.js</option></select></label><label>Timeout (seconds)<input id="script-timeout" type="number" min="1" step="1" value="30" required></label></div>
+<p class="muted small">Inline code needs its own wildcard execution authority. No script is generated or run automatically.</p>
+<button type="submit" class="primary">Run this script</button></form></section>
+<section class="card stack"><div class="row"><h2>Background jobs</h2><button id="refresh-jobs" type="button">Refresh jobs</button></div>
+<p id="jobs-help" class="muted small"></p><div id="jobs" class="stack"></div></section>
+<section class="card stack"><h2>This page's completed requests</h2><p class="muted small">Reusing a request fills the form only; it never executes it.</p>
+<div id="history" class="list"></div></section>
+<details class="card"><summary>Latest backend response</summary><div id="raw"></div></details>
+</main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

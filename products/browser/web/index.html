@@ -2,8 +2,34 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Browser</title><link rel="stylesheet" href="shared/ui.css"></head><body>
 <header><div><h1>Browser</h1><p data-app-label>Search, page inspection and attached-browser control</p></div></header>
-<main class="stack"><form id="navigation"><div class="toolbar"><input id="address" placeholder="Search query or HTTPS URL" required>
-<button class="primary" type="submit" id="go">Search</button></div></form><p id="notice" class="notice"></p>
-<section id="results" class="card stack"></section><section class="card stack"><h2>Page and tab operations</h2>
-<div id="actions" class="toolbar"></div><div id="details"></div></section><div id="more"></div></main>
+<main class="stack">
+<p id="scope" class="muted small"></p>
+<section id="tabs-section" class="card stack" hidden><div class="row"><h2>Open tabs</h2>
+<button id="refresh-tabs" type="button">Refresh tabs</button></div><div id="tabs" class="list"></div></section>
+<form id="navigation" class="card">
+<label id="address-label" for="address">Address</label>
+<div class="toolbar"><input id="address" placeholder="https://example.com" required autocomplete="off">
+<button class="primary" type="submit" id="go">Read page</button></div>
+<div id="search-options" class="toolbar" hidden>
+<label>Provider<select id="provider" required><option value="">Choose a provider</option>
+<option value="google">Google</option><option value="brave">Brave</option></select></label>
+<label>Search type<select id="search-kind"><option value="web">Web</option><option value="image">Images</option></select></label>
+<label>Results<input id="limit" type="number" value="5" min="1" max="10" step="1" required></label></div>
+<div id="reader-controls" class="toolbar" hidden><button id="back" type="button">Back</button>
+<button id="forward" type="button">Forward</button><button id="reload" type="button">Reload</button></div>
+<p id="navigation-help" class="muted small"></p></form>
+<p id="notice" class="notice" role="status" aria-live="polite"></p>
+<p id="outcome" class="notice" aria-live="polite"></p>
+<section id="results" class="stack" aria-label="Search results"></section>
+<section id="page-panel" class="card stack">
+<h2 id="page-title" class="prose">No page selected</h2><p id="page-url" class="prose"></p><p id="page-meta" class="muted small"></p>
+<div id="page-actions" class="toolbar"></div><div id="page-content" class="prose"></div>
+<div id="page-links" class="list"></div></section>
+<section id="inspect" class="card stack" hidden><h2>Inspect the selected tab</h2>
+<div class="toolbar"><button id="snapshot" type="button">Read page text</button>
+<button id="activate" type="button">Bring tab to foreground</button></div>
+<form id="query-form"><label>Find page elements by CSS selector<input id="selector" placeholder="a, button, input" required></label>
+<button type="submit">Find elements</button></form><div id="dom-results" class="stack"></div></section>
+<details class="card"><summary>Latest backend response</summary><div id="raw"></div></details>
+</main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

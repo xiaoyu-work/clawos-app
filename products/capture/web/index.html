@@ -2,8 +2,23 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Capture</title><link rel="stylesheet" href="shared/ui.css"></head><body>
 <header><div><h1>Capture</h1><p data-app-label>System screenshot capture through the authorized portal</p></div></header>
-<main class="stack"><section class="card"><h2>Capture a screenshot</h2>
-<p>Choose interactive or non-interactive capture and an authorized output directory.</p>
-<div id="actions" class="toolbar" style="margin-top:16px"></div><p class="small muted">A display, portal and the declared screen/output grants may be required. Browser access alone grants no screen access.</p></section>
-<p id="notice" class="notice"></p><section class="card"><h2>Capture result</h2><div id="result" class="stack" style="margin-top:12px"></div></section>
-<div id="more"></div></main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
+<main class="stack"><div class="split"><section class="card stack"><h2>Capture a screenshot</h2>
+<form id="capture-form"><label>Capture mode<select id="mode">
+<option value="screen">Non-interactive portal screen capture</option>
+<option disabled>Interactive region / window - native portal only</option>
+<option disabled>Clipboard capture - native portal only</option></select></label>
+<label>Existing authorized output directory<input id="directory" placeholder="/home/you/Pictures" maxlength="4096" autocomplete="off"></label>
+<p class="small muted">Leave blank to request the manifest's owner-resolved Pictures default. If the Host cannot resolve it, the request fails.
+An explicit path must be an existing absolute Linux directory; this page does not create directories or choose a destination outside its grant.</p>
+<label><span><input id="modal" type="checkbox" checked> Request a modal portal dialog</span></label>
+<button id="capture" class="primary" type="submit">Capture to a new PNG</button></form>
+<p class="small muted">This entry always sends interactive=false. Screen selection, clipboard access, delay, cursor options and video recording
+are not exposed by its tool. Browser UI access does not grant screen access.</p></section>
+<section class="card stack"><h2>Output</h2><div id="result" class="stack"><p class="empty">No capture requested.</p></div>
+<p class="small muted">The service returns a saved path or explicit cancellation, not image bytes.
+This view cannot show a live desktop or load a host file as a preview. A display, portal, authenticated session and screen/output grants are required.</p></section></div>
+<p id="notice" class="notice" role="status" aria-live="polite"></p>
+<section class="card stack"><h2>Responses in this page</h2><div id="history" class="stack"><p class="empty">No completed capture responses.</p></div>
+<p class="small muted">This is not a persistent screenshot library. Cancellation and unknown output are not reported as saved screenshots.</p></section>
+<details class="card"><summary>Latest backend response</summary><div id="raw"></div></details>
+</main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

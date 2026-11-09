@@ -2,8 +2,34 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Notifications</title><link rel="stylesheet" href="shared/ui.css"></head><body>
 <header><div><h1>Notifications</h1><p data-app-label>App-owned notification production with OS-owned delivery</p></div></header>
-<main class="stack"><section class="card stack"><h2>Send a notification</h2><form id="send"><label>Message<textarea name="message" required></textarea></label>
-<label><span><input name="urgent" type="checkbox" style="width:auto"> Urgent (when declared by this entry)</span></label>
-<div class="toolbar"><button class="primary" type="submit">Send</button><button id="refresh" type="button">Load notifications</button></div></form></section>
-<p id="notice" class="notice"></p><section id="notifications" class="card"></section><div id="actions" class="toolbar"></div><div id="more"></div></main>
+<main class="stack"><p id="scope" class="muted small"></p>
+<p id="notice" class="notice" role="status" aria-live="polite"></p><p id="outcome" class="notice" aria-live="polite"></p>
+<div class="split"><section class="card stack"><div class="row"><h2 id="list-title">Notifications</h2>
+<button id="refresh" type="button">Refresh source history</button></div><p id="total" class="muted small"></p>
+<div class="toolbar"><label id="limit-label">Fetch limit<input id="limit" type="number" value="20" min="1" max="100" step="1"></label>
+<label>Filter loaded entries<input id="filter" placeholder="Find text or a durable ID"></label></div>
+<label id="unread-label"><span><input id="unread" type="checkbox"> Show only entries explicitly reported unread</span></label>
+<p id="list-state" class="muted small"></p><div id="notifications" class="stack"></div></section>
+<section class="card stack"><h2 id="compose-title">Compose notification</h2>
+<form id="send"><label id="message-label">Message<textarea id="message" rows="6"></textarea></label>
+<label id="urgent-label"><span><input id="urgent" type="checkbox"> Urgent (warning severity, still respects DND)</span></label>
+<label id="summary-label" hidden>Headline<input id="summary" autocomplete="off"></label>
+<label id="body-label" hidden>Optional body<textarea id="body" rows="6"></textarea></label>
+<details id="post-options" hidden><summary>Native post options</summary><div class="stack">
+<label>Display sender label (not source identity)<input id="sender" value="Claw OS Agent"></label>
+<label>Icon-theme name, not a path or URL<input id="icon" value="com.clawos.Notifications" maxlength="128" pattern="[A-Za-z0-9._\-]*"></label>
+<label>Popup timeout (milliseconds: -1 default, 0 no expiry)<input id="expiry" type="number" value="-1" min="-1" max="2147483647" step="1"></label>
+<label><span><input id="transient" type="checkbox"> Omit the desktop history copy (OS durable activity is retained)</span></label>
+<label>Optional owner/App replay key (15-minute deduplication)<input id="dedupe" maxlength="128" pattern="[A-Za-z0-9._:\-\/@+]*" autocomplete="off"></label>
+</div></details><p id="compose-help" class="muted small"></p><p id="characters" class="muted small"></p>
+<button id="send-button" class="primary" type="submit">Send notification</button></form>
+<section class="stack"><h3>Latest confirmed send receipt</h3><div id="receipt" class="prose">No send confirmed.</div>
+<p class="small muted">A returned durable ID is not proof of desktop delivery, display, reading or acknowledgement. There are no DND, read or acknowledgement controls in these entries.</p></section>
+<form id="close-form" hidden><h3>Dismiss a previously returned native post</h3>
+<label>Same-owner, same-App durable ID<input id="close-id" placeholder="notif-..." pattern="notif-[A-Fa-f0-9]{32}" required autocomplete="off"></label>
+<p class="small muted">Native post IDs only. Numeric desktop handles and records from the separate notify entry are unsupported.
+The OS checks source and ownership, not the sender label.</p><button type="submit">Review dismissal</button></form>
+</section></div>
+<details class="card"><summary>Latest backend response</summary><div id="raw"></div></details>
+</main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

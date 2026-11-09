@@ -1,10 +1,25 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>System Packages</title><link rel="stylesheet" href="shared/ui.css"></head><body>
-<header><div><h1>System Packages</h1><p data-app-label>Package inventory and separately authorized system transactions</p></div></header>
-<main class="stack"><form id="search"><div class="toolbar"><input id="query" placeholder="Search system packages">
-<button type="submit" class="primary">Search</button><button id="installed" type="button">Installed packages</button></div></form>
-<p id="notice" class="notice"></p><section id="packages" class="card"></section><section class="card stack"><h2>Package actions</h2>
-<input id="package" placeholder="Exact package name"><div id="actions" class="toolbar"></div><div id="result"></div>
-<p class="muted small">System package effects require their own Critical package capability. App installation review is not a package-management grant.</p></section>
-<div id="more"></div></main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
+<title>App Store</title><link rel="stylesheet" href="shared/ui.css"></head><body>
+<header><div><h1>App Store</h1><p data-app-label>Package catalog, inventory and separately authorized transactions</p></div></header>
+<main class="stack"><p id="scope" class="muted small"></p>
+<form id="search" class="card"><label>Search the local apt catalog<input id="query" placeholder="Package name or apt search expression" required></label>
+<div class="toolbar"><button type="submit" class="primary">Search catalog</button><button id="installed" type="button">Installed / package inventory</button>
+<label>Result limit<input id="limit" type="number" value="25" min="1" max="100" step="1" required></label></div>
+<p class="muted small">Search uses the system's existing apt index; it does not refresh indexes, download software or use a different App.</p></form>
+<p id="notice" class="notice" role="status" aria-live="polite"></p><p id="outcome" class="notice" aria-live="polite"></p>
+<div class="split"><section class="card stack"><div class="row"><h2 id="list-title">Catalog</h2><span id="count" class="pill"></span></div>
+<label>Filter loaded results<input id="filter" placeholder="Filter by package name or summary"></label>
+<p id="inventory-help" class="muted small"></p><div id="packages" class="list"></div></section>
+<section class="card stack"><h2 id="package-name" class="prose">Select a package</h2><p id="summary" class="prose"></p>
+<p id="description" class="prose"></p><dl id="metadata" class="detail-grid"></dl>
+<div class="toolbar"><button id="availability" type="button" hidden>Check availability</button>
+<button id="desktop" type="button" hidden>Open in native Store</button></div><p id="availability-state" class="prose"></p>
+<h3>Package transactions</h3><p id="transaction-help" class="muted small"></p><div id="actions" class="toolbar"></div></section></div>
+<section class="card stack"><h2>Latest transaction or activation</h2><div id="result" class="stack"><p class="empty">No transaction requested.</p></div>
+<p class="muted small">Partial failure, pending and unknown results are not success. Do not retry an uncertain system mutation; inspect authoritative package state first.</p></section>
+<details id="system-actions" class="card" hidden><summary>System-wide package maintenance</summary>
+<p class="small muted">These operations affect package indexes or the entire system, not just the selected package. Each requires explicit review and its own authority.</p>
+<div id="maintenance" class="toolbar"></div></details>
+<details class="card"><summary>Latest backend response</summary><div id="raw"></div></details>
+</main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
