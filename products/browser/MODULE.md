@@ -1,7 +1,7 @@
 # Browser Product
 
 Own the Browser product's search, headless and attached App implementations,
-MCP contracts, Chromium extension and Native Messaging host. Native browser
+MCP contracts, Chromium extension and Native Messaging launchers. Native browser
 presentation and the reusable engine have not moved.
 
 | Path | Responsibility |
@@ -13,9 +13,9 @@ presentation and the reusable engine have not moved.
 | `apps/web/app.json` | Existing five-operation CLI and matching MCP schemas |
 | `apps/web/main.py`, `apps/web/server.py` | Headless reads, scraping, screenshots, forms and gated AI summaries |
 | `apps/web/test_main.py` | URL canonicalization, MCP dispatch and existing engine/AI behavior |
-| `apps/browser-attached/` | Ten attached-browser MCP tools, Native Host and authority/framing regressions |
+| `apps/browser-attached/` | Ten attached-browser MCP tools and a compatibility launcher for the OS transport |
 | `extension/` | MV3 service worker, top-frame DOM helpers and toolbar popup |
-| `packaging/claw-browser-host` | Unprivileged executable selecting the canonical installed Native Host |
+| `packaging/claw-browser-host` | Unprivileged executable selecting the versioned OS browser transport |
 | `package.json` | Product-owned staging and test inputs |
 
 Use the immutable platform dependency for SDK/runtime and
@@ -41,14 +41,17 @@ replace native browser build/rendering acceptance.
 `package.json` binds both `installed_assets` to `browser-attached`. The same
 staging contract used by the independent `claw-app-browser` Debian package
 installs the complete extension at `/usr/share/claw/extensions/claw-agent-browser`
-and the executable `/usr/lib/cos/claw-browser-host`. That launcher runs
-`/usr/bin/python3 /usr/lib/cos/apps/browser-attached/native_host.py`; only the
-canonical App payload owns the implementation. No duplicate is installed under
-`/usr/lib/cos/browser-agent`. Canonical `stage.py` invokes the asset helper once;
+and the executable `/usr/lib/cos/claw-browser-host`. That launcher selects the
+OS-owned `/usr/lib/cos/browser-native-host.py` with isolated system Python.
+The old package-local `native_host.py` is only a compatibility launcher, not a
+socket server or authority implementation. `claw-os-browser-bridge-v1 (= 1)`
+is an Agent service dependency, not an installed App identity or grant.
+No duplicate transport is installed under `/usr/lib/cos/browser-agent`.
+Canonical `stage.py` invokes the asset helper once;
 release assembly does not repeat it. Selecting only Search or Web does not add these
 attached-browser assets.
 
-Updating Browser updates its extension, launcher and host together, without a
+Updating Browser updates its extension and launchers together, without a
 separate desktop package or Chromium dependency. The OS
 `tools/install-browser-agent.sh` only validates installed files and configures
 the chosen extension ID, Native Messaging registration and policy. It does not
@@ -56,7 +59,10 @@ clone App sources, copy package assets or alter browser profiles. Ordinary
 extension/browser reload remains explicit; package upgrades do not kill user
 processes or force-install an extension. See
 [release ownership and validation](../../docs/releases.md).
-`clawd` still owns capabilities, origin injection and privileged socket access.
-Package ownership is not a runtime privilege. The direct Native Messaging
-launcher/root-peer contract remains subject to the generic authenticated App
-Host/session review documented in the release integration blockers.
+`clawd` owns capabilities, origin injection and privileged socket access.
+Its OS transport retains owner-only runtime/socket validation, kernel Root-peer
+admission, bounded Native Messaging frames and response correlation. It is
+system transport, not another App entrypoint or an exemption from App hosting.
+Every attached-browser tool still uses its ordinary authenticated App Host and
+own exact grants. Live installed browser/extension acceptance remains separate
+from source, unit and package checks.

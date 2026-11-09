@@ -1,2 +1,2 @@
 #!/bin/sh
-exec /usr/bin/python3 /usr/lib/cos/apps/browser-attached/native_host.py "$@"
+exec /usr/bin/python3 -I /usr/lib/cos/browser-native-host.py "$@"
