@@ -1,10 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Maintenance</title><link rel="stylesheet" href="shared/ui.css"></head><body>
-<header><div><h1>Maintenance</h1><p data-app-label>Exact configuration targets and service units</p></div></header>
-<main class="stack"><div class="toolbar"><input id="target" placeholder="Declared configuration target or service unit">
-<button id="inspect" class="primary">Inspect</button></div><p id="notice" class="notice"></p>
-<section class="card"><h2>Current state</h2><div id="state" style="margin-top:12px"></div></section>
-<section class="card"><h2>Controlled changes</h2><p>Validation, confirmation and rollback tokens use the App's existing OS contract.</p>
-<div id="actions" class="toolbar" style="margin-top:12px"></div><div id="result"></div></section><div id="more"></div></main>
+<header><div><h1>Maintenance</h1><p data-app-label>Exact configuration targets and independently authorized service units</p></div></header>
+<main class="stack"><p id="notice" class="notice" role="status" aria-live="polite"></p><div id="workspace" class="stack"></div>
+<section class="card stack"><h2 id="result-title">Maintenance evidence</h2><div id="result"><p class="muted">No target has been inspected or changed.</p></div></section></main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

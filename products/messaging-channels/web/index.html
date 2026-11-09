@@ -1,9 +1,25 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Messaging Channels</title><link rel="stylesheet" href="shared/ui.css"></head><body>
-<header><div><h1>Messaging Channels</h1><p data-app-label>Authenticated channel clients and explicit outbound messaging</p></div></header>
-<main class="stack"><div id="lifecycle" class="toolbar"></div><section class="card stack"><h2>Channel state</h2><div id="state"></div></section>
-<section class="card stack"><h2>Compose a message</h2><label>Text<textarea id="text"></textarea></label><div id="actions" class="toolbar"></div>
-<p class="muted small">The OS owns provider/owner/sender admission, channel credentials and inbound replay protection.</p></section>
-<section class="card"><h2>Message result</h2><div id="result" style="margin-top:12px"></div></section><div id="more"></div></main>
+<header><div><h1 id="title">Messaging Channel</h1><p data-app-label>One provider identity; authenticated admission stays with the OS</p></div></header>
+<main id="workspace" class="stack"><p id="notice" class="notice" role="status" aria-live="polite"></p>
+<section class="card stack"><h2>Managed receiver</h2><p>The OS owns credentials, exact sender/channel binding, replay evidence and receiver lifetime. This page does not create Activities, triggers or Agent tasks.</p>
+<div class="toolbar"><button id="status" class="primary">Refresh receiver status</button><button id="start">Start receiver...</button><button id="stop">Stop receiver...</button></div>
+<div id="state"><p class="muted">Status is not loaded. No receiver has been started by this page.</p></div>
+<details><summary>Receiver setup prerequisites</summary><p class="prose">A human must first create a bounded Activity and an ordinary generation-bound message.received trigger, then bind the exact provider account and sender/channel through protected OS channel configuration. Discord and Telegram use authenticated polling; Slack and WhatsApp require operator-owned public HTTPS forwarding and verified signatures. This App cannot supply or approve that admission configuration.</p></details></section>
+<div class="cards"><section class="card stack"><h2>New outbound message</h2><p id="credential-note"></p><form id="send-form">
+<label id="recipient-label">Recipient<input id="recipient" required autocomplete="off"></label><label>Message<textarea id="text" rows="5" required></textarea></label>
+<p id="send-note" class="muted small"></p><p id="send-count" class="muted small"></p><button type="submit" class="primary">Review new message...</button></form></section>
+<section class="card stack"><h2>Reply to a verified inbound event</h2><p>Paste an OS-verified event ID. The original account, recipient and thread are resolved by the receipt, never by these fields.</p>
+<form id="reply-form"><label>Verified event ID<input id="event-id" required autocomplete="off" placeholder="Exact channel event ID"></label>
+<label>Reply<textarea id="reply-text" rows="5" required></textarea></label><p id="reply-count" class="muted small"></p>
+<button type="submit">Review receipt-bound reply...</button></form></section></div>
+<details id="legacy" class="card stack" hidden><summary>Legacy Discord preferences (not ingress configuration)</summary>
+<p>New preference values only; these fields are not a readout of current settings. They never authorize OS receiver admission.</p>
+<form id="legacy-form"><label>Allowed user IDs<input id="legacy-users" required placeholder="Comma-separated exact IDs"></label>
+<label>Guild IDs to update (optional)<input id="legacy-guilds"></label><label>Channel IDs to update (optional)<input id="legacy-channels"></label>
+<label>Require mention preference<select id="legacy-mention"><option value="true">Yes</option><option value="false">No</option></select></label>
+<label>Requests per minute preference<input id="legacy-rpm" type="number" min="1" max="60" step="1" value="5"></label>
+<button type="submit">Review legacy preference update...</button></form></details>
+<section class="card stack"><h2 id="result-title">Channel request evidence</h2><div id="result"><p class="muted">No message or lifecycle request has been submitted. No automatic resend or polling is running.</p></div></section></main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

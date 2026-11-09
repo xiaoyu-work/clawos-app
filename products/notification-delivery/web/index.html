@@ -1,8 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Notification Delivery</title><link rel="stylesheet" href="shared/ui.css"></head><body>
-<header><div><h1>Notification Delivery</h1><p data-app-label>ntfy, Pushover and authenticated webhook delivery</p></div></header>
-<main class="stack"><section class="card stack"><h2>Compose delivery</h2><label>Message<textarea id="text"></textarea></label>
-<div id="actions" class="toolbar"></div><p class="muted small">Destination, credential references and confirmation use this entry's declared contract.</p></section>
-<section class="card stack"><h2>Delivery response</h2><div id="result"></div></section><div id="more"></div></main>
+<header><div><h1 id="title">Notification Delivery</h1><p data-app-label>One-shot delivery through the loaded App's own configuration</p></div></header>
+<main class="stack"><p id="notice" class="notice" role="status" aria-live="polite"></p><div id="workspace" class="stack"></div>
+<section class="card stack"><h2 id="result-title">Submission evidence</h2><div id="result"><p class="muted">Nothing has been sent. Provider IDs are not delivery or acknowledgement confirmations.</p></div></section></main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

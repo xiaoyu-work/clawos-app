@@ -1,11 +1,25 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Clipboard</title><link rel="stylesheet" href="shared/ui.css"></head><body>
-<header><div><h1>Clipboard</h1><p data-app-label>System selection and declared clipboard operations</p></div></header>
-<main class="stack"><div class="toolbar"><select id="selection" style="width:180px"><option value="clipboard">Clipboard</option>
-<option value="primary">Primary selection</option></select><input id="mime" value="text/plain;charset=utf-8" aria-label="MIME type">
-<button id="read" class="primary">Read selection</button><button id="status">Status</button></div>
-<p id="notice" class="notice"></p><section class="card"><h2>Selection content</h2><pre id="content" style="margin-top:12px"></pre></section>
-<section class="card"><h2>Write and history controls</h2><p>Writing uses an authorized source file. Clipboard and history permissions remain separate.</p>
-<div id="actions" class="toolbar" style="margin-top:12px"></div><div id="result"></div></section><div id="more"></div></main>
+<header><div><h1 id="title">Clipboard</h1><p data-app-label>Selection access and native history keep separate grants</p></div></header>
+<main class="stack"><p id="notice" class="notice" role="status" aria-live="polite"></p>
+<div id="selection-workspace" class="stack" hidden>
+<section class="card stack"><h2>Choose a selection</h2><p>No clipboard contents are read on page load or selection. Primary selection is opt-in. Read and write permissions are independent.</p>
+<label>Selection<select id="selection"><option value="clipboard">Clipboard selection</option><option value="primary">Primary selection</option></select></label>
+<label>MIME type (optional; blank keeps the OS default)<input id="mime" placeholder="text/plain;charset=utf-8" maxlength="255" autocomplete="off"></label>
+<div class="toolbar"><button id="status">Inspect selection status</button><button id="load-types">Load available formats</button><button id="read" class="primary">Read content explicitly</button></div>
+<div id="types" class="toolbar"><p class="muted">Formats are not loaded. Choosing a format does not read it.</p></div></section>
+<section class="card stack"><div class="row"><h2 id="content-label">Private content preview</h2><button id="hide-content">Hide local preview</button></div>
+<p>Text is shown safely, never interpreted as HTML. Hiding this preview does not clear the system selection.</p>
+<pre id="content">No selection content is displayed.</pre></section>
+<section class="card stack"><h2>Replace selection from a file</h2><p>Needs clipboard.write:selection and exact source-file read permission. There is no browser clipboard bridge, arbitrary text write or history permission fallback.</p>
+<form id="write-form"><label>Canonical source file<input id="source" required placeholder="/home/user/clip.txt" autocomplete="off"></label>
+<button type="submit">Review source-file write...</button></form>
+<div class="toolbar"><button id="clear" class="danger">Clear selected selection...</button></div></section>
+<section class="card stack"><h2 id="result-title">Clipboard evidence</h2><div id="result"><p class="muted">No service request has been made.</p></div></section></div>
+<section id="native-history" class="card stack" hidden><h2>Native CopyQ history</h2>
+<p>The installed Clipboard History desktop entry opens the standalone native history panel. This Web entry declares no MCP tools and cannot load, restore, delete or clear history.</p>
+<div class="cards"><section class="card stack"><h3>History read</h3><p>clipboard.read:history allows the native panel's policy-checked history display. It is not clipboard.read:selection.</p></section>
+<section class="card stack"><h3>History changes</h3><p>The native panel checks history grants for restore, delete and clear. This Web page has no history execution bridge and cannot borrow the Clipboard Manager identity.</p></section></div>
+<h3>What is available here?</h3><p>Only this entry's integration information. Use the installed native panel for actual history. No local browser history, clipboard content, sample entries or fake empty-state result is substituted for unavailable data.</p></section></main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
