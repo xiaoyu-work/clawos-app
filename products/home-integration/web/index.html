@@ -1,9 +1,23 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Home Integration</title><link rel="stylesheet" href="shared/ui.css"></head><body>
-<header><div><h1>Home Integration</h1><p data-app-label>Home Assistant service control through the existing adapter</p></div></header>
-<main class="stack"><div id="status-actions" class="toolbar"></div><section class="card"><h2>Connection</h2><div id="status" style="margin-top:12px"></div></section>
-<section class="card stack"><h2>Run a Home Assistant service</h2><label>Service<input id="service" placeholder="light.turn_on"></label>
-<div id="actions" class="toolbar"></div><p class="muted small">Accounts, devices and automation state remain in the external Home Assistant server.</p></section>
-<section class="card"><h2>Service result</h2><div id="result" style="margin-top:12px"></div></section><div id="more"></div></main>
+<header><div><h1>Home Assistant</h1><p data-app-label>Explicit notifications and service actions through the existing REST adapter</p></div></header>
+<main id="workspace" class="stack"><p id="notice" class="notice" role="status" aria-live="polite"></p>
+<section class="card stack"><div class="row"><h2>Server configuration</h2><button id="status-button">Check configuration</button></div>
+<p>Uses this App's homeassistant_url and homeassistant_token through OS credential custody. There is no credential editor, device discovery or state subscription here. OS egress policy may block private endpoints; this page cannot bypass it.</p>
+<div id="configuration"><p class="muted">Configuration has not been checked. No server connection is assumed.</p></div></section>
+<div class="cards"><section class="card stack"><h2>Send a notification</h2><p>Select the exact notify service. The shorthand notify expands to notify.notify; a blank service is never a default.</p>
+<form id="notify-form"><label>Notification service<input id="notify-service" required placeholder="notify.mobile_app_phone"></label>
+<label>Title (optional)<input id="notify-title"></label><label>Message<textarea id="message" rows="4" required></textarea></label>
+<button type="submit" class="primary">Review notification...</button></form></section>
+<section class="card stack"><h2>Control known entities</h2><p>These are service templates, not a catalog of available devices. Entity state and service availability are not verified.</p>
+<form id="control-form"><label>Service template<select id="control-service"><option value="light.turn_on">Turn lights on</option><option value="light.turn_off">Turn lights off</option>
+<option value="switch.turn_on">Turn switches on</option><option value="switch.turn_off">Turn switches off</option><option value="scene.turn_on">Activate a scene</option><option value="script.turn_on">Run a script</option></select></label>
+<label>Exact entity IDs, comma-separated<input id="entities" required placeholder="light.kitchen, light.hall"></label>
+<button type="submit">Review entity action...</button></form></section></div>
+<details class="card stack"><summary>Advanced service data</summary><p>Only for services and payloads you already know. No service is called while selecting a template or editing data.</p>
+<form id="advanced-form"><label>Exact domain.service<input id="custom-service" required placeholder="automation.trigger"></label>
+<label>JSON object service data<textarea id="payload" rows="5" required placeholder='{"entity_id":"automation.example"}'></textarea></label>
+<button type="submit">Review custom service call...</button></form></details>
+<section class="card stack"><h2 id="result-title">Service evidence</h2><div id="result"><p class="muted">No notification or service action has been submitted.</p></div></section></main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

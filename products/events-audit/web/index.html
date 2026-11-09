@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Events and Audit</title><link rel="stylesheet" href="shared/ui.css"></head><body>
-<header><div><h1>Events and Audit</h1><p data-app-label>Owner-scoped event history and activity evidence</p></div></header>
-<main class="stack"><div class="toolbar"><input id="query" placeholder="Search activity"><button id="search">Search</button>
-<button id="refresh" class="primary">Recent activity</button></div><p id="notice" class="notice"></p>
-<section id="events" class="card"></section><section class="card stack"><h2>Event details</h2><div id="details"></div></section>
-<div id="actions" class="toolbar"></div><div id="more"></div></main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
+<header><div><h1>Events and Audit</h1><p data-app-label>Event-service evidence and the separate legacy activity log</p></div></header>
+<main class="stack"><p id="notice" class="notice" role="status" aria-live="polite"></p><div id="workspace" class="stack"></div>
+<section class="card stack"><h2>Records</h2><p id="count">No query has been made.</p><div id="events" class="scroll"><p class="empty">Load records with an explicit query above.</p></div></section>
+<section class="card stack"><h2 id="detail-title">Record details</h2><div id="details"><p class="muted">No record selected. Nothing is watched or written automatically.</p></div></section></main>
+<script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

@@ -1,9 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Backup and Recovery</title><link rel="stylesheet" href="shared/ui.css"></head><body>
-<header><div><h1>Backup and Recovery</h1><p data-app-label>Backup repositories and explicit system recovery</p></div></header>
-<main class="stack"><div class="toolbar"><input id="repo" placeholder="Backup repository"><input id="credential" placeholder="OS credential reference">
-<button id="refresh" class="primary">Load snapshots</button></div><p id="notice" class="notice"></p><section id="snapshots" class="card"></section>
-<section class="card stack"><h2>Backup and recovery actions</h2><input id="snapshot" placeholder="Selected snapshot identifier">
-<div id="actions" class="toolbar"></div><div id="result"></div></section><div id="more"></div></main>
+<header><div><h1>Backup and Recovery</h1><p data-app-label>Data backups and whole-system recovery retain separate identities</p></div></header>
+<main class="stack"><p id="notice" class="notice" role="status" aria-live="polite"></p><div id="workspace" class="stack"></div>
+<section class="card stack"><h2 id="result-title">Recovery evidence</h2><div id="result"><p class="muted">No service request has been made. There is no assumed backup or recovery status.</p></div></section></main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

@@ -1,8 +1,16 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Storage</title><link rel="stylesheet" href="shared/ui.css"></head><body>
-<header><div><h1>Storage</h1><p data-app-label>Devices, mounts and filesystem health</p></div></header>
-<main class="stack"><div class="toolbar"><button id="refresh" class="primary">Refresh devices</button></div><p id="notice" class="notice"></p>
-<section id="devices" class="card"></section><section class="card stack"><h2>Device details</h2><input id="device" placeholder="Exact device identifier">
-<div id="actions" class="toolbar"></div><div id="result"></div></section><div id="more"></div></main>
-<script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
+<header><div><h1>Storage</h1><p data-app-label>Devices, mount points and read-only health checks</p></div></header>
+<main class="stack" id="workspace">
+<section class="card stack"><div class="row"><h2>Devices and volumes</h2><button id="refresh" class="primary">Load devices</button></div>
+<p>Nothing is scanned or changed on page load. Inventory, diagnosis and exact-device mount authority are separate.</p>
+<div id="devices" class="scroll"><p class="empty">Device inventory has not been loaded.</p></div></section>
+<p id="notice" class="notice" role="status" aria-live="polite"></p>
+<section class="card stack"><h2>Selected device</h2><p id="selected">No device selected. Selection does not mount, inspect or eject a device.</p>
+<label>Canonical device path<input id="device" placeholder="/dev/sdb1" autocomplete="off"></label>
+<div class="toolbar"><button id="health">Inspect health</button><button id="check">Read-only filesystem check</button></div>
+<h3>Mount and removal</h3><p>These actions need separate permission for the exact device and an explicit review. No formatting or repair is exposed.</p>
+<div class="toolbar"><button id="mount">Mount...</button><button id="unmount">Unmount...</button><button id="eject" class="danger">Eject...</button></div></section>
+<section class="card stack"><h2 id="result-title">Device evidence</h2><div id="result"><p class="muted">Select a record or request a check. No health result is assumed.</p></div></section>
+</main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

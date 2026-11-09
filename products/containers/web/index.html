@@ -1,9 +1,23 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Containers</title><link rel="stylesheet" href="shared/ui.css"></head><body>
-<header><div><h1>Containers</h1><p data-app-label>Runtime inventory, logs and controlled lifecycle</p></div></header>
-<main class="stack"><div class="toolbar"><select id="runtime" style="width:180px"><option value="docker">Docker</option><option value="podman">Podman</option>
-<option value="containerd">containerd</option></select><input id="namespace" placeholder="Namespace (when required)"><button id="refresh" class="primary">Refresh containers</button></div>
-<p id="notice" class="notice"></p><section id="containers" class="card"></section>
-<section class="card stack"><h2 id="selected">Container details</h2><div id="actions" class="toolbar"></div><div id="result"></div></section>
-<div id="more"></div></main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
+<header><div><h1>Containers</h1><p data-app-label>Runtime inventory, bounded logs and controlled lifecycle</p></div></header>
+<main id="workspace" class="stack">
+<section class="card stack"><h2>Choose a runtime</h2><p>Observation and lifecycle control use separate permissions. No runtime socket or container action is opened automatically.</p>
+<form id="inventory-form"><div class="cards"><label>Runtime<select id="runtime"><option value="docker">Docker</option><option value="podman">Podman (rootless)</option>
+<option value="podman-root">Podman (rootful)</option><option value="containerd">containerd</option></select></label>
+<label id="namespace-label" hidden>containerd namespace<input id="namespace" placeholder="Exact namespace" autocomplete="off"></label></div>
+<div class="toolbar"><button id="refresh" type="submit" class="primary">Load containers</button><button id="status" type="button">Runtime availability</button></div></form>
+<div id="containers" class="scroll"></div></section>
+<p id="notice" class="notice" role="status" aria-live="polite"></p>
+<section class="card stack"><h2>Container details</h2><label>Container ID or name<input id="target" placeholder="Select a record or enter an exact target" autocomplete="off"></label>
+<div class="toolbar"><button id="inspect">Inspect</button><button id="stats">Resource snapshot</button><button id="processes">Processes</button></div>
+<div class="cards"><label>Recent log lines (1-1000)<input id="lines" type="number" min="1" max="1000" step="1" value="100"></label></div>
+<div class="toolbar"><button id="logs">Load logs</button></div>
+<h3>Lifecycle</h3><p>Choosing a container does not control it. Every lifecycle request is reviewed separately.</p>
+<div class="toolbar"><button id="start">Start...</button><button id="stop">Stop...</button><button id="restart">Restart...</button></div>
+<details class="stack"><summary>Advanced container controls</summary><div class="toolbar"><button id="pause">Pause...</button><button id="unpause">Unpause...</button><button id="namespaces">Inspect namespaces</button></div>
+<label>Signal<select id="signal"><option>TERM</option><option>KILL</option><option>HUP</option><option>INT</option><option>USR1</option><option>USR2</option></select></label>
+<div class="toolbar"><button id="kill" class="danger">Send signal...</button><button id="remove" class="danger">Remove container...</button></div></details></section>
+<section class="card stack"><h2 id="result-title">Container evidence</h2><div id="result"></div></section>
+</main><script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
