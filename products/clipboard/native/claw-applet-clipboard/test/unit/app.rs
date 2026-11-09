@@ -16,16 +16,16 @@ fn deny_write(permission: HistoryPermission) -> crate::PolicyFuture {
 
 #[tokio::test]
 async fn denied_history_operations_never_reach_copyq() {
-    assert_eq!(load_history(deny).await.unwrap_err(), "Denied Read history");
-    assert_eq!(restore(deny, "fixture".into()).await.unwrap_err(), "Denied Read history");
-    assert_eq!(remove(deny, "fixture".into()).await.unwrap_err(), "Denied Read history");
-    assert_eq!(clear(deny).await.unwrap_err(), "Denied Write history");
-    assert_eq!(restore(deny_write, "fixture".into()).await.unwrap_err(), "Denied Write history");
-    assert_eq!(remove(deny_write, "fixture".into()).await.unwrap_err(), "Denied Write history");
+    assert_eq!(load_history(Some(deny)).await.unwrap_err(), "Denied Read history");
+    assert_eq!(restore(Some(deny), "fixture".into()).await.unwrap_err(), "Denied Read history");
+    assert_eq!(remove(Some(deny), "fixture".into()).await.unwrap_err(), "Denied Read history");
+    assert_eq!(clear(Some(deny)).await.unwrap_err(), "Denied Write history");
+    assert_eq!(restore(Some(deny_write), "fixture".into()).await.unwrap_err(), "Denied Write history");
+    assert_eq!(remove(Some(deny_write), "fixture".into()).await.unwrap_err(), "Denied Write history");
 }
 
 fn applet() -> ClipboardApplet {
-    ClipboardApplet::init(cosmic::app::Core::default(), deny).0
+    ClipboardApplet::init(cosmic::app::Core::default(), Some(deny)).0
 }
 
 #[test]

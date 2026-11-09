@@ -4,7 +4,9 @@
   "tests": ["native/test_build.py"],
   "native": {"claw-applet-widget-rail": "native/claw-applet-widget-rail"},
   "native_kind": "binary",
+  "native_payload": {"app": "widget-rail", "program": "claw-applet-widget-rail"},
   "native_assets": {"claw-applet-widget-rail": {
-    "Cargo.lock": "native/Cargo.lock", "LICENSE": "native/LICENSE"
+    "Cargo.lock": "native/Cargo.lock", "LICENSE": "native/LICENSE",
+    "app.json": "apps/widget-rail/app.json"
   }}
 }

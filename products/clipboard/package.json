@@ -4,7 +4,9 @@
   "tests": ["native/test_build.py"],
   "native": {"claw-applet-clipboard": "native/claw-applet-clipboard"},
   "native_kind": "binary",
+  "native_payload": {"app": "panel-clipboard", "program": "claw-applet-clipboard"},
   "native_assets": {"claw-applet-clipboard": {
-    "Cargo.lock": "native/Cargo.lock", "LICENSE": "native/LICENSE"
+    "Cargo.lock": "native/Cargo.lock", "LICENSE": "native/LICENSE",
+    "app.json": "apps/panel-clipboard/app.json"
   }}
 }

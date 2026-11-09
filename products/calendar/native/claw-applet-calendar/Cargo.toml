@@ -15,6 +15,7 @@ path = "src/main.rs"
 xdgen = "0.1"
 
 [dependencies]
+async-trait = "0.1"
 claw-os-sdk = { path = "../../../claw-os-sdk/rust", version = "0.2" }
 i18n-embed-fl = "0.10"
 i18n-embed = { version = "0.16.0", features = ["fluent-system", "desktop-requester"] }
@@ -24,12 +25,11 @@ libcosmic = { git = "https://github.com/pop-os/libcosmic", default-features = fa
     "wayland", "desktop-systemd-scope", "winit",
 ] }
 rust-embed = "8.11.0"
+serde_json = "1"
+tokio = { version = "1.49.0", features = ["macros", "rt", "time"] }
 tracing = "0.1"
 tracing-log = "0.2"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
-
-[dev-dependencies]
-tokio = { version = "1.49.0", features = ["macros", "rt"] }
 
 [profile.release]
 opt-level = 1

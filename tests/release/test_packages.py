@@ -65,7 +65,16 @@ def test_standalone_applet_packages_require_the_versioned_os_service_only_for_de
     assert {entry["architecture"] for entry in native} == {"amd64", "arm64"}
     for entry in packages:
         dependencies = release.dependencies(entry, "1.0.0")
-        assert ("claw-os-applet-services-v1 (= 1)" in dependencies) == (entry["variant"] == "desktop")
+        assert "claw-os-applet-services-v1 (= 1)" not in dependencies
+        assert ("claw-os-clipboard-history-v1 (= 1)" in dependencies) == (
+            product == "clipboard" and entry["variant"] == "desktop"
+        )
+        assert ("claw-os-calendar-read-v1 (= 1)" in dependencies) == (
+            product in {"calendar", "desktop-widgets"} and entry["variant"] == "desktop"
+        )
+        assert ("claw-os-observation-v1 (= 1)" in dependencies) == (
+            product == "desktop-widgets" and entry["variant"] == "desktop"
+        )
         assert "claw-os-app-runtime-v1" in dependencies
         root = tmp_path / entry["package"] / entry["architecture"]
         root.mkdir(parents=True)

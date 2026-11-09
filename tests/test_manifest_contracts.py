@@ -1185,7 +1185,6 @@ def test_file_plan_manifest_keeps_exact_authority_and_explicit_confirmation():
 
 
 def test_bundled_apps_have_an_explicit_agent_surface() -> None:
-    human_only = {"panel-calendar", "panel-clipboard", "widget-rail"}
     manifests = [
         (path, json.loads(path.read_text(encoding="utf-8")))
         for path in _manifests()
@@ -1193,7 +1192,7 @@ def test_bundled_apps_have_an_explicit_agent_surface() -> None:
     missing_mcp = {
         manifest["id"] for _path, manifest in manifests if "mcp" not in manifest
     }
-    assert missing_mcp == human_only
+    assert not missing_mcp
     native_plans = {}
     for name in stage.sources("product"):
         _source, package = stage.load_package(name, "product")
@@ -1209,10 +1208,6 @@ def test_bundled_apps_have_an_explicit_agent_surface() -> None:
         native_plans[planned["app_id"]] = planned
 
     for path, manifest in manifests:
-        if manifest["id"] in human_only:
-            assert manifest["desktop"]["panel_applet"] is True
-            assert manifest["runtime"] == "shell"
-            continue
         assert manifest["schema_version"] == 2
         assert manifest["mcp"]["tools"]
         entry = manifest["mcp"].get("entry")

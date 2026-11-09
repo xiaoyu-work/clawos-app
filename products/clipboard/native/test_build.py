@@ -28,7 +28,7 @@ def test_native_staging_preserves_complete_ui_backend_and_license(tmp_path):
     assert (output / "LICENSE").read_bytes() == (NATIVE / "LICENSE").read_bytes()
     assert (output / "Cargo.lock").read_bytes() == (NATIVE / "Cargo.lock").read_bytes()
     entry = (output / "data/com.clawos.AppletClipboard.desktop").read_text()
-    assert "cos app panel-clipboard open" in entry
+    assert "Exec=claw-applet-clipboard" in entry
     assert "Icon=edit-paste-symbolic" in entry
 
 

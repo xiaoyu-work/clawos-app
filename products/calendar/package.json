@@ -4,7 +4,9 @@
   "tests": ["native/test_build.py"],
   "native": {"claw-applet-calendar": "native/claw-applet-calendar"},
   "native_kind": "binary",
+  "native_payload": {"app": "panel-calendar", "program": "claw-applet-calendar"},
   "native_assets": {"claw-applet-calendar": {
-    "Cargo.lock": "native/Cargo.lock", "LICENSE": "native/LICENSE"
+    "Cargo.lock": "native/Cargo.lock", "LICENSE": "native/LICENSE",
+    "app.json": "apps/panel-calendar/app.json"
   }}
 }

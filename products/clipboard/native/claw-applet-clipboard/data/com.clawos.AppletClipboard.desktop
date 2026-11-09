@@ -2,7 +2,7 @@
 Name=Clipboard History
 Comment=Restore recent text copied by the existing CopyQ service
 Type=Application
-Exec=cos app panel-clipboard open
+Exec=claw-applet-clipboard
 Terminal=false
 Categories=Utility;X-ClawOS;
 Keywords=ClawOS;Applet;Clipboard;History;CopyQ;

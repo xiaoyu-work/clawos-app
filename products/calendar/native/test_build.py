@@ -27,7 +27,10 @@ def test_native_staging_preserves_complete_ui_and_license(tmp_path):
             assert (output / source.relative_to(NATIVE / "claw-applet-calendar")).read_bytes() == source.read_bytes()
     assert (output / "LICENSE").read_bytes() == (NATIVE / "LICENSE").read_bytes()
     assert (output / "Cargo.lock").read_bytes() == (NATIVE / "Cargo.lock").read_bytes()
-    assert "cos app panel-calendar open" in (
+    assert (output / "app.json").read_bytes() == (
+        NATIVE.parent / "apps/panel-calendar/app.json"
+    ).read_bytes()
+    assert "Exec=claw-applet-calendar" in (
         output / "data/com.clawos.PanelCalendarButton.desktop"
     ).read_text()
 

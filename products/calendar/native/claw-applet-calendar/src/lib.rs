@@ -2,6 +2,7 @@
 
 mod app;
 mod localize;
+mod mcp;
 mod service;
 
 use jiff::civil::Date;
@@ -21,6 +22,10 @@ pub type AgendaProvider = fn(Date) -> AgendaFuture;
 
 pub fn run_installed() -> cosmic::iced::Result {
     run(service::agenda)
+}
+
+pub fn run_mcp() -> Result<(), Box<dyn std::error::Error>> {
+    mcp::run()
 }
 
 /// Presentation owns no authority; the standalone entry uses the OS SDK provider.

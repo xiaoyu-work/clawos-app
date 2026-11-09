@@ -1,6 +1,7 @@
 {
   "id": "panel-calendar",
   "version": "0.1.0",
+  "schema_version": 2,
   "name": {
     "en": "Calendar"
   },
@@ -8,8 +9,56 @@
     "en": "Native calendar and local agenda panel applet."
   },
   "icon": "com.clawos.PanelCalendarButton-symbolic",
-  "runtime": "shell",
-  "entry": "main.sh",
+  "runtime": "binary",
+  "entry": "bin/claw-applet-calendar",
+  "mcp": {
+    "entry": "bin/claw-applet-calendar",
+    "transport": "stdio",
+    "lifecycle": "lazy",
+    "tools": [
+      {
+        "name": "panel-calendar.day",
+        "summary": {
+          "en": "Read the owner's local Calendar agenda for one day."
+        },
+        "args": [
+          {
+            "name": "date",
+            "kind": "text",
+            "required": true,
+            "binding": "flag",
+            "label": {
+              "en": "Calendar day (YYYY-MM-DD)"
+            }
+          }
+        ],
+        "needs": [
+          {
+            "verb": "data.db.read",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "calendar"
+              }
+            },
+            "why": {
+              "en": "Read local calendar events for the selected-day agenda."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read the selected-day Calendar agenda."
+            },
+            "recovery": "not_applicable"
+          }
+        ]
+      }
+    ]
+  },
   "operations": {
     "open": {
       "label": {

@@ -26,9 +26,9 @@
   },
   "desktop_dependencies": {
     "mail": ["thunderbird"],
-    "calendar": ["claw-os-applet-services-v1 (= 1)"],
-    "clipboard": ["copyq", "claw-os-applet-services-v1 (= 1)"],
-    "desktop-widgets": ["claw-os-applet-services-v1 (= 1)"],
+    "calendar": ["claw-os-calendar-read-v1 (= 1)"],
+    "clipboard": ["copyq", "claw-os-clipboard-history-v1 (= 1)"],
+    "desktop-widgets": ["claw-os-calendar-read-v1 (= 1)", "claw-os-observation-v1 (= 1)"],
     "capture": ["claw-os-capture-v1", "xdg-desktop-portal"],
     "media-player": ["claw-os-media-player-v1", "gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good", "gstreamer1.0-libav"],
     "notifications": ["claw-os-notifications-v1"],

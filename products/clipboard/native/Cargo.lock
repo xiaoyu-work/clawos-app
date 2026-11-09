@@ -708,6 +708,7 @@ dependencies = [
 name = "claw-applet-clipboard"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "claw-os-sdk",
  "i18n-embed",
  "i18n-embed-fl",

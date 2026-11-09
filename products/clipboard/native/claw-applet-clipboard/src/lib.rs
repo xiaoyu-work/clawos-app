@@ -3,6 +3,7 @@
 mod app;
 mod copyq;
 mod localize;
+mod mcp;
 mod service;
 
 use std::{future::Future, pin::Pin};
@@ -17,11 +18,19 @@ pub type PolicyFuture = Pin<Box<dyn Future<Output = Result<(), String>> + Send>>
 pub type HistoryPolicy = fn(HistoryPermission) -> PolicyFuture;
 
 pub fn run_installed() -> cosmic::iced::Result {
-    run(service::history_policy)
+    run_with_policy(None)
 }
 
-/// The standalone entry obtains only named history authorization from the OS SDK.
+pub fn run_mcp() -> Result<(), Box<dyn std::error::Error>> {
+    mcp::run()
+}
+
+/// Preserve the linked shell's optional policy seam; Root still authorizes every operation.
 pub fn run(policy: HistoryPolicy) -> cosmic::iced::Result {
+    run_with_policy(Some(policy))
+}
+
+fn run_with_policy(policy: Option<HistoryPolicy>) -> cosmic::iced::Result {
     localize::localize();
     cosmic::applet::run::<app::ClipboardApplet>(policy)
 }

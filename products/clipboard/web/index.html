@@ -17,9 +17,18 @@
 <button type="submit">Review source-file write...</button></form>
 <div class="toolbar"><button id="clear" class="danger">Clear selected selection...</button></div></section>
 <section class="card stack"><h2 id="result-title">Clipboard evidence</h2><div id="result"><p class="muted">No service request has been made.</p></div></section></div>
-<section id="native-history" class="card stack" hidden><h2>Native CopyQ history</h2>
-<p>The installed Clipboard History desktop entry opens the standalone native history panel. This Web entry declares no MCP tools and cannot load, restore, delete or clear history.</p>
-<div class="cards"><section class="card stack"><h3>History read</h3><p>clipboard.read:history allows the native panel's policy-checked history display. It is not clipboard.read:selection.</p></section>
-<section class="card stack"><h3>History changes</h3><p>The native panel checks history grants for restore, delete and clear. This Web page has no history execution bridge and cannot borrow the Clipboard Manager identity.</p></section></div>
-<h3>What is available here?</h3><p>Only this entry's integration information. Use the installed native panel for actual history. No local browser history, clipboard content, sample entries or fake empty-state result is substituted for unavailable data.</p></section></main>
+<div id="native-history" class="stack" hidden>
+<section class="card stack"><h2>Existing CopyQ history</h2>
+<p>History is loaded only when you request it. Read uses clipboard.read:history, not selection access. This entry calls only its own history tools; it never borrows Clipboard Manager grants or the browser clipboard.</p>
+<div class="toolbar"><button id="history-load" class="primary">Load history explicitly</button><button id="history-hide">Hide local previews</button></div>
+<p id="history-state" class="muted">History has not been loaded. Missing CopyQ or OS service is reported as unavailable, never as sample or empty history.</p>
+<div id="history-items" class="stack"><p class="muted">No service request has been made.</p></div></section>
+<section class="card stack"><h2>Selected history preview</h2><p>Selecting an already loaded preview does not read the live selection or fetch more content. Previews are plain text, at most 180 characters plus truncation.</p>
+<pre id="history-preview">No history item selected.</pre><p id="history-time" class="muted">Copy time not reported.</p><code id="history-identity"></code>
+<div class="toolbar"><button id="history-restore" disabled>Review restore to live clipboard...</button><button id="history-remove" class="danger" disabled>Review delete item...</button></div>
+<p>Restore separately requires clipboard.write:selection. A missing grant is a denial, not a reason to run CopyQ directly. Item identities are rechecked by the OS, not interpreted as row numbers.</p></section>
+<section class="card stack"><h2>Clear history</h2><p>Clear needs only clipboard.write:history and explicit confirmation. It does not grant selection read or write, and no undo is promised.</p>
+<button id="history-clear" class="danger">Review clear history...</button></section>
+<section class="card stack"><h2>History action response</h2><div id="history-result"><p class="muted">No history action has been requested.</p></div></section>
+</div></main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
