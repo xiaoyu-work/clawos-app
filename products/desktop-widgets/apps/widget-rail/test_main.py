@@ -15,7 +15,7 @@ def test_identity_and_independent_original_grants():
     needs = manifest["operations"]["open"]["needs"]
     assert [(need["verb"], need["scope"]) for need in needs] == [
         ("data.db.read", {"kind": "fixed", "scope": {"kind": "name", "value": "calendar"}}),
-        ("sys.observe", {"kind": "wild"}),
+        ("sys.observe", {"kind": "fixed", "scope": {"kind": "name", "value": "resources"}}),
         ("agent.observe", {"kind": "fixed", "scope": {"kind": "name", "value": "tasks"}}),
     ]
     assert manifest["desktop"]["single_instance"] is True
