@@ -3,8 +3,15 @@
 <title>HTTP Client</title><link rel="stylesheet" href="shared/ui.css"></head><body>
 <header><div><h1>HTTP Client</h1><p data-app-label>Capability-scoped HTTP requests and private downloads</p></div></header>
 <main class="stack"><form id="request" class="card stack"><div class="toolbar">
-<select name="method" style="width:120px"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option><option>HEAD</option></select>
-<input name="url" placeholder="HTTPS URL" required><button class="primary" type="submit">Send request</button></div>
-<label>Request body<textarea name="data"></textarea></label></form><p id="notice" class="notice"></p>
-<section class="card stack"><h2>Response</h2><div id="response"></div></section><div id="actions" class="toolbar"></div><div id="more"></div></main>
+<select name="method" aria-label="HTTP method" style="width:120px"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select>
+<input name="url" type="url" placeholder="HTTPS URL" required><button class="primary" type="submit">Send request</button></div>
+<label>Headers, one Name: value per line<textarea name="header" rows="3" placeholder="Accept: application/json"></textarea></label>
+<label>Timeout in seconds<input name="timeout" type="number" min="1" max="300" value="30" required></label>
+<label>Request body<textarea name="data"></textarea></label>
+<p class="muted small">Only Send request contacts the server. Headers and request bodies are not saved by this page.</p></form>
+<p id="notice" class="notice" role="status"></p><section class="card stack"><h2>Response</h2>
+<p id="response-status" class="small muted">No request sent.</p><div id="response-headers"></div>
+<label>Response body<textarea id="response" class="editor" readonly></textarea></label></section>
+<section class="card stack"><h2>Download</h2><p class="muted small">Downloads use the App's separately authorized canonical file destination, not the browser.</p>
+<div id="actions" class="toolbar"></div><p id="download-result" class="small"></p></section><div id="more"></div></main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

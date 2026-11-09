@@ -3,8 +3,13 @@
 <title>Document Engine</title><link rel="stylesheet" href="shared/ui.css"></head><body>
 <header><div><h1>Document Engine</h1><p data-app-label>Shared document client: inspection, conversion and explicit-text AI</p></div></header>
 <main class="stack"><section class="card stack"><h2>Document</h2><label>Authorized file path<input id="path"></label>
-<div id="file-actions" class="toolbar"></div></section><section class="card stack"><h2>Text assistance</h2>
+<div id="file-actions" class="toolbar"></div><p id="file-info" class="small muted"></p>
+<label>Extracted document text<textarea id="preview" class="editor" readonly></textarea></label></section>
+<p id="notice" class="notice" role="status"></p><section class="card stack"><h2>Text assistance</h2>
+<label>Input source<select id="input-source"><option value="text">Explicit text below</option><option value="file">The authorized document above</option></select></label>
 <label>Explicit text<textarea id="text"></textarea></label><div id="ai-actions" class="toolbar"></div>
+<label>Rewrite instruction<input id="instruction" value="Improve clarity, fix grammar, keep the original meaning."></label>
 <p class="muted small">This is a shared-capability client, not a privileged parser or another product's AI provider.</p></section>
-<section class="card stack"><h2>Document result</h2><div id="result"></div></section><div id="more"></div></main>
+<section class="card stack"><h2>Document result</h2><div id="result" class="prose"></div>
+<p id="result-source" class="small muted"></p><button id="use-text" hidden>Use proposal as text input</button></section><div id="more"></div></main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>
