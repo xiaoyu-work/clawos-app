@@ -33,10 +33,15 @@
   });
 
   function unwrap(value) {
+    if (value && value.isError) {
+      const detail = value.structuredContent;
+      const text = Array.isArray(value.content) ? value.content
+        .filter((item) => item.type === "text").map((item) => item.text).join("\n") : "";
+      throw new Error(detail && typeof detail.error === "string" ? detail.error : text || "App reported an error");
+    }
     if (value && value.structuredContent !== undefined) return value.structuredContent;
     if (value && Array.isArray(value.content)) {
       const text = value.content.filter((item) => item.type === "text").map((item) => item.text).join("\n");
-      if (value.isError) throw new Error(text || "App reported an error");
       try { return JSON.parse(text); } catch { return text || value; }
     }
     return value;

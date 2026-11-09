@@ -21,6 +21,12 @@ Every call uses the existing owner-scoped App service and ordinary capability,
 review, cancellation and audit checks. Normal App operations require no model
 request or running Agent task.
 
+The script-only sandbox also forbids native form navigation. Bundled
+presentation helpers cancel submit-button clicks and input Enter keys, check
+HTML validity and the pending submitter, and dispatch the existing JavaScript
+submit handler. Do not add `allow-forms` or same-origin access to make a form
+work. A required confirmation remains unchecked until the user selects it.
+
 The App Store obtains only authenticated release metadata and immutable
 payloads from `xiaoyu-work/clawos-app`. Installation uses the OS's protected
 human review and verified directory installer. Catalog signatures, package

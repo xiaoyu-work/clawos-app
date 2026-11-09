@@ -79,36 +79,53 @@
     const label = document.querySelector("[data-app-label]");
     if (label) label.textContent = `${typeof app.name === "string" ? app.name : app.id} · ${app.id}`;
   }
-  function command(app, name, defaults, onResult) {
+  function command(app, name, defaults, onResult, options) {
+    options = options || {};
     const tool = ClawApp.tool(app, name);
     if (!tool) throw new Error(`This App entry does not declare ${name}.`);
     const dialog = node("dialog");
-    dialog.append(node("h2", tool.name));
-    dialog.append(node("p", tool.description || "", { class: "muted small" }));
+    dialog.append(node("h2", options.title || tool.name));
+    dialog.append(node("p", options.description || tool.description || "", { class: "muted small" }));
     const form = node("form");
     const inputs = [];
     for (const argument of tool.args || []) {
-      const label = node("label", argument.name);
+      const presentation = options.fields && options.fields[argument.name] || {};
+      const label = node("label", presentation.label || argument.name.replace(/[-_]/g, " "));
       const type = argument.kind;
-      const complex = ["json", "object", "list", "array"].includes(type);
-      const input = node(complex || type === "text" ? "textarea" : "input");
+      const complex = argument.repeatable || ["json", "object", "list", "array"].includes(type);
+      const choices = presentation.choices || argument.choices;
+      const boolean = type === "bool" || type === "boolean";
+      const selection = Array.isArray(choices) && choices.length && !boolean && !argument.repeatable;
+      const input = node(selection ? "select" :
+        presentation.type === "textarea" || !presentation.type && (complex || type === "text") ? "textarea" : "input");
       input.name = argument.name;
-      if (!complex) input.type = type === "bool" || type === "boolean" ? "checkbox" :
+      if (input.tagName === "SELECT") {
+        if (!argument.required) input.append(node("option", "Not specified", { value: "" }));
+        for (const choice of choices) input.append(node("option", choice, { value: choice }));
+      } else if (input.tagName === "INPUT") input.type = presentation.type || (boolean ? "checkbox" :
         ["int", "integer", "number", "float"].includes(type) ? "number" :
-        /password|secret|bearer|hmac/.test(argument.name) ? "password" : "text";
+        /password|secret|bearer|hmac/.test(argument.name) ? "password" : "text");
       const value = defaults && defaults[argument.name] !== undefined ? defaults[argument.name] : argument.default;
-      if (input.type === "checkbox") input.checked = value === true;
-      else if (value !== undefined && value !== null) input.value = complex ? JSON.stringify(value, null, 2) : String(value);
-      input.required = argument.required === true && input.type !== "checkbox";
-      if (argument.description) label.append(node("span", argument.description, { class: "muted" }));
+      if (input.type === "checkbox") input.checked = argument.name !== "confirm" && value === true;
+      else if (value !== undefined && value !== null) input.value = presentation.format ? presentation.format(value) :
+        complex ? JSON.stringify(value, null, 2) : String(value);
+      input.required = argument.required === true && !presentation.allowEmpty &&
+        (input.type !== "checkbox" || argument.name === "confirm" || choices && !choices.includes(false));
+      for (const attribute of ["placeholder", "min", "max", "step", "rows", "maxlength"]) {
+        if (presentation[attribute] !== undefined) input.setAttribute(attribute, presentation[attribute]);
+      }
+      if (presentation.readOnly) input.readOnly = true;
+      if (presentation.hidden) label.hidden = true;
+      const description = presentation.description || argument.description;
+      if (description) label.append(node("span", description, { class: "muted" }));
       label.append(input);
       form.append(label);
-      inputs.push({ input, complex });
+      inputs.push({ input, complex, argument, presentation, choices, selection });
     }
     const notice = node("p", "", { class: "notice" });
     const actions = node("div", null, { class: "toolbar" });
     const cancel = node("button", "Cancel", { type: "button" });
-    const execute = node("button", "Run", { type: "submit", class: "primary" });
+    const execute = node("button", options.submitLabel || "Run", { type: "submit", class: "primary" });
     cancel.onclick = () => dialog.close();
     actions.append(cancel, execute);
     form.append(notice, actions);
@@ -116,13 +133,14 @@
       event.preventDefault();
       const arguments_ = {};
       try {
-        for (const { input, complex } of inputs) {
+        for (const { input, complex, argument, presentation, choices, selection } of inputs) {
           if (input.type === "checkbox") arguments_[input.name] = input.checked;
-          else if (input.value !== "") arguments_[input.name] = complex ? JSON.parse(input.value) :
-            input.type === "number" ? Number(input.value) : input.value;
+          else if (input.value !== "" || argument.required || presentation.includeEmpty) arguments_[input.name] = presentation.parse ?
+            presentation.parse(input.value) : selection ? choices.find((choice) => String(choice) === input.value) :
+              complex ? JSON.parse(input.value) : input.type === "number" ? Number(input.value) : input.value;
         }
-      } catch {
-        notice.textContent = "Enter valid JSON for structured fields.";
+      } catch (error) {
+        notice.textContent = error.message || "Check the entered values.";
         notice.classList.add("error");
         return;
       }
@@ -135,6 +153,8 @@
     dialog.addEventListener("close", () => dialog.remove());
     document.body.append(dialog);
     dialog.showModal();
+    const first = inputs.find(({ input, presentation }) => !presentation.hidden && !input.readOnly);
+    if (first) first.input.focus();
   }
   function actions(target, app, names, onResult, defaults) {
     for (const item of names) {
@@ -157,5 +177,24 @@
     details.append(buttons);
     target.append(details);
   }
+  function submitForm(form) {
+    const submitter = Array.from(form.elements).find((element) => element.type === "submit");
+    if (submitter && submitter.disabled || !form.reportValidity()) return;
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  }
+  // The script-only Host deliberately forbids native form navigation.
+  document.addEventListener("click", (event) => {
+    const control = event.target.closest("button, input");
+    if (!control || !control.form || control.type !== "submit") return;
+    event.preventDefault();
+    submitForm(control.form);
+  }, true);
+  document.addEventListener("keydown", (event) => {
+    const control = event.target;
+    if (event.key !== "Enter" || control.tagName !== "INPUT" || !control.form ||
+        ["checkbox", "radio", "file", "button", "submit"].includes(control.type)) return;
+    event.preventDefault();
+    submitForm(control.form);
+  }, true);
   window.ClawUi = Object.freeze({ node, replace, rows, table, run, output, fields, showApp, command, actions, allTools });
 }());
