@@ -2,7 +2,7 @@
 Name=Desktop Widgets
 Comment=Calendar, AI tasks, system health, and smart suggestions
 Type=Application
-Exec=cos app widget-rail open
+Exec=claw-applet-widget-rail
 Terminal=false
 Categories=ClawOS;
 Keywords=ClawOS;Applet;Widgets;Calendar;Tasks;System;Suggestions;

@@ -1,6 +1,7 @@
 {
   "id": "widget-rail",
   "version": "0.1.0",
+  "schema_version": 2,
   "name": {
     "en": "Desktop Widgets"
   },
@@ -8,8 +9,104 @@
     "en": "Calendar, AI tasks, system health, and smart suggestions."
   },
   "icon": "view-grid-symbolic",
-  "runtime": "shell",
-  "entry": "main.sh",
+  "runtime": "binary",
+  "entry": "bin/claw-applet-widget-rail",
+  "mcp": {
+    "entry": "bin/claw-applet-widget-rail",
+    "transport": "stdio",
+    "lifecycle": "lazy",
+    "tools": [
+      {
+        "name": "widget-rail.calendar",
+        "summary": {
+          "en": "Read today's events from the owner's local Calendar service."
+        },
+        "args": [],
+        "needs": [
+          {
+            "verb": "data.db.read",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "calendar"
+              }
+            },
+            "why": {
+              "en": "Read local calendar events for the Today card."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read today's Calendar events."
+            },
+            "recovery": "not_applicable"
+          }
+        ]
+      },
+      {
+        "name": "widget-rail.tasks",
+        "summary": {
+          "en": "Observe the owner's Agent tasks without starting or changing a task."
+        },
+        "args": [],
+        "needs": [
+          {
+            "verb": "agent.observe",
+            "scope": {
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "tasks"
+              }
+            },
+            "why": {
+              "en": "Read the agent task list for the AI Tasks card."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Observe existing Agent tasks."
+            },
+            "recovery": "not_applicable"
+          }
+        ]
+      },
+      {
+        "name": "widget-rail.system",
+        "summary": {
+          "en": "Read system resource telemetry from the OS service."
+        },
+        "args": [],
+        "needs": [
+          {
+            "verb": "sys.observe",
+            "scope": {
+              "kind": "wild"
+            },
+            "why": {
+              "en": "Observe system resource usage for the System Health card."
+            }
+          }
+        ],
+        "effects": [
+          {
+            "kind": "read",
+            "label": {
+              "en": "Read system resource telemetry."
+            },
+            "recovery": "not_applicable"
+          }
+        ]
+      }
+    ]
+  },
   "operations": {
     "open": {
       "label": {

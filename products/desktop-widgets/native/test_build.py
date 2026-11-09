@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import os
 from pathlib import Path
 import shutil
@@ -28,8 +29,11 @@ def test_native_staging_preserves_complete_ui_and_license(tmp_path):
             assert (output / source.relative_to(source_root)).read_bytes() == source.read_bytes()
     assert (output / "LICENSE").read_bytes() == (NATIVE / "LICENSE").read_bytes()
     assert (output / "Cargo.lock").read_bytes() == (NATIVE / "Cargo.lock").read_bytes()
+    assert (output / "app.json").read_bytes() == (
+        NATIVE.parent / "apps/widget-rail/app.json"
+    ).read_bytes()
     entry = (output / "data/com.clawos.AppletWidgetRail.desktop").read_text()
-    assert "cos app widget-rail open" in entry
+    assert "Exec=claw-applet-widget-rail" in entry
     assert "Icon=view-grid-symbolic" in entry
 
 
@@ -57,7 +61,9 @@ def test_desktop_identity_stages_without_tests(tmp_path):
     stage = module(ROOT / "tools/stage.py")
     assert stage.stage("desktop-widgets", tmp_path, ["widget-rail"]) == ["widget-rail"]
     output = tmp_path / "usr/lib/cos/apps/widget-rail"
-    assert (output / "main.sh").stat().st_mode & 0o111
+    manifest = json.loads((output / "app.json").read_text())
+    assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/claw-applet-widget-rail"
+    assert not (output / manifest["entry"]).exists(), "source staging must not fabricate an ELF"
     assert not (output / "test_main.py").exists()
 
 

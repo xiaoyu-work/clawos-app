@@ -5,11 +5,59 @@
     "en": "Clipboard History"
   },
   "summary": {
-    "en": "Native text-only panel access to the existing CopyQ history."
+    "en": "Read and manage existing CopyQ history through the owner-bound OS clipboard service."
   },
   "icon": "edit-paste-symbolic",
-  "runtime": "shell",
-  "entry": "main.sh",
+  "runtime": "binary",
+  "schema_version": 2,
+  "entry": "bin/claw-applet-clipboard",
+  "mcp": {
+    "entry": "bin/claw-applet-clipboard",
+    "transport": "stdio",
+    "lifecycle": "lazy",
+    "access": {"system_agent": true},
+    "tools": [
+      {
+        "name": "history.list",
+        "summary": {"en": "List up to twenty text-only clipboard history previews."},
+        "args": [],
+        "needs": [
+          {"verb": "clipboard.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "history"}}, "why": {"en": "Read the existing history text previews, not the current selection."}}
+        ],
+        "effects": [{"kind": "read", "label": {"en": "Read existing clipboard history previews"}, "recovery": "unknown"}]
+      },
+      {
+        "name": "history.restore",
+        "summary": {"en": "Restore one unchanged history item to the live clipboard."},
+        "args": [{"name": "identity", "kind": "text", "required": true}],
+        "needs": [
+          {"verb": "clipboard.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "history"}}, "why": {"en": "Locate the selected unchanged history item."}},
+          {"verb": "clipboard.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "history"}}, "why": {"en": "Select the existing history item in CopyQ."}},
+          {"verb": "clipboard.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "selection"}}, "why": {"en": "Replace the live clipboard selection with the selected history item."}}
+        ],
+        "effects": [{"kind": "update", "label": {"en": "Restore a history item to the live clipboard"}, "recovery": "unknown"}]
+      },
+      {
+        "name": "history.remove",
+        "summary": {"en": "Delete one unchanged clipboard history item."},
+        "args": [{"name": "identity", "kind": "text", "required": true}],
+        "needs": [
+          {"verb": "clipboard.read", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "history"}}, "why": {"en": "Locate the selected unchanged history item."}},
+          {"verb": "clipboard.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "history"}}, "why": {"en": "Delete only the selected item from existing history."}}
+        ],
+        "effects": [{"kind": "delete", "label": {"en": "Delete a selected clipboard history item"}, "recovery": "unknown"}]
+      },
+      {
+        "name": "history.clear",
+        "summary": {"en": "Clear the existing clipboard history after explicit confirmation."},
+        "args": [{"name": "confirm", "kind": "bool", "required": true, "choices": [true], "binding": "flag"}],
+        "needs": [
+          {"verb": "clipboard.write", "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "history"}}, "why": {"en": "Clear the existing configured history tab without changing selection authority."}}
+        ],
+        "effects": [{"kind": "delete", "label": {"en": "Clear existing clipboard history"}, "recovery": "unknown"}]
+      }
+    ]
+  },
   "operations": {
     "open": {
       "label": {
@@ -40,6 +88,19 @@
           },
           "why": {
             "en": "Restore, delete, or clear entries when you choose a clipboard action."
+          }
+        },
+        {
+          "verb": "clipboard.write",
+          "scope": {
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "selection"
+            }
+          },
+          "why": {
+            "en": "Allow the interactive panel's Restore action to replace the live clipboard; history grants alone do not authorize this."
           }
         }
       ],

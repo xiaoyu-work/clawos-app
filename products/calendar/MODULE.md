@@ -10,9 +10,9 @@ work; Calendar never calls another App.
 | `apps/calendar/main.py` | Local SQLite events and remote provider operations |
 | `apps/calendar/server.py` | MCP transport over the same implementation |
 | `apps/calendar/test_main.py` | Local event and provider behavior |
-| `apps/panel-calendar/` | Standalone native launcher, unchanged manifest and named Calendar read grant |
+| `apps/panel-calendar/` | Existing native identity, manifest-bound GUI/MCP entry and unchanged named Calendar read grant |
 | `native/claw-applet-calendar/` | Complete monthly picker, popup, selected-day agenda, translations, icon and desktop entry |
-| `native/claw-applet-calendar/src/main.rs`, `src/service.rs` | Independent binary entry and public OS SDK agenda client |
+| `native/claw-applet-calendar/src/main.rs`, `src/service.rs`, `src/mcp.rs` | MCP-first binary entry and shared read-only public OS SDK agenda client |
 | `native/claw-applet-calendar/build.rs`, `justfile` | Product-owned localized desktop generation and native installation |
 | `native/build.py`, `native/Cargo.lock`, `../../tools/native_build.py` | Locked standalone native build/test against declared SDK/toolkit inputs |
 | `PROVENANCE.md`, `native/LICENSE` | Native source origin and preserved GPL terms |
@@ -21,10 +21,14 @@ work; Calendar never calls another App.
 The source move preserves the installed `calendar` identity, data paths and
 grants. The OS retains the SDK/runtime, worker isolation, data-partition
 migration, policy and credential authority. App-owned support comes from
-[`shared/python`](../../shared/python). `panel-calendar` launches
-`/usr/bin/claw-applet-calendar`, not `cosmic-applets`.
-The binary retains the existing UI and internal `AgendaProvider` seam; its
-production callback uses `claw_os_sdk::applet::Client` and the fixed OS helper.
+[`shared/python`](../../shared/python). `panel-calendar` selects the same real
+`bin/claw-applet-calendar` ELF for GUI and lazy stdio MCP. The compatibility
+command is exported through the common Host, not `cosmic-applets`.
+The binary retains the existing UI and internal `AgendaProvider` seam. Both
+surfaces use the published SDK 0.2.0 generic wire client with the fixed
+`/usr/local/bin/cos __calendar day <year> <month> <day>` OS command and SDK
+`CalendarEvent` records. No Desktop-only applet-provider, other App, raw
+database, user bus or process-global credential override is used.
 The existing read-only `data.db.read:Name(calendar)` provider stays OS-owned,
 also serving Widget Rail. Denial and missing/broken service errors remain
 visible. No identity, grant or data partition is merged.
@@ -33,9 +37,25 @@ The OS service and ordinary task-operation Hosts bind Calendar's existing
 owner/App data partition through private UID-mapped views, so a new Host can read the same
 on-disk state without copying it or changing its owner. This is not a new
 Calendar directory. Panel and Widget Rail reads now use the owner-scoped OS
-Calendar service through the unchanged SDK interface. Their own data directories
+Calendar service through the public SDK wire interface. Their own data directories
 cannot select the Calendar database, and they receive no raw file access.
 Installed GUI/resource acceptance remains separate.
+
+## Read-only panel service and Web UI
+
+`panel-calendar.day` accepts one canonical `date` (`YYYY-MM-DD`) and returns
+`{date, events}` with the existing `id`, `title`, `start`, nullable `end` and
+`location` fields. Its only need is `data.db.read:Name(calendar)`, exactly the
+original panel grant; it does not inherit Calendar's provider credentials or
+write permissions. Calls are bounded and cancellation/deadlines drop the SDK
+CLI future. The OS still authenticates owner/session and authorizes the read.
+
+The owning Web page selects a read-only day picker/agenda for `panel-calendar`;
+the separate `calendar` identity retains its existing CRUD, provider and
+invitation UI. Denial, missing services and invalid service data are visible,
+not empty agendas. The native UI continues to run independently of MCP or an
+active Agent/model. MCP dispatch precedes GUI initialization and the existing
+direct `--version` handling; other native arguments retain their ignored behavior.
 
 The Rust UI uses the same verified App manifest, identity/session, capability
 and sandbox contract as any other App. Neither its language nor its package
@@ -81,6 +101,9 @@ The native command prepares declared immutable SDK/toolkit inputs, generates
 build inputs under `build/calendar-native`, and uses `build/native-target`
 unless `--target-dir` is supplied. It compiles the library and actual standalone
 ELF with the checked-in lock.
+The `native_payload` declaration prepares the real package-local ELF with the
+original installer resources and GPL license; source staging does not create
+a substitute binary or signed payload.
 `tools/stage_native.py calendar --root <empty-build-input-directory>` exports
 native build inputs, not installed binaries. The product's `just install`
 installs the compiled binary, generated `com.clawos.PanelCalendarButton.desktop`
@@ -89,8 +112,11 @@ and original scalable Calendar icon. Its `rootdir`, `prefix`, `targetdir` and
 Installation is build-time staging and requires an explicit non-root `rootdir`.
 It installs files only, not permissions or installed-system hooks.
 
-The independent native App package requires `claw-os-applet-services-v1 (= 1)`;
-the OS shell neither links this UI nor generates its resources. Native tests
+The binary no longer depends on `claw-os-applet-provider`; the shared release
+metadata's historical `claw-os-applet-services-v1 (= 1)` dependency remains an
+owner-coordinated packaging cleanup, not a runtime fallback. The OS shell
+neither links this UI nor generates its resources. Native tests
 retain selected-day injection, stale generations, queued refreshes and visible
-denial, and execute the actual standalone binary headlessly. This is not a
+denial, exercise synthetic public CLI/MCP reads and execute the actual standalone
+binary headlessly. These fixtures never access real accounts or services. This is not a
 claim of interactive Wayland acceptance.

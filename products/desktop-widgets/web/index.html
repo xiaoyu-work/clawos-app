@@ -1,18 +1,13 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Widget Rail</title><link rel="stylesheet" href="shared/ui.css"></head><body>
-<header><div><h1>Widget Rail</h1><p data-app-label>Browser-local date tools and honest native-provider availability</p></div></header>
+<header><div><h1>Widget Rail</h1><p data-app-label>Read-only Calendar, Agent tasks and OS resource telemetry</p></div><button id="refresh">Refresh cards</button></header>
 <main id="workspace" class="stack"><p id="notice" class="notice" role="status" aria-live="polite"></p>
-<div class="cards"><section class="card stack"><h2>Browser-local clock</h2><div id="clock" class="metric"></div><p id="zone"></p>
-<p>This is the browser's clock and time zone, not OS telemetry or a system-settings query.</p></section>
-<section class="card stack"><h2>Today</h2><p id="today" class="prose"></p><p>Calendar date only. No appointments, task deadlines or suggestions have been loaded.</p></section></div>
-<section class="card stack"><div class="row"><h2 id="month">Month</h2><div class="toolbar"><button id="previous" aria-label="Previous month">Previous</button><button id="go-today">Today</button><button id="next" aria-label="Next month">Next</button></div></div>
-<div class="weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
-<div id="calendar" class="calendar" aria-label="Browser-local calendar"></div>
-<p id="selected-date" aria-live="polite"></p><p>Date selection is local only. There is no event or task lookup behind a day.</p></section>
-<section class="card stack"><h2>Native data sources</h2><p>The Widget Rail manifest has no MCP tools. Its installed native UI uses independently authorized OS providers. This Web entry cannot call those providers or borrow another App's authority.</p>
-<div class="cards"><section class="card stack"><h3>Calendar</h3><span class="pill">Native only</span><p>data.db.read:calendar. The native Today card can display authorized events; this page has no calendar-event feed.</p></section>
-<section class="card stack"><h3>AI tasks</h3><span class="pill">Native only</span><p>agent.observe:tasks is read-only in the native provider. This page neither observes nor creates Agent tasks.</p></section>
-<section class="card stack"><h3>System health</h3><span class="pill">Native only</span><p>sys.observe authorizes the native telemetry source. CPU, memory, battery and sampling values are not fabricated here.</p></section></div>
-<h3>Suggestions</h3><p>No data-backed suggestions are available in this Web entry. Open the installed Desktop Widgets native entry for the original provider-backed rail. No fake live cards, browser-network polling or privilege bridge is substituted.</p></section></main>
+<div class="cards"><section class="card stack"><h2>Today</h2><p class="small muted">Owner-scoped local Calendar service · read-only</p>
+<p id="calendar-state" role="status"></p><div id="calendar" class="stack"></div></section>
+<section class="card stack"><h2>Agent tasks</h2><p class="small muted">Existing tasks only · no task or model is started</p>
+<p id="tasks-state" role="status"></p><div id="tasks" class="stack"></div></section>
+<section class="card stack"><h2>System health</h2><p class="small muted">OS telemetry · missing values stay unavailable</p>
+<p id="system-state" role="status"></p><div id="system" class="stack"></div></section></div>
+<p class="muted small">Each card uses only this App's separately authorized read tool. Denied or unavailable sources do not prevent the other cards from refreshing.</p></main>
 <script src="shared/client.js"></script><script src="shared/ui.js"></script><script src="app.js"></script></body></html>

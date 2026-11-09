@@ -10,6 +10,7 @@ ClawApp.ready.then((app) => {
     $("selection-workspace").hidden = true;
     $("native-history").hidden = false;
     $("title").textContent = "Clipboard History";
+    historyWorkspace();
     return;
   }
   if (app.id !== "clipboard-manager") {
@@ -18,6 +19,106 @@ ClawApp.ready.then((app) => {
     return;
   }
   $("selection-workspace").hidden = false;
+
+  function historyWorkspace() {
+    let entries = [];
+    let selected = null;
+    let loading = false;
+    function select(entry) {
+      selected = entry;
+      $("history-preview").textContent = entry ? entry.preview : "No history item selected.";
+      $("history-time").textContent = entry && entry.copied_at ? `CopyQ copy time: ${entry.copied_at}` : "Copy time not reported.";
+      $("history-identity").textContent = entry ? entry.identity : "";
+      $("history-restore").disabled = loading || !entry;
+      $("history-remove").disabled = loading || !entry;
+      for (const control of $("history-items").querySelectorAll("button")) {
+        control.setAttribute("aria-pressed", String(control.dataset.identity === (entry && entry.identity)));
+      }
+    }
+    function hide(message = "History previews are hidden locally. Load history explicitly to view it again.") {
+      entries = [];
+      ui.replace($("history-items"), [ui.node("p", message, { class: "muted" })]);
+      select(null);
+    }
+    function show(value) {
+      if (!value || !Array.isArray(value.entries) || value.entries.length > 20 ||
+          value.entries.some((entry) => !entry || typeof entry.identity !== "string" ||
+            !/^[A-Za-z0-9+/]{43}=$/.test(entry.identity) || typeof entry.preview !== "string" ||
+            Array.from(entry.preview).length > 181 || entry.preview.includes("\0") ||
+            entry.copied_at !== null && typeof entry.copied_at !== "string")) {
+        hide("The service returned an invalid history response. No entries are displayed.");
+        throw new Error("Invalid OS clipboard history result.");
+      }
+      entries = value.entries;
+      select(null);
+      const controls = entries.map((entry, index) => {
+        const control = ui.node("button", `${index + 1}. ${entry.preview || "(Whitespace-only text)"}`, {
+          type: "button", "aria-pressed": "false",
+        });
+        control.dataset.identity = entry.identity;
+        control.onclick = () => select(entry);
+        return control;
+      });
+      ui.replace($("history-items"), controls.length ? controls : [
+        ui.node("p", "CopyQ returned no eligible text history items.", { class: "muted" }),
+      ]);
+      $("history-state").textContent = `${entries.length} text previews returned (up to 20). This snapshot can become stale.`;
+    }
+    async function load(control) {
+      if (loading) return;
+      loading = true;
+      hide("Loading existing text history...");
+      $("history-hide").disabled = true;
+      $("history-clear").disabled = true;
+      try {
+        const value = await ui.run(control, () => {
+          const tool = ClawApp.tool(app, "history.list");
+          if (!tool) throw new Error("This identity does not declare history.list.");
+          return ClawApp.call(tool.name, {});
+        }, show, $("notice"));
+        if (value === undefined) {
+          hide("History could not be loaded. The service error is shown above.");
+          $("history-state").textContent = "History unavailable or invalid; no empty result was substituted.";
+        }
+      } finally {
+        loading = false;
+        $("history-hide").disabled = false;
+        $("history-clear").disabled = false;
+        select(selected);
+      }
+    }
+    function review(command) {
+      if (loading || command !== "history.clear" && !selected) return;
+      const identity = selected && selected.identity;
+      try {
+        ui.command(app, command, command === "history.clear" ? {} : { identity }, (value) => {
+          hide("History changed or may now be stale. Load it explicitly before another item action.");
+          $("history-state").textContent = "Action response received; no automatic retry or refresh.";
+          ui.output($("history-result"), value);
+          $("notice").textContent = "Inspect history again before another change. No undo is promised.";
+        }, {
+          title: command === "history.clear" ? "Clear CopyQ history?" :
+            command === "history.restore" ? "Restore selected history item?" : "Delete selected history item?",
+          description: command === "history.restore" ?
+            "This replaces the live clipboard. The OS separately requires clipboard.write:selection as well as history read/write. It does not read the current selection." :
+            command === "history.clear" ?
+              "This deletes the configured CopyQ history tab's items, not the live selection. Confirm explicitly; no undo or automatic retry is promised." :
+              "This deletes only the selected unchanged history item. If it changed or disappeared, refresh instead of guessing its position.",
+          submitLabel: command === "history.clear" ? "Clear history" :
+            command === "history.restore" ? "Restore to clipboard" : "Delete history item",
+          fields: {
+            identity: { label: "Selected item identity", readOnly: true },
+            confirm: { label: "I confirm clearing this existing clipboard history." },
+          },
+        });
+      } catch (error) { $("notice").textContent = error.message; }
+    }
+    $("history-load").onclick = (event) => { void load(event.currentTarget); };
+    $("history-hide").onclick = () => { hide(); $("history-state").textContent = "Only local previews were hidden. System history and selection are unchanged."; };
+    $("history-restore").onclick = () => review("history.restore");
+    $("history-remove").onclick = () => review("history.remove");
+    $("history-clear").onclick = () => review("history.clear");
+  }
 
   function detail(value) {
     if (value === null || value === undefined) return ui.node("p", "Not reported", { class: "muted" });

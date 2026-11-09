@@ -2,7 +2,7 @@
 Name=Calendar
 Comment=View the calendar and local agenda
 Type=Application
-Exec=cos app panel-calendar open
+Exec=claw-applet-calendar
 Terminal=false
 Categories=Utility;X-ClawOS;
 Keywords=ClawOS;Applet;Calendar;Schedule;

@@ -6,10 +6,10 @@ calendar, task executor, telemetry authority or persistent state owner.
 
 | Path | Responsibility |
 | --- | --- |
-| `apps/widget-rail/` | Standalone native launcher, unchanged human-only manifest and exact original grants |
+| `apps/widget-rail/` | Existing identity, manifest-bound native GUI/MCP and exact original grants |
 | `native/claw-applet-widget-rail/src/app.rs` | Complete Today, AI Tasks, System Health and deterministic Suggestions cards |
 | `native/claw-applet-widget-rail/src/provider.rs` | Existing typed read-only callback seam and presentation records |
-| `native/claw-applet-widget-rail/src/main.rs`, `src/service.rs` | Standalone entry and independent public OS SDK clients |
+| `native/claw-applet-widget-rail/src/main.rs`, `src/service.rs`, `src/mcp.rs` | MCP-first entry and shared read-only public OS SDK clients |
 | `native/claw-applet-widget-rail/build.rs`, `justfile` | Product-owned localized desktop generation and binary installation |
 | `native/claw-applet-widget-rail/i18n/`, `data/` | Original UI/desktop translations and desktop entry |
 | `native/claw-applet-widget-rail/test/unit/` | Original rendering/state helpers and provider/update regressions |
@@ -17,25 +17,56 @@ calendar, task executor, telemetry authority or persistent state owner.
 | `native/Cargo.lock`, `../../tools/native_build.py` | Locked native build against the immutable shared toolkit |
 | `PROVENANCE.md`, `native/LICENSE` | Preserved origin and GPL terms |
 
-The fixed OS applet service supplies each independently authorized provider. Calendar retains
-`data.db.read:Name(calendar)` and its existing database path; tasks retain
-`agent.observe:Name(tasks)` and `cos agent ls`; telemetry retains the original
-`sys.observe:Wild`, bounded `cos sys resources` call and policy-gated Linux
-fallback. OS-owned sampling deltas remain process-local in a persistent private helper,
-never serialized back to the UI as provider state. No live data is moved.
+The published SDK 0.2.0 generic wire client selects the fixed
+`/usr/local/bin/cos` binary for each independently authorized read. Calendar
+retains `data.db.read:Name(calendar)` and uses the owner-scoped
+`__calendar day <year> <month> <day>` service with the runtime's local day.
+Tasks retain `agent.observe:Name(tasks)` and use `cos --wire=1 __observe tasks`;
+telemetry retains the original `sys.observe:Wild` and uses
+`cos --wire=1 __observe resources`. These commands use the existing SessionAction
+wire to the generic Root-owned read-only observer. The OS binds the authenticated
+owner; task results contain only `id`, `purpose`, `status` and `created_at`,
+never leases or task arguments. The ordinary `agent ls` Task-only route is not
+an App observation interface.
+
+The client decodes `{tasks: [Task]}` and `{summary: SystemSummary}` directly into
+the existing public SDK types. The Root host owns telemetry observation and
+sampling; nullable first CPU/network samples remain unavailable until reported,
+and subsequent samples and the OS `fallback` flag are preserved unchanged.
+There is no fallback to `agent ls` or `sys resources`, no local `/proc` sampler,
+copied provider, Desktop-only helper or fabricated telemetry. No live data is moved.
 Agent execution, task mutations and cross-App orchestration remain OS-owned.
 The product imports no other App or OS implementation.
+
+## Read-only MCP and owning Web cards
+
+The same real `bin/claw-applet-widget-rail` serves the native UI and lazy stdio
+MCP. Dispatch precedes GUI initialization and the original direct `--version`
+handling; other native arguments retain their ignored behavior.
+
+| Tool | Exact independent need | Result |
+| --- | --- | --- |
+| `widget-rail.calendar` | `data.db.read:Name(calendar)` | `{events: [CalendarEvent]}` |
+| `widget-rail.tasks` | `agent.observe:Name(tasks)` | `{tasks: [Task]}` |
+| `widget-rail.system` | `sys.observe:Wild` | `{summary: SystemSummary}` |
+
+Tools accept no arguments and never start/modify tasks or invoke a model.
+One card cannot borrow the GUI's grant union or another card's permission.
+The OS retains owner/session authorization and state. Calls have a 12-second bound;
+cancellation/deadlines drop the public SDK CLI future. The Web page renders
+real event/task/resource fields with independent loading, denied/unavailable
+and empty states, never raw JSON or placeholder live values. Native `Providers`
+callbacks use the same clients without requiring MCP or an active AI Agent.
 
 The Rust UI uses the same verified App manifest, identity/session, capability
 and sandbox contract as every App. Its language, UI and package origin select
 no special integration tier. The public data service uses resource scopes,
 not a Widget Rail identity exemption or native App allowlist entry.
 
-Fast sources refresh every five seconds and Calendar every minute, with
-independent in-flight guards and original loading/empty/error presentation.
-No visual redesign or extra state store is introduced. The standalone main
-uses separate SDK clients so each source keeps its independent refresh/error
-state. None calls another App or opens a worker desktop transport.
+Fast sources refresh every five seconds and Calendar every minute in both
+presentations, with independent in-flight guards and loading/empty/error
+presentation. No native visual redesign or extra state store is introduced.
+None calls another App or opens a worker desktop transport.
 
 ```bash
 python3 tools/test.py desktop-widgets
@@ -45,10 +76,15 @@ python3 tools/stage.py desktop-widgets --root build/widget-stage
 
 The installed identity remains `widget-rail` / `com.clawos.AppletWidgetRail`.
 The product's `just install` copies the actual `/usr/bin/claw-applet-widget-rail`
-ELF and generated desktop entry. Its independent App package requires
-`claw-os-applet-services-v1 (= 1)`, not a linked OS shell; `cosmic-applets` reads
+ELF and generated desktop entry. `native_payload` preserves that ELF, resources
+and original GPL license inside the package-local App; source staging never
+fabricates a runnable binary. Compatibility launchers use the common Host.
+The binary no longer needs `claw-os-applet-provider`; shared release metadata
+still lists the historical `claw-os-applet-services-v1 (= 1)` dependency pending
+owner-coordinated packaging cleanup. `cosmic-applets` reads
 none of its source/assets. The recipe requires an explicit non-root staging
 `rootdir`; it installs files, never permissions or installed-system hooks.
 Original UI tests remain and the integration test
-runs the real binary headlessly. These checks do not replace interactive
+runs the real binary headlessly. Synthetic CLI/MCP fixtures cover the declared
+reads and independent denials without real services or accounts. These checks do not replace interactive
 Wayland or full-image acceptance.

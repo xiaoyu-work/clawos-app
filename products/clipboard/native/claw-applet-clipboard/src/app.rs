@@ -35,7 +35,7 @@ pub struct ClipboardApplet {
     notice: Option<String>,
     refresh_generation: u64,
     busy: bool,
-    policy: HistoryPolicy,
+    policy: Option<HistoryPolicy>,
 }
 
 #[derive(Debug, Clone)]
@@ -63,11 +63,11 @@ pub enum Action {
 impl cosmic::Application for ClipboardApplet {
     type Message = Message;
     type Executor = cosmic::SingleThreadExecutor;
-    type Flags = HistoryPolicy;
+    type Flags = Option<HistoryPolicy>;
 
     const APP_ID: &'static str = "com.clawos.AppletClipboard";
 
-    fn init(core: cosmic::app::Core, policy: HistoryPolicy) -> (Self, app::Task<Message>) {
+    fn init(core: cosmic::app::Core, policy: Option<HistoryPolicy>) -> (Self, app::Task<Message>) {
         (
             Self {
                 core,
@@ -342,7 +342,7 @@ impl ClipboardApplet {
     }
 }
 
-fn refresh(generation: u64, policy: HistoryPolicy) -> app::Task<Message> {
+fn refresh(generation: u64, policy: Option<HistoryPolicy>) -> app::Task<Message> {
     Task::perform(load_history(policy), move |result| {
         cosmic::Action::App(Message::Loaded(generation, result))
     })
@@ -358,25 +358,33 @@ fn action(
     })
 }
 
-async fn load_history(policy: HistoryPolicy) -> Result<Vec<ClipboardEntry>, String> {
-    policy(HistoryPermission::Read).await?;
+async fn load_history(policy: Option<HistoryPolicy>) -> Result<Vec<ClipboardEntry>, String> {
+    if let Some(policy) = policy {
+        policy(HistoryPermission::Read).await?;
+    }
     copyq::load_history().await
 }
 
-async fn restore(policy: HistoryPolicy, identity: String) -> Result<(), String> {
-    policy(HistoryPermission::Read).await?;
-    policy(HistoryPermission::Write).await?;
+async fn restore(policy: Option<HistoryPolicy>, identity: String) -> Result<(), String> {
+    if let Some(policy) = policy {
+        policy(HistoryPermission::Read).await?;
+        policy(HistoryPermission::Write).await?;
+    }
     copyq::restore(identity).await
 }
 
-async fn remove(policy: HistoryPolicy, identity: String) -> Result<(), String> {
-    policy(HistoryPermission::Read).await?;
-    policy(HistoryPermission::Write).await?;
+async fn remove(policy: Option<HistoryPolicy>, identity: String) -> Result<(), String> {
+    if let Some(policy) = policy {
+        policy(HistoryPermission::Read).await?;
+        policy(HistoryPermission::Write).await?;
+    }
     copyq::remove(identity).await
 }
 
-async fn clear(policy: HistoryPolicy) -> Result<(), String> {
-    policy(HistoryPermission::Write).await?;
+async fn clear(policy: Option<HistoryPolicy>) -> Result<(), String> {
+    if let Some(policy) = policy {
+        policy(HistoryPermission::Write).await?;
+    }
     copyq::clear().await
 }
 

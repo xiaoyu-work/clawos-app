@@ -110,7 +110,7 @@ updates both halves through the same APT transaction, without moving profiles,
 grants or privileged browser authority.
 See [Independent App releases](docs/releases.md) for package ownership, public
 ABI dependencies, the bounded initial file transfer and publication prerequisites.
-The nine native MCP products declare a real `bin/<program>` shared by their
+The native MCP products declare a real `bin/<program>` shared by their
 primary GUI and MCP entries. Their builder preserves all installer resources
 inside the App and exports only the common Host at the legacy primary command.
 Signed inventory admission and native selector parsing are separate from external resources,
@@ -280,13 +280,16 @@ toolkit and immutable App source pin. The panel manifest and compiled shell
 remain in `claw-os-desktop`; Calendar's Python backend remains in
 `claw-os-agent`. Installed state, grants and signed APT updates do not change.
 
-Clipboard's complete native popup, CopyQ implementation and resources use the
-same native staging/build mechanism. Its `HistoryPolicy` callback asks the OS
-host for read/write authorization on the named history scope before executing
-CopyQ; authority is not imported from Widget Rail or copied into the product.
-The human-only `panel-clipboard` identity and desktop package ownership remain
-separate from `clipboard-manager` and its Wayland selection grants. Relocation
-does not integrate the two backends or move user history.
+Clipboard's complete native popup and resources use the same native
+staging/build mechanism. The existing `panel-clipboard` identity owns its
+MCP-first real binary and Web history workflow, separate from
+`clipboard-manager`'s selection UI/grants. Its public SDK client sends closed
+history operations to the OS clipboard service; only Root validates the owner
+endpoint/process and executes CopyQ. The installed native client has no separate
+authorization preflight; the legacy linked shell's optional callback cannot
+bypass actual Root enforcement. History list needs only
+history read; restore additionally requires independently authorized selection
+write. No grants, installed identity, user history or other App state move.
 
 `tools/native_build.py <product> test` is the shared native development/CI runner.
 It uses each product's checked-in lock and the common toolkit patch mapping,

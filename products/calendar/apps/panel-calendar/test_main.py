@@ -1,25 +1,16 @@
 import json
-import os
 from pathlib import Path
-import subprocess
 
 APP = Path(__file__).resolve().parent
-
-
-def test_launcher_executes_only_its_standalone_native_binary(tmp_path):
-    binary = tmp_path / "claw-applet-calendar"
-    binary.write_text("#!/bin/sh\nprintf '%s:%s\\n' \"${0##*/}\" \"$#\"\n")
-    binary.chmod(0o755)
-    result = subprocess.run([str(APP / "main.sh")], check=True, capture_output=True, text=True,
-                            env={**os.environ, "PATH": str(tmp_path)})
-    assert result.stdout.splitlines() == ["claw-applet-calendar:0"]
 
 
 def test_identity_and_narrow_calendar_grant_are_preserved():
     manifest = json.loads((APP / "app.json").read_text())
     assert manifest["id"] == "panel-calendar"
-    assert manifest["runtime"] == "shell"
-    assert manifest["entry"] == "main.sh"
+    assert manifest["runtime"] == "binary"
+    assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/claw-applet-calendar"
+    assert manifest["mcp"]["transport"] == "stdio"
+    assert manifest["mcp"]["lifecycle"] == "lazy"
     assert list(manifest["operations"]) == ["open"]
     needs = manifest["operations"]["open"]["needs"]
     assert len(needs) == 1
@@ -29,4 +20,15 @@ def test_identity_and_narrow_calendar_grant_are_preserved():
     }
     assert manifest["desktop"]["single_instance"] is True
     assert manifest["desktop"]["panel_applet"] is True
-    assert (APP / "main.sh").stat().st_mode & 0o111
+    assert manifest["desktop"]["exec"] == "open"
+
+
+def test_day_tool_is_read_only_and_uses_only_the_existing_calendar_scope():
+    manifest = json.loads((APP / "app.json").read_text())
+    tools = manifest["mcp"]["tools"]
+    assert [tool["name"] for tool in tools] == ["panel-calendar.day"]
+    assert tools[0]["needs"] == manifest["operations"]["open"]["needs"]
+    assert [(arg["name"], arg["kind"], arg["required"]) for arg in tools[0]["args"]] == [
+        ("date", "text", True),
+    ]
+    assert [effect["kind"] for effect in tools[0]["effects"]] == ["read"]

@@ -1,8 +1,19 @@
 # Package-local native App payloads
 
 This is the producer contract for Editor, Files, Terminal, Launcher, Store,
-Media Player, Capture, Settings and Notifications. It is not permission to
-publish or an assertion of GUI/resource integration acceptance.
+Media Player, Capture, Settings, Notifications, Calendar, Clipboard History
+and Widget Rail. It is not permission to publish or an assertion of
+GUI/resource integration acceptance.
+
+Clipboard History preserves `panel-clipboard` and its `open` desktop selector.
+Its real `bin/claw-applet-clipboard` serves both the unchanged native popup and
+four manifest-bound history MCP tools. Its original installer exports the
+program name; compatibility preparation replaces that command with the common
+Host launcher while preserving the original ELF, desktop resource and GPL
+license. Root, not the App, executes CopyQ. The history-read tool never acquires
+selection rights; restore and the compound interactive GUI declare selection
+write separately through ordinary OS review/consent. Old grants are never
+silently widened. See [Clipboard](../products/clipboard/MODULE.md).
 
 Each product's `package.json` declares `native_payload.app`, its real
 `program`, and any `auxiliary_programs`. These are build ownership declarations,
@@ -12,10 +23,11 @@ The selected App's existing identity, version, AI policy, MCP tools and complete
 
 ## Preparation and signing
 
-The nine manifests explicitly select `bin/<program>` for both `entry` and
-`mcp.entry`, with `runtime: "binary"` and `desktop.exec: "--gui"`. The selector
-is not an executable path. The common Host forwards it as the first native
-argument, followed by the original user arguments.
+The native manifests explicitly select `bin/<program>` for both `entry` and
+`mcp.entry`, with `runtime: "binary"`. `desktop.exec` retains the product's
+`--gui` or panel `open` selector, not an executable path. The common Host
+forwards it as the first native argument, followed by the original user
+arguments.
 One real ELF serves both surfaces without copying it twice.
 
 [`native_payload.py`](../tools/native_payload.py) validates the original
@@ -98,12 +110,12 @@ or error. The marker selects parsing behavior, never identity or authority.
 | Media Player | Original URL ordering, thumbnail/size values, warnings and help/version. Its original parser has no end-of-options state; the adapter does not invent one. |
 | Notifications | No argv parser; all command-line tokens remain ignored. It needs no unused adapter dependency, and ordinary `--help`/`--version` are not GUI-free modes. |
 
-All nine retain MCP-first dispatch and their existing session/identity context.
+These Apps retain MCP-first dispatch and their existing session/identity context.
 Settings and Capture parse CLI early exits before GUI localization. In particular,
 debug Settings help no longer requires exposing its build-source translation
 directory; normal GUI localization/resources still require their actual runtime
 contract. Capture's MCP localization initialization is unchanged.
-The immutable SDK 1.0.0 artifact is unchanged; the helper is compiled into the
+The pinned public SDK artifact is unchanged; the helper is compiled into the
 eight actual parser consumers, not installed as a new shared runtime or an OS
 source import. Parser and isolated no-desktop process checks do not prove
 authenticated Host launch, Wayland access, single-instance activation, resource
@@ -153,9 +165,9 @@ empty resource directories and modes are retained inside the App.
 | Provider/helper executable identity | Existing OS capture, media-player, Settings and presentation callers may still identify the legacy system program or require special argv/private descriptors. A Host-only wrapper is not the original ELF or a new grant. Parent-owned callers must bind the authenticated package-local resource; Capture's `--portal-capture-stdout` and Player's thumbnailer cannot be reinterpreted as generic GUI authority. |
 
 The pending-origin-neutral publication gate remains enabled. Signature/archive
-validity is deliberately separate from these runtime checks. Mail's opaque
-stdio operation, Clipboard/GUI containment and OS review implementation are
-outside this nine-native unit.
+validity is deliberately separate from these runtime checks. Installed GUI
+containment and OS review implementation remain outside this producer-only
+validation.
 
 ## Focused validation
 
