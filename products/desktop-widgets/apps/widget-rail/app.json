@@ -88,7 +88,11 @@
           {
             "verb": "sys.observe",
             "scope": {
-              "kind": "wild"
+              "kind": "fixed",
+              "scope": {
+                "kind": "name",
+                "value": "resources"
+              }
             },
             "why": {
               "en": "Observe system resource usage for the System Health card."
@@ -129,7 +133,11 @@
         {
           "verb": "sys.observe",
           "scope": {
-            "kind": "wild"
+            "kind": "fixed",
+            "scope": {
+              "kind": "name",
+              "value": "resources"
+            }
           },
           "why": {
             "en": "Observe system resource usage for the System Health card."

@@ -22,7 +22,7 @@ The published SDK 0.2.0 generic wire client selects the fixed
 retains `data.db.read:Name(calendar)` and uses the owner-scoped
 `__calendar day <year> <month> <day>` service with the runtime's local day.
 Tasks retain `agent.observe:Name(tasks)` and use `cos --wire=1 __observe tasks`;
-telemetry retains the original `sys.observe:Wild` and uses
+telemetry requests only `sys.observe:Name(resources)` and uses
 `cos --wire=1 __observe resources`. These commands use the existing SessionAction
 wire to the generic Root-owned read-only observer. The OS binds the authenticated
 owner; task results contain only `id`, `purpose`, `status` and `created_at`,
@@ -48,7 +48,7 @@ handling; other native arguments retain their ignored behavior.
 | --- | --- | --- |
 | `widget-rail.calendar` | `data.db.read:Name(calendar)` | `{events: [CalendarEvent]}` |
 | `widget-rail.tasks` | `agent.observe:Name(tasks)` | `{tasks: [Task]}` |
-| `widget-rail.system` | `sys.observe:Wild` | `{summary: SystemSummary}` |
+| `widget-rail.system` | `sys.observe:Name(resources)` | `{summary: SystemSummary}` |
 
 Tools accept no arguments and never start/modify tasks or invoke a model.
 One card cannot borrow the GUI's grant union or another card's permission.
