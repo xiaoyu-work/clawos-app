@@ -96,7 +96,7 @@ replacement or remove/weaken their protections:
 
 | Existing surface | Outstanding contract |
 | --- | --- |
-| App lifecycle and AI independence | The accepted [lifecycle contract](../ARCHITECTURE.md#app-lifecycle-and-ai-independence) keeps Apps independent of an active AI Agent while requiring OS `clawd` custody, with no standalone Root bypass. The OS launch-ownership cutover and Root install/update/rollback coordination remain in progress; this declaration is not runtime acceptance or publication approval. |
+| App lifecycle and AI independence | Ordinary App launchers, including UID 0, now register through authenticated `clawd`; the local backend is an explicit unit fixture only. Apps remain independent of an active AI Agent, not of the OS service. Root install/update/rollback coordination and installed acceptance remain in progress; this does not establish publication approval. |
 | OS `core/src/worker/trusted_desktop.rs::verified_entrypoint` | Generic signed package-relative entry admission has replaced the fixed launch table. The nine native producer manifests/payload plans now use it; this does not establish runtime resource or provider integration. |
 | Mail opaque stdio integration | The existing `TrustedNativeHost` launcher/parent/provenance checks and AI-only standing ceiling remain. Account-scoped Mail requests cross the OS-owned native gateway, not AI App stdout or old provider grants. This does not complete the generic Host/sandbox replacement or authorize App publication. |
 | Browser Native Messaging launcher/host | The package-owned direct Python launcher and root-peer socket check must be reconciled with generic authenticated App Host/session binding. Packaging preserves those checks; it does not establish an exemption. |
