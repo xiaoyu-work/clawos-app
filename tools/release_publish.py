@@ -178,7 +178,7 @@ def previous_snapshot(github, destination, *, initialize):
 
 
 def release_assets(plan, selection, packages, directory, signing, *, development, artifact_directory,
-                   interfaces=None, snapshots=None):
+                   interfaces=None, snapshots=None, build_packages=None):
     if interfaces not in (None, {}):
         raise ValueError("Retired App config/util interface archives cannot be signed or published")
     target = directory / release_tag(selection, plan["version"])
@@ -211,6 +211,10 @@ def release_assets(plan, selection, packages, directory, signing, *, development
         "development": fixture,
         "interfaces": None,
     }
+    if build_packages is not None:
+        metadata["build_packages"] = sorted(
+            (record for record in build_packages if record["package"] in names), key=identity,
+        )
     if snapshot_records:
         metadata["app_snapshots"] = snapshot_records
     write_json(target / "release.json", metadata)
@@ -306,7 +310,10 @@ def push_snapshot(github, output, previous_commit):
         if previous_commit:
             run(["git", "fetch", "--quiet", "--no-tags", "--depth=1", "origin", previous_commit], cwd=output)
             run(["git", "update-ref", "HEAD", previous_commit], cwd=output)
-        run(["git", "add", "--", ".nojekyll", "archive-key.asc", "index.html", "pool", "dists"], cwd=output)
+        paths = [".nojekyll", "archive-key.asc", "index.html", "pool", "dists"]
+        if (output / "store").exists():
+            paths.append("store")
+        run(["git", "add", "--", *paths], cwd=output)
         run(["git", "-c", "user.name=Claw OS Applications Release",
              "-c", "user.email=41898282+github-actions[bot]@users.noreply.github.com",
              "commit", "--quiet", "--message", "Publish authenticated App APT metadata"], cwd=output)
@@ -339,6 +346,10 @@ def main():
     github = GitHub()
     github.preflight()
     output = work_path(options.output)
+    snapshots_root = output.parent / ".app-store-release-snapshots"
+    store_output = output.parent / ".app-store-next"
+    if output.exists() or snapshots_root.exists() or store_output.exists():
+        raise ValueError("Publication requires new APT, authenticated release and Store workspaces")
     plan = load_plan(options.plan) if options.command == "publish" else None
     packages, development, interfaces = verify_artifacts(plan, options.artifacts) if plan else ([], {}, {})
     previous, commit = previous_snapshot(
@@ -347,33 +358,38 @@ def main():
     )
     try:
         with Signing(output.parent / "apt-publish-signing") as signing:
-            if previous:
-                verify_repository(previous, signing)
+            retained = verify_repository(previous, signing) if previous else None
             signing.import_environment()
-            compose(packages, output, signing, previous=previous, initialize=previous is None)
-            snapshot_groups = {}
-            snapshots_root = output.parent / ".app-store-release-snapshots"
-            if plan and any(entry["apps"] for entry in plan["packages"]):
-                if not all((options.cos, options.cos_sha256, options.publisher_key_id, options.app_signing_key)):
-                    raise ValueError("App Store publication requires the public provenance CLI, its pins and the App signing key")
-                from release_snapshots import Provenance
-                from release_store import prepare_release_snapshots, compose as compose_store
-                provenance = Provenance(options.cos, options.cos_sha256, options.publisher_key_id)
-                snapshot_groups = prepare_release_snapshots(
+            snapshot_groups, build_packages, provenance = {}, None, None
+            from release_store import prepare_release_snapshots, compose as compose_store, refresh
+            if plan:
+                if any(entry["apps"] for entry in plan["packages"]):
+                    if not all((options.cos, options.cos_sha256, options.publisher_key_id, options.app_signing_key)):
+                        raise ValueError("App Store publication requires the public provenance CLI, its pins and the App signing key")
+                    from release_snapshots import Provenance
+                    provenance = Provenance(options.cos, options.cos_sha256, options.publisher_key_id)
+                packages, snapshot_groups = prepare_release_snapshots(
                     plan, packages, snapshots_root, provenance, signing, options.app_signing_key,
                 )
-                store_output = output.parent / ".app-store-next"
+                build_packages = json.loads((snapshots_root / "release-record.json").read_bytes())["build_packages"]
+            previous_store = previous / "store" if previous and (previous / "store").exists() else None
+            next_store = None
+            if plan and (snapshot_groups or previous_store):
+                store_packages = list(packages)
+                if retained and not previous_store:
+                    keys = {identity(package_record(path)) for path in packages}
+                    store_packages.extend(previous / record["filename"] for record in retained["packages"]
+                                          if identity(record) not in keys)
                 compose_store(
                     [directory for values in snapshot_groups.values() for directory in values],
-                    store_output, provenance, signing,
-                    previous=previous / "store" if previous and (previous / "store").exists() else None,
+                    store_output, provenance, signing, packages=store_packages, previous=previous_store,
                 )
-                if (output / "store").exists():
-                    shutil.rmtree(output / "store")
-                store_output.rename(output / "store")
-            elif (output / "store").exists():
-                from release_store import refresh
-                refresh(output / "store", signing)
+                next_store = store_output
+            elif previous_store:
+                shutil.copytree(previous_store, store_output)
+                refresh(store_output, signing)
+                next_store = store_output
+            compose(packages, output, signing, previous=previous, initialize=previous is None, store=next_store)
             check_hosting_limits(output)
             if plan:
                 check_published_versions(github, plan["selections"], plan["version"])
@@ -389,7 +405,8 @@ def main():
                     for selection in plan["selections"]:
                         assets = release_assets(plan, selection, packages, assets_root, signing,
                                                 development=development, artifact_directory=options.artifacts,
-                                                interfaces=interfaces, snapshots=snapshot_groups.get(selection))
+                                                interfaces=interfaces, snapshots=snapshot_groups.get(selection),
+                                                build_packages=build_packages)
                         if not existing[selection]:
                             # Bound small-package batches below GitHub's content-creation rate limit.
                             time.sleep(max(0, 9 - (time.monotonic() - previous_write)))
@@ -401,9 +418,10 @@ def main():
                     shutil.rmtree(assets_root)
             push_snapshot(github, output, commit)
             verify_repository(output, signing)
-            if snapshots_root.exists():
-                shutil.rmtree(snapshots_root)
     finally:
+        for directory in (snapshots_root, store_output):
+            if directory.exists():
+                shutil.rmtree(directory)
         if previous:
             shutil.rmtree(previous)
     print(f"Verified signed App APT snapshot ready for Pages: {output}")

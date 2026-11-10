@@ -2,8 +2,10 @@
 
 App delivery is subordinate to one verified App install/review contract.
 This repository owns product payloads, independent versions, build/test jobs,
-authenticated App snapshots and release catalogs. The tested Debian/APT builders
-remain explicit compatibility delivery, not installation approval or authority.
+authenticated App snapshots and release catalogs. The approved `apt_official`
+Store model installs the existing signed product Debian packages through the
+OS's APT transaction service. Snapshots remain explicit development/preflight
+inputs, not a production installation fallback or installation approval.
 The OS owns installation, protected human review, capability enforcement,
 App provenance, security-floor gates and user state. There is no additional
 privileged updater, runtime source checkout, model-controlled signing key or
@@ -234,7 +236,7 @@ Preparation must resolve any required delivery-layout change explicitly; the
 producer never silently dereferences, drops or invents a signed link.
 There is no `.deb` maintainer-hook execution or post-extraction installer.
 
-**OS consumer contract:** authenticate the catalog and exact artifact, verify
+**Explicit development/preflight consumer contract:** authenticate the catalog and exact artifact, verify
 the extracted App with the existing provenance machinery, then request
 `cos app install <directory> --review`. Its preflight has `installed: false`
 and `permission_review.permissions_granted: false`; permissions/scopes/purposes
@@ -245,7 +247,8 @@ review JSON, `--yes` or matching `contract_digest` is never first-review proof
 and never grants capabilities. The OS's terminal and desktop presenters use
 the same protected controller/policy state for scope-limited allow, ask and
 deny; an App UI cannot replace those presenters or acknowledge for its user.
-Store/APT/first-use integration must honor that same contract before publication.
+Official Store/APT/first-use integration must honor that same protected review
+contract before publication, without installing snapshots as a fallback.
 
 **Not yet production inputs:** a versioned public CLI/runtime artifact exposing
 `cos provenance sign`, `cos provenance verify` and the reviewed install API;
@@ -278,6 +281,82 @@ skipped, not replaced with fabricated envelopes or unsigned success.
 The [native payload preparation contract](native-payloads.md) covers all nine
 native MCP products, explicit signer entrypoints, byte/mode/license preservation,
 Host-only compatibility launchers and the separate resource/runtime blockers.
+
+## Official Store APT producer
+
+The separately OpenPGP-signed `store/index.json` uses **`claw.app-store/v2`**.
+Its existing repository, runtime ABI, monotonic generation, bounded
+`issued_at`/`expires_at`, App snapshot, raw manifest/provenance, display and
+product-owned Web bindings remain. A required `packages` array inventories
+every selected Debian package, including common support, named libraries and
+metapackages. Each entry has exactly:
+
+```json
+{
+  "package": "claw-cap-storage-sdk",
+  "version": "1.2.3-2",
+  "architecture": "all",
+  "size": 12345,
+  "sha256": "<actual lowercase 64-hex digest of the final .deb>",
+  "apps": ["db", "kv"]
+}
+```
+
+`size` and `sha256` describe the actual final Debian bytes; `version` is the
+complete Debian release version, not the independent manifest App version.
+Architecture is `all`, `amd64` or `arm64`. `apps` is sorted and unique and
+matches both the real contained manifests and Debian `X-Claw-App-Ids`;
+support/library/metapackages without Apps use `[]`.
+The inventory is bounded to 10,000 packages, 255 ASCII package-name characters,
+1 GiB per `.deb`, and 1,000 sorted unique App IDs per package. The existing
+release-version policy is narrower than Debian's general 255-character bound.
+Publication's separate Pages hosting limit rejects `.deb` files of
+100,000,000 bytes or more before creating Releases.
+Each App has exactly `delivery: {"kind": "apt", "package_sha256": "<digest>"}`.
+That digest selects exactly one containing package with the same architecture,
+release version and App ID. One package's App bundle cannot select split or
+older versions. Unknown schemas (including v1), extra delivery/package fields,
+missing references, ownership conflicts, changed immutable tuples, and
+digest/size/control mismatches fail rather than selecting snapshot delivery.
+Composition retains all previous immutable package tuples/digests and advances
+generation without allowing version regression.
+
+The release order deliberately separates tested inputs from final publication:
+
+1. Authenticate each matrix build record against the original unsigned CI
+   `.deb` bytes and complete selected package/architecture plan.
+2. Privately extract **data and DEBIAN control**. Sign each actual App directory
+   through the existing digest-pinned public `cos provenance sign` interface
+   and reverify its ordinary pinned package-signing publisher. No private
+   provenance implementation or new trust root is introduced.
+3. Repack the Debian payload with the signed `.provenance.json` files, preserving
+   control identity/version/architecture, modes, links, resources and licenses.
+   Refresh an existing `md5sums` file. Re-run delivery validation on the **final**
+   archive, extract it again, compare the complete payload and reverify the Apps.
+   Shared packages with no Apps retain their original bytes.
+4. Derive snapshot archives from those extracted final signed Debian App bytes,
+   not from a separately signed copy. Bind the Store's package records and App
+   delivery to final Debian digests, then sign Store/APT indexes and immutable
+   release checksums. APT verification checks the Store's complete inventory
+   against the actual retained pool. The state commit includes `store/`.
+
+The private preparation `release-record.json` and signed per-selection
+`release.json` distinguish `build_packages` (original CI records) from
+`packages` (final authenticated release records). Original CI artifacts/records
+are not overwritten or claimed to equal the signed published bytes.
+Standalone `release_store.py build` requires repeated `--package <final.deb>`
+alongside its explicit `--snapshot-directory` inputs.
+
+Only the OS `clawd` transaction/review service may install these pinned APT
+packages and manage installed state, rollback, capabilities and runtime
+authority. App data, independent identities/grants, product/capability ownership,
+native UIs, architectures and the separate App archive/package publishers do
+not change. APT signatures are not App provenance or permission grants.
+Synthetic public-signer fixtures test the packaging wire and final-byte
+bindings; optional public-CLI fixtures test real provenance signatures.
+The existing publication gate and public CLI/publisher prerequisites still
+apply. This source implementation does not publish packages, adopt a platform
+pin, complete OS integration or declare release readiness.
 
 ## Packages and ownership
 
@@ -649,6 +728,8 @@ https://xiaoyu-work.github.io/clawos-app/
   dists/trixie/main/binary-{amd64,arm64}/Packages[.gz|.xz]
   dists/trixie/main/binary-{amd64,arm64}/by-hash/{SHA256,SHA512}/<digest>
   pool/main/<package>/<package>_<version>_<architecture>.deb
+  store/index.json
+  store/index.json.asc
 ```
 
 The signed `app-apt` branch retains repository content between deployments.
