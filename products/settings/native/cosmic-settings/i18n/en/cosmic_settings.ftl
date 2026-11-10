@@ -924,6 +924,12 @@ time-format = Date & time format
 
 time-region = Region & language
 
+users-password-credential = Password credential (namespace/name)
+users-password-credential-confirm = Confirm password credential
+users-password-credential-hint = Select an existing OS credential reference, not a password. The OS requires a separate exact secret-read permission. Account creation is a sequence of confirmed operations; partial changes are not rolled back.
+users-icon-requirement = Choose a local image of at most 1 MiB. The OS requires exact read permission on this file; Settings does not copy it to a differently authorized path.
+users-refresh-error = Current account state could not be refreshed. Any previous operation outcome above is unchanged. { $detail }
+
 regional-settings = OS regional settings
     .working = Waiting for the OS service. No change is confirmed yet.
     .confirmed = The OS confirmed the requested change.

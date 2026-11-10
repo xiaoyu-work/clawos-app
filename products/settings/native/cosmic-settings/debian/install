@@ -32,8 +32,6 @@
 /usr/share/applications/com.clawos.Settings.Wireless.desktop
 /usr/share/applications/com.clawos.Settings.Workspaces.desktop
 /usr/share/metainfo/com.clawos.Settings.metainfo.xml
-/usr/share/polkit-1/actions/com.clawos.Settings.Users.policy
-/usr/share/polkit-1/rules.d/cosmic-settings.rules
 /usr/share/cosmic/com.clawos.Theme.Dark
 /usr/share/cosmic/com.clawos.Theme.Dark.Builder
 /usr/share/cosmic/com.clawos.Theme.Light

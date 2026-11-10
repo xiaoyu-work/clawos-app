@@ -55,10 +55,9 @@ def main():
         for relative in (
             "metainfo/com.clawos.Settings.metainfo.xml",
             "icons/hicolor/scalable/apps/com.clawos.Settings.svg",
-            "polkit-1/actions/com.clawos.Settings.Users.policy",
-            "polkit-1/rules.d/cosmic-settings.rules",
         ):
             assert (resources / relative).is_file(), relative
+        assert not (resources / "polkit-1").exists()
         namespace = "/run/settings-fixture"
         broker = fixture / "cos"
         broker.write_text(
@@ -273,7 +272,7 @@ def main():
         final_call = json.loads((fixture / "calls").read_text().splitlines()[-1])
         assert final_call == [["--wire=1", "__app-permissions", '{"action":"list"}'], None]
         assert not (fixture / "config").exists()
-        print("Settings installed binary/resources: 32 localized entries, schemas/polkit/icons; "
+        print("Settings installed binary/resources: 32 localized entries, schemas/icons, no authority files; "
               "seven authenticated MCP tools, owner/session injection and self-approval rejection, "
               "pending/approved/denied restoration with OS query truth, cancelled-authentication pending "
               "and failed-transport behavior, revocation responses; 31 pages, search clamps, fixed launch, denial, "

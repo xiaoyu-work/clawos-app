@@ -20,6 +20,12 @@ protocol/AT-SPI patches and git config-schema dependencies are retained.
 No Settings Daemon, compositor, panel service, kernel, model provider or
 privileged management implementation has been imported.
 
+The original two polkit resources were subsequently moved to the OS
+`desktop/initial-setup/res/` component with their GPL terms and authorization
+semantics intact. Their shared desktop/first-boot consumers and installed
+ownership remain OS responsibilities. The product installer and Debian list
+no longer supply or remove those authority files.
+
 The eleven management Apps retain their original independent identities and
 permissions. The separate `cosmic-settings` binary retains
 `/usr/bin/cosmic-settings`, `com.clawos.Settings` resources and its original
