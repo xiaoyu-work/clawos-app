@@ -202,7 +202,7 @@ def test_initial_repository_requires_explicit_initialization_and_cannot_replace_
     ("claw-os-desktop", "usr/bin/claw-applet-widget-rail", True),
 ])
 def test_bound_file_ownership_transfer_refuses_a_post_split_os_package(tmp_path, deb, signing, former, target, symlink):
-    bound = "1:0.3.0"
+    bound = "1:0.2.1"
     root = tmp_path / "root"
     (root / "var/lib/dpkg").mkdir(parents=True)
     (root / "var/lib/dpkg/status").write_text("")
@@ -228,6 +228,30 @@ def test_bound_file_ownership_transfer_refuses_a_post_split_os_package(tmp_path,
     assert private.read_bytes() == b"unchanged exact identity grants"
     later = deb(former, "1:0.5.0", files={target: b"unrelated new OS file"})
     assert run([*install, later], check=False, env=environment).returncode != 0
+
+
+@pytest.mark.parametrize("old_runtime", ["claw-os-app-runtime-v1", "claw-os-app-runtime-v1 (= 0.2.0)"])
+def test_independent_support_requires_the_coordinated_runtime_implementation_without_a_desktop(
+    tmp_path, deb, signing, old_runtime,
+):
+    release.build(release.make_plan("support", "0.2.1"), "all", tmp_path / "packages")
+    support = tmp_path / "packages/claw-app-support_0.2.1_all.deb"
+    extra = {"Provides": old_runtime + ", python3 (= 3.13), python3-idna (= 3.3)"}
+    old = deb("claw-app-fixture-runtime", "0.2.0", extra=extra)
+    repository = compose([old, support], tmp_path / "repository", signing, initialize=True)
+    apt = IsolatedApt(tmp_path / "root", repository, signing)
+    apt.update()
+    assert apt.call("install", "-y", "claw-app-support", check=False).returncode != 0
+    extra["Provides"] = "claw-os-app-runtime-v1 (= 0.2.1), python3 (= 3.13), python3-idna (= 3.3)"
+    current = deb("claw-app-fixture-runtime", "0.2.1", extra=extra)
+    updated = compose([current], tmp_path / "updated", signing, previous=repository)
+    shutil.rmtree(repository)
+    updated.rename(repository)
+    apt.update()
+    apt.call("install", "-y", "claw-app-support")
+    assert apt.installed("claw-app-support") == "0.2.1"
+    assert apt.installed("claw-app-fixture-runtime") == "0.2.1"
+    assert not (apt.root / "usr/bin/cosmic-session").exists()
 
 
 def test_actual_app_catalog_metadata_survives_signed_apt_indexing(tmp_path, signing):
