@@ -1,9 +1,11 @@
 // Copyright 2024 System76 <info@system76.com>
 // SPDX-License-Identifier: GPL-3.0-only
 
-mod getent;
-
-use crate::pages;
+use crate::{
+    pages,
+    regional_settings::{Failure, Pending},
+    user_settings::{self, Change, Target, DEFAULT_ICON_FILE},
+};
 use cosmic::{
     Apply, Element,
     dialog::file_chooser,
@@ -11,40 +13,19 @@ use cosmic::{
     widget::{self, column, icon, list, row, settings, space::horizontal, text},
 };
 use cosmic_settings_page::{self as page, Section, section};
-use image::GenericImageView;
-use pwhash::{bcrypt, md5_crypt, sha256_crypt, sha512_crypt};
-use regex::Regex;
 use slotmap::SlotMap;
-use std::{
-    collections::HashMap,
-    fs::File,
-    future::Future,
-    io::{BufRead, BufReader},
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::{path::PathBuf, sync::Arc};
 use url::Url;
-use zbus_polkit::policykit1::CheckAuthorizationFlags;
-
-const DEFAULT_ICON_FILE: &str = "/usr/share/pixmaps/faces/pop-robot.png";
-const USERS_ADMIN_POLKIT_POLICY_ID: &str = "com.clawos.Settings.Users.Admin";
-
-// AccountsService has a hard limit of 1MB for icon files
-// https://gitlab.freedesktop.org/accountsservice/accountsservice/-/blob/main/src/user.c#L3131
-const MAX_ICON_SIZE_BYTES: u64 = 1_048_576;
-// Use a smaller threshold to ensure compressed images stay under the limit
-const ICON_SIZE_THRESHOLD: u64 = 900_000; // 900KB
-// Target dimensions for resized profile icons
-const TARGET_ICON_SIZE: u32 = 512;
 
 #[derive(Clone, Debug, Default)]
 pub struct User {
-    id: u64,
+    id: u32,
+    account_name: String,
     profile_icon: Option<icon::Handle>,
     full_name: String,
     username: String,
-    password: String,
-    password_confirm: String,
+    credential: String,
+    credential_confirm: String,
     full_name_edit: bool,
     username_edit: bool,
     is_admin: bool,
@@ -65,58 +46,59 @@ pub enum Dialog {
 #[derive(Clone, Debug)]
 pub struct Page {
     on_enter_handle: Option<cosmic::iced::task::Handle>,
-    current_user_id: u64,
     entity: page::Entity,
     users: Vec<User>,
     selected_user_idx: Option<usize>,
     dialog: Option<Dialog>,
     default_icon: icon::Handle,
     password_label: String,
-    password_confirm_label: String,
+    credential_label: String,
+    credential_confirm_label: String,
     username_label: String,
     fullname_label: String,
-    password_hidden: bool,
-    password_confirm_hidden: bool,
+    pending: Pending,
+    query_generation: u64,
+    last_outcome: Option<String>,
+    notice: Option<String>,
 }
 
 impl Default for Page {
     fn default() -> Self {
         Self {
             on_enter_handle: None,
-            current_user_id: 0,
             entity: page::Entity::default(),
             users: Vec::default(),
             selected_user_idx: None,
             dialog: None,
             default_icon: icon::from_path(PathBuf::from(DEFAULT_ICON_FILE)),
             password_label: crate::fl!("password"),
-            password_confirm_label: crate::fl!("password-confirm"),
+            credential_label: crate::fl!("users-password-credential"),
+            credential_confirm_label: crate::fl!("users-password-credential-confirm"),
             username_label: crate::fl!("username"),
             fullname_label: crate::fl!("full-name"),
-            password_hidden: true,
-            password_confirm_hidden: true,
+            pending: Pending::default(),
+            query_generation: 0,
+            last_outcome: None,
+            notice: None,
         }
     }
 }
 #[derive(Clone, Debug)]
 pub enum Message {
     ApplyEdit(usize, EditorField),
-    ChangedAccountType(u64, bool),
-    DeletedUser(u64),
     Dialog(Option<Dialog>),
     Edit(usize, EditorField, String),
-    LoadedIcon(u64, icon::Handle),
-    LoadPage(u64, Vec<User>),
+    LoadPage(u64, (u64, bool), Result<Vec<User>, Failure>),
+    Finished(u64, Result<(), Failure>),
     NewUser(String, String, String, bool),
     None,
-    SelectProfileImage(u64),
-    SelectedProfileImage(u64, Arc<Result<Url, file_chooser::Error>>),
+    Refresh,
+    SelectProfileImage(u32),
+    SelectedProfileImage(u32, Arc<Result<Url, file_chooser::Error>>),
     SelectUser(usize),
-    SelectedUserDelete(u64),
-    SelectedUserSetAdmin(u64, bool),
+    SelectedUserDelete(u32),
+    SelectedUserSetAdmin(u32, bool),
     ToggleEdit(usize, EditorField),
-    TogglePasswordVisibility,
-    TogglePasswordConfirmVisibility,
     SaveNewPassword(User),
 }
 
@@ -130,58 +112,6 @@ impl From<Message> for crate::pages::Message {
     fn from(message: Message) -> Self {
         crate::pages::Message::User(message)
     }
-}
-
-fn prepare_icon_file(path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
-    let metadata = std::fs::metadata(path)?;
-    let file_size = metadata.len();
-
-    tracing::debug!("Icon file size: {} bytes", file_size);
-
-    if file_size <= ICON_SIZE_THRESHOLD {
-        tracing::debug!("File size is acceptable, using original file");
-        return Ok(path.to_path_buf());
-    }
-
-    tracing::info!(
-        "Icon file is {} bytes, resizing to fit under 1MB limit",
-        file_size
-    );
-
-    let img = image::open(path)?;
-    let (width, height) = img.dimensions();
-
-    tracing::debug!("Original image dimensions: {}x{}", width, height);
-
-    let (new_width, new_height) = if width > height {
-        let ratio = TARGET_ICON_SIZE as f32 / width as f32;
-        (TARGET_ICON_SIZE, (height as f32 * ratio) as u32)
-    } else {
-        let ratio = TARGET_ICON_SIZE as f32 / height as f32;
-        ((width as f32 * ratio) as u32, TARGET_ICON_SIZE)
-    };
-
-    tracing::debug!("Resizing to {}x{}", new_width, new_height);
-
-    let resized = img.resize(new_width, new_height, image::imageops::FilterType::Lanczos3);
-
-    // Create a temporary file for the resized icon
-    let temp_dir = std::env::temp_dir();
-    let temp_filename = format!("cosmic-settings-icon-{}.png", std::process::id());
-    let temp_path = temp_dir.join(temp_filename);
-
-    tracing::debug!("Saving resized icon to: {:?}", temp_path);
-
-    resized.save(&temp_path)?;
-
-    let new_size = std::fs::metadata(&temp_path)?.len();
-    tracing::info!("Resized icon file size: {} bytes", new_size);
-
-    if new_size > MAX_ICON_SIZE_BYTES {
-        tracing::warn!("Resized file is still too large, but attempting anyway");
-    }
-
-    Ok(temp_path)
 }
 
 impl page::Page<crate::pages::Message> for Page {
@@ -229,36 +159,26 @@ impl page::Page<crate::pages::Message> for Page {
                         }),
                 );
 
-                let password_input = widget::container(
-                    widget::secure_input(
-                        "",
-                        &user.password,
-                        Some(Message::TogglePasswordVisibility),
-                        self.password_hidden,
-                    )
-                    .label(&self.password_label)
-                    .on_input(|value| {
-                        Message::Dialog(Some(Dialog::AddNewUser(User {
-                            password: value,
-                            ..user.clone()
-                        })))
-                    }),
+                let credential_input = widget::container(
+                    widget::text_input("", &user.credential)
+                        .label(&self.credential_label)
+                        .on_input(|value| {
+                            Message::Dialog(Some(Dialog::AddNewUser(User {
+                                credential: value,
+                                ..user.clone()
+                            })))
+                        }),
                 );
 
-                let password_confirm_input = widget::container(
-                    widget::secure_input(
-                        "",
-                        &user.password_confirm,
-                        Some(Message::TogglePasswordConfirmVisibility),
-                        self.password_confirm_hidden,
-                    )
-                    .label(&self.password_confirm_label)
-                    .on_input(|value| {
-                        Message::Dialog(Some(Dialog::AddNewUser(User {
-                            password_confirm: value,
-                            ..user.clone()
-                        })))
-                    }),
+                let credential_confirm_input = widget::container(
+                    widget::text_input("", &user.credential_confirm)
+                        .label(&self.credential_confirm_label)
+                        .on_input(|value| {
+                            Message::Dialog(Some(Dialog::AddNewUser(User {
+                                credential_confirm: value,
+                                ..user.clone()
+                            })))
+                        }),
                 );
 
                 let admin_toggler = widget::toggler(user.is_admin).on_toggle(|value| {
@@ -268,30 +188,30 @@ impl page::Page<crate::pages::Message> for Page {
                     })))
                 });
 
-                // validation
                 let mut validation_msg = String::new();
-                let username_regex = Regex::new("^[a-z][a-z0-9-]{0,30}$").unwrap();
-                let username_valid = username_regex.is_match(&user.username);
+                let username_valid = user_settings::valid_name(&user.username);
                 let complete_maybe = if !username_valid && !user.username.is_empty() {
                     validation_msg = fl!("invalid-username");
                     None
-                } else if user.password != user.password_confirm
-                    && !user.password.is_empty()
-                    && !user.password_confirm.is_empty()
+                } else if user.credential != user.credential_confirm
+                    && !user.credential.is_empty()
+                    && !user.credential_confirm.is_empty()
                 {
                     validation_msg = fl!("password-mismatch");
                     None
                 } else if user.full_name.is_empty()
                     || user.username.is_empty()
-                    || user.password.is_empty()
-                    || user.password_confirm.is_empty()
+                    || !user_settings::valid_credential(&user.credential)
+                    || !user_settings::valid_full_name(&user.full_name)
+                    || user.credential_confirm.is_empty()
                 {
+                    validation_msg = fl!("users-password-credential-hint");
                     None
                 } else {
                     Some(Message::NewUser(
                         user.username.clone(),
                         user.full_name.clone(),
-                        user.password.clone(),
+                        user.credential.clone(),
                         user.is_admin,
                     ))
                 };
@@ -309,8 +229,9 @@ impl page::Page<crate::pages::Message> for Page {
                         widget::ListColumn::default()
                             .add(full_name_input)
                             .add(username_input)
-                            .add(password_input)
-                            .add(password_confirm_input)
+                            .add(credential_input)
+                            .add(credential_confirm_input)
+                            .add(text::body(fl!("users-password-credential-hint")))
                             .add(
                                 row::with_capacity(3)
                                     .push(
@@ -334,47 +255,39 @@ impl page::Page<crate::pages::Message> for Page {
             }
 
             Dialog::UpdatePassword(user) => {
-                let password_input = widget::container(
-                    widget::secure_input(
-                        "",
-                        &user.password,
-                        Some(Message::TogglePasswordVisibility),
-                        self.password_hidden,
-                    )
-                    .label(&self.password_label)
-                    .on_input(|value| {
-                        Message::Dialog(Some(Dialog::UpdatePassword(User {
-                            password: value,
-                            ..user.clone()
-                        })))
-                    }),
+                let credential_input = widget::container(
+                    widget::text_input("", &user.credential)
+                        .label(&self.credential_label)
+                        .on_input(|value| {
+                            Message::Dialog(Some(Dialog::UpdatePassword(User {
+                                credential: value,
+                                ..user.clone()
+                            })))
+                        }),
                 );
 
-                let password_confirm_input = widget::container(
-                    widget::secure_input(
-                        "",
-                        &user.password_confirm,
-                        Some(Message::TogglePasswordConfirmVisibility),
-                        self.password_confirm_hidden,
-                    )
-                    .label(&self.password_confirm_label)
-                    .on_input(|value| {
-                        Message::Dialog(Some(Dialog::UpdatePassword(User {
-                            password_confirm: value,
-                            ..user.clone()
-                        })))
-                    }),
+                let credential_confirm_input = widget::container(
+                    widget::text_input("", &user.credential_confirm)
+                        .label(&self.credential_confirm_label)
+                        .on_input(|value| {
+                            Message::Dialog(Some(Dialog::UpdatePassword(User {
+                                credential_confirm: value,
+                                ..user.clone()
+                            })))
+                        }),
                 );
 
-                // validation
                 let mut validation_msg = String::new();
-                let complete_maybe = if user.password != user.password_confirm
-                    && !user.password.is_empty()
-                    && !user.password_confirm.is_empty()
+                let complete_maybe = if user.credential != user.credential_confirm
+                    && !user.credential.is_empty()
+                    && !user.credential_confirm.is_empty()
                 {
                     validation_msg = fl!("password-mismatch");
                     None
-                } else if user.password.is_empty() || user.password_confirm.is_empty() {
+                } else if !user_settings::valid_credential(&user.credential)
+                    || user.credential_confirm.is_empty()
+                {
+                    validation_msg = fl!("users-password-credential-hint");
                     None
                 } else {
                     Some(Message::SaveNewPassword(user.clone()))
@@ -391,8 +304,9 @@ impl page::Page<crate::pages::Message> for Page {
                     .title(fl!("change-password"))
                     .control(
                         widget::ListColumn::default()
-                            .add(password_input)
-                            .add(password_confirm_input),
+                            .add(credential_input)
+                            .add(credential_confirm_input)
+                            .add(text::body(fl!("users-password-credential-hint"))),
                     )
                     .primary_action(save_button)
                     .secondary_action(cancel_button)
@@ -409,7 +323,15 @@ impl page::Page<crate::pages::Message> for Page {
             handle.abort();
         }
 
-        let (task, handle) = cosmic::task::future(async { Self::reload().await }).abortable();
+        if self.pending.busy() {
+            return cosmic::Task::none();
+        }
+        let Some(query) = self.next_query() else {
+            return cosmic::Task::none();
+        };
+        let revision = self.pending.revision();
+        let (task, handle) =
+            cosmic::task::future(async move { Self::reload(query, revision).await }).abortable();
         self.on_enter_handle = Some(handle);
         task
     }
@@ -424,68 +346,108 @@ impl page::Page<crate::pages::Message> for Page {
 }
 
 impl Page {
-    pub async fn reload() -> Message {
-        let passwd_users = getent::passwd(uid_range());
-        let mut users = Vec::with_capacity(passwd_users.len());
-        let groups = getent::group();
+    pub async fn reload(query: u64, revision: (u64, bool)) -> Message {
+        let result = user_settings::load().await.map(|accounts| {
+            accounts
+                .into_iter()
+                .map(|account| User {
+                    id: account.target.uid,
+                    account_name: account.target.user.clone(),
+                    username: account.target.user,
+                    full_name: account.full_name,
+                    is_admin: account.administrator,
+                    profile_icon: (!account.icon_file.is_empty())
+                        .then(|| icon::from_path(PathBuf::from(account.icon_file))),
+                    ..User::default()
+                })
+                .collect()
+        });
+        Message::LoadPage(query, revision, result)
+    }
 
-        let uid = rustix::process::getuid().as_raw() as u64;
-
-        let admin_group = groups.iter().find(|g| &*g.name == "sudo");
-
-        let Ok(conn) = zbus::Connection::system().await else {
-            tracing::error!("unable to access dbus system service");
-            return Message::LoadPage(uid, Vec::new());
+    fn next_query(&mut self) -> Option<u64> {
+        let Some(next) = self.query_generation.checked_add(1) else {
+            self.notice = Some(
+                Failure::Unavailable("restart Settings before refreshing again".into()).message(),
+            );
+            return None;
         };
+        self.query_generation = next;
+        Some(next)
+    }
 
-        for user in passwd_users {
-            let Ok(user_proxy) = accounts_zbus::UserProxy::from_uid(&conn, user.uid).await else {
-                continue;
-            };
+    fn target(&self, uid: u32) -> Option<Target> {
+        self.users
+            .iter()
+            .find(|user| user.id == uid)
+            .map(|user| Target {
+                user: user.account_name.clone(),
+                uid,
+            })
+    }
 
-            users.push(User {
-                id: user.uid,
-                profile_icon: user_proxy
-                    .icon_file()
-                    .await
-                    .ok()
-                    .map(|path| icon::from_path(PathBuf::from(path))),
-                is_admin: match user_proxy.account_type().await {
-                    Ok(1) => true,
-                    Ok(_) => false,
-                    Err(_) => admin_group.is_some_and(|group| group.users.contains(&user.username)),
-                },
-                username: String::from(user.username),
-                full_name: String::from(user.full_name),
-                password: String::new(),
-                password_confirm: String::new(),
-                full_name_edit: false,
-                username_edit: false,
-            });
-        }
-
-        Message::LoadPage(uid, users)
+    fn start(&mut self, change: Change) -> cosmic::Task<crate::app::Message> {
+        let generation = match self.pending.begin() {
+            Ok(generation) => generation,
+            Err(error) => {
+                self.notice = Some(error.message());
+                return cosmic::Task::none();
+            }
+        };
+        self.last_outcome = None;
+        self.notice = Some(fl!("regional-settings", "working"));
+        cosmic::task::future(async move {
+            Message::Finished(generation, user_settings::apply(change).await)
+        })
     }
 
     pub fn update(&mut self, message: Message) -> cosmic::Task<crate::app::Message> {
+        if self.pending.busy() && !matches!(&message, Message::Finished(..) | Message::LoadPage(..))
+        {
+            return cosmic::Task::none();
+        }
         match message {
             Message::None => (),
-
-            Message::ChangedAccountType(uid, is_admin) => {
-                for user in &mut self.users {
-                    if user.id == uid {
-                        user.is_admin = is_admin;
-                        return cosmic::Task::none();
+            Message::Refresh => {
+                let Some(query) = self.next_query() else {
+                    return cosmic::Task::none();
+                };
+                let revision = self.pending.revision();
+                return cosmic::task::future(async move { Self::reload(query, revision).await });
+            }
+            Message::LoadPage(query, revision, result) => {
+                if query == self.query_generation
+                    && revision == self.pending.revision()
+                    && !self.pending.busy()
+                {
+                    match result {
+                        Ok(users) => {
+                            self.users = users;
+                            self.selected_user_idx = None;
+                        }
+                        Err(error) => {
+                            let detail = error.message();
+                            let refresh = fl!("users-refresh-error", detail = detail.as_str());
+                            self.notice = Some(match &self.last_outcome {
+                                Some(outcome) => format!("{outcome}\n{refresh}"),
+                                None => refresh,
+                            });
+                        }
                     }
                 }
             }
-
-            Message::LoadedIcon(uid, handle) => {
-                for user in &mut self.users {
-                    if user.id == uid {
-                        user.profile_icon = Some(handle);
+            Message::Finished(generation, result) => {
+                if self.pending.complete(generation) {
+                    let outcome = crate::regional_settings::outcome(&result);
+                    self.last_outcome = Some(outcome.clone());
+                    self.notice = Some(outcome);
+                    let Some(query) = self.next_query() else {
                         return cosmic::Task::none();
-                    }
+                    };
+                    let revision = self.pending.revision();
+                    return cosmic::task::future(
+                        async move { Self::reload(query, revision).await },
+                    );
                 }
             }
 
@@ -504,49 +466,21 @@ impl Page {
             }
 
             Message::SelectedProfileImage(uid, image_result) => {
-                let url = match Arc::into_inner(image_result).unwrap() {
-                    Ok(url) => url,
+                let url = match image_result.as_ref() {
+                    Ok(url) => url.clone(),
                     Err(why) => {
-                        tracing::error!(?why, "failed to get image file");
+                        self.notice = Some(format!("{}: {why}", fl!("users-icon-requirement")));
                         return cosmic::Task::none();
                     }
                 };
-
-                return cosmic::task::future(async move {
-                    let Ok(conn) = zbus::Connection::system().await else {
-                        return Message::None;
-                    };
-
-                    let Ok(user) = accounts_zbus::UserProxy::from_uid(&conn, uid).await else {
-                        return Message::None;
-                    };
-
-                    let Ok(path) = url.to_file_path() else {
-                        tracing::error!("selected image is not a file path");
-                        return Message::None;
-                    };
-
-                    // Prepare the icon file, resizing if necessary to fit within accountsservice's 1MB limit
-                    let icon_path = match prepare_icon_file(&path) {
-                        Ok(p) => p,
-                        Err(why) => {
-                            tracing::error!(?why, "failed to prepare icon file");
-                            return Message::None;
-                        }
-                    };
-
-                    let result = request_permission_on_denial(&conn, || {
-                        user.set_icon_file(icon_path.to_str().unwrap())
-                    })
-                    .await;
-
-                    if let Err(why) = result {
-                        tracing::error!(?why, "failed to set profile icon");
-                        return Message::None;
-                    }
-
-                    Message::LoadedIcon(uid, icon::from_path(path))
-                });
+                let path = url
+                    .to_file_path()
+                    .ok()
+                    .and_then(|path| path.to_str().map(str::to_owned));
+                if let (Some(target), Some(path)) = (self.target(uid), path) {
+                    return self.start(Change::Icon(target, path));
+                }
+                self.notice = Some(fl!("users-icon-requirement"));
             }
 
             Message::Edit(id, field, value) => {
@@ -567,98 +501,34 @@ impl Page {
                 }
             }
 
-            Message::TogglePasswordVisibility => {
-                self.password_hidden = !self.password_hidden;
-            }
-            Message::TogglePasswordConfirmVisibility => {
-                self.password_confirm_hidden = !self.password_confirm_hidden;
-            }
-
             Message::ApplyEdit(id, field) => {
                 if let Some(user) = self.users.get_mut(id) {
-                    let uid = user.id;
-
-                    match field {
-                        EditorField::FullName => {
-                            if user.full_name_edit {
-                                let full_name = user.full_name.clone();
-
-                                return cosmic::Task::future(async move {
-                                    let Ok(conn) = zbus::Connection::system().await else {
-                                        return;
-                                    };
-
-                                    let Ok(user) =
-                                        accounts_zbus::UserProxy::from_uid(&conn, uid).await
-                                    else {
-                                        return;
-                                    };
-
-                                    _ = request_permission_on_denial(&conn, || {
-                                        user.set_real_name(&full_name)
-                                    })
-                                    .await;
-                                })
-                                .discard();
-                            }
+                    let target = Target {
+                        user: user.account_name.clone(),
+                        uid: user.id,
+                    };
+                    let change = match field {
+                        EditorField::FullName if user.full_name_edit => {
+                            user.full_name_edit = false;
+                            Some(Change::FullName(target, user.full_name.clone()))
                         }
-
-                        EditorField::Username => {
-                            if user.username_edit {
-                                let username = user.username.clone();
-
-                                return cosmic::Task::future(async move {
-                                    let Ok(conn) = zbus::Connection::system().await else {
-                                        return;
-                                    };
-
-                                    let Ok(user) =
-                                        accounts_zbus::UserProxy::from_uid(&conn, uid).await
-                                    else {
-                                        return;
-                                    };
-
-                                    _ = request_permission_on_denial(&conn, || {
-                                        user.set_user_name(&username)
-                                    })
-                                    .await;
-                                })
-                                .discard();
-                            }
+                        EditorField::Username if user.username_edit => {
+                            user.username_edit = false;
+                            Some(Change::Rename(target, user.username.clone()))
                         }
+                        _ => None,
+                    };
+                    if let Some(change) = change {
+                        return self.start(change);
                     }
                 }
             }
 
             Message::SaveNewPassword(user) => {
                 self.dialog = None;
-
-                let uid = user.id;
-                let password_hashed = hash_password(&user.password);
-
-                return cosmic::Task::future(async move {
-                    let Ok(conn) = zbus::Connection::system().await else {
-                        return;
-                    };
-
-                    let Ok(user) = accounts_zbus::UserProxy::from_uid(&conn, uid).await else {
-                        return;
-                    };
-
-                    if let Err(why) = request_permission_on_denial(&conn, || {
-                        user.set_password(&password_hashed, "")
-                    })
-                    .await
-                    {
-                        tracing::error!(?why, "failed to set password");
-                    }
-                })
-                .discard();
-            }
-
-            Message::LoadPage(uid, users) => {
-                self.current_user_id = uid;
-                self.users = users;
+                if let Some(target) = self.target(user.id) {
+                    return self.start(Change::Password(target, user.credential));
+                }
             }
 
             Message::SelectUser(user_idx) => {
@@ -673,99 +543,29 @@ impl Page {
             }
 
             Message::SelectedUserDelete(uid) => {
-                return cosmic::task::future(async move {
-                    let Ok(conn) = zbus::Connection::system().await else {
-                        return Message::None;
-                    };
-
-                    let accounts = accounts_zbus::AccountsProxy::new(&conn).await.unwrap();
-
-                    let result = request_permission_on_denial(&conn, || {
-                        accounts.delete_user(uid as i64, false)
-                    })
-                    .await;
-
-                    if let Err(why) = result {
-                        tracing::error!(?why, "failed to delete user account");
-                        return Message::None;
-                    }
-
-                    Message::DeletedUser(uid)
-                });
-            }
-
-            Message::DeletedUser(uid) => {
-                self.users.retain(|user| user.id != uid);
+                if let Some(target) = self.target(uid) {
+                    return self.start(Change::Delete(target));
+                }
             }
 
             Message::Dialog(dialog) => {
-                self.password_hidden = true;
-                self.password_confirm_hidden = true;
                 self.dialog = dialog;
             }
 
-            Message::NewUser(username, full_name, password, is_admin) => {
+            Message::NewUser(username, full_name, credential, is_admin) => {
                 self.dialog = None;
-
-                return cosmic::task::future(async move {
-                    let Ok(conn) = zbus::Connection::system().await else {
-                        return Message::None;
-                    };
-
-                    let accounts = accounts_zbus::AccountsProxy::new(&conn).await.unwrap();
-
-                    let user_result = request_permission_on_denial(&conn, || {
-                        accounts.create_user(&username, &full_name, if is_admin { 1 } else { 0 })
-                    })
-                    .await;
-
-                    let user_object_path = match user_result {
-                        Ok(path) => path,
-
-                        Err(why) => {
-                            tracing::error!(?why, "failed to create user account");
-                            return Message::None;
-                        }
-                    };
-
-                    let password_hashed = hash_password(&password);
-                    match accounts_zbus::UserProxy::new(&conn, user_object_path).await {
-                        Ok(user) => {
-                            _ = user.set_password(&password_hashed, "").await;
-                            _ = user.set_icon_file(DEFAULT_ICON_FILE).await
-                        }
-
-                        Err(why) => {
-                            tracing::error!(?why, "failed to get user by object path");
-                        }
-                    }
-
-                    Self::reload().await
+                return self.start(Change::Create {
+                    user: username,
+                    full_name,
+                    credential,
+                    administrator: is_admin,
                 });
             }
 
             Message::SelectedUserSetAdmin(uid, is_admin) => {
-                return cosmic::task::future(async move {
-                    let Ok(conn) = zbus::Connection::system().await else {
-                        return Message::None;
-                    };
-
-                    let Ok(user) = accounts_zbus::UserProxy::from_uid(&conn, uid).await else {
-                        return Message::None;
-                    };
-
-                    let result = request_permission_on_denial(&conn, || async {
-                        user.set_account_type(if is_admin { 1 } else { 0 }).await
-                    })
-                    .await;
-
-                    if let Err(why) = result {
-                        tracing::error!(?why, "failed to change account type of user");
-                        return Message::None;
-                    }
-
-                    Message::ChangedAccountType(uid, is_admin)
-                });
+                if let Some(target) = self.target(uid) {
+                    return self.start(Change::AccountType(target, is_admin));
+                }
             }
         };
 
@@ -912,124 +712,16 @@ fn user_list() -> Section<crate::pages::Message> {
                 .width(Length::Fill)
                 .align_x(Alignment::End);
 
-            widget::column::with_capacity(2)
+            let refresh =
+                widget::button::standard(fl!("app-permissions-refresh")).on_press(Message::Refresh);
+            let notice = page.notice.clone().unwrap_or_default();
+            widget::column::with_capacity(4)
+                .push(text::body(notice))
                 .push(users_list)
+                .push(refresh)
                 .push(add_user)
                 .spacing(space_xxs)
                 .apply(Element::from)
                 .map(crate::pages::Message::User)
         })
-}
-
-async fn check_authorization(conn: &zbus::Connection) -> anyhow::Result<()> {
-    let proxy = zbus_polkit::policykit1::AuthorityProxy::new(conn).await?;
-    let subject = zbus_polkit::policykit1::Subject::new_for_owner(std::process::id(), None, None)?;
-    proxy
-        .check_authorization(
-            &subject,
-            USERS_ADMIN_POLKIT_POLICY_ID,
-            &HashMap::new(),
-            CheckAuthorizationFlags::AllowUserInteraction.into(),
-            "",
-        )
-        .await?;
-    Ok(())
-}
-
-fn uid_range() -> (u64, u64) {
-    let (mut min, mut max) = (1000, 60000);
-    let Ok(file) = std::fs::File::open("/etc/login.defs") else {
-        return (min, max);
-    };
-
-    let mut reader = BufReader::new(file);
-    let mut line = String::new();
-
-    loop {
-        line.clear();
-        match reader.read_line(&mut line) {
-            Ok(0) | Err(_) => break,
-            _ => (),
-        }
-
-        let line = line.trim();
-
-        let variable = if line.starts_with("UID_MIN ") {
-            &mut min
-        } else if line.starts_with("UID_MAX ") {
-            &mut max
-        } else {
-            continue;
-        };
-
-        if let Some(value) = line
-            .split_ascii_whitespace()
-            .nth(1)
-            .and_then(|value| value.parse::<u64>().ok())
-        {
-            *variable = value;
-        }
-    }
-
-    (min, max)
-}
-
-async fn request_permission_on_denial<T, Fun, Fut>(
-    conn: &zbus::Connection,
-    action: Fun,
-) -> zbus::Result<T>
-where
-    Fun: Fn() -> Fut,
-    Fut: Future<Output = zbus::Result<T>>,
-{
-    match action().await {
-        Ok(value) => Ok(value),
-        Err(why) => {
-            if permission_was_denied(&why) {
-                _ = check_authorization(conn).await;
-                action().await
-            } else {
-                Err(why)
-            }
-        }
-    }
-}
-
-fn permission_was_denied(result: &zbus::Error) -> bool {
-    matches!(result, zbus::Error::MethodError(name, _, _) if name.as_str() == "org.freedesktop.Accounts.Error.PermissionDenied")
-}
-
-// TODO: Should we allow deprecated methods?
-fn hash_password(password_plain: &str) -> String {
-    #[allow(deprecated)]
-    match get_encrypt_method().as_str() {
-        "SHA512" => sha512_crypt::hash(password_plain).unwrap(),
-        "SHA256" => sha256_crypt::hash(password_plain).unwrap(),
-        "MD5" => md5_crypt::hash(password_plain).unwrap(),
-        _ => bcrypt::hash(password_plain).unwrap(),
-    }
-}
-
-// TODO: In the future loading in the whole login.defs file into an object might be handy?
-// For now, just grabbing what we need
-fn get_encrypt_method() -> String {
-    let mut value = String::new();
-    let login_defs = if let Ok(file) = File::open("/etc/login.defs") {
-        file
-    } else {
-        return value;
-    };
-    let reader = BufReader::new(login_defs);
-
-    for line in reader.lines().map_while(Result::ok) {
-        if !line.trim().is_empty()
-            && let Some(index) = line.find(|c: char| c.is_whitespace())
-        {
-            let key = line[0..index].trim();
-            if key == "ENCRYPT_METHOD" {
-                value = line[(index + 1)..].trim().to_string();
-            }
-        }
-    }
-    value
 }

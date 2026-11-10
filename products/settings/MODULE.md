@@ -52,6 +52,7 @@ here, retaining its separate twelfth identity and original default pages.
 | `native/cosmic-settings/cosmic-settings/src/mcp.rs` | Static page catalog/search and fixed OS Settings activation |
 | `native/cosmic-settings/cosmic-settings/src/permissions.rs`, `src/pages/applications/permissions.rs` | Shared OS query/request/revoke client and cancellable Applications UI; human confirmation belongs to OS review |
 | `native/cosmic-settings/cosmic-settings/src/regional_settings.rs`, `src/pages/time/region.rs`, `src/pages/system/about.rs` | Public SDK regional client and pending/error/partial-result UI; locale, owner language and static hostname setters remain OS-owned |
+| `native/cosmic-settings/cosmic-settings/src/user_settings.rs`, `src/pages/system/users/mod.rs` | Fixed-binary public SDK User client; protected local account/UID targets, credential references, exact icon-source paths and explicit partial outcomes |
 | `native/cosmic-settings/cosmic-settings/src/claw_glue.rs`, `src/human.rs`, `human_bridge.py` | Human-only controlled filesystem/process/policy/snapshot adapters and SDK Agent context; no App dispatch |
 | `native/test_build.py`, `native/test_process.py` | Workspace/default graph, synthetic human adapters, installed resources, authenticated stdio MCP and clean-environment native permission client |
 
@@ -177,7 +178,7 @@ by Agent. Source development against an older service fails visibly, without
 raw socket/file authority or a silent success fallback. No live device/user
 state or independent manager grants are migrated.
 
-The native human UI retains its original D-Bus/Wayland and configuration
+The native human UI retains its original Wayland and unrelated configuration
 query behavior, not the eleven Apps' combined grants. Region/language and About
 mutations instead use `cos __regional-settings` through the published SDK's
 fixed `/usr/local/bin/cos` transport. Locale changes require `sys.locale`
@@ -189,17 +190,69 @@ unavailable, stale and ambiguous outcomes remain visible; separate system and
 owner-language writes never imply rollback. Local preference lists remain
 App-owned, and partial clock-format persistence errors are reported separately.
 
+The Users page now uses only the same fixed-binary SDK transport to
+`cos __users`; it neither preflights App-local policy before privileged D-Bus
+nor retries a denied operation through polkit. `status` and the closed
+`show-user --user NAME --uid UID` require `sys.observe:identities`.
+`rename-user --new-name`, `set-full-name --full-name`, `set-account-type
+--account-type standard|administrator` and `set-icon --icon` retain
+`sys.identity:manage`. Each binds the expected managed local account name/UID;
+owner, session, live authority and fixed AccountsService backend custody are
+OS-owned. Rename preserves AccountsService's login/cache semantics without
+moving the home, renaming groups or inventing a migration. Real-name changes
+preserve other GECOS fields, and account types retain the distro-defined
+administrator-group set rather than substituting a guessed sudo group.
+
+Icon mutation additionally spends `fs.read` on the exact selected source,
+opens it under the authenticated owner's filesystem identity without symlink
+traversal, rejects protected stores, hardlinks and non-regular/oversized files,
+and hands only a bounded sealed snapshot to AccountsService. The UI explicitly
+requires an image of at most 1 MiB: it no longer silently resizes/copies to an
+unrelated temporary path with different authority. Password input is an existing
+OS `namespace/name` credential reference, not plaintext or an App-generated hash.
+The existing `set-password` route retains its distinct exact `secret.read`.
+Account creation uses existing OS defaults and then separate password, type
+and default-icon operations; the default icon also needs exact `fs.read` on
+`/usr/share/pixmaps/faces/pop-robot.png`. A failed later step reports partial
+creation, stops immediately and never deletes, rolls back or retries the account.
+Results are bound to their requested action/target/value; stale loads cannot
+replace a newer query or mutation state, and an observation denial never
+replaces the preceding mutation outcome.
+
 The current manifest has no GUI operation declarations for these needs.
 Parent/publisher integration must supply actual GUI selectors/operation needs
-and a later published SDK vocabulary; existing 1.0.0 transport alone does not
-admit new High-risk grants. Authenticated GUI bootstrap/root-owned launch custody
-remain prerequisites. The original broad polkit rule, its installer and custom
-Users policy are unchanged release blockers, not authority for this client.
-No Users/password/account-administration cutover or real Wayland acceptance
-is included.
+and their versioned capability vocabulary; the existing published transport
+alone does not admit new High-risk grants. Authenticated GUI bootstrap/root-owned launch custody
+and resource/credential-reference admission remain prerequisites. No GUI rights
+are acquired by these clients or by the new Root actions. Actual direct
+locale/static-hostname/User mutations in this App use protected OS routes,
+and two indirect OS consumers retain OS-owned policy:
+
+- The keyboard page writes owner compositor `xkb_config`. OS
+  `desktop/settings-daemon/src/main.rs` watches that key and
+  `src/locale.rs::sync_cosmic_to_locale1` calls localed's `SetX11Keyboard`
+  with console conversion enabled. The existing regional Root request has no
+  protected system-keyboard operation or corresponding caller-bound daemon path.
+- OS `desktop/initial-setup/src/page/user.rs` still requests
+  `com.clawos.Settings.Users.Admin` while creating/configuring accounts and
+  performing UID/transaction-bound first-boot rollback. Its home-overlay setup
+  and delete-new-home recovery are not the generic User Manager's deliberately
+  home-retaining deletion contract. The pre-login authority/session/credential
+  and home transaction require separate OS-owned coordination.
+
+No direct ModemManager control or transient-hostname setter exists in this
+native App graph. The original policies now belong to the OS initial-setup
+component, with their action identifiers, translations and authorization
+semantics retained for these OS clients. Product install/uninstall and Debian
+delivery contain neither authority file; the complete-payload validator still
+rejects any App-supplied replacement. This does not grant Apps a user bus or
+the OS clients' authority. No account/home data is removed or migrated.
+Generic keyboard/config resource ownership, first-boot coordination, GUI
+grants and real Wayland/resource acceptance remain separate prerequisites.
 
 Focused Rust tests are `regional_settings`, `pages::time::region` and
-`pages::system::about` in the independent `cosmic-settings` binary package,
+`pages::system::about`, plus `users_service` in the independent
+`cosmic-settings` binary package,
 prepared through `tools/native_build.prepare` and the digest-verified published
 platform loader. Do not combine upstream native packages or import an OS tree.
 
@@ -239,7 +292,7 @@ initialization; no debug-source resource mount is needed to parse them.
 MCP dispatch remains first. This does not create a GUI operation key,
 declare the pending regional needs or acquire any missing launch authority.
 The focused parser filter is `native_gui_argv_` in the binary's `test/unit/main.rs`.
-The original installer's polkit rules/actions are rejected before output,
-never silently stripped or exempted. Signed ELF/resource fixtures are separate
+The original installer's polkit rules/actions remain rejected before output,
+never stripped or exempted. Signed ELF/resource fixtures are separate
 from that complete-package gate and actual GUI/provider admission; see
 [native payloads](../../docs/native-payloads.md).

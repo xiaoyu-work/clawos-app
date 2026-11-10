@@ -8,10 +8,11 @@ Agent, privileged broker, runtime authority, SDK and OS image.
 language or UI, must use one authenticated manifest/Host/capability/resource-owner
 and sandbox model. Package authenticity and versioned interface availability
 are not grants. The generic Host now admits signed package-relative entries
-without the former fixed launch table or native-host exemption. Business-name
-provider gates, Browser/Mail integration, native GUI authority and resource
-admission, and Settings' authority payload remain coordinated blockers, not
-approved architecture. Preserve existing protections until equivalent generic
+without the former fixed launch table or native-host exemption. Source now
+includes generic GUI entry/permission contracts and OS-owned Native Messaging
+and Settings policies. Provider/helper resources, GUI/config admission and
+installation/update/rollback acceptance remain coordinated blockers, not
+approved exceptions. Preserve existing protections until equivalent generic
 checks and regressions replace them. New release publication is gated; see
 [the current contract status](docs/releases.md#one-app-integration-contract-pending).
 

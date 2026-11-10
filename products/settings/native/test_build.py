@@ -90,6 +90,51 @@ def test_permission_manifest_preserves_request_only_tools_and_signed_ceiling():
     assert "OS approval gate or cos review" in request["summary"]["en"]
 
 
+def test_native_users_have_one_protected_transport_without_app_owned_authority():
+    page = (NATIVE / "cosmic-settings/src/pages/system/users/mod.rs").read_text()
+    client = (NATIVE / "cosmic-settings/src/user_settings.rs").read_text()
+    for operation in ("FullName", "Rename", "Icon", "AccountType", "Password", "Delete", "Create"):
+        assert f"Change::{operation}" in page, operation
+    for forbidden in ("zbus::", "accounts_zbus", "polkit", "check_authorization",
+                      "request_permission_on_denial", "hash_password", "secure_input",
+                      "std::process::Command", "tokio::process::Command"):
+        assert forbidden not in page, forbidden
+        assert forbidden not in client, forbidden
+    assert "cos_call_json_async_with_binary" in client
+    assert '"/usr/local/bin/cos"' in client and '"__users"' in client
+    assert '"--uid"' in client and '"--credential"' in client and '"--icon"' in client
+    assert "self.pending.complete(generation)" in page
+    assert "self.pending.revision()" in page
+    assert "Earlier steps may have applied; no rollback was attempted" in client
+    labels = (NATIVE / "i18n/en/cosmic_settings.ftl").read_text()
+    assert "not a password" in labels and "at most 1 MiB" in labels
+
+
+def test_system_authority_is_never_installed_or_removed_by_the_product():
+    installer = (NATIVE / "justfile").read_text()
+    debian = (NATIVE / "debian/install").read_text()
+    assert "polkit" not in installer
+    for path in ("rules.d/cosmic-settings.rules", "actions/com.clawos.Settings.Users.policy"):
+        assert not (NATIVE / "resources/polkit-1" / path).exists()
+        assert f"/usr/share/polkit-1/{path}" not in debian
+    forbidden = (
+        ".set_locale(", ".set_x11_keyboard(", ".set_x11keyboard(",
+        ".set_vconsole_keyboard(", ".set_vconsolekeyboard(",
+        ".set_hostname(", ".set_static_hostname(", "org.freedesktop.ModemManager1",
+        "com.clawos.Settings.Users.Admin",
+    )
+    for group in ("cosmic-settings/src", "crates", "pages", "subscriptions"):
+        for source in (NATIVE / group).rglob("*.rs"):
+            text = source.read_text()
+            for operation in forbidden:
+                assert operation not in text, (source, operation)
+    keyboard = (NATIVE / "cosmic-settings/src/pages/input/keyboard/mod.rs").read_text()
+    assert 'config.set("xkb_config", xkb)' in keyboard
+    regional = (NATIVE / "cosmic-settings/src/regional_settings.rs").read_text()
+    assert "cos_call_json_async_with_binary" in regional
+    assert '"__regional-settings"' in regional
+
+
 @pytest.fixture
 def human(monkeypatch):
     monkeypatch.delenv("COS_MCP_SERVER", raising=False)

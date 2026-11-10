@@ -12,9 +12,6 @@ iconsdir := usrdir / 'share' / 'icons' / 'hicolor'
 bin-dst := usrdir / 'bin' / name
 bin-src := cargo-target-dir / 'release' / name
 metainfo-dst := usrdir / 'share' / 'metainfo' / appid + '.metainfo.xml'
-polkit-actions-dst := usrdir / 'share' / 'polkit-1' / 'actions'
-policy-users-dst := polkit-actions-dst / appid + '.Users.policy'
-polkit-rules-dst := usrdir / 'share' / 'polkit-1' / 'rules.d' / 'cosmic-settings.rules'
 
 import 'cargo.just'
 
@@ -30,8 +27,6 @@ build-deb:
 install:
     for size in 16 24 32 48 64 128 256; do rm -f {{iconsdir}}/${size}x${size}/apps/{{appid}}.png; done
     install -Dm0644 {{'resources' / appid + '.metainfo.xml'}} {{metainfo-dst}}
-    install -Dm0644 {{'resources' / 'polkit-1' / 'rules.d' / 'cosmic-settings.rules'}} {{polkit-rules-dst}}
-    install -Dm0644 {{'resources' / 'polkit-1' / 'actions' / appid + '.Users.policy'}} {{policy-users-dst}}
     install -Dm0755 {{bin-src}} {{bin-dst}}
     cd target/xdgen && find * -type f -exec install -Dm0644 '{}' '{{appdir}}/{}' \;
     cd resources/default_schema && find * -type f -exec install -Dm0644 '{}' '{{default-schema-target}}/{}' \;
@@ -39,7 +34,7 @@ install:
 
 # Uninstalls everything (requires same arguments as given to install)
 uninstall:
-    rm {{bin-dst}} {{metainfo-dst}} {{polkit-rules-dst}} {{policy-users-dst}}
+    rm {{bin-dst}} {{metainfo-dst}}
     rm -f {{iconsdir}}/scalable/apps/{{appid}}.svg
     for size in 16 24 32 48 64 128 256; do rm -f {{iconsdir}}/${size}x${size}/apps/{{appid}}.png; done
     cd target/xdgen && find * -type f -exec rm '{{appdir}}/{}' \;
