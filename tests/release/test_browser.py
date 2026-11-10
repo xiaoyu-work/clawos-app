@@ -63,7 +63,7 @@ def test_browser_package_owns_complete_extension_and_the_single_canonical_host(t
     control = fields(run(["dpkg-deb", "-f", package]).stdout.decode().strip())
     assert control["X-Claw-App-Ids"] == "search, web, browser-attached"
     assert "chromium" not in control["Depends"] and "claw-os-app-permissions-v1" not in control["Depends"]
-    assert control["Breaks"] == control["Replaces"] == "claw-os-agent (<< 1:0.3.0)"
+    assert control["Breaks"] == control["Replaces"] == "claw-os-agent (<< 1:0.2.1)"
 
 
 def test_browser_fixture_archive_restages_the_declared_extension_and_launcher(tmp_path):
@@ -108,7 +108,7 @@ def test_real_browser_apt_upgrade_updates_extension_and_host_together_without_re
     release.build(release.make_plan("browser", "1.0.0"), "all", tmp_path / "first")
     platform = [
         deb("claw-app-fixture-platform", extra={
-            "Provides": "claw-os-app-runtime-v1, claw-os-browser-bridge-v1 (= 1), claw-app-support-v1, python3 (= 3.13)",
+            "Provides": "claw-os-app-runtime-v1 (= 0.2.1), claw-os-browser-bridge-v1 (= 1), claw-app-support-v1, python3 (= 3.13)",
         }),
         deb("claw-app-unrelated"),
     ]

@@ -5,6 +5,12 @@ construction or a privileged updater.
 
 - `release.json` is the package/channel, native toolchain, public service ABI,
   Python dependency and bounded first-ownership-transfer policy.
+  The approved 0.2.1 source cutover bounds former OS owners at `(<< 1:0.2.1)`
+  and requires `claw-os-app-runtime-v1 (>= 0.2.1)`, not a new ABI or a new
+  production platform pin. OS production staging no longer copies App/support
+  source. Missing official App APT artifacts or reintroduced shell/private-library
+  links block OS release assembly. The real Desktop source links are removed;
+  native build/publication/integration acceptance gates remain intact.
 - `apt/archive-key.asc` is the checked-in App archive public key. Its fingerprint
   must match both `release.json` and the OS repository consumer. Private signing
   material belongs only in the two dedicated GitHub Actions secrets.

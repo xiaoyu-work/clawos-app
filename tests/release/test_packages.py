@@ -75,13 +75,13 @@ def test_standalone_applet_packages_require_the_versioned_os_service_only_for_de
         assert ("claw-os-observation-v1 (= 1)" in dependencies) == (
             product == "desktop-widgets" and entry["variant"] == "desktop"
         )
-        assert "claw-os-app-runtime-v1" in dependencies
+        assert "claw-os-app-runtime-v1 (>= 0.2.1)" in dependencies
         root = tmp_path / entry["package"] / entry["architecture"]
         root.mkdir(parents=True)
         release.write_control(root, entry, release.make_plan(product, "1.0.0"))
         control = fields((root / "DEBIAN/control").read_text().strip())
         former = "claw-os-desktop" if entry["variant"] == "desktop" else "claw-os-agent"
-        assert control["Breaks"] == control["Replaces"] == f"{former} (<< 1:0.3.0)"
+        assert control["Breaks"] == control["Replaces"] == f"{former} (<< 1:0.2.1)"
 
 
 def test_support_package_declares_the_idna_compatibility_bounds(tmp_path):
@@ -89,9 +89,9 @@ def test_support_package_declares_the_idna_compatibility_bounds(tmp_path):
     package = tmp_path / "packages/claw-app-support_1.2.3_all.deb"
     control = fields(run(["dpkg-deb", "-f", package]).stdout.decode().strip())
     dependencies = {value.strip() for value in control["Depends"].split(",")}
-    assert {"python3-idna (>= 3.3)", "python3-idna (<< 4)", "claw-os-app-runtime-v1"} <= dependencies
+    assert {"python3-idna (>= 3.3)", "python3-idna (<< 4)", "claw-os-app-runtime-v1 (>= 0.2.1)"} <= dependencies
     assert control["Provides"] == "claw-app-support-v1"
-    assert control["Breaks"] == control["Replaces"] == "claw-os-agent (<< 1:0.3.0)"
+    assert control["Breaks"] == control["Replaces"] == "claw-os-agent (<< 1:0.2.1)"
     payload = tmp_path / "payload"
     run(["dpkg-deb", "--extract", package, payload])
     for relative in ("_shared/__init__.py", "gateway/__init__.py", "canonical_argv.py"):
@@ -130,13 +130,13 @@ def test_real_packages_are_deterministic_and_have_nonconflicting_ownership(tmp_p
     desktop = fields(run(["dpkg-deb", "-f", first / "claw-app-mail-desktop_1.2.3_all.deb"]).stdout.decode().strip())
     assert "thunderbird" in desktop["Depends"]
     assert "claw-app-mail (= 1.2.3)" in desktop["Depends"]
-    assert desktop["Replaces"] == "claw-os-agent (<< 1:0.3.0)"
+    assert desktop["Replaces"] == "claw-os-agent (<< 1:0.2.1)"
     doc = fields(run(["dpkg-deb", "-f", first / "claw-cap-document-engine_1.2.3_all.deb"]).stdout.decode().strip())
     assert "claw-app-files" in doc["Depends"] and "claw-app-python-claw-files-v1" in doc["Depends"]
     assert "claw_os_sdk" not in repr(owned)
     assert not any("test_" in path or "Cargo.toml" in path for path in owned)
-    assert doc["Breaks"] == doc["Replaces"] == "claw-os-agent (<< 1:0.3.0)"
-    assert "claw-os-app-runtime-v1" in doc["Depends"]
+    assert doc["Breaks"] == doc["Replaces"] == "claw-os-agent (<< 1:0.2.1)"
+    assert "claw-os-app-runtime-v1 (>= 0.2.1)" in doc["Depends"]
     assert "python3-pptx" not in doc["Depends"]
     assert doc["X-Claw-App-Ids"] == "doc"
 

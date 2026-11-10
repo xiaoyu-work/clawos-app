@@ -14,9 +14,10 @@ trust-root override.
 ## Platform publication status
 
 App development platform `1.0.0` and `1.1.0` releases, tags and uploaded Actions
-artifacts have been withdrawn at the owner's request. The OS platform source
-version is now the separately approved, published **`0.2.0`** platform,
-runtime ABI 1. Historical `1.0.0`/`1.1.0` archives were not restored.
+artifacts have been withdrawn at the owner's request. The production OS platform
+development pin is the separately approved, published **`0.2.0`** platform,
+runtime ABI 1; coordinated 0.2.1 source remains unpublished as noted below.
+Historical `1.0.0`/`1.1.0` archives were not restored.
 
 [`app-platform-v0.1.0`](https://github.com/xiaoyu-work/claw-os/releases/tag/app-platform-v0.1.0)
 was published by the approved platform workflow from OS source
@@ -54,6 +55,12 @@ strict artifact verifier.
 Any future release, release tag, version bump or dependency-pin adoption needs
 explicit owner approval. Source development, successful validation and requests
 to commit or push do not authorize publication.
+
+The coordinated **0.2.1** source cutover is approved, not published. OS source
+provides runtime ABI 1 with implementation version 0.2.1; independent App
+packages now require that implementation floor. `platform.lock.json` still
+selects the real published 0.2.0 development artifact. No unpublished artifact,
+URL, digest or App pin is adopted by the packaging ownership change.
 
 ## One App integration contract: pending
 
@@ -370,7 +377,7 @@ package catalog from each explicitly kinded `package.json`:
 | `claw-app-<product>-desktop` | Native graphical identities, binaries and original installed resources |
 | `claw-cap-<group>` | Explicit shared-capability client identities |
 | `claw-app-support` | App-owned `_shared`, `gateway._shared` and `canonical_argv` under `/usr/lib/cos/python` |
-| `claw-apps-agent` | Recommended headless set: 63 identities, their libraries and capability clients |
+| `claw-apps-agent` | Recommended headless set: 51 identities, their libraries and capability clients |
 | `claw-apps-desktop` | Recommended graphical set, including the headless set and twelve native identities |
 
 Native-only products such as Editor and Capture have only a `-desktop` package;
@@ -422,7 +429,7 @@ Common safe HTTP/IDNA helpers require Debian `python3-idna (>= 3.3)` and
 `python3-idna (<< 4)` through `claw-app-support`; consumers do not vendor a
 separate IDNA implementation or install it dynamically.
 
-Apps depend on `claw-os-app-runtime-v1`, with additional permission, capture,
+Apps depend on `claw-os-app-runtime-v1 (>= 0.2.1)`, with additional permission, capture,
 media-player and notification service interfaces where required. Native runtime
 library dependencies are computed from the actual installed ELF binaries with
 `dpkg-shlibdeps`. Python/system package mappings remain explicit in the release
@@ -430,12 +437,12 @@ configuration.
 These dependencies express public interface availability, never a grant, a
 special caller class or a sandbox exemption. Existing names remain for
 compatibility while the general service/Host contracts above are resolved.
-Calendar, Clipboard and Desktop Widgets' standalone desktop packages additionally
-depend on `claw-os-applet-services-v1 (= 1)`. The OS provides the fixed
-`/usr/libexec/claw-os-applet-provider --stdio-v1` interface and retains policy
-and service implementations; App packages install only their own presentation
-binaries/resources. This service ABI is not required by Calendar/Clipboard's
-headless package or an OS package-version lock.
+Calendar, Clipboard and Desktop Widgets' standalone packages consume the
+Agent's declared Calendar/history/observation services, not a hard dependency
+on the full OS Desktop package. The OS retains policy and service
+implementations; App packages install only their own presentation
+binaries/resources. Agent-only Ubuntu/WSL installations can select native App
+packages explicitly, subject to the same GUI resources and permissions.
 
 Debian trixie does not provide `python3-pptx`. Files therefore owns the explicitly
 SHA256/size-pinned pure `python-pptx` wheel, including its upstream MIT license
@@ -448,10 +455,10 @@ different bytes and unsafe/architecture-specific wheel paths are refused.
 
 ### First ownership transfer
 
-The initial split requires OS packages **at least `1:0.3.0`**, which no longer
+The initial split requires OS packages **at least `1:0.2.1`**, which no longer
 own the transferred files and still enforce the OS security floor. App packages
 declare bounded `Breaks` and `Replaces` against the former owner
-`(<< 1:0.3.0)`. Headless/support payloads and Mail's XPI replace old
+`(<< 1:0.2.1)`. Headless/support payloads and Mail's XPI replace old
 `claw-os-agent` ownership; other native payloads replace old
 `claw-os-desktop` ownership. These declarations never authorize replacement
 of a newer OS package. Calendar, Clipboard and Widget Rail replace the former
@@ -462,9 +469,29 @@ Upgrade the OS platform boundary in the same ordinary
 APT transaction before installing the split Apps. Do not weaken an OS gate,
 force an overwrite or delete owner data to make the transition install.
 The OS security epoch and protocol ABI remain **1**; only its package-version
-compatibility boundary advances from `1:0.2.0` to `1:0.3.0`. The OS's signed-channel
+compatibility boundary advances from `1:0.2.0` to `1:0.2.1`. The OS's signed-channel
 bootstrap/cutover guard must prove the App channel and required packages are
 available before removing old bundled payloads.
+
+OS Agent now recommends `claw-apps-agent`; Desktop recommends
+`claw-apps-desktop`. Neither is a circular hard dependency from Agent to its
+App consumers. Bootstrap publishes the approved SDK artifact and independent
+App APT packages first, then the payload-free Agent/OS packages. OS release
+preparation authenticates the App APT indexes and complete selected package
+closure, preserving exact matching native/headless versions. Missing, stale,
+incomplete or altered artifacts block the build; source fixtures are not a
+fallback. Image composition installs the same checked App `.deb` bytes as
+separate dpkg owners in the ordinary transaction.
+
+The OS shell no longer links Calendar/Clipboard/Widget Rail UI or
+Notifications-private config/util. App packages retain the original panel
+binaries, desktop entries/icons and common-Host launchers; OS notification
+presentation uses the existing public SDK records/proxy with confirmed popup
+mute and bounded decoded icons, not direct product configuration writes.
+The source guard remains and passes this separated graph. Actual Linux native
+builds, signed public 0.2.1 artifacts, protected APT review/custody and installed
+GUI/update/rollback acceptance remain blockers. This source cutover does not clear
+`integration_contract` or permit publication.
 
 ## Build and test a selection
 
@@ -767,7 +794,7 @@ source/test archives.
 Before dispatching the first release:
 
 1. Publish the platform-development artifact and commit its validated App lock.
-2. Coordinate the `1:0.3.0` file-ownership boundary and versioned virtual
+2. Coordinate the `1:0.2.1` file-ownership boundary and versioned virtual
    runtime/service `Provides` in the OS packages.
 3. Enable **immutable releases** in the App repository. The workflow verifies
    GitHub's setting before writing release content and verifies each published
