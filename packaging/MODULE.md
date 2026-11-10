@@ -25,17 +25,22 @@ construction or a privileged updater.
   `claw.provenance/v1` App directories and signs a manifest/artifact-bound catalog.
   It calls the existing pinned public verifier and has no OS-source dependency,
   root hooks, installer, permission summary or approval store. OS protected
-  install/update review and activation remain prerequisites; Debian/APT is
-  compatibility delivery, not a bypass. Operation/GUI and MCP/background entry
+  install/update review and activation remain prerequisites. Snapshots are
+  explicit development/preflight inputs, never an official Store installation
+  fallback. Operation/GUI and MCP/background entry
   binding follows the public manifest defaults, while `needs[].why` and scope
   requests remain unchanged data for OS-owned review and enforcement.
 - `../tools/release_store.py` creates a separately signed, freshness-bounded
-  Store index over exact authenticated App snapshots. Publication signs the
-  tested Debian App directories through the existing public provenance CLI,
-  includes product Web resources in immutable Release assets, and retains
-  `store/index.json` in the authenticated Pages snapshot. It supplies no
-  installer, grant or source-download fallback; public tool pins and package
-  signing inputs are explicit owner-controlled release prerequisites.
+  `claw.app-store/v2` index binding every App to its actual signed APT package.
+  Publication verifies original CI records, signs App directories through the
+  pinned public provenance CLI, repacks and validates final Debian bytes, then
+  derives snapshots from those identical final payloads. Complete package
+  inventories include shared support, libraries and metapackages, retaining
+  immutable prior tuples. Build-input digests remain distinct from authenticated
+  release digests. Product Web assets and `store/index.json` remain authenticated.
+  Official Store transactions, review and runtime authority stay in `clawd`;
+  this producer supplies no installer, grant or snapshot/source fallback.
+  Public tool pins and signing inputs remain owner-controlled prerequisites.
 - `../tools/release_development.py` assembles the complete declared fixture
   staging closure and explicitly exported compatibility crates as a
   digest-addressed development archive; it is never a runtime dependency.

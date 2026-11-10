@@ -9,10 +9,11 @@ import lzma
 from pathlib import Path
 import re
 import shutil
+import tempfile
 
 from release_common import (
     ROOT, compare_versions, control_bytes, digest, fields, identity, package_record,
-    relative_path, work_path, write_json,
+    relative_path, run, work_path, write_json,
 )
 from release_signing import Signing
 
@@ -158,8 +159,17 @@ def verify_repository(root, signing, *, now=None):
         *(record["filename"] for record in records),
     }
     if (root / "store").exists():
-        from release_store import verified_index
-        verified_index(root / "store", signing, now=current)
+        from release_store import debian_apps, package_binding, verified_index
+        store = verified_index(root / "store", signing, now=current)
+        inventory = []
+        with tempfile.TemporaryDirectory(prefix=".apt-store-", dir=root.parent) as scratch:
+            for record in records:
+                extracted = Path(scratch) / "package"
+                run(["dpkg-deb", "--extract", root / record["filename"], extracted])
+                inventory.append(package_binding(record, debian_apps(extracted, record)))
+                shutil.rmtree(extracted)
+        if sorted(inventory, key=identity) != sorted(store["packages"], key=identity):
+            raise ValueError("App Store package inventory differs from the authenticated APT repository")
         allowed.update({"store/index.json", "store/index.json.asc"})
     actual = {
         path.relative_to(root).as_posix() for path in root.rglob("*")
@@ -170,7 +180,7 @@ def verify_repository(root, signing, *, now=None):
     return catalog
 
 
-def compose(packages, output, signing, *, previous=None, initialize=False, now=None):
+def compose(packages, output, signing, *, previous=None, initialize=False, now=None, store=None):
     output = work_path(Path(output))
     settings = signing.settings
     current = now or now_utc()
@@ -253,6 +263,10 @@ def compose(packages, output, signing, *, previous=None, initialize=False, now=N
     shutil.copy2(signing.public_key, output / "archive-key.asc")
     (output / ".nojekyll").write_bytes(b"")
     (output / "index.html").write_bytes(INDEX)
+    if store is not None:
+        if (output / "store").exists():
+            shutil.rmtree(output / "store")
+        shutil.copytree(store, output / "store")
     verify_repository(output, signing, now=current)
     return output
 
