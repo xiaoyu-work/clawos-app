@@ -57,8 +57,9 @@ def main():
         ROOT / "tests" / "test_platform_dependency.py",
     ])
     platform_arguments = development.arguments() if development is not None else []
+    # Load fixture options before pytest encounters an archive outside the source tree.
     subprocess.run([sys.executable, "-m", "pytest", "-q", "--import-mode=importlib",
-                    *platform_arguments, *map(str, tests)],
+                    *map(str, tests), *platform_arguments],
                    cwd=ROOT, env=env, check=True)
 
 
