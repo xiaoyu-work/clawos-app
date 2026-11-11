@@ -100,21 +100,49 @@ class PackageInstallTests(unittest.TestCase):
         require.assert_not_called()
 
     def test_install_uses_hidden_clawd_broker(self):
-        payload = json.dumps({"package": "curl", "after": {"installed": True}})
+        payload = json.dumps({"status": "accepted", "accepted": True, "request_id": "a" * 32})
         with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
             main.subprocess,
             "run",
             return_value=_fake_completed(stdout=payload),
         ) as runner:
-            installed, failed, errors = _apt_install(["curl"])
-        self.assertEqual(installed, ["curl"])
+            installed, failed, errors, pending = _apt_install(["curl"])
+        self.assertEqual(installed, [])
         self.assertEqual(failed, [])
         self.assertEqual(errors, {})
         argv = runner.call_args[0][0]
-        self.assertEqual(argv, ["/usr/local/bin/cos", "__package", "install", "curl"])
+        self.assertEqual(argv, ["/usr/local/bin/cos", "__package", "--retained", "install", "curl"])
+        self.assertEqual(pending[0]["request_id"], "a" * 32)
+        self.assertNotIn("after", pending[0])
+
+    def test_need_submits_one_batch_before_the_requesting_app_can_be_retired(self):
+        payload = json.dumps({"status": "accepted", "accepted": True, "request_id": "b" * 32})
+        with _allow_policy(), mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+            main, "_dpkg_check", return_value=False
+        ), mock.patch.object(main.subprocess, "run", return_value=_fake_completed(stdout=payload)) as runner:
+            result = cmd_need(["curl", "git"])
+        runner.assert_called_once()
+        self.assertEqual(runner.call_args.args[0], [
+            "/usr/local/bin/cos", "__package", "--retained", "install-packages", "curl", "git"
+        ])
+        self.assertEqual(result["status"], "accepted")
+        self.assertEqual(result["installed"], [])
+        self.assertEqual(result["failed"], [])
+        self.assertEqual(result["transactions"][0]["packages"], ["curl", "git"])
+
+    def test_payload_result_without_a_root_handoff_is_not_success(self):
+        payload = json.dumps({"package": "curl", "after": {"installed": True}})
+        with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+            main.subprocess, "run", return_value=_fake_completed(stdout=payload)
+        ):
+            installed, failed, errors, pending = _apt_install(["curl"])
+        self.assertEqual(installed, [])
+        self.assertEqual(failed, ["curl"])
+        self.assertIn("handoff", errors["curl"])
+        self.assertEqual(pending, [])
 
     def test_remove_uses_exact_package_scope(self):
-        payload = json.dumps({"action": "remove", "changed": True})
+        payload = json.dumps({"status": "accepted", "accepted": True, "request_id": "c" * 32})
         with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
             main.policy, "require"
         ) as require, mock.patch.object(
@@ -122,7 +150,8 @@ class PackageInstallTests(unittest.TestCase):
         ):
             result = main.run("remove", ["curl"])
         require.assert_called_once_with("sys.package", name="curl")
-        self.assertTrue(result["changed"])
+        self.assertEqual(result["status"], "accepted")
+        self.assertNotIn("changed", result)
 
     def test_update_requires_wild_package_permission(self):
         payload = json.dumps({"action": "update-index"})

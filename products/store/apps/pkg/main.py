@@ -62,16 +62,22 @@ def _dpkg_check(package):
         return False
 
 
-def _package_broker(action, package=None, version=None):
+def _package_broker(action, package=None, version=None, packages=None):
     """Run one privileged package action through clawd."""
     cos_bin = _cos_binary()
     if not cos_bin:
         return {"error": "cos binary not found; privileged package broker unavailable"}
-    argv = [cos_bin, "__package", action]
+    payload_action = action not in ("update-index", "hold", "unhold")
+    argv = [cos_bin, "__package"]
+    if payload_action:
+        argv.append("--retained")
+    argv.append(action)
     if package is not None:
         argv.append(package)
     if version is not None:
         argv.append(version)
+    if packages is not None:
+        argv.extend(packages)
     try:
         result = subprocess.run(
             argv,
@@ -99,35 +105,50 @@ def _package_broker(action, package=None, version=None):
             payload.get("stderr_tail")
             or f"package broker exited {result.returncode}"
         )
+    if payload_action and not payload.get("error"):
+        request = payload.get("request_id")
+        if (
+            payload.get("accepted") is not True
+            or payload.get("status") != "accepted"
+            or not isinstance(request, str)
+            or not re.fullmatch(r"[a-f0-9]{32}", request)
+        ):
+            return {"error": "Root package handoff was not confirmed; inspect status before retrying"}
     return payload
 
 
 def _apt_install(packages):
-    """Install packages through clawd. Returns installed, failed, errors."""
+    """Submit one retained transaction before the caller can be retired."""
     installed = []
     failed = []
     errors = {}
+    pending = []
     for pkg in packages:
         if not _valid_package_name(pkg):
             failed.append(pkg)
             errors[pkg] = "invalid Debian package name"
             continue
-        payload = _package_broker("install", pkg)
+    valid = [pkg for pkg in packages if pkg not in failed]
+    if valid:
+        payload = (
+            _package_broker("install", valid[0])
+            if len(valid) == 1
+            else _package_broker("install-packages", packages=valid)
+        )
         if payload.get("error"):
-            failed.append(pkg)
-            errors[pkg] = payload["error"]
-        elif payload.get("after", {}).get("installed") is True:
-            installed.append(pkg)
+            failed.extend(valid)
+            errors.update({pkg: payload["error"] for pkg in valid})
         else:
-            failed.append(pkg)
-            errors[pkg] = payload.get("stderr_tail") or "package was not installed"
-    return installed, failed, errors
+            pending.append({**payload, "packages": valid})
+    return installed, failed, errors, pending
 
 
 def cmd_need(args):
     """Ensure packages are installed, only installing what's missing."""
     if not args:
         return {"error": "need requires at least one package name"}
+    if len(args) > 128:
+        return {"error": "need accepts at most 128 packages per retained transaction"}
 
     for pkg in args:
         if not _valid_package_name(pkg):
@@ -146,8 +167,9 @@ def cmd_need(args):
     installed = []
     failed = []
     errors = {}
+    pending = []
     if to_install:
-        installed, failed, errors = _apt_install(to_install)
+        installed, failed, errors, pending = _apt_install(to_install)
 
     response = {
         "installed": installed,
@@ -156,6 +178,9 @@ def cmd_need(args):
     }
     if errors:
         response["errors"] = errors
+    if pending:
+        response["status"] = "accepted"
+        response["transactions"] = pending
     return response
 
 
