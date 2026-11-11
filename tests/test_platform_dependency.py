@@ -771,7 +771,7 @@ def test_test_runner_disables_cache_bytecode(dependency, development, monkeypatc
     assert str(expected / "payload" / EXPORTS["python-sdk"]) in environment["PYTHONPATH"]
     command = calls[0][0][0]
     if local:
-        assert command[5:11] == selected_arguments
+        assert command[-len(selected_arguments):] == selected_arguments
         assert dependency.calls == []
     else:
         assert "--development-platform" not in command
