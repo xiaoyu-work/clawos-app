@@ -26,6 +26,24 @@ App new default authority. No installed package database, apt configuration or
 OS provider code moves into this repository. Product code never invokes another
 App, and the GUI must not gain authority by forwarding through `pkg`.
 
+Payload mutations now require the retained Root handoff contract. `accepted`
+means only that Root saved the request, not that any package was installed,
+removed or restored. Root may retire affected Apps, including this caller.
+`need` submits its missing packages together (at most 128) before returning a
+receipt; it never waits for its own retirement or reports pending packages as
+installed. Root derives a payload/dependency impact closure rather than stopping
+every installed App by default. If helper, trigger or shared-runtime effects
+cannot be bounded, the existing protected OS review channel must separately
+confirm the all-App stop for the exact plan and impact before any such stop.
+Neither Critical package permission, an App-install review nor a client flag
+supplies that confirmation. The owner uses `cos package-transactions [request-id]` or
+`--invocation <id>` outside the affected App to inspect completion. `--recover`
+performs read-only outcome reconciliation and never replays APT. App deliveries
+still need separate protected per-App confirmation; Critical package permission
+does not supply it. Query/search and index/hold metadata operations retain
+their existing behavior. Older clients/brokers must refuse the handoff marker
+or typed correlation field, rather than fall back to an uncoordinated installer.
+
 ```bash
 python3 tools/test.py store
 python3 tools/stage.py store --root build/store-stage
