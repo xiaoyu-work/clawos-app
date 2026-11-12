@@ -177,7 +177,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         |path| fs::canonicalize(path),
     );
 
-    if daemonize {
+    if daemonize && !claw_os_sdk::gui::is_gui_launch() {
         #[cfg(all(unix, not(any(target_os = "macos", target_os = "redox"))))]
         match fork::daemon(true, true) {
             Ok(fork::Fork::Child) => (),
