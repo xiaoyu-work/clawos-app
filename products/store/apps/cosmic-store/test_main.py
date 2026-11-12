@@ -13,7 +13,10 @@ def test_native_identity_and_grants():
     assert (manifest["id"], manifest["runtime"], manifest["schema_version"]) == ("cosmic-store", "binary", 2)
     assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-store"
     assert manifest["desktop"]["exec"] == "--gui"
-    assert manifest["desktop"]["needs"] == []
+    assert [need["verb"] for need in manifest["desktop"]["needs"]] == ["sys.observe"]
+    assert manifest["desktop"]["needs"][0]["scope"] == {
+        "kind": "fixed", "scope": {"kind": "name", "value": "packages"},
+    }
     assert [need["verb"] for need in manifest["desktop"]["optional_needs"]] == ["sys.package"]
     tools = {tool["name"]: tool for tool in manifest["mcp"]["tools"]}
     assert set(tools) == {"store.search", "store.installed", "store.show", "store.open"}

@@ -433,39 +433,54 @@ impl AppstreamCache {
             .collect();
 
         for (origin_opt, infos, addons) in path_results {
-            for (id, info) in infos {
-                for pkgname in &info.pkgnames {
-                    self.pkgnames
-                        .entry(pkgname.clone())
-                        .or_default()
-                        .insert(id.clone());
-                }
-                if let Some(_old) = self.infos.insert(id.clone(), info) {
-                    //TODO: merge based on priority
-                    log::debug!("found duplicate info {:?}", id);
-                }
-            }
+            self.append_metadata(origin_opt, infos, addons);
+        }
+    }
 
-            for addon in addons {
-                let id = AppId::new(&addon.id.0);
-                for extend_id in addon.extends.iter() {
-                    self.addons
-                        .entry(AppId::new(&extend_id.0))
-                        .or_default()
-                        .push(id.clone());
-                }
-                let addon_info = Arc::new(AppInfo::new(
-                    &self.source_id,
-                    &self.source_name,
-                    origin_opt.as_deref(),
-                    addon,
-                    &self.locale,
-                    stats::monthly_downloads(&id).unwrap_or(0),
-                ));
-                if let Some(_old) = self.infos.insert(id.clone(), addon_info) {
-                    //TODO: merge based on priority
-                    log::debug!("found duplicate info {:?}", id);
-                }
+    pub fn extend_controlled_xml(&mut self, source: &str, xml: &str) -> Result<(), Box<dyn Error>> {
+        let (origin, infos, addons) = self.parse_xml(source, xml.as_bytes())?;
+        self.append_metadata(origin, infos, addons);
+        Ok(())
+    }
+
+    fn append_metadata(
+        &mut self,
+        origin_opt: Option<String>,
+        infos: Vec<(AppId, Arc<AppInfo>)>,
+        addons: Vec<Component>,
+    ) {
+        for (id, info) in infos {
+            for pkgname in &info.pkgnames {
+                self.pkgnames
+                    .entry(pkgname.clone())
+                    .or_default()
+                    .insert(id.clone());
+            }
+            if let Some(_old) = self.infos.insert(id.clone(), info) {
+                //TODO: merge based on priority
+                log::debug!("found duplicate info {:?}", id);
+            }
+        }
+
+        for addon in addons {
+            let id = AppId::new(&addon.id.0);
+            for extend_id in addon.extends.iter() {
+                self.addons
+                    .entry(AppId::new(&extend_id.0))
+                    .or_default()
+                    .push(id.clone());
+            }
+            let addon_info = Arc::new(AppInfo::new(
+                &self.source_id,
+                &self.source_name,
+                origin_opt.as_deref(),
+                addon,
+                &self.locale,
+                stats::monthly_downloads(&id).unwrap_or(0),
+            ));
+            if let Some(_old) = self.infos.insert(id.clone(), addon_info) {
+                //TODO: merge based on priority
+                log::debug!("found duplicate info {:?}", id);
             }
         }
     }
