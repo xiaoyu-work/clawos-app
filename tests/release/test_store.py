@@ -500,6 +500,11 @@ def test_publisher_hands_final_signed_bytes_to_indexes_assets_and_state(
         "--publisher-key-id", verifier.publisher_key_id,
         "--app-signing-key", str(tmp_path / "package-key.json"), "--initialize",
     ])
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/publisher-fixture")
+    with pytest.raises(ValueError, match="only publish reviewed main-branch code"):
+        release_publish.main()
+    assert events == []
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
     release_publish.main()
     assert events[:3] == ["authenticate", "store", "apt"]
     assert events[3:-1] == ["assets", "release"] * len(plan["selections"])
