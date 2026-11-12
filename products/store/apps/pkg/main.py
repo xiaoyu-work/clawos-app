@@ -11,8 +11,7 @@ import subprocess
 import sys
 import time
 
-# Pull in scrub_env so the apt-* / dpkg children we shell out to don't
-# inherit OPENAI_API_KEY / GITHUB_TOKEN / etc.
+# Keep credentials out of the OS package client process.
 from _shared.env_scrub import scrub_env  # noqa: E402
 
 from cos_runtime import policy  # noqa: E402
@@ -22,9 +21,7 @@ from claw_os_sdk import kernel  # noqa: E402
 DEFAULT_SEARCH_LIMIT = 25
 MAX_SEARCH_LIMIT = 100
 
-# Per-command upper bounds for spawned apt/dpkg children. ``apt-get
-# install`` can be genuinely slow (mirror, large download); the read
-# helpers should be near-instant.
+# Retained package requests and bounded metadata queries use separate deadlines.
 QUERY_TIMEOUT_SECS = 60
 INSTALL_TIMEOUT_SECS = int(os.environ.get("CLAW_PKG_INSTALL_TIMEOUT", "900"))
 PACKAGE_NAME_RE = re.compile(
@@ -45,23 +42,6 @@ def _cos_binary():
     if explicit:
         return explicit
     return shutil.which("cos")
-
-
-def _dpkg_check(package):
-    """Return True if a package is installed according to dpkg."""
-    try:
-        result = subprocess.run(
-            ["dpkg", "-s", package],
-            capture_output=True,
-            text=True,
-            timeout=QUERY_TIMEOUT_SECS,
-            stdin=subprocess.DEVNULL,
-            env=scrub_env(),
-            check=False,
-        )
-        return result.returncode == 0
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        return False
 
 
 def _package_query(action, *arguments):
@@ -149,11 +129,7 @@ def _apt_install(packages):
             continue
     valid = [pkg for pkg in packages if pkg not in failed]
     if valid:
-        payload = (
-            _package_broker("install", valid[0])
-            if len(valid) == 1
-            else _package_broker("install-packages", packages=valid)
-        )
+        payload = _package_broker("ensure-packages", packages=valid)
         if payload.get("error"):
             failed.extend(valid)
             errors.update({pkg: payload["error"] for pkg in valid})
@@ -174,31 +150,18 @@ def cmd_need(args):
             return {"error": f"invalid Debian package name: {pkg!r}"}
         policy.require("sys.package", name=pkg)
 
-    already_present = []
-    to_install = []
-
-    for pkg in args:
-        if _dpkg_check(pkg):
-            already_present.append(pkg)
-        else:
-            to_install.append(pkg)
-
-    installed = []
-    failed = []
-    errors = {}
-    pending = []
-    if to_install:
-        installed, failed, errors, pending = _apt_install(to_install)
+    installed, failed, errors, pending = _apt_install(args)
 
     response = {
         "installed": installed,
-        "already_present": already_present,
+        "already_present": [],
         "failed": failed,
     }
     if errors:
         response["errors"] = errors
     if pending:
         response["status"] = "accepted"
+        response["preflight"] = "retained"
         response["transactions"] = pending
     return response
 

@@ -7,7 +7,7 @@ translations, assets, original Cargo graph and `flathub-stats` workspace member.
 | Path | Responsibility |
 | --- | --- |
 | `apps/pkg/app.json` | CLI/MCP arguments and existing package/observation capabilities |
-| `apps/pkg/main.py` | Controlled OS catalog/details/inventory/availability reads, legacy `need` preflight and `cos __package` mutation requests |
+| `apps/pkg/main.py` | Controlled OS catalog/details/inventory/availability reads and retained `cos __package` mutation/ensure requests |
 | `apps/pkg/server.py` | Runtime adapter from manifest operations to SDK MCP |
 | `apps/pkg/test_main.py` | Catalog client validation, scoped broker requests and all MCP operation routes |
 | `package.json` | Product-owned staging and test inputs |
@@ -30,8 +30,14 @@ App, and the GUI must not gain authority by forwarding through `pkg`.
 Payload mutations now require the retained Root handoff contract. `accepted`
 means only that Root saved the request, not that any package was installed,
 removed or restored. Root may retire affected Apps, including this caller.
-`need` submits its missing packages together (at most 128) before returning a
-receipt; it never waits for its own retirement or reports pending packages as
+`need` submits one bounded `ensure-packages` intent (at most 128). After accepting
+the exact package authority once, Root determines missing targets under the same
+installed-state digest as its concrete APT plan. Already-installed targets are
+not explicit install/upgrade targets. The immediate result marks
+`preflight: retained`; its empty installed/already-present arrays are not a
+completed inventory. Even an all-present request first returns an accepted
+receipt; the Root plan/status records already-present and missing targets.
+The App never waits for its own retirement or reports pending packages as
 installed. Root derives a payload/dependency impact closure rather than stopping
 every installed App by default. If helper, trigger or shared-runtime effects
 cannot be bounded, the existing protected OS review channel must separately
@@ -65,7 +71,9 @@ against a fixed system PATH. The App receives the same package/command/not-found
 result without raw package state, a caller PATH
 or execution of the named command. A query failure is explicit, never a local
 fallback.
-`need` preflight still has its separate legacy query integration gate.
+`need` performs no local package preflight and does not request observation
+permission as a substitute for its exact Critical mutation authorization.
+Older runtimes reject its closed ensure action; there is no plain-install fallback.
 Native MCP uses the public SDK's generic call primitive for the closed
 `cos __package_query` search/details/installed interface. Root independently
 requires `sys.observe:packages` for search/list and the exact named observation
