@@ -7,7 +7,7 @@ translations, assets, original Cargo graph and `flathub-stats` workspace member.
 | Path | Responsibility |
 | --- | --- |
 | `apps/pkg/app.json` | CLI/MCP arguments and existing package/observation capabilities |
-| `apps/pkg/main.py` | Controlled OS catalog/details/inventory reads, legacy availability preflight and `cos __package` mutation requests |
+| `apps/pkg/main.py` | Controlled OS catalog/details/inventory/availability reads, legacy `need` preflight and `cos __package` mutation requests |
 | `apps/pkg/server.py` | Runtime adapter from manifest operations to SDK MCP |
 | `apps/pkg/test_main.py` | Catalog client validation, scoped broker requests and all MCP operation routes |
 | `package.json` | Product-owned staging and test inputs |
@@ -58,8 +58,14 @@ The three `pkg` catalog operations use the same OS reader through the published
 Python SDK kernel transport. Their existing permission checks and result fields
 remain; the App no longer parses or directly opens APT/dpkg catalog state.
 The shared Web inventory copy describes the new installed-state snapshot rather
-than treating dpkg selections as installation proof. Availability and `need`
-preflight still have their separate legacy query integration gate.
+than treating dpkg selections as installation proof. Named availability also
+uses the exact existing `sys.observe` scope through the OS reader. Root checks
+real installed state first, then executable presence as the authenticated owner
+against a fixed system PATH. The App receives the same package/command/not-found
+result without raw package state, a caller PATH
+or execution of the named command. A query failure is explicit, never a local
+fallback.
+`need` preflight still has its separate legacy query integration gate.
 Native MCP uses the public SDK's generic call primitive for the closed
 `cos __package_query` search/details/installed interface. Root independently
 requires `sys.observe:packages` for search/list and the exact named observation

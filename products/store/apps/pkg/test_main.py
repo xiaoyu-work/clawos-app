@@ -286,6 +286,19 @@ class CmdShowTests(unittest.TestCase):
             self.assertEqual(main.cmd_list([]), response)
         self.assertEqual(reader.call_args.args[1], ["__package_query", "installed"])
         local.assert_not_called()
+        available = {
+            "name": "FixtureCommand", "available": True,
+            "type": "command", "details": "found at /usr/bin/FixtureCommand",
+        }
+        with _allow_policy(), mock.patch.object(
+            main.kernel, "call_json_with_stdin_binary", return_value=available
+        ) as reader, mock.patch.object(main.subprocess, "run") as local, mock.patch.object(
+            main.shutil, "which"
+        ) as lookup:
+            self.assertEqual(main.cmd_has(["FixtureCommand"]), available)
+        self.assertEqual(reader.call_args.args[1], ["__package_query", "available", "FixtureCommand"])
+        local.assert_not_called()
+        lookup.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

@@ -213,31 +213,7 @@ def cmd_has(args):
         return {"error": f"invalid package or command name: {name!r}"}
     policy.require("sys.observe", name=name)
 
-    # Check dpkg first
-    if _dpkg_check(name):
-        return {
-            "name": name,
-            "available": True,
-            "type": "system",
-            "details": "installed via dpkg",
-        }
-
-    # Fall back to which
-    path = shutil.which(name)
-    if path:
-        return {
-            "name": name,
-            "available": True,
-            "type": "command",
-            "details": f"found at {path}",
-        }
-
-    return {
-        "name": name,
-        "available": False,
-        "type": "",
-        "details": "not found",
-    }
+    return _package_query("available", name)
 
 
 def _parse_search_args(args):
