@@ -53,5 +53,7 @@ After the existing MCP dispatch, the App-owned `claw-app-gui-argv` library remov
 one exact argv[1] `--gui` only in SDK GUI mode. The existing lexer still owns
 option values, URL order, local-path canonicalization, warning-and-continue
 behavior and help/version exits; no new `--` end-of-options state is added.
+Managed GUI launches stay in the foreground for the common Host; unmanaged
+daemonization, MCP precedence and thumbnail early exits remain unchanged.
 This does not change thumbnail admission or OS playback executable/resource
 bindings; see [native payloads](../../docs/native-payloads.md).

@@ -115,12 +115,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     #[cfg(all(unix, not(target_os = "redox")))]
-    match fork::daemon(true, true) {
-        Ok(fork::Fork::Child) => (),
-        Ok(fork::Fork::Parent(_child_pid)) => process::exit(0),
-        Err(err) => {
-            eprintln!("failed to daemonize: {:?}", err);
-            process::exit(1);
+    if !claw_os_sdk::gui::is_gui_launch() {
+        match fork::daemon(true, true) {
+            Ok(fork::Fork::Child) => (),
+            Ok(fork::Fork::Parent(_child_pid)) => process::exit(0),
+            Err(err) => {
+                eprintln!("failed to daemonize: {:?}", err);
+                process::exit(1);
+            }
         }
     }
 

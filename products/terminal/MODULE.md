@@ -54,7 +54,9 @@ Native builds require the paired OS's fixed Terminal desktop service at runtime.
 Native startup uses shared `claw-app-gui-argv` with the published SDK's
 GUI-launch signal, removing only one leading Host `--gui` after MCP dispatch.
 The native parser still handles argv0, help/version early exits, working-directory
-values, unknown-argument warnings and daemonization as before. `-e`, `--command`
+values, unknown-argument warnings and unmanaged daemonization as before.
+Managed GUI launches stay in the foreground for the common Host's captured
+lifetime; the GUI-mode signal grants no authority. `-e`, `--command`
 and `--` stop option scanning; every suffix token stays in the command,
 including `--gui` and option-like values. Working-directory OS bytes are
 preserved; shell strings retain the existing terminal backend conversion.

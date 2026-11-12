@@ -106,6 +106,8 @@ python3 products/files/native/test_process.py
 The primary native entry uses shared `claw-app-gui-argv` and the published
 SDK's GUI-launch signal to remove only the leading Host `--gui`, after the
 existing MCP dispatch. Direct `--gui` remains a path; `--` is not a delimiter.
+Managed GUI launches suppress upstream daemonization so the common Host retains
+their actual process lifetime; unmanaged launch flags remain unchanged.
 Native flags, config-gated Recents, file-URL canonicalization and the separate
 ordered location/URI vectors are unchanged. Non-UTF-8 native path bytes are
 preserved. The `cli::tests::` Rust filter exercises the actual parser with

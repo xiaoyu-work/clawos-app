@@ -118,7 +118,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Platform-specific daemonization logic
 
     #[cfg(all(unix, not(target_os = "redox")))]
-    if daemonize {
+    if daemonize && !claw_os_sdk::gui::is_gui_launch() {
         match fork::daemon(true, true) {
             Ok(fork::Fork::Child) => (),
             Ok(fork::Fork::Parent(_child_pid)) => process::exit(0),
