@@ -31,7 +31,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: python3 tools/release_ci.py test
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Plan the full validation selection without publishing
+        run: python3 tools/release.py plan --select all --version 0.2.1
+      - run: python3 tools/release_ci.py test --plan build/release-plan.json
+      - name: Test all selected product and capability contracts together
+        run: |
+          export TMPDIR="$PWD/build/ci-work"
+          python3 tools/release.py test --plan build/release-plan.json --architecture all
       - run: |
           export TMPDIR="$PWD/build/ci-work"
           python3 -m pytest -q tests/release --basetemp=build/release-tests
