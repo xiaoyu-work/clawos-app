@@ -83,6 +83,9 @@ Every remaining argument is a filename, including `--gui` on direct launches
 and option-like names or `--`; OS path bytes and order are preserved.
 Startup captures these paths in `Flags`, rather than rereading process argv
 after GUI initialization. `COS_MCP_SERVER=1` still takes precedence.
+Managed GUI launches stay in the foreground so the common Host retains their
+actual lifetime. Only unmanaged Unix launches retain upstream daemonization;
+this mode choice grants no authority.
 The included Rust parser tests use the `cli::tests::` filter.
 
 `native_payload` prepares the real `bin/cosmic-edit` for both signed primary
