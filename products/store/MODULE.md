@@ -15,7 +15,7 @@ translations, assets, original Cargo graph and `flathub-stats` workspace member.
 | `native/cosmic-store/src/mcp.rs` | Three catalog queries and fixed Store activation |
 | `native/cosmic-store/src/argparse.rs`, `native/cosmic-store/test/unit/argparse.rs` | Native search/helper arguments, bounded Host GUI selector adaptation and parser regressions |
 | `native/cosmic-store/src/product.rs`, `product_bridge.py` | Controlled OS catalog reads; embedded human filesystem/snapshot and fixed desktop adapters |
-| `native/cosmic-store/src/package.rs`, `backend/packagekit.rs` | Exact Debian intent/correlation, retained Root handoff, status and read-only recovery; PackageKit queries only |
+| `native/cosmic-store/src/package.rs`, `backend/packagekit.rs` | Exact Debian intent/correlation, retained Root handoff, status and read-only recovery; controlled OS catalog/inventory/update queries |
 | `native/test_process.py` | Real binary/resource installation and authenticated synthetic stdio fixture |
 
 Preserve the installed `pkg` identity and existing permissions. The OS package
@@ -90,9 +90,10 @@ Human-only Flatpak data cleanup checks `fs.delete` and snapshots before removal;
 ref-file reads check `fs.read`. Both adapters reject MCP use. New Window and
 `store.open` use a fixed broker target under `proc.spawn:cosmic-store`.
 Native Debian install/remove/purge/update actions now submit one exact single
-or bounded batch intent to the existing Root package controller. The GUI has
-an explicit empty mandatory needs list and starts without Critical package
-authority. Its optional declaration describes the package feature, not consent.
+or bounded batch intent to the existing Root package controller. The GUI declares
+only ordinary `sys.observe:packages` as mandatory, settled through the normal
+protected GUI read review. It starts without Critical package authority.
+Its optional package declaration describes the feature, not consent.
 Root must bind this exact signed GUI, owner/session, action, package set and
 invocation to ordinary protected Critical `sys.package` reviews. Only Root
 redeems the complete decision set and retains its real expiry/revocation bounds
@@ -118,10 +119,20 @@ review in top-level OS Approvals (`cos agent serve --open`), and App deliveries
 still need independent per-App confirmation. The active `clawd` package remains
 refused by the same Root controller.
 
-PackageKit remains a catalog/query backend only: no payload mutator,
-interactive polkit transaction or privileged cache refresh remains in Store.
+The upstream `packagekit` backend/source identifier stays stable, but Debian
+metadata no longer uses a system D-Bus connection or PackageKit daemon.
+It reads revision-paged standard AppStream XML through the public SDK and keeps
+the original product-owned localization, Component-to-AppInfo conversion,
+add-ons, package grouping and UI. Every page requires live ordinary read
+authority; changed, incomplete or unconfigured catalogs are errors, never a
+local-file/raw-bus fallback or a cached authorization verdict. Inventory and
+updates use the same controlled OS reader, including real installed/candidate
+versions. No payload mutator, interactive polkit transaction or privileged cache
+refresh remains in Store.
 Local `.deb` files are explicitly unsupported by the authenticated APT-channel
-transport; metadata is not authority to install arbitrary archives. Flatpak
+transport; metadata is not authority to install arbitrary archives. Their
+inspection and GStreamer codec resolution also fail explicitly until controlled
+OS providers exist rather than reintroducing a raw PackageKit path. Flatpak
 catalog/installed/source presentation remains, but refs, updates, removals,
 rebases and repository changes fail with `OS_PACKAGE_PROVIDER_UNSUPPORTED`.
 There is currently no typed retained Root Flatpak provider; its future contract
@@ -132,8 +143,9 @@ are never passed to Debian, and no App-owned root D-Bus/helper exception exists.
 Catalog refresh rereads existing metadata rather than activating privileged
 PackageKit/Flatpak refresh helpers.
 
-UI catalog/backend consolidation, installed-data migration, genuine GUI
-self-handoff against private APT, full-image integration and interactive/visual
+This read-client cutover does not establish managed GUI/resource acceptance.
+Controlled catalog icons, codec/archive providers, installed-data migration,
+genuine GUI self-handoff against private APT, full-image integration and interactive/visual
 acceptance remain separate gates. This source does not complete native Store
 acceptance or approve publication, an SDK freeze or adoption of a new App pin.
 

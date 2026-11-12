@@ -12,7 +12,15 @@
   "entry": "bin/cosmic-store",
   "desktop": {
     "exec": "--gui",
-    "needs": [],
+    "needs": [
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "packages"}},
+        "why": {
+          "en": "Browse the controlled system software catalog and installed or upgradable package metadata. This grants no package mutation authority."
+        }
+      }
+    ],
     "optional_needs": [
       {
         "verb": "sys.package",

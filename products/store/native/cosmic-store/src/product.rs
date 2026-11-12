@@ -8,7 +8,7 @@ const BACKEND: &str = include_str!("../catalog_backend.py");
 const BRIDGE: &str = include_str!("../product_bridge.py");
 
 pub fn query(operation: &str, arguments: Value) -> io::Result<Value> {
-    if matches!(operation, "search" | "installed" | "show") {
+    if matches!(operation, "search" | "installed" | "show" | "catalog" | "updates") {
         let invalid = || io::Error::new(io::ErrorKind::InvalidInput, "invalid package query");
         let mut args = vec!["__package_query".to_string(), operation.to_string()];
         match operation {
@@ -22,6 +22,13 @@ pub fn query(operation: &str, arguments: Value) -> io::Result<Value> {
                 let name = arguments["name"].as_str().filter(|name| valid_package_name(name))
                     .ok_or_else(invalid)?;
                 args.push(name.to_string());
+            }
+            "catalog" => {
+                if let Some(cursor) = arguments.get("cursor").filter(|value| !value.is_null()) {
+                    let cursor = cursor.as_str().filter(|cursor| cursor.len() <= 128)
+                        .ok_or_else(invalid)?;
+                    args.push(cursor.to_string());
+                }
             }
             _ => {}
         }
