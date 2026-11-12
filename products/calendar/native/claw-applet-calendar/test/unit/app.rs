@@ -20,6 +20,19 @@ fn applet() -> CalendarApplet {
 }
 
 #[test]
+fn panel_uses_original_applet_geometry_without_keyboard_focus() {
+    let mut context = cosmic::applet::Context::default();
+    context.window_size(24, 28);
+    let (width, height) = context.suggested_window_size();
+    let settings = panel_settings(&context);
+    assert_eq!(settings.size, Some((Some(width.get()), Some(height.get()))));
+    assert_eq!(settings.keyboard_interactivity, KeyboardInteractivity::None);
+    let applet = applet();
+    assert_eq!(applet.core.main_window_id(), Some(settings.id));
+    assert!(!applet.core.window.use_template);
+}
+
+#[test]
 fn selected_day_is_sent_to_the_injected_provider() {
     let mut applet = applet();
     let _ = applet.start_load();
