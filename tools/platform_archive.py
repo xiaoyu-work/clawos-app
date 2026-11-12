@@ -221,6 +221,17 @@ class _MetadataBoundedReader(io.BufferedReader):
         return super().read(size)
 
 
+class _MetadataBoundedTarInfo(tarfile.TarInfo):
+    def _proc_member(self, archive):
+        # Hidden metadata may be streamed in small reads; bound its declared size first.
+        if self.type in {
+            tarfile.GNUTYPE_LONGNAME, tarfile.GNUTYPE_LONGLINK,
+            tarfile.XHDTYPE, tarfile.XGLTYPE, tarfile.SOLARIS_XHDTYPE,
+        } and not 0 <= self.size <= MAX_METADATA_BYTES:
+            raise ValueError("App platform tar metadata size limit exceeded")
+        return super()._proc_member(archive)
+
+
 @contextmanager
 def inspected_archive(path, workspace, version, runtime_abi, destination):
     # Bound expansion before tarfile parses even hidden GNU/PAX metadata.
@@ -233,7 +244,7 @@ def inspected_archive(path, workspace, version, runtime_abi, destination):
                 raise ValueError("App platform expanded size limit exceeded")
             output.write(chunk)
     with _MetadataBoundedReader(expanded.open("rb", buffering=0)) as stream:
-        with tarfile.open(fileobj=stream, mode="r:") as archive:
+        with tarfile.open(fileobj=stream, mode="r:", tarinfo=_MetadataBoundedTarInfo) as archive:
             members = {}
             for member in archive:
                 name = str(_path(member.name))

@@ -658,11 +658,18 @@ def test_archive_limits_fail_before_publication(dependency, monkeypatch, limit):
     assert_unpublished(dependency)
 
 
-def test_huge_hidden_tar_metadata_is_bounded_before_parser_allocation(dependency):
+@pytest.mark.parametrize("kind", [
+    tarfile.GNUTYPE_LONGNAME, tarfile.GNUTYPE_LONGLINK,
+    tarfile.XHDTYPE, tarfile.XGLTYPE, tarfile.SOLARIS_XHDTYPE,
+])
+def test_huge_hidden_tar_metadata_is_bounded_before_parser_allocation(dependency, monkeypatch, kind):
     header = tarfile.TarInfo("././@LongLink")
-    header.type = tarfile.GNUTYPE_LONGNAME
+    header.type = kind
     header.size = platform.artifact.MAX_METADATA_BYTES + 1
     dependency.repin(gzip.compress(header.tobuf(format=tarfile.GNU_FORMAT) + bytes(1024)))
+    def parse_payload(*args, **kwargs):
+        pytest.fail("Oversized hidden metadata reached the payload parser")
+    monkeypatch.setattr(tarfile.TarInfo, "_proc_member", parse_payload)
     with pytest.raises(ValueError, match="metadata size limit"):
         platform.prepare()
     assert_unpublished(dependency)
