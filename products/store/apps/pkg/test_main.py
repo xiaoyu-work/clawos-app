@@ -1,5 +1,6 @@
-"""Tests for the pkg app — search & show parsing and arg handling."""
+"""Tests for the pkg App's catalog clients and argument handling."""
 
+from contextlib import contextmanager
 import json
 import os
 import pathlib
@@ -21,7 +22,6 @@ main = load_local_module(
 DEFAULT_SEARCH_LIMIT = main.DEFAULT_SEARCH_LIMIT
 MAX_SEARCH_LIMIT = main.MAX_SEARCH_LIMIT
 _apt_install = main._apt_install
-_parse_apt_show = main._parse_apt_show
 _parse_search_args = main._parse_search_args
 _valid_package_name = main._valid_package_name
 cmd_need = main.cmd_need
@@ -30,9 +30,12 @@ cmd_show = main.cmd_show
 run = main.run
 
 
+@contextmanager
 def _allow_policy():
-    """Stub policy.require so tests don't shell out to the policy bridge."""
-    return mock.patch.object(main.policy, "require", lambda *a, **kw: None)
+    with mock.patch.object(main.policy, "require", lambda *a, **kw: None), mock.patch.object(
+        main, "_cos_binary", return_value="/usr/local/bin/cos"
+    ):
+        yield
 
 
 def _fake_completed(stdout="", stderr="", returncode=0):
@@ -178,96 +181,58 @@ class CmdSearchTests(unittest.TestCase):
             result = cmd_search(["--limit", "5"])
         self.assertIn("error", result)
 
-    def test_parses_results(self):
-        fake_stdout = (
-            "imagemagick - image manipulation programs -- binaries\n"
-            "graphicsmagick - collection of image processing tools\n"
-            "noseparator-line-without-dash\n"
-        )
+    def test_returns_catalog_response_through_the_os_reader(self):
+        response = {
+            "query": "image", "count": 1,
+            "results": [{"name": "imagemagick", "summary": "Image tools"}],
+            "truncated": True, "hint": "Refine the query",
+        }
         with _allow_policy(), mock.patch.object(
-            main.subprocess, "run", return_value=_fake_completed(stdout=fake_stdout)
-        ):
+            main.kernel, "call_json_with_stdin_binary", return_value=response
+        ) as reader, mock.patch.object(main.subprocess, "run") as local:
             result = cmd_search(["image"])
-        self.assertEqual(result["query"], "image")
-        self.assertEqual(result["count"], 3)
-        self.assertEqual(result["results"][0]["name"], "imagemagick")
-        self.assertEqual(
-            result["results"][0]["summary"],
-            "image manipulation programs -- binaries",
-        )
-        self.assertEqual(result["results"][2]["name"], "noseparator-line-without-dash")
-        self.assertEqual(result["results"][2]["summary"], "")
+        self.assertEqual(result, response)
+        self.assertEqual(reader.call_args.args, (
+            "/usr/local/bin/cos", ["__package_query", "search", "image", "25"], b"",
+        ))
+        local.assert_not_called()
 
-    def test_results_truncated_to_limit(self):
-        lines = "\n".join(f"pkg{i} - summary {i}" for i in range(50))
+    def test_unavailable_runtime_has_no_local_apt_fallback(self):
         with _allow_policy(), mock.patch.object(
-            main.subprocess, "run", return_value=_fake_completed(stdout=lines)
-        ):
-            result = cmd_search(["foo", "--limit", "10"])
-        self.assertEqual(result["count"], 10)
-        self.assertTrue(result["truncated"])
-        self.assertIn("hint", result)
-
-    def test_apt_cache_missing_returns_structured_error(self):
-        with _allow_policy(), mock.patch.object(
-            main.subprocess, "run", side_effect=FileNotFoundError
-        ):
+            main.kernel, "call_json_with_stdin_binary",
+            side_effect=main.kernel.KernelUnavailable("no package reader"),
+        ), mock.patch.object(main.subprocess, "run") as local:
             result = cmd_search(["foo"])
         self.assertEqual(result["results"], [])
-        self.assertIn("apt-cache not found", result["error"])
+        self.assertIn("no package reader", result["error"])
+        local.assert_not_called()
 
-    def test_non_zero_exit_surfaces_stderr(self):
+    def test_os_denial_is_preserved_and_does_not_run_apt(self):
+        denial = {"wire_version": 1, "ok": False, "code": "PERMISSION_DENIED", "error": "scope denied"}
         with _allow_policy(), mock.patch.object(
-            main.subprocess,
-            "run",
-            return_value=_fake_completed(stderr="E: oops", returncode=100),
-        ):
+            main.kernel, "call_json_with_stdin_binary",
+            side_effect=main.kernel.KernelDenied(denial),
+        ), mock.patch.object(main.subprocess, "run") as local:
             result = cmd_search(["foo"])
         self.assertEqual(result["results"], [])
-        self.assertIn("oops", result["error"])
+        self.assertEqual(result["denial"], denial)
+        local.assert_not_called()
 
-    def test_invokes_apt_cache_with_names_only(self):
+    def test_passes_one_canonical_query_and_bounded_limit(self):
         with _allow_policy(), mock.patch.object(
-            main.subprocess, "run", return_value=_fake_completed(stdout="")
-        ) as runner:
-            cmd_search(["pdf", "viewer"])
-        runner.assert_called_once()
-        args = runner.call_args[0][0]
-        self.assertEqual(args[:3], ["apt-cache", "search", "--names-only"])
-        self.assertEqual(args[3:], ["--", "pdf viewer"])
+            main.kernel, "call_json_with_stdin_binary", return_value={"results": []}
+        ) as reader:
+            cmd_search(["pdf", "viewer", "--limit", "10"])
+        self.assertEqual(reader.call_args.args[1], ["__package_query", "search", "pdf viewer", "10"])
 
     def test_option_like_query_is_data_not_apt_configuration(self):
         with _allow_policy(), mock.patch.object(
-            main.subprocess, "run", return_value=_fake_completed(stdout="")
-        ) as runner:
+            main.kernel, "call_json_with_stdin_binary", return_value={"results": []}
+        ) as reader:
             cmd_search(["--", "-oAPT::Update::Pre-Invoke=id"])
-        self.assertEqual(runner.call_args[0][0][3:], ["--", "-oAPT::Update::Pre-Invoke=id"])
-
-
-# ---------------------------------------------------------------------------
-# _parse_apt_show
-# ---------------------------------------------------------------------------
-
-class ParseAptShowTests(unittest.TestCase):
-    def test_first_stanza_only(self):
-        stdout = (
-            "Package: foo\n"
-            "Version: 1.0\n"
-            "Description: short\n"
-            " long line one\n"
-            " long line two\n"
-            "\n"
-            "Package: foo\n"
-            "Version: 0.9\n"
-        )
-        fields = _parse_apt_show(stdout)
-        self.assertEqual(fields["Package"], "foo")
-        self.assertEqual(fields["Version"], "1.0")
-        self.assertIn("long line one", fields["Description"])
-        self.assertIn("long line two", fields["Description"])
-
-    def test_empty_input(self):
-        self.assertEqual(_parse_apt_show(""), {})
+        self.assertEqual(reader.call_args.args[1], [
+            "__package_query", "search", "-oAPT::Update::Pre-Invoke=id", "25",
+        ])
 
 
 # ---------------------------------------------------------------------------
@@ -280,49 +245,47 @@ class CmdShowTests(unittest.TestCase):
         self.assertIn("error", result)
 
     def test_returns_structured_metadata(self):
-        stdout = (
-            "Package: imagemagick\n"
-            "Version: 8:6.9.11.60\n"
-            "Section: graphics\n"
-            "Homepage: https://imagemagick.org/\n"
-            "Maintainer: Debian QA <pkg@debian.org>\n"
-            "Installed-Size: 100\n"
-            "Depends: libc6, libmagickcore\n"
-            "Description: image manipulation programs -- binaries\n"
-            " ImageMagick is a collection of tools for creating,\n"
-            " editing, and converting images.\n"
-        )
+        response = {
+            "name": "imagemagick", "found": True, "version": "8:6.9.11.60",
+            "section": "graphics", "homepage": "https://imagemagick.org/",
+            "installed_size": "100", "depends": "libc6, libmagickcore",
+            "summary": "image manipulation programs -- binaries",
+            "description": "ImageMagick is a collection of tools for creating images.",
+        }
         with _allow_policy(), mock.patch.object(
-            main.subprocess, "run", return_value=_fake_completed(stdout=stdout)
-        ):
+            main.kernel, "call_json_with_stdin_binary", return_value=response
+        ) as reader:
             result = cmd_show(["imagemagick"])
-        self.assertTrue(result["found"])
-        self.assertEqual(result["name"], "imagemagick")
-        self.assertEqual(result["version"], "8:6.9.11.60")
-        self.assertEqual(result["summary"], "image manipulation programs -- binaries")
-        self.assertIn("ImageMagick is a collection", result["description"])
-        self.assertEqual(result["homepage"], "https://imagemagick.org/")
-        self.assertEqual(result["section"], "graphics")
-        self.assertEqual(result["depends"], "libc6, libmagickcore")
-        self.assertEqual(result["installed_size"], "100")
+        self.assertEqual(result, response)
+        self.assertEqual(reader.call_args.args[1], ["__package_query", "show", "imagemagick"])
 
     def test_unknown_package_returns_not_found(self):
         with _allow_policy(), mock.patch.object(
-            main.subprocess,
-            "run",
-            return_value=_fake_completed(stderr="N: Unable to locate package nope", returncode=100),
+            main.kernel, "call_json_with_stdin_binary",
+            return_value={"name": "nope", "found": False, "error": "no package found"},
         ):
             result = cmd_show(["nope"])
         self.assertFalse(result["found"])
-        self.assertIn("nope", result["error"])
+        self.assertEqual(result["name"], "nope")
+        self.assertIn("no package", result["error"])
 
-    def test_apt_cache_missing(self):
+    def test_os_reader_missing(self):
         with _allow_policy(), mock.patch.object(
-            main.subprocess, "run", side_effect=FileNotFoundError
+            main.kernel, "call_json_with_stdin_binary",
+            side_effect=main.kernel.KernelUnavailable("no package reader"),
         ):
             result = cmd_show(["foo"])
         self.assertFalse(result["found"])
-        self.assertIn("apt-cache not found", result["error"])
+        self.assertIn("no package reader", result["error"])
+
+    def test_installed_snapshot_keeps_versions_and_does_not_parse_local_dpkg(self):
+        response = {"packages": ["fixture-one"], "versions": {"fixture-one": "2.0"}}
+        with _allow_policy(), mock.patch.object(
+            main.kernel, "call_json_with_stdin_binary", return_value=response
+        ) as reader, mock.patch.object(main.subprocess, "run") as local:
+            self.assertEqual(main.cmd_list([]), response)
+        self.assertEqual(reader.call_args.args[1], ["__package_query", "installed"])
+        local.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -336,16 +299,17 @@ class RunDispatcherTests(unittest.TestCase):
 
     def test_search_dispatch(self):
         with _allow_policy(), mock.patch.object(
-            main.subprocess, "run", return_value=_fake_completed(stdout="abc - a thing\n")
+            main.kernel, "call_json_with_stdin_binary",
+            return_value={"count": 1, "results": [{"name": "abc", "summary": "a thing"}]},
         ):
             result = run("search", ["abc"])
         self.assertEqual(result["count"], 1)
         self.assertEqual(result["results"][0]["name"], "abc")
 
     def test_show_dispatch(self):
-        stdout = "Package: abc\nVersion: 1\nDescription: thing\n"
         with _allow_policy(), mock.patch.object(
-            main.subprocess, "run", return_value=_fake_completed(stdout=stdout)
+            main.kernel, "call_json_with_stdin_binary",
+            return_value={"name": "abc", "found": True, "version": "1", "summary": "thing"},
         ):
             result = run("show", ["abc"])
         self.assertTrue(result["found"])

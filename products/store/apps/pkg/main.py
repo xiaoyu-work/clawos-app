@@ -9,12 +9,14 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 
 # Pull in scrub_env so the apt-* / dpkg children we shell out to don't
 # inherit OPENAI_API_KEY / GITHUB_TOKEN / etc.
 from _shared.env_scrub import scrub_env  # noqa: E402
 
 from cos_runtime import policy  # noqa: E402
+from claw_os_sdk import kernel  # noqa: E402
 
 
 DEFAULT_SEARCH_LIMIT = 25
@@ -60,6 +62,23 @@ def _dpkg_check(package):
         return result.returncode == 0
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return False
+
+
+def _package_query(action, *arguments):
+    binary = _cos_binary()
+    if not binary:
+        return {"error": "cos binary not found; package catalog provider unavailable"}
+    try:
+        return kernel.call_json_with_stdin_binary(
+            binary,
+            ["__package_query", action, *arguments],
+            b"",
+            deadline_unix_ms=time.time_ns() // 1_000_000 + QUERY_TIMEOUT_SECS * 1000,
+        )
+    except kernel.KernelDenied as error:
+        return {"error": str(error), "denial": error.payload}
+    except kernel.KernelUnavailable as error:
+        return {"error": f"package catalog provider unavailable: {error}"}
 
 
 def _package_broker(action, package=None, version=None, packages=None):
@@ -256,70 +275,7 @@ def cmd_search(args):
 
     policy.require("sys.observe", name="packages")
 
-    try:
-        result = subprocess.run(
-            ["apt-cache", "search", "--names-only", "--", query],
-            capture_output=True,
-            text=True,
-            timeout=QUERY_TIMEOUT_SECS,
-            stdin=subprocess.DEVNULL,
-            env=scrub_env(),
-            check=False,
-        )
-    except FileNotFoundError:
-        return {"results": [], "error": "apt-cache not found"}
-    except subprocess.TimeoutExpired:
-        return {"results": [], "error": f"apt-cache search exceeded {QUERY_TIMEOUT_SECS}s"}
-
-    if result.returncode != 0:
-        return {"results": [], "error": result.stderr.strip() or "apt-cache search failed"}
-
-    results = []
-    for line in result.stdout.splitlines():
-        line = line.rstrip()
-        if not line:
-            continue
-        name, sep, summary = line.partition(" - ")
-        if not sep:
-            results.append({"name": line.strip(), "summary": ""})
-        else:
-            results.append({"name": name.strip(), "summary": summary.strip()})
-
-    truncated = len(results) > limit
-    if truncated:
-        results = results[:limit]
-
-    response = {"query": query, "results": results, "count": len(results)}
-    if truncated:
-        response["truncated"] = True
-        response["hint"] = f"showing first {limit} results; pass --limit N (max {MAX_SEARCH_LIMIT}) to widen"
-    return response
-
-
-def _parse_apt_show(stdout):
-    """Parse the first stanza of `apt-cache show` output (RFC822-ish).
-
-    apt-cache prints one stanza per available version separated by
-    blank lines; we surface only the first since that's what the
-    apt resolver would pick by default.
-    """
-    fields = {}
-    current_key = None
-    for raw in stdout.splitlines():
-        if not raw.strip():
-            if fields:
-                break
-            continue
-        if raw[0] in (" ", "\t"):
-            if current_key:
-                fields[current_key] = (fields[current_key] + "\n" + raw.strip()).strip()
-            continue
-        key, sep, value = raw.partition(":")
-        if not sep:
-            continue
-        current_key = key.strip()
-        fields[current_key] = value.strip()
-    return fields
+    return {"results": [], **_package_query("search", query, str(limit))}
 
 
 def cmd_show(args):
@@ -336,76 +292,13 @@ def cmd_show(args):
         return {"name": name, "found": False, "error": "invalid Debian package name"}
     policy.require("sys.observe", name=name)
 
-    try:
-        result = subprocess.run(
-            ["apt-cache", "show", name],
-            capture_output=True,
-            text=True,
-            timeout=QUERY_TIMEOUT_SECS,
-            stdin=subprocess.DEVNULL,
-            env=scrub_env(),
-            check=False,
-        )
-    except FileNotFoundError:
-        return {"name": name, "found": False, "error": "apt-cache not found"}
-    except subprocess.TimeoutExpired:
-        return {"name": name, "found": False, "error": f"apt-cache show exceeded {QUERY_TIMEOUT_SECS}s"}
-
-    if result.returncode != 0 or not result.stdout.strip():
-        return {
-            "name": name,
-            "found": False,
-            "error": result.stderr.strip() or "no package found",
-        }
-
-    fields = _parse_apt_show(result.stdout)
-    if not fields:
-        return {"name": name, "found": False, "error": "no package found"}
-
-    description = fields.get("Description", "")
-    summary = description.splitlines()[0] if description else ""
-    long_description = "\n".join(description.splitlines()[1:]).strip() if description else ""
-
-    return {
-        "name": fields.get("Package", name),
-        "found": True,
-        "version": fields.get("Version", ""),
-        "summary": summary,
-        "description": long_description,
-        "section": fields.get("Section", ""),
-        "homepage": fields.get("Homepage", ""),
-        "depends": fields.get("Depends", ""),
-        "installed_size": fields.get("Installed-Size", ""),
-        "maintainer": fields.get("Maintainer", ""),
-    }
+    return {"name": name, "found": False, **_package_query("show", name)}
 
 
 def cmd_list(args):
-    """List installed packages via dpkg."""
+    """List installed packages through the controlled OS reader."""
     policy.require("sys.observe", name="packages")
-    try:
-        result = subprocess.run(
-            ["dpkg", "--get-selections"],
-            capture_output=True,
-            text=True,
-            timeout=QUERY_TIMEOUT_SECS,
-            stdin=subprocess.DEVNULL,
-            env=scrub_env(),
-            check=False,
-        )
-        if result.returncode != 0:
-            return {"packages": [], "error": result.stderr.strip()}
-
-        packages = []
-        for line in result.stdout.strip().splitlines():
-            parts = line.split()
-            if parts:
-                packages.append(parts[0])
-        return {"packages": packages}
-    except FileNotFoundError:
-        return {"packages": [], "error": "dpkg not found"}
-    except subprocess.TimeoutExpired:
-        return {"packages": [], "error": f"dpkg --get-selections exceeded {QUERY_TIMEOUT_SECS}s"}
+    return {"packages": [], **_package_query("installed")}
 
 
 def _single_package_action(command, args):
