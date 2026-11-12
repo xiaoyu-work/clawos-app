@@ -72,7 +72,7 @@ ClawApp.ready.then((app) => {
     $("#filter").value = "";
     $("#list-title").textContent = inventory ? "Installed / package inventory" : "Catalog matches";
     $("#inventory-help").textContent = inventory ?
-      "The backend returns names from dpkg selections, without versions or per-package install state. A listed name alone is not proof of installation." : "";
+      "Read-only OS snapshot of packages reported installed by dpkg. Catalog versions and pending transactions are separate." : "";
     $("#packages").replaceChildren(ui.node("p", "Loading packages...", { class: "empty" }));
     const command = inventory ? pkg ? "list" : "installed" : "search";
     const args = inventory ? {} : { query: pkg ? [$("#query").value] : $("#query").value, limit: Number($("#limit").value) };

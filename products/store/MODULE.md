@@ -7,9 +7,9 @@ translations, assets, original Cargo graph and `flathub-stats` workspace member.
 | Path | Responsibility |
 | --- | --- |
 | `apps/pkg/app.json` | CLI/MCP arguments and existing package/observation capabilities |
-| `apps/pkg/main.py` | Read-only apt/dpkg queries and `cos __package` mutation requests |
+| `apps/pkg/main.py` | Controlled OS catalog/details/inventory reads, legacy availability preflight and `cos __package` mutation requests |
 | `apps/pkg/server.py` | Runtime adapter from manifest operations to SDK MCP |
-| `apps/pkg/test_main.py` | Catalog parsing, validation, scoped broker requests and all MCP operation routes |
+| `apps/pkg/test_main.py` | Catalog client validation, scoped broker requests and all MCP operation routes |
 | `package.json` | Product-owned staging and test inputs |
 | `apps/cosmic-store/app.json` | Unchanged four-tool native descriptor and independent grants |
 | `native/cosmic-store/src/mcp.rs` | Three catalog queries and fixed Store activation |
@@ -54,6 +54,12 @@ python3 products/store/native/test_process.py
 ```
 
 Tests mock package queries and mutations; they do not install or remove software.
+The three `pkg` catalog operations use the same OS reader through the published
+Python SDK kernel transport. Their existing permission checks and result fields
+remain; the App no longer parses or directly opens APT/dpkg catalog state.
+The shared Web inventory copy describes the new installed-state snapshot rather
+than treating dpkg selections as installation proof. Availability and `need`
+preflight still have their separate legacy query integration gate.
 Native MCP uses the public SDK's generic call primitive for the closed
 `cos __package_query` search/details/installed interface. Root independently
 requires `sys.observe:packages` for search/list and the exact named observation
