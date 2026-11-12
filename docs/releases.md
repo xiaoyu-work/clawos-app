@@ -49,6 +49,10 @@ It supplies independent GUI entries and mandatory/optional needs, owner-path
 bindings and bounded selected read/write/save/create clients. Root's actual
 metadata, content, no-replace creation, canonical evidence and checked-retirement
 acceptance passed; this does not establish every product's installed native UI.
+The matching [`sdk-v0.2.1`](https://github.com/xiaoyu-work/claw-os/releases/tag/sdk-v0.2.1)
+publishes all four language bindings and the portable amd64/arm64 provenance
+CLIs with upstream notices. All eleven assets match their GitHub digests and
+published checksums; the verified amd64 CLI reports version `0.2.1`.
 
 This release supplies development libraries, not installed Apps or a running
 OS update. Production channel ingress also requires its matching OS service,
