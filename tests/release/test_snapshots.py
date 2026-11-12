@@ -330,6 +330,138 @@ def test_public_runtime_defaults_cover_each_declared_surface(language, main, ser
     }) == [("operation/GUI", "bin/application"), ("MCP/background", "bin/service")]
 
 
+@pytest.mark.parametrize("language", snapshots.RUNTIME_ENTRIES)
+def test_explicit_gui_bindings_do_not_replace_operations_or_mcp(language):
+    manifest = {
+        "runtime": language, "entry": "operation",
+        "desktop": {
+            "entry": "default-gui", "exec": "--gui", "needs": [],
+            "entries": {"desktop_icons": {
+                "entry": "other-gui", "exec": "one literal selector",
+                "name": {"en": "Desktop", "fr": "Bureau"}, "needs": [],
+                "optional_needs": [{
+                    "verb": "fs.read", "scope": {"kind": "owner-path", "path": "**"},
+                    "why": {"en": "Read only separately selected content"},
+                }],
+            }},
+        },
+        "mcp": {"entry": "service"},
+    }
+    assert snapshots.manifest_entries(manifest) == [
+        ("operation/GUI", "operation"), ("GUI", "default-gui"),
+        ("MCP/background", "service"), ("GUI:desktop_icons", "other-gui"),
+    ]
+    del manifest["entry"]
+    assert snapshots.manifest_entries(manifest) == [
+        ("operation/GUI", "default-gui"), ("MCP/background", "service"),
+        ("GUI:desktop_icons", "other-gui"),
+    ]
+
+
+@pytest.mark.parametrize("change", (
+    "unknown_field", "bad_name", "traversal", "absolute", "missing_entry",
+    "missing_exec", "command_array", "control_selector", "missing_name", "missing_needs",
+    "null_entry", "null_exec", "null_name", "null_needs", "null_optional_needs",
+))
+def test_additional_gui_entry_metadata_cannot_infer_a_launch_surface(change):
+    declaration = {"entry": "gui", "exec": "--gui", "name": {"en": "Other UI"}, "needs": []}
+    additional = {"other": declaration}
+    manifest = {"desktop": {"entries": additional}}
+    if change == "unknown_field":
+        declaration["runtime"] = "shell"
+    elif change == "bad_name":
+        additional["../other"] = additional.pop("other")
+    elif change == "traversal":
+        declaration["entry"] = "bin/../other"
+    elif change == "absolute":
+        declaration["entry"] = "/usr/bin/other"
+    elif change == "command_array":
+        declaration["exec"] = ["sh", "-c", "never execute"]
+    elif change == "control_selector":
+        declaration["exec"] = "--gui\nanother-command"
+    elif change.startswith("null_"):
+        declaration[change.removeprefix("null_")] = None
+    else:
+        del declaration[change.removeprefix("missing_")]
+    with pytest.raises(ValueError):
+        snapshots.manifest_entries(manifest)
+
+
+@pytest.mark.parametrize("field", ("entry", "needs", "optional_needs", "entries"))
+def test_default_gui_new_fields_cannot_null_out_explicit_bindings(field):
+    with pytest.raises(ValueError):
+        snapshots.manifest_entries({"desktop": {field: None}})
+
+
+@pytest.mark.parametrize("failure", ("unsigned", "missing", "symlink", "nonexecutable", "wrong_architecture"))
+def test_additional_gui_entries_require_signed_regular_architecture_bound_files(tmp_path, failure):
+    root = tmp_path / "app"
+    root.mkdir()
+    # These are structural ELF fixtures, not product binaries or GUI acceptance.
+    for name in ("main", "other"):
+        shutil.copy2("/usr/bin/true", root / name)
+    manifest = {"runtime": "binary", "entry": "main", "desktop": {"entries": {"other": {
+        "entry": "other", "exec": "--gui", "name": {"en": "Other UI"}, "needs": [],
+    }}}}
+    entries = ["main", "other"]
+    snapshots.validate_manifest_entries(root, manifest, entries)
+    if failure == "unsigned":
+        entries.remove("other")
+    elif failure == "missing":
+        (root / "other").unlink()
+    elif failure == "symlink":
+        (root / "other").unlink()
+        (root / "other").symlink_to("main")
+    elif failure == "nonexecutable":
+        (root / "other").chmod(0o644)
+    else:
+        data = bytearray((root / "other").read_bytes())
+        data[18:20] = (183 if platform.machine() == "x86_64" else 62).to_bytes(2, "little")
+        (root / "other").write_bytes(data)
+    architecture = {"x86_64": "amd64", "aarch64": "arm64"}[platform.machine()]
+    with pytest.raises(ValueError):
+        snapshots.validate_manifest_entries(root, manifest, entries)
+        snapshots.tree_inventory(root, architecture)
+
+
+@pytest.mark.parametrize("scope,purpose", [
+    ({"kind": "wild"}, "Read only delegated files."),
+    ({"kind": "owner-path", "path": "Documents/**"}, "Read approved files in Documents."),
+])
+def test_named_gui_signatures_bind_own_needs_and_preserve_every_surface(
+    tmp_path, runtime, signing, app, scope, purpose,
+):
+    _, sign = runtime
+    root = app("multiple-gui-fixture")
+    manifest = snapshots.read_metadata(root / "app.json")
+    manifest["entry"] = "operation.py"
+    manifest["desktop"] = {
+        "entry": "gui.py", "exec": "--gui", "needs": [],
+        "entries": {"other": {
+            "entry": "other.py", "exec": "one literal selector",
+            "name": {"en": "Other UI", "fr": "Autre interface"},
+            "needs": [{"verb": "fs.read", "scope": scope, "why": {"en": purpose}}],
+        }},
+    }
+    write_json(root / "app.json", manifest)
+    for entry in ("operation.py", "gui.py", "other.py"):
+        shutil.copy2(root / "server.py", root / entry)
+    entries = ("operation.py", "gui.py", "server.py")
+    sign(root, entries=entries)
+    with pytest.raises(ValueError, match="GUI:other entry is not a declared signed"):
+        build(root, tmp_path / "rejected", runtime, signing)
+    sign(root, entries=(*entries, "other.py"))
+    original = (root / "app.json").read_bytes()
+    catalog = build(root, tmp_path / "accepted", runtime, signing)
+    extracted = tmp_path / "extracted"
+    snapshots.extract_archive(
+        tmp_path / "accepted" / catalog["apps"][0]["artifact"]["file"], extracted,
+    )
+    assert (extracted / "app.json").read_bytes() == original
+    assert snapshots.read_metadata(extracted / "app.json")["desktop"] == manifest["desktop"]
+    assert not (tmp_path / "entrypoint-executed").exists()
+
+
 @pytest.mark.parametrize("language,server", [
     ("python", "server.py"), ("node", "server.js"), ("shell", "server.sh"), ("binary", "server"),
 ])
