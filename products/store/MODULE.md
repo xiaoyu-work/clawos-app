@@ -14,7 +14,7 @@ translations, assets, original Cargo graph and `flathub-stats` workspace member.
 | `apps/cosmic-store/app.json` | Unchanged four-tool native descriptor and independent grants |
 | `native/cosmic-store/src/mcp.rs` | Three catalog queries and fixed Store activation |
 | `native/cosmic-store/src/argparse.rs`, `native/cosmic-store/test/unit/argparse.rs` | Native search/helper arguments, bounded Host GUI selector adaptation and parser regressions |
-| `native/cosmic-store/src/product.rs`, `product_bridge.py` | Embedded canonical catalog functions; OS policy/snapshot and desktop adapters |
+| `native/cosmic-store/src/product.rs`, `product_bridge.py` | Controlled OS catalog reads; embedded human filesystem/snapshot and fixed desktop adapters |
 | `native/cosmic-store/src/package.rs`, `backend/packagekit.rs` | Exact Debian intent/correlation, retained Root handoff, status and read-only recovery; PackageKit queries only |
 | `native/test_process.py` | Real binary/resource installation and authenticated synthetic stdio fixture |
 
@@ -54,11 +54,18 @@ python3 products/store/native/test_process.py
 ```
 
 Tests mock package queries and mutations; they do not install or remove software.
-Native MCP embeds `apps/pkg/main.py` at compilation but invokes only its three
-catalog functions, never the App entrypoint or transaction functions. Isolated
-system Python imports installed OS SDK/runtime and App-owned common support
-from `/usr/lib/cos/python`. The worker's
-authenticated session stays intact; call metadata does not grant pkg authority.
+Native MCP uses the public SDK's generic call primitive for the closed
+`cos __package_query` search/details/installed interface. Root independently
+requires `sys.observe:packages` for search/list and the exact named observation
+scope for details. The App receives metadata, not raw system D-Bus or APT/dpkg
+state mounts; package mutation authority does not substitute for read access.
+An older runtime refuses the interface without a local-query fallback.
+The installed-process fixture supplies a synthetic OS reader and no local
+apt/dpkg executable. The worker's authenticated session stays intact; call
+metadata does not grant pkg authority.
+The remaining human filesystem adapter still embeds the product library and
+uses isolated system Python with installed OS SDK/runtime and App-owned common
+support from `/usr/lib/cos/python`; it never invokes another App entrypoint.
 Human-only Flatpak data cleanup checks `fs.delete` and snapshots before removal;
 ref-file reads check `fs.read`. Both adapters reject MCP use. New Window and
 `store.open` use a fixed broker target under `proc.spawn:cosmic-store`.

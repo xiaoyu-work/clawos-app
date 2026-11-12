@@ -1,4 +1,4 @@
-//! Compiled-in Store queries and fixed OS desktop activation.
+//! Controlled OS package queries and fixed desktop activation.
 
 use std::io::{self, Write};
 use std::process::{Command, Stdio};
@@ -8,6 +8,26 @@ const BACKEND: &str = include_str!("../catalog_backend.py");
 const BRIDGE: &str = include_str!("../product_bridge.py");
 
 pub fn query(operation: &str, arguments: Value) -> io::Result<Value> {
+    if matches!(operation, "search" | "installed" | "show") {
+        let invalid = || io::Error::new(io::ErrorKind::InvalidInput, "invalid package query");
+        let mut args = vec!["__package_query".to_string(), operation.to_string()];
+        match operation {
+            "search" => {
+                let query = arguments["query"].as_str().ok_or_else(invalid)?;
+                let limit = arguments["limit"].as_u64().filter(|limit| (1..=100).contains(limit))
+                    .ok_or_else(invalid)?;
+                args.extend([query.to_string(), limit.to_string()]);
+            }
+            "show" => {
+                let name = arguments["name"].as_str().filter(|name| valid_package_name(name))
+                    .ok_or_else(invalid)?;
+                args.push(name.to_string());
+            }
+            _ => {}
+        }
+        return claw_os_sdk::cos_call_json("package", "query", args)
+            .map_err(|error| io::Error::other(error.to_string()));
+    }
     let backend = serde_json::to_string(BACKEND)?;
     let bridge = serde_json::to_string(BRIDGE)?;
     let mut child = Command::new("/usr/bin/python3")
