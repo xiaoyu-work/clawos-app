@@ -96,6 +96,11 @@ The legacy primary command enters the common Host; it does not choose a new
 presentation transport, grant, default provider or resource mount. Private
 descriptor/owner integration and live popup acceptance remain OS-coordinated;
 see [native payloads](../../docs/native-payloads.md).
+The coordinated 0.2.1 GUI declaration explicitly requests high-risk `ui.panel`
+for its own Layer-shell popup surfaces, subject to protected owner approval.
+Neither it nor the separate MCP `ui.notify` send/close capability authorizes
+reading other Apps' notification data, claiming the OS delivery queue or using
+a raw session bus. No MCP tool inherits the GUI panel capability.
 
 Notifications has no CLI argument parser: ordinary argv, including `--gui`,
 `--help` and `--version`, remains ignored rather than becoming a new option

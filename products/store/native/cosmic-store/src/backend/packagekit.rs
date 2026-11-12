@@ -12,7 +12,7 @@ use packagekit_zbus::{
 use std::{collections::HashMap, error::Error, fmt::Write, sync::Arc};
 
 use super::{Backend, Package};
-use crate::{AppId, AppInfo, AppUrl, AppstreamCache, GStreamerCodec, Operation, OperationKind};
+use crate::{AppId, AppInfo, AppUrl, AppstreamCache, GStreamerCodec, Operation};
 
 #[derive(Debug)]
 struct TransactionDetails {
@@ -31,6 +31,7 @@ struct TransactionPackage {
     summary: String,
 }
 
+#[allow(dead_code)]
 struct TransactionProgress {
     package_id: String,
     status: u32,
@@ -132,18 +133,8 @@ fn transaction_handle(
 enum FilterKind {
     None = 1 << 1,
     Installed = 1 << 2,
-    NotInstalled = 1 << 3,
     Newest = 1 << 16,
     Arch = 1 << 18,
-}
-
-#[allow(dead_code)]
-#[repr(u64)]
-enum TransactionFlag {
-    None = 1 << 0,
-    OnlyTrusted = 1 << 1,
-    AllowReinstall = 1 << 4,
-    AllowDowngrade = 1 << 6,
 }
 
 #[derive(Debug)]
@@ -178,6 +169,7 @@ impl Packagekit {
             .destination("org.freedesktop.PackageKit")?
             .path(tx_path)?
             .build()?;
+        tx.set_hints(&["interactive=false"])?;
         Ok(tx)
     }
 
@@ -311,13 +303,7 @@ impl Packagekit {
 }
 
 impl Backend for Packagekit {
-    fn load_caches(&mut self, refresh: bool) -> Result<(), Box<dyn Error>> {
-        if refresh {
-            let tx = self.transaction()?;
-            tx.set_hints(&["interactive=true", "cache-age=300"])?;
-            tx.refresh_cache(false)?;
-        }
-
+    fn load_caches(&mut self, _refresh: bool) -> Result<(), Box<dyn Error>> {
         for appstream_cache in self.appstream_caches.iter_mut() {
             appstream_cache.reload();
         }
@@ -373,6 +359,9 @@ impl Backend for Packagekit {
     }
 
     fn file_packages(&self, path: &str) -> Result<Vec<Package>, Box<dyn Error>> {
+        let path = crate::claw_glue::read_path(std::path::Path::new(path))
+            .map_err(|error| -> Box<dyn Error> { crate::claw_glue::user_message(&error).into() })?;
+        let path = path.to_str().ok_or("package metadata path must be UTF-8")?;
         let tx = self.transaction()?;
         tx.get_details_local(&[path])?;
         let mut packages = self.package_transaction(tx)?;
@@ -413,94 +402,8 @@ impl Backend for Packagekit {
     fn operation(
         &self,
         op: &Operation,
-        mut f: Box<dyn FnMut(f32) + 'static>,
-    ) -> Result<(), Box<dyn Error>> {
-        let mut package_names = Vec::new();
-        let mut package_paths = Vec::new();
-        for info in op.infos.iter() {
-            for pkgname in &info.pkgnames {
-                package_names.push(pkgname.as_str());
-            }
-            for package_path in &info.package_paths {
-                package_paths.push(package_path.as_str());
-            }
-        }
-        if package_names.is_empty() {
-            return Err(format!("{:?} missing package name", op.package_ids).into());
-        }
-        let (_tx_details, tx_packages) = {
-            let tx = self.transaction()?;
-            log::info!("resolve packages for {:?}", package_names);
-            let filter = match &op.kind {
-                OperationKind::Install | OperationKind::Update => {
-                    FilterKind::NotInstalled as u64
-                        | FilterKind::Newest as u64
-                        | FilterKind::Arch as u64
-                }
-                OperationKind::Uninstall { .. } => FilterKind::Installed as u64,
-                // Other operations not supported
-                _ => 0,
-            };
-            tx.resolve(filter, &package_names)?;
-            transaction_handle(tx, |_, _| {})?
-        };
-        let package_ids = tx_packages
-            .iter()
-            .map(|p| p.package_id.as_str())
-            .collect::<Vec<_>>();
-        let tx = self.transaction()?;
-        tx.set_hints(&["interactive=true"])?;
-        match &op.kind {
-            OperationKind::Install => {
-                if !package_paths.is_empty() {
-                    log::info!("installing package files {:?}", package_paths);
-                    //TODO: transaction flags
-                    tx.install_files(0, &package_paths)?;
-                } else {
-                    log::info!("installing packages {:?}", package_ids);
-                    //TODO: transaction flags
-                    tx.install_packages(TransactionFlag::OnlyTrusted as u64, &package_ids)?;
-                }
-            }
-            OperationKind::Uninstall { purge_data } => {
-                log::info!(
-                    "uninstalling packages {:?} (purge_data: {})",
-                    package_ids,
-                    purge_data
-                );
-                if *purge_data {
-                    log::warn!(
-                        "PackageKit backend does not fully support purging configuration files. \
-                        Only the package will be removed. Configuration files may remain in user directories."
-                    );
-                }
-                //TODO: transaction flags?
-                //TODO: investigate if we can detect package managers like dnf, apt, etc
-                // and use purge-specific functionality
-                tx.remove_packages(0, &package_ids, true, true)?;
-            }
-            OperationKind::Update => {
-                log::info!("updating packages {:?}", package_ids);
-                //TODO: transaction flags?
-                tx.update_packages(TransactionFlag::OnlyTrusted as u64, &package_ids)?;
-            }
-            OperationKind::RepositoryAdd { .. } => {
-                return Err("packagekit backend does not support adding repositories".into());
-            }
-            OperationKind::RepositoryRemove { .. } => {
-                return Err("packagekit backend does not support removing repositories".into());
-            }
-        }
-        let _tx_packages = transaction_handle(tx, |total_percentage, progress| {
-            log::info!(
-                "{}%: {} {} {}%",
-                total_percentage,
-                progress.package_id,
-                progress.status,
-                progress.percentage
-            );
-            f(total_percentage as f32);
-        })?;
-        Ok(())
+        _f: Box<dyn FnMut(f32) + 'static>,
+    ) -> Result<crate::package::Tracked, Box<dyn Error>> {
+        Ok(crate::package::submit(op)?)
     }
 }

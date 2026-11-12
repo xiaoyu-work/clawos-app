@@ -15,6 +15,7 @@ translations, assets, original Cargo graph and `flathub-stats` workspace member.
 | `native/cosmic-store/src/mcp.rs` | Three catalog queries and fixed Store activation |
 | `native/cosmic-store/src/argparse.rs`, `native/cosmic-store/test/unit/argparse.rs` | Native search/helper arguments, bounded Host GUI selector adaptation and parser regressions |
 | `native/cosmic-store/src/product.rs`, `product_bridge.py` | Embedded canonical catalog functions; OS policy/snapshot and desktop adapters |
+| `native/cosmic-store/src/package.rs`, `backend/packagekit.rs` | Exact Debian intent/correlation, retained Root handoff, status and read-only recovery; PackageKit queries only |
 | `native/test_process.py` | Real binary/resource installation and authenticated synthetic stdio fixture |
 
 Preserve the installed `pkg` identity and existing permissions. The OS package
@@ -61,9 +62,53 @@ authenticated session stays intact; call metadata does not grant pkg authority.
 Human-only Flatpak data cleanup checks `fs.delete` and snapshots before removal;
 ref-file reads check `fs.read`. Both adapters reject MCP use. New Window and
 `store.open` use a fixed broker target under `proc.spawn:cosmic-store`.
-The existing interactive PackageKit/Flatpak confirmation and provider policies
-remain unchanged. UI catalog/backend consolidation, installed-data migration,
-full-image integration and interactive/visual acceptance are separate work.
+Native Debian install/remove/purge/update actions now submit one exact single
+or bounded batch intent to the existing Root package controller. The GUI has
+an explicit empty mandatory needs list and starts without Critical package
+authority. Its optional declaration describes the package feature, not consent.
+Root must bind this exact signed GUI, owner/session, action, package set and
+invocation to ordinary protected Critical `sys.package` reviews. Only Root
+redeems the complete decision set and retains its real expiry/revocation bounds
+for one unindexed package use; neither an App dialog nor the review-ready
+status authorizes effects, and the GUI's startup grant is never widened.
+The package-only private GUI transport/shared wiring needs coordinated OS
+integration; older CLIs/daemons fail closed without a provider fallback.
+
+The client saves intent/correlation in its own authenticated `COS_DATA_DIR`
+before dispatch, and reopens cached intents as **unconfirmed**, never as cached
+success. A resumed intent can request OS review only, without spending decisions
+or replaying effects. Root terminal reconciliation may trim this local pending
+bookkeeping, but the OS retains the actual transaction evidence.
+Accepted requests appear as handed off, not Installed/Removed; Root
+may stop Store itself. Check OS status and read-only recovery are explicit,
+bounded requests, not a GUI-blocked wait or an automatic mutation retry.
+Recovery itself is retained by Root before returning so it cannot wait on
+publication while the controller waits for this GUI provider to retire.
+Only a matching authenticated Root `applied` record with confirmed completion
+can report applied; even the codec helper cannot turn acceptance into success.
+Unknown `/usr` readers still require the separate protected global-impact
+review in top-level OS Approvals (`cos agent serve --open`), and App deliveries
+still need independent per-App confirmation. The active `clawd` package remains
+refused by the same Root controller.
+
+PackageKit remains a catalog/query backend only: no payload mutator,
+interactive polkit transaction or privileged cache refresh remains in Store.
+Local `.deb` files are explicitly unsupported by the authenticated APT-channel
+transport; metadata is not authority to install arbitrary archives. Flatpak
+catalog/installed/source presentation remains, but refs, updates, removals,
+rebases and repository changes fail with `OS_PACKAGE_PROVIDER_UNSUPPORTED`.
+There is currently no typed retained Root Flatpak provider; its future contract
+must bind owner/session, exact user/system installation, remote/ref/commit and
+dependencies, checked runtime/GUI retirement, unknown helper/shared effects,
+protected consent, durable outcome/inverse and read-only recovery. Flatpak IDs
+are never passed to Debian, and no App-owned root D-Bus/helper exception exists.
+Catalog refresh rereads existing metadata rather than activating privileged
+PackageKit/Flatpak refresh helpers.
+
+UI catalog/backend consolidation, installed-data migration, genuine GUI
+self-handoff against private APT, full-image integration and interactive/visual
+acceptance remain separate gates. This source does not complete native Store
+acceptance or approve publication, an SDK freeze or adoption of a new App pin.
 
 The native payload binds GUI and MCP to the real `bin/cosmic-store`, preserving
 resources and licenses. Its compatibility command enters the existing common

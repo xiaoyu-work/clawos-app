@@ -1,20 +1,15 @@
 use cosmic::widget;
 use futures::StreamExt;
-use libflatpak::{Installation, Ref, Remote, Transaction, gio::Cancellable, glib, prelude::*};
+use libflatpak::{Installation, gio::Cancellable, glib, prelude::*};
 use std::{
-    cell::{Cell, RefCell},
     collections::HashMap,
     error::Error,
     fmt::Write,
-    fs, ptr,
-    rc::Rc,
     sync::Arc,
 };
 
 use super::{Backend, Package};
-use crate::{
-    AppId, AppInfo, AppUrl, AppstreamCache, Operation, OperationKind, RepositoryRemoveError,
-};
+use crate::{AppId, AppInfo, AppUrl, AppstreamCache, Operation};
 
 #[derive(Debug)]
 pub struct Flatpak {
@@ -62,35 +57,6 @@ impl Flatpak {
                     continue;
                 }
             };
-
-            // Update appstream if not found
-            let mut update_appstream = !appstream_dir.is_dir();
-            if !update_appstream
-                && let Some(age) = remote
-                    .appstream_timestamp(None)
-                    .and_then(|x| x.path())
-                    .and_then(|x| fs::metadata(x).ok())
-                    .and_then(|x| x.modified().ok())
-                    .and_then(|x| x.elapsed().ok())
-                && age.as_secs() > 3600
-            {
-                // Update appstream if more than one hour old
-                update_appstream = true;
-            }
-
-            if update_appstream {
-                log::info!("updating appstream data for remote {:?}", remote);
-                match inst.update_appstream_sync(&source_id, None, Cancellable::NONE) {
-                    Ok(()) => {}
-                    Err(err) => {
-                        log::warn!(
-                            "failed to update appstream data for remote {:?}: {}",
-                            remote,
-                            err
-                        );
-                    }
-                }
-            }
 
             let mut paths = Vec::new();
             let xml_gz_path = appstream_dir.join("appstream.xml.gz");
@@ -228,39 +194,12 @@ impl Flatpak {
 }
 
 impl Backend for Flatpak {
-    fn load_caches(&mut self, refresh: bool) -> Result<(), Box<dyn Error>> {
-        let inst = self.installation()?;
+    fn load_caches(&mut self, _refresh: bool) -> Result<(), Box<dyn Error>> {
         let appstream_caches = std::mem::take(&mut self.appstream_caches);
         let local_set = tokio::task::LocalSet::new();
 
         self.appstream_caches = futures::executor::block_on(async move {
             local_set.run_until(async move {
-                if refresh {
-                    if let Ok(remotes) = inst.list_remotes(Cancellable::NONE) {
-                        remotes.into_iter()
-                            .filter_map(|remote| remote.name())
-                            .for_each(|remote_name| {
-                                log::info!("updating flatpak remote {remote_name}");
-                                if let Err(why) =
-                                    inst.update_remote_sync(&remote_name, Cancellable::NONE)
-                                {
-                                    log::error!(
-                                        "failed to update flatpak remote {remote_name}: {why:?}"
-                                    );
-                                    return;
-                                }
-
-                                log::info!("updating appstream metadata for flatpak remote {remote_name}");
-                                if let Err(why) = inst.update_appstream_sync(&remote_name, None, Cancellable::NONE) {
-                                    log::error!(
-                                        "failed to update flatpak remote {remote_name} appstream metadata: {why:?}"
-                                    );
-                                    return;
-                                }
-                            });
-                    }
-                }
-
                 // Parallel reload of appstream caches.
                 appstream_caches
                     .into_iter()
@@ -312,6 +251,9 @@ impl Backend for Flatpak {
             return Err(format!("flatpak backend does not support file {path:?}").into());
         }
 
+        let path = crate::claw_glue::read_path(std::path::Path::new(path))
+            .map_err(|error| -> Box<dyn Error> { crate::claw_glue::user_message(&error).into() })?;
+        let path = path.to_str().ok_or("Flatpak ref path must be UTF-8")?;
         let entry = freedesktop_entry_parser::parse_entry(path)?;
         if !entry.has_section("Flatpak Ref") {
             return Err(format!("flatpak ref {path:?} missing Flatpak Ref section").into());
@@ -378,310 +320,9 @@ impl Backend for Flatpak {
 
     fn operation(
         &self,
-        op: &Operation,
-        callback: Box<dyn FnMut(f32) + 'static>,
-    ) -> Result<(), Box<dyn Error>> {
-        let callback = Rc::new(RefCell::new(callback));
-        let inst = self.installation()?;
-        let total_ops = Rc::new(Cell::new(0));
-        let tx = Transaction::for_installation(&inst, Cancellable::NONE)?;
-        {
-            let total_ops = total_ops.clone();
-            tx.connect_ready(move |tx| {
-                total_ops.set(tx.operations().len());
-                true
-            });
-        }
-        let started_ops = Rc::new(Cell::new(0));
-        tx.connect_new_operation(move |_, op, progress| {
-            let current_op = started_ops.get();
-            started_ops.set(current_op + 1);
-            let progress_per_op = 100.0 / (total_ops.get().max(started_ops.get()) as f32);
-            log::info!(
-                "Operation {}: {:?} {:?}",
-                current_op,
-                op.operation_type(),
-                op.get_ref()
-            );
-            let callback = callback.clone();
-            progress.connect_changed(move |progress| {
-                log::info!(
-                    "{}: {}%",
-                    progress.status().unwrap_or_default(),
-                    progress.progress()
-                );
-                let op_progress = (progress.progress() as f32) / 100.0;
-                let total_progress = ((current_op as f32) + op_progress) * progress_per_op;
-                let mut callback = callback.borrow_mut();
-                callback(total_progress)
-            });
-        });
-        match &op.kind {
-            OperationKind::Install => {
-                for info in op.infos.iter() {
-                    if !info.package_paths.is_empty() {
-                        for package_path in info.package_paths.iter() {
-                            log::info!("installing flatpak ref {:?}", package_path);
-                            //TODO: keep package data in memory?
-                            let data = crate::claw_glue::read_bytes(std::path::Path::new(
-                                package_path,
-                            ))
-                            .map_err(|err| -> Box<dyn Error> {
-                                crate::claw_glue::user_message(&err).into()
-                            })?;
-                            let bytes = glib::Bytes::from_owned(data);
-                            tx.add_install_flatpakref(&bytes)?;
-                        }
-                    } else {
-                        for r_str in info.flatpak_refs.iter() {
-                            let r = match Ref::parse(r_str) {
-                                Ok(ok) => ok,
-                                Err(err) => {
-                                    log::warn!("failed to parse flatpak ref {:?}: {}", r_str, err);
-                                    continue;
-                                }
-                            };
-                            for remote in inst.list_remotes(Cancellable::NONE)? {
-                                let Some(remote_name) = remote.name() else {
-                                    continue;
-                                };
-                                if self.source_id(&remote_name) != info.source_id {
-                                    continue;
-                                }
-                                match inst.fetch_remote_ref_sync(
-                                    &remote_name,
-                                    r.kind(),
-                                    &r.name().unwrap_or_default(),
-                                    r.arch().as_deref(),
-                                    r.branch().as_deref(),
-                                    Cancellable::NONE,
-                                ) {
-                                    Ok(_) => {}
-                                    Err(err) => {
-                                        log::info!(
-                                            "failed to find {} in {}: {}",
-                                            r_str,
-                                            remote_name,
-                                            err
-                                        );
-                                        continue;
-                                    }
-                                };
-
-                                log::info!(
-                                    "installing flatpak {} from remote {}",
-                                    r_str,
-                                    remote_name
-                                );
-                                tx.add_install(&remote_name, r_str, &[])?;
-                                //TODO: install all refs?
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            OperationKind::Uninstall { purge_data } => {
-                //TODO: deduplicate code
-                let mut app_ids_to_purge = Vec::new();
-                for info in op.infos.iter() {
-                    for r_str in info.flatpak_refs.iter() {
-                        let r = match Ref::parse(r_str) {
-                            Ok(ok) => ok,
-                            Err(err) => {
-                                log::warn!("failed to parse flatpak ref {}: {}", r_str, err);
-                                continue;
-                            }
-                        };
-                        match inst.installed_ref(
-                            r.kind(),
-                            &r.name().unwrap_or_default(),
-                            r.arch().as_deref(),
-                            r.branch().as_deref(),
-                            Cancellable::NONE,
-                        ) {
-                            Ok(_) => {}
-                            Err(err) => {
-                                log::info!("failed to find {} installed locally: {}", r_str, err);
-                                continue;
-                            }
-                        };
-
-                        log::info!(
-                            "uninstalling flatpak {} (purge_data: {})",
-                            r_str,
-                            purge_data
-                        );
-                        tx.add_uninstall(r_str)?;
-
-                        // If purge_data is requested, collect app IDs for later deletion
-                        if *purge_data && let Some(app_id) = r.name() {
-                            app_ids_to_purge.push(app_id.to_string());
-                        }
-                    }
-                }
-
-                tx.run(Cancellable::NONE)?;
-
-                // After successful uninstall, delete user data if requested
-                if *purge_data {
-                    for app_id in app_ids_to_purge {
-                        // User data is always stored in ~/.var/app/<app-id> regardless of installation type
-                        if let Ok(home) = std::env::var("HOME") {
-                            let data_path = std::path::PathBuf::from(home)
-                                .join(".var")
-                                .join("app")
-                                .join(&app_id);
-
-                            if data_path.exists() {
-                                log::info!("Purging user data for {}: {:?}", app_id, data_path);
-                                if let Err(err) = crate::claw_glue::fs_rm(&data_path) {
-                                    if err.is_denied() {
-                                        log::warn!(
-                                            "Permission denied purging user data for {}: {}",
-                                            app_id,
-                                            crate::claw_glue::user_message(&err)
-                                        );
-                                    } else {
-                                        log::warn!(
-                                            "Failed to remove user data for {}: {}",
-                                            app_id,
-                                            err
-                                        );
-                                    }
-                                } else {
-                                    log::info!("Successfully removed user data for {}", app_id);
-                                }
-                            } else {
-                                log::info!("No user data found for {} at {:?}", app_id, data_path);
-                            }
-                        }
-                    }
-                }
-
-                return Ok(());
-            }
-            OperationKind::Update => {
-                //TODO: deduplicate code
-                for info in op.infos.iter() {
-                    for r_str in info.flatpak_refs.iter() {
-                        let r = match Ref::parse(r_str) {
-                            Ok(ok) => ok,
-                            Err(err) => {
-                                log::warn!("failed to parse flatpak ref {}: {}", r_str, err);
-                                continue;
-                            }
-                        };
-                        let id = r.name().unwrap_or_default();
-                        match inst.installed_ref(
-                            r.kind(),
-                            &id,
-                            r.arch().as_deref(),
-                            r.branch().as_deref(),
-                            Cancellable::NONE,
-                        ) {
-                            Ok(inst_r) => {
-                                if let Some(eol_rebase) = inst_r.eol_rebase() {
-                                    log::info!("eol rebase: {} -> {}", r_str, eol_rebase);
-                                    let origin = inst_r.origin().unwrap_or_default();
-                                    unsafe {
-                                        // Subpaths is NULL for installing complete ref
-                                        let subpaths = ptr::null_mut();
-                                        let mut previous_ids = vec![id.as_ptr()];
-                                        let mut error: *mut libflatpak::glib::ffi::GError =
-                                            ptr::null_mut();
-                                        //TODO: wrap in libflatpak crate
-                                        if libflatpak::ffi::flatpak_transaction_add_rebase(
-                                            tx.as_ptr(),
-                                            origin.as_ptr(),
-                                            eol_rebase.as_ptr(),
-                                            subpaths,
-                                            previous_ids.as_mut_ptr(),
-                                            &mut error,
-                                        ) == 0
-                                        {
-                                            let error_message = if error.is_null() {
-                                                "unspecified error".to_string()
-                                            } else {
-                                                libflatpak::glib::Error::from_glib_ptr_borrow(
-                                                    &error,
-                                                )
-                                                .message()
-                                                .to_string()
-                                            };
-                                            //TODO: get message from error
-                                            return Err(format!(
-                                                "failed to rebase {} to {}: {}",
-                                                r_str, eol_rebase, error_message
-                                            )
-                                            .into());
-                                        }
-                                    }
-
-                                    log::info!("uninstalling {} after rebase", r_str);
-                                    tx.add_uninstall(r_str)?;
-                                } else {
-                                    log::info!("updating flatpak {}", r_str);
-                                    tx.add_update(r_str, &[], None)?;
-                                }
-                            }
-                            Err(err) => {
-                                log::info!("failed to find {} installed locally: {}", r_str, err);
-                            }
-                        }
-                    }
-                }
-            }
-            OperationKind::RepositoryAdd(adds) => {
-                drop(tx);
-                let mut remotes = Vec::with_capacity(adds.len());
-                for add in adds.iter() {
-                    remotes.push(Remote::from_file(&add.id, &glib::Bytes::from(&add.data))?);
-                }
-                for remote in remotes {
-                    inst.add_remote(&remote, true, Cancellable::NONE)?;
-                }
-                return Ok(());
-            }
-            OperationKind::RepositoryRemove(rms, force) => {
-                let mut installed = Vec::new();
-                for r in inst.list_installed_refs(Cancellable::NONE)? {
-                    let Some(origin) = r.origin() else {
-                        continue;
-                    };
-                    if !rms.iter().any(|rm| rm.id == origin) {
-                        continue;
-                    }
-                    if *force {
-                        let Some(ref_str) = r.format_ref() else {
-                            continue;
-                        };
-                        tx.add_uninstall(ref_str.as_str())?;
-                    } else {
-                        let Some(name) = r.name() else { continue };
-                        let appdata_name = r.appdata_name().unwrap_or_else(|| name.clone());
-                        installed.push((name.to_string(), appdata_name.to_string()));
-                    }
-                }
-                if !installed.is_empty() {
-                    installed.sort_by(|a, b| crate::LANGUAGE_SORTER.compare(&a.1, &b.1));
-                    return Err(RepositoryRemoveError {
-                        rms: rms.clone(),
-                        installed,
-                    }
-                    .into());
-                }
-                if *force {
-                    tx.run(Cancellable::NONE)?;
-                }
-                drop(tx);
-                for rm in rms.iter() {
-                    inst.remove_remote(&rm.id, Cancellable::NONE)?;
-                }
-                return Ok(());
-            }
-        }
-        tx.run(Cancellable::NONE)?;
-        Ok(())
+        _op: &Operation,
+        _callback: Box<dyn FnMut(f32) + 'static>,
+    ) -> Result<crate::package::Tracked, Box<dyn Error>> {
+        Err(crate::package::FLATPAK_UNAVAILABLE.into())
     }
 }

@@ -117,6 +117,28 @@
   },
   "desktop": {
     "exec": "open",
+    "needs": [
+      {
+        "verb": "clipboard.read",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "history"}},
+        "why": {"en": "Show existing clipboard history previews."}
+      },
+      {
+        "verb": "clipboard.write",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "history"}},
+        "why": {"en": "Remove or clear history entries when you choose."}
+      },
+      {
+        "verb": "clipboard.write",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "selection"}},
+        "why": {"en": "Restore a selected history item into the live clipboard."}
+      },
+      {
+        "verb": "ui.panel",
+        "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
+        "why": {"en": "Display the clipboard history panel in your authenticated desktop."}
+      }
+    ],
     "name": {
       "en": "Clipboard History"
     },

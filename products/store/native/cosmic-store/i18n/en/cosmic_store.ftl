@@ -25,6 +25,13 @@ place-applet-desc = Choose where to add the applet before refining its position.
 panel = Panel
 dock = Dock
 place-and-refine = Place and refine
+package-requests = Root package requests — acceptance is not completion
+package-check-status = Check OS status
+package-read-only-recovery = Read-only recovery
+package-continue-approved = Continue after OS approval
+package-request-review = Request OS review only — no effects
+package-request-overlap = An overlapping Root request is unresolved ({$invocation}). Check OS status/recovery; do not replay package effects.
+package-request-submitting = An overlapping Root request is being submitted.
 
 # Codec dialog
 codec-title = Install additional packages?
@@ -37,6 +44,7 @@ codec-footer =
      • You are using this software for research purposes only
 codec-error = There were errors during package installation.
 codec-installed = The packages have been installed.
+codec-installation-unconfirmed = Root handoff is pending or unconfirmed; codec installation is not successful yet. Check OS status, or close without reporting installation success.
 
 # Progress footer
 details = Details

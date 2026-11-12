@@ -11,7 +11,17 @@
   "runtime": "binary",
   "entry": "bin/cosmic-store",
   "desktop": {
-    "exec": "--gui"
+    "exec": "--gui",
+    "needs": [],
+    "optional_needs": [
+      {
+        "verb": "sys.package",
+        "scope": {"kind": "wild"},
+        "why": {
+          "en": "Request an exact Debian package action through protected OS review when you choose a mutation. This declaration grants no package authority or all-App-stop consent."
+        }
+      }
+    ]
   },
   "mcp": {
     "entry": "bin/cosmic-store",

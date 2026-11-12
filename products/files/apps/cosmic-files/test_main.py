@@ -41,6 +41,25 @@ def test_preserves_native_catalog_and_exact_authority():
     assert manifest["runtime"] == "binary"
     assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-files"
     assert manifest["desktop"]["exec"] == "--gui"
+    applet = manifest["desktop"]["entries"]["applet"]
+    assert applet["entry"] == "bin/cosmic-files-applet"
+    assert applet["exec"] == "--gui"
+    assert applet["name"] == {"en": "Files Desktop"}
+    for surface, path in ((manifest["desktop"], "**"), (applet, "Desktop/**")):
+        required = [need for need in surface["needs"] if need["verb"].startswith("fs.")]
+        assert {need["verb"] for need in required} == {"fs.meta"}
+        optional = surface["optional_needs"]
+        assert {need["verb"] for need in optional} == {
+            "fs.read", "fs.watch", "fs.write", "fs.delete",
+        }
+        filesystem = [*required, *optional]
+        assert {need["verb"] for need in filesystem} == {
+            "fs.read", "fs.meta", "fs.watch", "fs.write", "fs.delete",
+        }
+        assert all(need["scope"] == {"kind": "owner-path", "path": path} for need in filesystem)
+    assert all(need["verb"] != "ui.panel" for need in manifest["desktop"]["needs"])
+    panel = next(need for need in applet["needs"] if need["verb"] == "ui.panel")
+    assert panel["scope"] == {"kind": "fixed", "scope": {"kind": "wild"}}
     assert manifest["ai"] == {
         "budget": {"monthly_units": 200000}, "safety": "strict",
         "origins": ["external-content"],
@@ -74,6 +93,11 @@ def test_standalone_build_preserves_original_toolkit_patches(tmp_path):
         "bzip2", "dbus-config", "desktop", "gvfs", "io-uring",
         "lzma-rust2", "notify", "wayland", "wgpu",
     ]
+    applet = tomllib.loads((destination / "cosmic-files-applet/Cargo.toml").read_text())
+    assert applet["dependencies"]["cosmic-files"] == {
+        "path": "..", "default-features": False,
+        "features": ["desktop", "gvfs", "wayland", "desktop-applet"],
+    }
     assert (destination / "Cargo.lock").read_bytes() == (NATIVE / "Cargo.lock").read_bytes()
 
 

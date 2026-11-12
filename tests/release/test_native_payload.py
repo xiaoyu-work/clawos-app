@@ -96,15 +96,17 @@ def test_uncontracted_global_resources_are_not_exported(installer, tmp_path):
 
 
 @pytest.mark.parametrize("product", PRODUCTS)
-def test_every_native_plan_binds_one_local_gui_and_mcp_entry(product):
+def test_every_native_plan_binds_primary_and_explicit_additional_gui_entries(product):
     selected = native_payload.plan(product)
     manifest = snapshots.read_metadata(selected.source / "app.json")
     expected = f"bin/{selected.program}"
     assert manifest["entry"] == manifest["mcp"]["entry"] == expected
+    additional = manifest["desktop"].get("entries", {})
     assert snapshots.manifest_entries(manifest) == [
         ("operation/GUI", expected), ("MCP/background", expected),
+        *((f"GUI:{name}", gui["entry"]) for name, gui in sorted(additional.items())),
     ]
-    assert selected.entrypoints == (expected,)
+    assert selected.entrypoints == tuple(sorted({expected, *(gui["entry"] for gui in additional.values())}))
     assert selected.record()["gui_command"] == [
         "/usr/local/bin/cos", "app", manifest["id"], manifest["desktop"]["exec"],
     ]
@@ -244,14 +246,76 @@ def test_settings_authority_payload_is_rejected_not_stripped_or_exempted(path, i
         assert not (tmp_path / "rejected").exists()
 
 
-def test_files_auxiliary_elf_is_preserved_but_not_an_implicit_execution_surface(installer, tmp_path):
+def test_files_auxiliary_elf_exports_only_its_explicit_common_host_entry(installer, tmp_path):
     selected, installed = installer("files")
     result = native_payload.prepare(selected, installed, tmp_path / "app", ARCHITECTURE)
-    assert (result.root / "bin/cosmic-files-applet").is_file()
-    assert result.entrypoints == ("bin/cosmic-files",)
-    with pytest.raises(ValueError, match="no declared common Host entry"):
-        native_payload.install(selected, installed, tmp_path / "not-installed", ARCHITECTURE)
-    assert not (tmp_path / "not-installed").exists()
+    assert (result.root / "bin/cosmic-files-applet").read_bytes() == (
+        installed / "usr/bin/cosmic-files-applet"
+    ).read_bytes()
+    assert result.entrypoints == ("bin/cosmic-files", "bin/cosmic-files-applet")
+    desktop = installed / "usr/share/applications/files-applet.desktop"
+    desktop.parent.mkdir()
+    desktop.write_text("[Desktop Entry]\nExec=cosmic-files-applet\nTryExec=/usr/bin/cosmic-files-applet\n")
+    destination = tmp_path / "installed"
+    binaries = native_payload.install(selected, installed, destination, ARCHITECTURE)
+    assert set(binaries) == {destination / selected.installed_app / entry for entry in result.entrypoints}
+    assert (destination / "usr/bin/cosmic-files-applet").read_bytes() == (
+        b'#!/bin/sh\nexec /usr/local/bin/cos app cosmic-files --gui:applet "$@"\n'
+    )
+    assert (destination / "usr/bin/cosmic-files").read_bytes() == native_payload.compatibility_launcher(selected)
+    assert (destination / desktop.relative_to(installed)).read_bytes() == desktop.read_bytes()
+    with pytest.raises(ValueError, match="explicitly declared GUI entry"):
+        native_payload.compatibility_launcher(selected, gui_entry="unknown")
+
+
+@pytest.mark.parametrize("binding", ("missing", "ambiguous", "undeclared", "traversal"))
+def test_auxiliary_exports_require_unique_explicit_declared_binary_binding(
+    binding, installer, tmp_path, monkeypatch,
+):
+    selected, installed = installer("files")
+    product, package = stage.load_package("files")
+    source = tmp_path / "source"
+    for relative in package["apps"]:
+        target = source / relative / "app.json"
+        target.parent.mkdir(parents=True)
+        shutil.copy2(product / relative / "app.json", target)
+    app = source / "apps/cosmic-files"
+    manifest = json.loads(selected.manifest_bytes)
+    additional = manifest["desktop"]["entries"]
+    if binding == "missing":
+        additional.clear()
+    elif binding == "ambiguous":
+        additional["other"] = dict(additional["applet"])
+    else:
+        additional["applet"]["entry"] = "bin/undeclared" if binding == "undeclared" else "../outside"
+    (app / "app.json").write_text(json.dumps(manifest))
+    monkeypatch.setattr(native_payload.stage, "load_package", lambda *args, **kwargs: (source, package))
+    with pytest.raises(ValueError, match="unique declared common Host entry|explicitly declared|Unsafe App-relative"):
+        altered = native_payload.plan("files")
+        native_payload.install(altered, installed, tmp_path / "rejected", ARCHITECTURE)
+    assert not (tmp_path / "rejected").exists()
+
+
+@pytest.mark.parametrize("failure", ("missing", "script", "wrong_architecture", "nonexecutable", "symlink"))
+def test_additional_gui_elf_is_not_a_trusted_helper(failure, installer, tmp_path):
+    selected, installed = installer("files")
+    binary = installed / "usr/bin/cosmic-files-applet"
+    if failure == "missing":
+        binary.unlink()
+    elif failure == "script":
+        binary.write_bytes(b"#!/bin/sh\nexit 0\n")
+    elif failure == "wrong_architecture":
+        data = bytearray(binary.read_bytes())
+        data[18:20] = (183 if ARCHITECTURE == "amd64" else 62).to_bytes(2, "little")
+        binary.write_bytes(data)
+    elif failure == "nonexecutable":
+        binary.chmod(0o644)
+    else:
+        binary.unlink()
+        binary.symlink_to("/usr/bin/true")
+    with pytest.raises(ValueError):
+        native_payload.prepare(selected, installed, tmp_path / "rejected", ARCHITECTURE)
+    assert not (tmp_path / "rejected").exists()
 
 
 @pytest.mark.parametrize("product", [name for name in PRODUCTS if name != "files"])
@@ -277,24 +341,49 @@ def test_compatibility_exports_only_enter_common_host(product, installer, tmp_pa
     "Exec=/bin/sh -c forbidden\n",
     " Exec = /bin/sh -c forbidden\n",
     "TryExec=/other/program\n",
-    "Exec=cosmic-screenshot\nDBusActivatable=true\n",
-    "Exec=cosmic-screenshot\nDBusActivatable = TRUE\n",
+    "Exec=/app/bin/{program}\n",
+    "Exec={program}\nDBusActivatable=true\n",
+    "Exec={program}\nDBusActivatable = TRUE\n",
     "Name=No executable\n",
 ))
-def test_compatibility_refuses_alternate_execution_or_activation(metadata, installer, tmp_path):
-    selected, installed = installer("capture")
+@pytest.mark.parametrize("product", ("capture", "files"))
+def test_compatibility_refuses_alternate_execution_or_activation(product, metadata, installer, tmp_path):
+    selected, installed = installer(product)
     desktop = installed / "usr/share/applications/fixture.desktop"
     desktop.parent.mkdir()
-    desktop.write_text("[Desktop Entry]\n" + metadata)
+    command = selected.auxiliary_programs[0] if selected.auxiliary_programs else selected.program
+    desktop.write_text("[Desktop Entry]\n" + metadata.format(program=command))
     with pytest.raises(ValueError, match="Host"):
         native_payload.install(selected, installed, tmp_path / "rejected", ARCHITECTURE)
     assert not (tmp_path / "rejected").exists()
 
 
-def test_wrapper_preserves_public_cli_arguments_and_host_error_without_executing_an_app(tmp_path):
-    selected = native_payload.plan("settings")
+@pytest.mark.parametrize("relative", (
+    "usr/share/dbus-1/services/fixture.service", "usr/share/applications/fixture.service",
+))
+def test_additional_gui_declaration_cannot_authorize_dbus_activation(relative, installer, tmp_path):
+    selected, installed = installer("files")
+    service = installed / relative
+    service.parent.mkdir(parents=True)
+    service.write_text("[D-BUS Service]\nName=org.freedesktop.FileManager1\nExec=cosmic-files-applet\n")
+    with pytest.raises(ValueError, match="explicit OS installation contract|authenticated Host contract"):
+        native_payload.install(selected, installed, tmp_path / "rejected", ARCHITECTURE)
+    assert not (tmp_path / "rejected").exists()
+
+
+@pytest.mark.parametrize("product,gui_entry,selector", [
+    ("settings", None, "--gui"), ("files", "applet", "--gui:applet"),
+    ("clipboard", None, "open"),
+    ("settings", None, "one literal selector; $(never-executed)"),
+])
+def test_wrapper_preserves_public_cli_arguments_and_host_error_without_executing_an_app(
+    product, gui_entry, selector, tmp_path,
+):
+    selected = native_payload.plan(product)
+    if gui_entry is None:
+        selected = replace(selected, gui_selector=selector)
     wrapper = tmp_path / "wrapper"
-    wrapper.write_bytes(native_payload.compatibility_launcher(selected))
+    wrapper.write_bytes(native_payload.compatibility_launcher(selected, gui_entry=gui_entry))
     wrapper.chmod(0o755)
     host_bin = tmp_path / "host-bin"
     host_bin.mkdir()
@@ -311,7 +400,7 @@ def test_wrapper_preserves_public_cli_arguments_and_host_error_without_executing
         "/wrapper", *arguments,
     ], check=False)
     assert result.returncode == 23
-    assert json.loads(result.stdout) == ["app", selected.app_id, "--gui", *arguments]
+    assert json.loads(result.stdout) == ["app", selected.app_id, selector, *arguments]
 
 
 @pytest.mark.parametrize("app_only", (False, True))

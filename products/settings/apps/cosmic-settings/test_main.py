@@ -13,6 +13,10 @@ def test_native_identity_and_exact_grants():
     assert (manifest["id"], manifest["runtime"], manifest["schema_version"]) == ("cosmic-settings", "binary", 2)
     assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-settings"
     assert manifest["desktop"]["exec"] == "--gui"
+    assert manifest["desktop"]["needs"] == []
+    assert {need["verb"] for need in manifest["desktop"]["optional_needs"]} == {
+        "sys.observe", "sys.identity", "sys.permissions",
+    }
     tools = {tool["name"]: tool for tool in manifest["mcp"]["tools"]}
     management = {f"settings.permissions_{action}" for action in ("list", "show", "request", "revoke")}
     assert set(tools) == {"settings.list_pages", "settings.search", "settings.open"} | management

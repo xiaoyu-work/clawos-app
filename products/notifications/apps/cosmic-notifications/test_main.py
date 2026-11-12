@@ -21,6 +21,7 @@ def test_manifest_retains_identity_and_grant_with_explicit_durable_id_compatibil
     )
     assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-notifications"
     assert manifest["desktop"]["exec"] == "--gui"
+    assert {need["verb"] for need in manifest["desktop"]["needs"]} == {"ui.panel"}
     tools = {tool["name"]: tool for tool in manifest["mcp"]["tools"]}
     assert set(tools) == {"notify.post", "notify.close"}
     for tool in tools.values():

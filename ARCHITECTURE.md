@@ -151,8 +151,9 @@ inventory on every cache use. It selects named SDK/runtime/toolkit exports;
 there is no Git, sibling-checkout or unverified-cache fallback. The SDK artifact
 contains OS libraries, not App helpers or private OS providers.
 Historical platform `1.0.0`/`1.1.0` releases remain withdrawn. The explicitly
-approved `app-platform-v0.2.0` release now supplies the verified development pin,
-including account-scoped Mail permissions, public event/channel and object/effect contracts; see
+approved `app-platform-v0.2.1` release now supplies the verified development pin,
+including account-scoped Mail permissions, public event/channel/object/effect
+contracts and independent GUI/selected-file clients; see
 [publication status](docs/releases.md#platform-publication-status).
 Developer commands can explicitly supply a local archive, expected version
 and SHA-256 through the same public artifact verifier. This uses a separate

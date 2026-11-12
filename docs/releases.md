@@ -15,8 +15,8 @@ trust-root override.
 
 App development platform `1.0.0` and `1.1.0` releases, tags and uploaded Actions
 artifacts have been withdrawn at the owner's request. The production OS platform
-development pin is the separately approved, published **`0.2.0`** platform,
-runtime ABI 1; coordinated 0.2.1 source remains unpublished as noted below.
+development pin is the separately approved, published **`0.2.1`** platform,
+runtime ABI 1. App and Agent package publication remains separate as noted below.
 Historical `1.0.0`/`1.1.0` archives were not restored.
 
 [`app-platform-v0.1.0`](https://github.com/xiaoyu-work/claw-os/releases/tag/app-platform-v0.1.0)
@@ -31,12 +31,24 @@ compatibility tests passed without sibling-source imports or live accounts/model
 [`app-platform-v0.2.0`](https://github.com/xiaoyu-work/claw-os/releases/tag/app-platform-v0.2.0)
 was published with explicit owner approval from OS source
 `ae4ede35da721d5743c5d71693f6ffdb9abb21e3`.
-`platform.lock.json` selects its real HTTPS archive with SHA-256
+Its historical HTTPS archive has SHA-256
 `7db6ab8c069ca245b98cd1395d1aa70c28524eb2fc0a1d593b1a36b4d9586c6d`,
 runtime ABI 1. It adds the account-scoped `mail.accounts`, `mail.read`,
 `mail.draft` and `mail.send` manifest vocabulary consumed by Thunderbird-backed
 Agent Email. Both the GitHub asset digest and published checksum agree;
 the normal dependency consumer re-verifies the complete payload on use.
+
+[`app-platform-v0.2.1`](https://github.com/xiaoyu-work/claw-os/releases/tag/app-platform-v0.2.1)
+was published through the approved platform workflow from OS source
+`83cd069ba9ead851c0bcc2654b2bb84adf4b3d8c`, after its complete nine-job validation
+passed. `platform.lock.json` selects its real HTTPS archive with SHA-256
+`0412f750add06a32c81312c9405338687471249a01dcbf0c9688e66885dde8d8`,
+runtime ABI 1. The published checksum, GitHub asset digest and complete bounded
+archive/inventory verification agree.
+It supplies independent GUI entries and mandatory/optional needs, owner-path
+bindings and bounded selected read/write/save/create clients. Root's actual
+metadata, content, no-replace creation, canonical evidence and checked-retirement
+acceptance passed; this does not establish every product's installed native UI.
 
 This release supplies development libraries, not installed Apps or a running
 OS update. Production channel ingress also requires its matching OS service,
@@ -56,11 +68,12 @@ Any future release, release tag, version bump or dependency-pin adoption needs
 explicit owner approval. Source development, successful validation and requests
 to commit or push do not authorize publication.
 
-The coordinated **0.2.1** source cutover is approved, not published. OS source
-provides runtime ABI 1 with implementation version 0.2.1; independent App
-packages now require that implementation floor. `platform.lock.json` still
-selects the real published 0.2.0 development artifact. No unpublished artifact,
-URL, digest or App pin is adopted by the packaging ownership change.
+The coordinated **0.2.1 App/Agent package cutover** is approved, not published.
+OS source provides runtime ABI 1 with implementation version 0.2.1; independent
+App packages require that implementation floor. The separately approved
+development-library publication above does not publish those packages or
+complete their installed native UI acceptance. No unpublished artifact, URL or
+digest is substituted for the real platform pin.
 
 ## One App integration contract: pending
 

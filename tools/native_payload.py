@@ -31,6 +31,13 @@ RESOURCE_EXPORTS = (
 
 
 @dataclass(frozen=True)
+class NativeGuiEntry:
+    name: str
+    entry: str
+    selector: str
+
+
+@dataclass(frozen=True)
 class NativePlan:
     product: str
     app_id: str
@@ -41,10 +48,11 @@ class NativePlan:
     auxiliary_programs: tuple[str, ...]
     entrypoints: tuple[str, ...]
     gui_selector: str
+    gui_entries: tuple[NativeGuiEntry, ...]
     manifest_bytes: bytes = field(repr=False)
 
     def record(self):
-        return {
+        record = {
             "product": self.product, "app_id": self.app_id,
             "installed_app": self.installed_app.as_posix(),
             "program": self.program, "entrypoints": list(self.entrypoints),
@@ -54,6 +62,15 @@ class NativePlan:
             "resources": "Original installer usr/share files, archived under resources/usr/share",
             "unsigned_preparation_only": True,
         }
+        if self.gui_entries:
+            record["gui_entries"] = {
+                gui.name: {
+                    "entry": gui.entry, "exec": gui.selector,
+                    "gui_command": [HOST, "app", self.app_id, f"--gui:{gui.name}"],
+                }
+                for gui in self.gui_entries
+            }
+        return record
 
 
 @dataclass(frozen=True)
@@ -98,19 +115,27 @@ def plan(product):
     if manifest.get("id") != app_id or manifest.get("runtime") != "binary" or (
         manifest.get("schema_version") != 2 or manifest.get("entry") != entry
         or not isinstance(mcp, dict) or mcp.get("entry") != entry
-        or mcp.get("transport") != "stdio" or entries != (entry,)
+        or mcp.get("transport") != "stdio"
         or not isinstance(desktop, dict)
+        or desktop.get("entry", entry) != entry
     ):
         raise ValueError("Native GUI/MCP must explicitly select the same package-local binary")
+    declared = {entry, *(f"bin/{name}" for name in auxiliary)}
+    if not set(entries) <= declared:
+        raise ValueError("Native GUI entries must select explicitly declared package-local binaries")
     selector = desktop.get("exec", "--gui")
     if not isinstance(selector, str) or not selector or selector in ("--help", "-h", "help", "--schema") or len(selector) > 256 or any(
         ord(char) < 32 or ord(char) == 127 for char in selector
     ):
         raise ValueError("Native GUI requires its exact non-empty declared selector")
+    gui_entries = tuple(
+        NativeGuiEntry(name, declaration["entry"], declaration["exec"])
+        for name, declaration in sorted(desktop.get("entries", {}).items())
+    )
     return NativePlan(
         product, app_id, app, source / "native/LICENSE",
         Path("usr/lib/cos/apps") / app.relative_to(source / "apps"),
-        program, tuple(auxiliary), entries, selector, manifest_bytes,
+        program, tuple(auxiliary), entries, selector, gui_entries, manifest_bytes,
     )
 
 
@@ -270,14 +295,30 @@ def prepare(selected, installed, destination, architecture):
             shutil.rmtree(destination)
 
 
-def compatibility_launcher(selected):
+def compatibility_launcher(selected, *, gui_entry=None):
+    if gui_entry is not None and not any(gui.name == gui_entry for gui in selected.gui_entries):
+        raise ValueError(f"Native compatibility requires an explicitly declared GUI entry: {gui_entry}")
+    selector = selected.gui_selector if gui_entry is None else f"--gui:{gui_entry}"
     command = " ".join(shlex.quote(value) for value in (
-        HOST, "app", selected.app_id, selected.gui_selector,
+        HOST, "app", selected.app_id, selector,
     ))
     return f'#!/bin/sh\nexec {command} "$@"\n'.encode()
 
 
-def _launch_metadata(selected, origin, name):
+def _compatibility_entries(selected):
+    exports = {selected.program: None}
+    for program in selected.auxiliary_programs:
+        matches = [gui.name for gui in selected.gui_entries if gui.entry == f"bin/{program}"]
+        if len(matches) != 1:
+            raise ValueError(
+                f"Native compatibility surface has no unique declared common Host entry: {program}"
+                "; prepare App-only signed resources separately and keep this package gated"
+            )
+        exports[program] = matches[0]
+    return exports
+
+
+def _launch_metadata(exports, origin, name):
     if origin.suffix == ".service":
         raise ValueError(f"Native D-Bus activation requires an authenticated Host contract: {name}")
     if origin.suffix not in (".desktop", ".thumbnailer"):
@@ -288,12 +329,16 @@ def _launch_metadata(selected, origin, name):
         metadata.read_string(origin.read_text())
     except configparser.Error as error:
         raise ValueError(f"Malformed native launch metadata: {name}") from error
+    commands = {command for program in exports for command in (program, f"/usr/bin/{program}")}
     found = False
     for section in metadata.sections():
         for key, value in metadata.items(section, raw=True):
             if key in ("Exec", "TryExec"):
-                words = shlex.split(value)
-                if not words or words[0] not in (selected.program, f"/usr/bin/{selected.program}") or (
+                try:
+                    words = shlex.split(value)
+                except ValueError as error:
+                    raise ValueError(f"Malformed native Host launch metadata: {name}") from error
+                if not words or words[0] not in commands or (
                     key == "TryExec" and len(words) != 1
                 ):
                     raise ValueError(f"Native launch metadata bypasses its common Host: {name}")
@@ -310,12 +355,7 @@ def install(selected, installed, destination, architecture):
     _inputs(selected, installed, architecture)
     if destination.exists():
         tree_inventory(destination, architecture)
-    if selected.auxiliary_programs:
-        raise ValueError(
-            "Native compatibility surface has no declared common Host entry: "
-            + ", ".join(selected.auxiliary_programs)
-            + "; prepare App-only signed resources separately and keep this package gated"
-        )
+    gui_exports = _compatibility_entries(selected)
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="native-payload-", dir=destination.parent) as temporary:
         prepared = prepare(selected, installed, Path(temporary) / selected.app_id, architecture)
@@ -326,12 +366,14 @@ def install(selected, installed, destination, architecture):
         for name, record in prepared.installer_inventory.items():
             if record["type"] == "file":
                 if name.startswith("usr/bin/"):
-                    exports[name] = compatibility_launcher(selected)
+                    exports[name] = compatibility_launcher(
+                        selected, gui_entry=gui_exports[Path(name).name],
+                    )
                 else:
                     if not any(name.startswith(prefix + "/") for prefix in RESOURCE_EXPORTS):
                         raise ValueError(f"Native resource export requires an explicit OS installation contract: {name}")
                     origin = prepared.root / _payload_path(name)
-                    _launch_metadata(selected, origin, name)
+                    _launch_metadata(gui_exports, origin, name)
                     exports[name] = origin.read_bytes()
                     if hashlib.sha256(exports[name]).hexdigest() != record["sha256"]:
                         raise ValueError(f"Prepared native resource changed before export: {name}")

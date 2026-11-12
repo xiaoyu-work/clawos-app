@@ -8,8 +8,9 @@ remains. Its Python paths include the named SDK/runtime exports and local
 App-owned `shared/python`, never OS `apps/`.
 `manifest_schema_path()` resolves the public SDK manifest contract, not private
 core source. `test.py` runs declared Python/Node contracts with these imports.
-The lock selects the separately approved published platform `0.2.0`, including
-the account-scoped Mail manifest vocabulary. Historical `1.0.0`/`1.1.0`
+The lock selects the separately approved published platform `0.2.1`, including
+account-scoped Mail, independent GUI declarations and bounded selected-file
+clients. Historical `1.0.0`/`1.1.0`
 releases remain withdrawn; see
 [publication status](../docs/releases.md#platform-publication-status).
 `stage.py` assembles declared App assets without installing them on the host.
@@ -166,9 +167,11 @@ fixture examples. For a product's explicit `native_payload` declaration,
 `--install-root` additionally emits only common-Host compatibility exports.
 Both consume the real original installer through `native_payload.py`, preserve
 ELF/resource/license bytes and refuse links, placeholders, conflicts and
-authority files. Files' auxiliary applet lacks a separate declared Host entry
-and therefore blocks compatibility installation, without discarding its ELF
-from App-only preparation. Ordinary source staging remains source-only.
+authority files. Auxiliary commands require a unique explicit additional GUI
+entry under the same App and export only its named common-Host route. Files
+declares that applet binding without changing either native feature graph;
+FileManager1, display and resource admission remain explicit runtime gates.
+Ordinary source staging remains source-only.
 See [native payloads and current runtime gates](../docs/native-payloads.md).
 `release_wheels.py` stages digest-pinned pure Python dependencies absent from
 Debian, preserving their licenses and one explicit product package owner.

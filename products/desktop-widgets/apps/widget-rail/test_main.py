@@ -37,3 +37,5 @@ def test_read_tools_have_separate_needs_not_the_gui_grant_union():
     for tool in tools:
         assert tool["args"] == []
         assert [effect["kind"] for effect in tool["effects"]] == ["read"]
+        assert all(need["verb"] != "ui.panel" for need in tool["needs"])
+    assert {need["verb"] for need in manifest["desktop"]["needs"]} == set(original) | {"ui.panel"}

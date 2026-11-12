@@ -1216,7 +1216,11 @@ def test_bundled_apps_have_an_explicit_agent_surface() -> None:
             if manifest["id"] in native_plans:
                 planned = native_plans[manifest["id"]]
                 assert manifest["runtime"] == "binary"
-                assert planned["entrypoints"] == [entry]
+                desktop = manifest.get("desktop", {})
+                declared = {entry, manifest["entry"], desktop.get("entry", manifest["entry"])}
+                declared.update(surface["entry"] for surface in desktop.get("entries", {}).values())
+                assert set(planned["entrypoints"]) == declared
+                assert len(planned["entrypoints"]) == len(declared)
                 assert planned["manifest_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
             else:
                 assert source_entry.is_file(), f"Missing MCP source entry: {source_entry}"

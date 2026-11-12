@@ -11,7 +11,14 @@
   "runtime": "binary",
   "entry": "bin/cosmic-launcher",
   "desktop": {
-    "exec": "--gui"
+    "exec": "--gui",
+    "needs": [
+      {
+        "verb": "ui.panel",
+        "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
+        "why": {"en": "Display the native launcher overlay in your authenticated desktop."}
+      }
+    ]
   },
   "mcp": {
     "entry": "bin/cosmic-launcher",

@@ -18,7 +18,7 @@ silently widened. See [Clipboard](../products/clipboard/MODULE.md).
 Each product's `package.json` declares `native_payload.app`, its real
 `program`, and any `auxiliary_programs`. These are build ownership declarations,
 not an App type, trust tier, runtime command loader or privilege allowlist.
-The selected App's existing identity, version, AI policy, MCP tools and complete
+The selected App's existing identity, version, AI policy, MCP tools and their
 `needs` values remain unchanged.
 
 ## Preparation and signing
@@ -28,7 +28,16 @@ The native manifests explicitly select `bin/<program>` for both `entry` and
 `--gui` or panel `open` selector, not an executable path. The common Host
 forwards it as the first native argument, followed by the original user
 arguments.
-One real ELF serves both surfaces without copying it twice.
+One real primary ELF serves both surfaces without copying it twice.
+An additional GUI is explicit `desktop.entries.<canonical-name>` metadata:
+`entry`, one literal `exec` selector, localized `name` and its own `needs` array.
+Optional `desktop.entry` changes only the default GUI entry, not operations or
+MCP. An omitted default `desktop.needs` retains legacy operation behavior;
+an explicit array (including `[]`) selects only that GUI's own needs.
+Additional GUIs never inherit another surface's needs. Optional `panel_applet`
+is presentation metadata, not display authority. The published `0.2.1` platform
+pin supplies these public manifest fields. Matching Host support and the
+installed UI/resource acceptance below remain independent requirements.
 
 [`native_payload.py`](../tools/native_payload.py) validates the original
 installer's complete output before preparing a fresh App directory. It checks
@@ -58,8 +67,9 @@ python3 tools/native_payload.py notifications \
 Preparation is explicitly **unsigned**. It does not invent `.provenance.json`,
 change trust roots or supply a signer pin. Use the existing public provenance
 CLI and an authorized App publisher key; pass each `entrypoints` value returned
-by the plan once through `--entrypoint`. For these dual-mode Apps that is just
-`bin/<program>`. The existing `claw.provenance/v1` signer inventories all files,
+by the plan once through `--entrypoint`. Normally that is just `bin/<program>`;
+Files also declares `bin/cosmic-files-applet`. The existing
+`claw.provenance/v1` signer inventories all files,
 including full ELF bytes, resources and licenses. Named resource declarations,
 when supplied, use that existing format and confer no mounts or grants.
 
@@ -75,7 +85,7 @@ The output contains:
 ```text
 app.json                         exact source manifest bytes
 bin/<program>                    real, single-link executable
-bin/<auxiliary-program>          preserved file, not implicitly executable by a Host route
+bin/<auxiliary-program>          owned ELF; Host selection requires an explicit GUI entry
 resources/usr/share/...          original installed resource bytes
 LICENSE
 licenses/...                     original native license/copyright/notice files
@@ -137,8 +147,12 @@ This is the public `cos app` route in the OS's
 or an App-to-App call. Arguments remain distinct argv values; errors and exit
 status are propagated. The launcher does not clear caller identity, manufacture
 approval, choose another executable or fall back when the Host refuses.
-Desktop and thumbnailer exports must target this program, not a shell or
-alternate executable; D-Bus activation without a Host contract is refused.
+An auxiliary command is exported only when exactly one explicit additional
+GUI entry selects its declared binary; its wrapper uses
+`/usr/local/bin/cos app <identity> --gui:<entry-name> "$@"`, never the ELF.
+Desktop and thumbnailer exports may target only the primary command or these
+mapped auxiliary commands, not a shell, arbitrary path or unbound helper.
+D-Bus activation without a Host contract is refused.
 
 The original resource files remain in the App snapshot and their legacy
 desktop/icon/metainfo exports where supported. A file copied to
@@ -159,10 +173,34 @@ empty resource directories and modes are retained inside the App.
 | --- | --- |
 | End-to-end GUI execution | App-side selector parsing preserves the Host's forwarded arguments, but does not establish authenticated GUI bootstrap, Wayland/resource access or single-instance activation. File/URI opens, page selection, Terminal execution, Capture modes and Player thumbnailing still require their actual admitted runtime paths. |
 | GUI permissions | Fixed operation needs now use the ordinary exact-owner approval flow when outside launcher delegation; inherited rights and independent owner approvals retain live revocation checks. Wild operation needs still require bounded delegation, and MCP-tool needs are never unioned. Later file-picker/argument-bound needs and Layer-shell authority still need their own generic resource contracts; declarations are not grants or an Admin bootstrap. |
-| Files companion | The original installer also produces `cosmic-files-applet`. App-only preparation preserves its complete ELF under `bin/`, but the main manifest does not select that different executable. Compatibility installation refuses rather than retaining an unsandboxed secondary binary, choosing a new identity or inventing an auxiliary-entry ABI. |
-| Settings authority files | The original installer supplies `usr/share/polkit-1/rules.d/cosmic-settings.rules` and `usr/share/polkit-1/actions/com.clawos.Settings.Users.policy`. Both remain rejected before output; neither is silently stripped or exempted. The package stays gated pending OS-owned authority integration. |
-| Installed resources and state | Settings defaults under `/usr/share/cosmic`, legacy icon/theme lookup, global desktop catalogs and existing native XDG configuration are not automatically mapped into an App partition. No file or data migration is performed. |
+| Files companion | The original separate `cosmic-files-applet` ELF is explicitly bound by `desktop.entries.applet` under `cosmic-files`; its compatibility command selects `--gui:applet` through the common Host. The applet is UI-only; the OS-owned FileManager1 facade routes same-owner URI intents through default-GUI Host launch. The actual OS fixture verifies signed execution and checked teardown, not the real Files UI/resource integration. Raw owner D-Bus access is not admitted. Display/Layer-shell and installed-resource contracts remain independent blockers. |
+| Settings authority ownership | The desktop/first-boot policies now live in the OS initial-setup component with their existing authorization semantics. Product install/uninstall no longer supplies or removes them; delivery validation still rejects App authority files. Native User mutations use the generic Root service. Keyboard/config resource admission and first-boot coordination remain separate from this ownership move. |
+| Installed resources and state | Root now projects the signed App's read-only `resources/` and its `usr/share` through `COS_APP_RESOURCE_DIR` and `XDG_DATA_DIRS`; toolkit default schema lookup honors this data path. Absolute provider/helper paths, global catalogs and existing owner configuration still require their own resource contracts. `COS_OWNER_HOME` is path context, not a filesystem grant; App state remains private and no data migration is performed. |
 | Provider/helper executable identity | Existing OS capture, media-player, Settings and presentation callers may still identify the legacy system program or require special argv/private descriptors. A Host-only wrapper is not the original ELF or a new grant. Parent-owned callers must bind the authenticated package-local resource; Capture's `--portal-capture-stdout` and Player's thumbnailer cannot be reinterpreted as generic GUI authority. |
+
+Files' explicit GUI filesystem needs use the coordinated `owner-path` binding:
+`{"kind":"owner-path","path":"**"}` for the primary GUI and
+`{"kind":"owner-path","path":"Desktop/**"}` for the desktop applet. Only Root's
+authenticated owner home resolves these into bounded Path capabilities, with
+normal exact-owner approval rather than missing launcher rights or an Admin
+bootstrap. The producer preserves the relative binding and localized reasons;
+it never expands an App-provided home environment variable. Protected-resource
+and mount checks still apply, including rejection of a home-tree request that
+would expose credential roots. Custom desktop locations outside the declared
+tree do not gain a fallback grant.
+
+The accepted native file UX retains full browsing through OS-controlled
+browsing/selection and user-selected file or directory authority. Restricting
+Files/Editor to a fixed set of public folders is not the selected rollout.
+Files first requests per-window Home directory-browsing/metadata consent;
+that consent does not grant file-content reads or writes. Selected content
+authority is separate, and permanent resource grants are not part of this
+initial contract.
+Raw Home mounts, changing a recursive request to an exact Home request, or
+removing credential protections are not substitutes. The generic resource
+runtime and actual native consumers must be completed and verified before
+publication; a path getter, signed declaration or picker-only mock is not that
+integration.
 
 The pending-origin-neutral publication gate remains enabled. Signature/archive
 validity is deliberately separate from these runtime checks. Installed GUI

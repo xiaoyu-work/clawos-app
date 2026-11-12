@@ -80,6 +80,7 @@ static ICON_CACHE: OnceLock<Mutex<IconCache>> = OnceLock::new();
 static LINE_NUMBER_CACHE: OnceLock<Mutex<LineNumberCache>> = OnceLock::new();
 static SWASH_CACHE: OnceLock<Mutex<SwashCache>> = OnceLock::new();
 static SYNTAX_SYSTEM: OnceLock<SyntaxSystem> = OnceLock::new();
+static FILE_ACCESS_JOBS: tokio::sync::Semaphore = tokio::sync::Semaphore::const_new(4);
 
 pub fn icon_cache_get(name: &'static str, size: u16) -> icon::Icon {
     let mut icon_cache = ICON_CACHE.get().unwrap().lock().unwrap();
@@ -452,9 +453,20 @@ impl PartialEq for WatcherWrapper {
     }
 }
 
+fn dialog_settings(kind: DialogKind) -> DialogSettings {
+    let settings = DialogSettings::new().kind(kind);
+    if claw_os_sdk::gui::is_gui_launch() {
+        if let Some(home) = claw_os_sdk::gui::owner_home() {
+            return settings.path(home);
+        }
+    }
+    settings
+}
+
 enum NewTab {
     Tab(EditorTab),
     Exists(Entity),
+    Pending(PathBuf),
 }
 
 #[allow(dead_code)]
@@ -512,6 +524,8 @@ pub enum Message {
     OpenFile(PathBuf),
     OpenFileDialog,
     OpenFileResult(DialogResult),
+    FileReadResult(PathBuf, Result<(), String>),
+    FileWriteResult(PathBuf, Result<claw_glue::FileSelection, String>),
     OpenGitDiff(PathBuf, GitDiff),
     OpenProjectDialog,
     OpenProjectResult(DialogResult),
@@ -639,6 +653,9 @@ pub struct App {
     auto_scroll: Option<(f32, u32)>,
     dialog_opt: Option<Dialog<Message>>,
     dialog_page_opt: Option<DialogPage>,
+    pending_file_opens: HashMap<PathBuf, Option<Entity>>,
+    pending_file_saves: HashMap<PathBuf, Entity>,
+    file_access_error: Option<String>,
     find_opt: Option<FindField>,
     find_replace_id: widget::Id,
     find_replace_value: String,
@@ -792,6 +809,11 @@ impl App {
     pub fn open_tab(&mut self, path_opt: Option<PathBuf>) -> Option<segmented_button::Entity> {
         match self.new_tab(path_opt)? {
             NewTab::Exists(entity) => Some(entity),
+            NewTab::Pending(path) => {
+                self.pending_file_opens.entry(path).or_insert(None);
+                self.file_access_error = None;
+                None
+            }
             NewTab::Tab(tab) => {
                 let entity = self
                     .tab_model
@@ -815,6 +837,11 @@ impl App {
         entity: Entity,
     ) -> Option<segmented_button::Entity> {
         match self.new_tab(Some(path))? {
+            NewTab::Pending(path) => {
+                self.pending_file_opens.entry(path).or_insert(Some(entity));
+                self.file_access_error = None;
+                None
+            }
             NewTab::Exists(existing) => {
                 // Swap to existing tab and remove tab keyed by `entity`
                 self.tab_model.remove(entity);
@@ -860,6 +887,13 @@ impl App {
                 if let Some(entity) = activate_opt {
                     self.tab_model.activate(entity);
                     return Some(NewTab::Exists(entity));
+                }
+
+                if claw_os_sdk::gui::is_gui_launch()
+                    && fs::File::open(&canonical)
+                        .is_err_and(|error| error.kind() == io::ErrorKind::PermissionDenied)
+                {
+                    return Some(NewTab::Pending(canonical));
                 }
 
                 // Add to recent files, ensuring only one entry
@@ -1798,6 +1832,9 @@ impl Application for App {
             auto_scroll: None,
             dialog_opt: None,
             dialog_page_opt: None,
+            pending_file_opens: HashMap::new(),
+            pending_file_saves: HashMap::new(),
+            file_access_error: None,
             find_opt: None,
             find_replace_id: widget::Id::unique(),
             find_replace_value: String::new(),
@@ -2647,10 +2684,61 @@ impl Application for App {
                 self.open_tab(Some(path));
                 return self.update_tab();
             }
+            Message::FileReadResult(path, outcome) => {
+                let Some(replacement) = self.pending_file_opens.remove(&path) else {
+                    return Task::none();
+                };
+                match outcome {
+                    Ok(()) => {
+                        let entity = replacement.unwrap_or_else(|| self.tab_model.active());
+                        let replace_empty = matches!(self.tab_model.data::<Tab>(entity),
+                            Some(Tab::Editor(tab)) if tab.path_opt.is_none()
+                                && !tab.editor.lock().unwrap().changed());
+                        if replace_empty {
+                            self.replace_tab(path, entity);
+                        } else {
+                            self.open_tab(Some(path));
+                        }
+                        self.file_access_error = None;
+                        return self.update_tab();
+                    }
+                    Err(error) => {
+                        log::warn!("file read selection for {:?} failed: {}", path, error);
+                        self.file_access_error = Some(fl!(
+                            "file-access-error",
+                            path = path.to_string_lossy().to_string(),
+                            error = error
+                        ));
+                    }
+                }
+            }
+            Message::FileWriteResult(path, outcome) => {
+                let Some(entity) = self.pending_file_saves.remove(&path) else {
+                    return Task::none();
+                };
+                let Some(Tab::Editor(tab)) = self.tab_model.data_mut::<Tab>(entity) else {
+                    return Task::none();
+                };
+                if tab.path_opt.as_ref() != Some(&path) {
+                    return Task::none();
+                }
+                let outcome = outcome.and_then(|selection| {
+                    tab.write_selection = Some(selection);
+                    tab.save().map_err(|error| error.to_string())
+                });
+                self.file_access_error = outcome.err().map(|error| fl!(
+                    "file-access-error",
+                    path = path.to_string_lossy().to_string(),
+                    error = error
+                ));
+                let title = tab.title();
+                self.tab_model.text_set(entity, title);
+                return self.update_dialogs();
+            }
             Message::OpenFileDialog => {
                 if self.dialog_opt.is_none() {
                     let (dialog, command) = Dialog::new(
-                        DialogSettings::new().kind(DialogKind::OpenMultipleFiles),
+                        dialog_settings(DialogKind::OpenMultipleFiles),
                         Message::DialogMessage,
                         Message::OpenFileResult,
                     );
@@ -2738,7 +2826,7 @@ impl Application for App {
             Message::OpenProjectDialog => {
                 if self.dialog_opt.is_none() {
                     let (dialog, command) = Dialog::new(
-                        DialogSettings::new().kind(DialogKind::OpenMultipleFolders),
+                        dialog_settings(DialogKind::OpenMultipleFolders),
                         Message::DialogMessage,
                         Message::OpenProjectResult,
                     );
@@ -2939,8 +3027,14 @@ impl Application for App {
                     if tab.path_opt.is_none() {
                         return self.update(Message::SaveAsDialog(Some(entity)));
                     }
+                    if claw_os_sdk::gui::is_gui_launch() {
+                        self.pending_file_saves.entry(tab.path_opt.clone().unwrap())
+                            .or_insert(entity);
+                        self.file_access_error = None;
+                        return self.update_dialogs();
+                    }
                     title_opt = Some(tab.title());
-                    tab.save();
+                    let _ = tab.save();
                 }
                 if let Some(title) = title_opt {
                     self.tab_model.text_set(self.tab_model.active(), title);
@@ -2949,15 +3043,17 @@ impl Application for App {
             }
             Message::SaveAll => {
                 let entities: Vec<_> = self.tab_model.iter().collect();
+                let mut tasks = Vec::new();
                 for entity in entities {
-                    if let Some(Tab::Editor(tab)) = self.tab_model.data_mut::<Tab>(entity) {
+                    if let Some(Tab::Editor(tab)) = self.tab_model.data::<Tab>(entity) {
                         if tab.path_opt.is_none() {
                             log::warn!("{} has no path when doing save all", tab.title());
+                            continue;
                         }
-                        tab.save();
+                        tasks.push(self.update(Message::Save(Some(entity))));
                     }
                 }
-                return self.update_dialogs();
+                return Task::batch(tasks);
             }
             Message::SaveAsDialog(entity_opt) => {
                 if self.dialog_opt.is_none() {
@@ -2973,8 +3069,7 @@ impl Application for App {
                             ),
                             None => (String::new(), None),
                         };
-                        let mut settings =
-                            DialogSettings::new().kind(DialogKind::SaveFile { filename });
+                        let mut settings = dialog_settings(DialogKind::SaveFile { filename });
                         if let Some(path) = path_opt {
                             settings = settings.path(path);
                         }
@@ -2996,13 +3091,13 @@ impl Application for App {
                             let mut title_opt = None;
                             if let Some(Tab::Editor(tab)) = self.tab_model.data_mut::<Tab>(entity) {
                                 tab.path_opt = Some(paths.remove(0));
+                                tab.write_selection = None;
                                 title_opt = Some(tab.title());
-                                tab.save();
                             }
                             if let Some(title) = title_opt {
                                 self.tab_model.text_set(entity, title);
                             }
-                            return self.update_dialogs();
+                            return self.update(Message::Save(Some(entity)));
                         }
                     }
                 }
@@ -3413,6 +3508,21 @@ impl Application for App {
                 .class(theme::Container::custom(tab_bar_glass_style)),
         );
 
+        let pending_file_count = self.pending_file_opens.len() + self.pending_file_saves.len();
+        let file_access_message = if pending_file_count == 0 {
+            self.file_access_error.clone()
+        } else {
+            Some(fl!("file-access-pending", count = (pending_file_count as i64)))
+        };
+        if let Some(message) = file_access_message {
+            tab_column = tab_column.push(
+                widget::container(widget::text(message))
+                    .padding([space_xxs, space_xs])
+                    .width(Length::Fill)
+                    .class(theme::Container::custom(find_bar_glass_style)),
+            );
+        }
+
         let tab_id = self.tab_model.active();
         match self.tab_model.data::<Tab>(tab_id) {
             Some(Tab::Editor(tab)) => {
@@ -3808,6 +3918,15 @@ impl Application for App {
             },
         ];
 
+        for path in self.pending_file_opens.keys() {
+            subscriptions.push(file_access_subscription(path.clone(), false, None));
+        }
+        for (path, entity) in &self.pending_file_saves {
+            if let Some(Tab::Editor(tab)) = self.tab_model.data::<Tab>(*entity) {
+                subscriptions.push(file_access_subscription(path.clone(), true, tab.write_selection.clone()));
+            }
+        }
+
         if let Some(auto_scroll) = self.auto_scroll {
             #[derive(Clone, Copy)]
             struct AutoScroll {
@@ -3832,4 +3951,95 @@ impl Application for App {
 
         Subscription::batch(subscriptions)
     }
+}
+
+fn file_access_subscription(
+    path: PathBuf, write: bool, selection: Option<claw_glue::FileSelection>,
+) -> Subscription<Message> {
+    Subscription::run_with((path, write, selection), |(path, write, selection)| {
+        let path = path.clone();
+        let write = *write;
+        let selection = selection.clone();
+        stream::channel(
+            1,
+            move |mut output: futures::channel::mpsc::Sender<Message>| async move {
+                let mut selection = selection;
+                loop {
+                    let read_path = path.clone();
+                    let current = selection.clone();
+                    let response = {
+                        let _permit = FILE_ACCESS_JOBS.acquire().await
+                            .expect("file access job limiter is never closed");
+                        tokio::task::spawn_blocking(move || {
+                            let (id, node, create) = match current {
+                                Some(claw_glue::FileSelection::Existing(id, node)) => (Some(id), node, false),
+                                Some(claw_glue::FileSelection::Create(id, node)) => (Some(id), node, true),
+                                None => {
+                                    match fs::symlink_metadata(&read_path) {
+                                        Ok(metadata) => (None, std::os::unix::fs::MetadataExt::ino(&metadata), false),
+                                        Err(error) if write && error.kind() == std::io::ErrorKind::NotFound => {
+                                            let parent = read_path.parent().ok_or("creation target has no parent")?;
+                                            let metadata = fs::symlink_metadata(parent).map_err(|error| error.to_string())?;
+                                            if !metadata.is_dir() {
+                                                return Err("creation parent is not a native metadata directory".to_string());
+                                            }
+                                            (None, std::os::unix::fs::MetadataExt::ino(&metadata), true)
+                                        }
+                                        Err(error) => return Err(error.to_string()),
+                                    }
+                                }
+                            };
+                            if create {
+                                let name = read_path.file_name().and_then(|name| name.to_str())
+                                    .ok_or("creation requires one UTF-8 filename")?;
+                                let reply = match id {
+                                    Some(id) => claw_os_sdk::gui::file_create_status(&id, node),
+                                    None => claw_os_sdk::gui::request_file_create(node, name),
+                                }.map_err(|error| error.to_string())?;
+                                if reply.name != name {
+                                    return Err("creation status has another target".to_string());
+                                }
+                                Ok((claw_glue::FileSelection::Create(reply.selection_id, reply.parent_node),
+                                    reply.state, reply.reason))
+                            } else if write {
+                                let reply = match id {
+                                    Some(id) => claw_os_sdk::gui::file_write_status(&id, node),
+                                    None => claw_os_sdk::gui::request_file_write(node),
+                                }.map_err(|error| error.to_string())?;
+                                Ok((claw_glue::FileSelection::Existing(reply.selection_id, reply.node),
+                                    reply.state, reply.reason))
+                            } else {
+                                let reply = match id {
+                                    Some(id) => claw_os_sdk::gui::file_read_status(&id, node),
+                                    None => claw_os_sdk::gui::request_file_read(node),
+                                }.map_err(|error| error.to_string())?;
+                                Ok((claw_glue::FileSelection::Existing(reply.selection_id, reply.node),
+                                    reply.state, reply.reason))
+                            }
+                        }).await
+                    };
+                    let outcome = match response {
+                        Ok(Ok((reference, state, _))) if state == "pending" => {
+                            selection = Some(reference);
+                            None
+                        }
+                        Ok(Ok((reference, state, _))) if state == "selected" => Some(Ok(reference)),
+                        Ok(Ok((_, state, reason))) => Some(Err(reason.unwrap_or(state))),
+                        Ok(Err(error)) => Some(Err(error)),
+                        Err(error) => Some(Err(error.to_string())),
+                    };
+                    if let Some(outcome) = outcome {
+                        let message = if write {
+                            Message::FileWriteResult(path, outcome)
+                        } else {
+                            Message::FileReadResult(path, outcome.map(|_| ()))
+                        };
+                        let _ = output.send(message).await;
+                        break;
+                    }
+                    time::sleep(time::Duration::from_millis(400)).await;
+                }
+            },
+        )
+    })
 }

@@ -92,6 +92,18 @@
   },
   "desktop": {
     "exec": "open",
+    "needs": [
+      {
+        "verb": "data.db.read",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "calendar"}},
+        "why": {"en": "Read local calendar events for the selected-day agenda."}
+      },
+      {
+        "verb": "ui.panel",
+        "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
+        "why": {"en": "Display the calendar panel surface in your authenticated desktop."}
+      }
+    ],
     "name": {
       "en": "Calendar"
     },

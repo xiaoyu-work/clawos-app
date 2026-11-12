@@ -27,7 +27,7 @@ use crate::explore::ExplorePage;
 use crate::nav::NavPage;
 use crate::operation::{Operation, OperationKind, RepositoryAdd};
 use crate::search::{apply_icons_to_results, preserve_icons_from};
-use crate::{App, DialogPage, GStreamerExitCode, Message, Mode};
+use crate::{App, ContextPage, DialogPage, GStreamerExitCode, Message, Mode};
 
 impl App {
     pub fn handle_update(&mut self, message: Message) -> Task<Message> {
@@ -270,7 +270,28 @@ impl App {
                         }
                     }
                 }
+                let mut grouped: HashMap<_, Operation> = HashMap::new();
                 for op in ops {
+                    let group = grouped.entry((op.backend_name, op.kind.clone()))
+                        .or_insert_with(|| Operation {
+                            kind: op.kind.clone(), backend_name: op.backend_name,
+                            package_ids: Vec::new(), infos: Vec::new(),
+                        });
+                    group.package_ids.extend(op.package_ids);
+                    group.infos.extend(op.infos);
+                }
+                if grouped.keys().filter(|(backend, _)| *backend == BackendName::Packagekit).count() > 1 {
+                    if let Some((_, op)) = grouped.into_iter().next() {
+                        let id = self.pending_operation_id;
+                        self.pending_operation_id += 1;
+                        self.failed_operations.insert(id, (op, 0.0,
+                            "Mixed Debian install/removal cannot be one retained action. \
+                             Select one action kind at a time; no package request was submitted.".into()));
+                        self.dialog_pages.push_back(DialogPage::FailedOperation(id));
+                    }
+                    return Task::none();
+                }
+                for (_, op) in grouped {
                     self.operation(op);
                 }
             }
@@ -439,47 +460,53 @@ impl App {
                     infos: vec![info],
                 });
             }
-            Message::PendingComplete(id) => {
-                log::debug!("pending complete {id}");
-                if let Some((op, _)) = self.pending_operations.remove(&id) {
-                    for (package_id, info) in op.package_ids.iter().zip(op.infos.iter()) {
-                        self.waiting_installed.push((
-                            op.backend_name,
-                            info.source_id.clone(),
-                            package_id.clone(),
-                        ));
-                        self.waiting_updates.push((
-                            op.backend_name,
-                            info.source_id.clone(),
-                            package_id.clone(),
-                        ));
-                    }
-                    self.complete_operations.insert(id, op);
-                }
-
-                let mut tasks = Vec::with_capacity(self.backends.len() * 2 + 1);
-
-                // Close progress notification if all relavent operations are finished
+            Message::PendingHandoff(id, request) => {
+                self.pending_operations.remove(&id);
+                self.root_operations.insert(request.intent.invocation_id.clone(), request);
+                self.context_page = ContextPage::Operations;
+                self.core.window.show_context = true;
                 if self.pending_operations.is_empty() {
                     self.progress_operations.clear();
-
-                    // If repos were changing, update backends
-                    if !self.repos_changing.is_empty() {
-                        return Task::batch([
-                            self.update_notification(),
-                            self.update_backends(true),
-                        ]);
+                    return self.update_notification();
+                }
+            }
+            Message::PackageIntent(id, mode) => {
+                if self.root_refreshing.contains(&id) {
+                    return Task::none();
+                }
+                let Some(request) = self.root_operations.get(&id) else {
+                    return Task::none();
+                };
+                if mode == crate::package::Mode::Submit
+                    && !matches!(request.state, crate::package::State::PermissionRequired(_) | crate::package::State::PermissionReady)
+                {
+                    return Task::none();
+                }
+                let request = request.clone();
+                self.root_refreshing.insert(id);
+                return Task::perform(async move {
+                    let fallback = request.clone();
+                    let updated = tokio::task::spawn_blocking(move ||
+                        crate::package::refresh(&request.intent, mode))
+                        .await.unwrap_or_else(|error| crate::package::Tracked {
+                            intent: fallback.intent,
+                            state: crate::package::State::Unconfirmed(error.to_string()),
+                        });
+                    action::app(Message::PackageIntentUpdated(updated))
+                }, |message| message);
+            }
+            Message::PackageIntentUpdated(request) => {
+                self.root_refreshing.remove(&request.intent.invocation_id);
+                let applied = request.confirmed_applied();
+                self.root_operations.insert(request.intent.invocation_id.clone(), request);
+                if applied {
+                    let mut tasks = Vec::new();
+                    for (name, backend) in self.backends.clone() {
+                        tasks.push(self.update_backend_installed(name, backend.clone()));
+                        tasks.push(self.update_backend_updates(name, backend));
                     }
-
-                    tasks.push(self.update_notification());
+                    return Task::batch(tasks);
                 }
-
-                for (name, backend) in self.backends.clone() {
-                    tasks.push(self.update_backend_installed(name.clone(), backend.clone()));
-                    tasks.push(self.update_backend_updates(name, backend));
-                }
-
-                return Task::batch(tasks);
             }
             Message::PendingDismiss => {
                 self.progress_operations.clear();
