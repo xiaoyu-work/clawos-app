@@ -29,6 +29,7 @@ RUNTIME_ENTRIES = {
     "shell": ("main.sh", "server.sh"),
     "binary": ("main", "server"),
 }
+GUI_ENTRY_NAME = re.compile(r"[a-z][a-z0-9_-]{0,63}")
 
 
 def unique_object(pairs):
@@ -177,8 +178,49 @@ def manifest_entries(manifest):
         raise ValueError("App desktop surface must be an object")
     main, server = RUNTIME_ENTRIES[runtime]
     entries = []
-    if "entry" in manifest or operations or "desktop" in manifest or "mcp" not in manifest:
+    if "entry" in manifest or operations or ("desktop" not in manifest and "mcp" not in manifest):
         entries.append(("operation/GUI", manifest.get("entry", main)))
+    additional = {}
+    if "desktop" in manifest:
+        desktop = manifest["desktop"]
+        gui_entry = desktop.get("entry", manifest.get("entry", main))
+        if "entry" in desktop:
+            _gui_entry_path(gui_entry)
+        if not any(entry == gui_entry for _, entry in entries):
+            entries.append(("GUI" if entries else "operation/GUI", gui_entry))
+        if "needs" in desktop and not isinstance(desktop["needs"], list):
+            raise ValueError("App default GUI needs must be an explicit array")
+        if "optional_needs" in desktop and not isinstance(desktop["optional_needs"], list):
+            raise ValueError("App default GUI optional_needs must be an explicit array")
+        additional = desktop.get("entries", {})
+        if not isinstance(additional, dict) or len(additional) > 64:
+            raise ValueError("App additional GUI entries must be an object with at most 64 entries")
+        for name, declaration in additional.items():
+            if not isinstance(name, str) or not GUI_ENTRY_NAME.fullmatch(name):
+                raise ValueError(f"App GUI entry requires a canonical name: {name!r}")
+            required = {"entry", "exec", "name", "needs"}
+            if not isinstance(declaration, dict) or not required <= declaration.keys() or (
+                set(declaration) - (required | {"panel_applet", "optional_needs"})
+            ):
+                raise ValueError(f"App GUI:{name} requires its own entry, exec, localized name and needs")
+            _gui_entry_path(declaration["entry"])
+            selector = declaration["exec"]
+            if not isinstance(selector, str) or not selector.strip() or (
+                len(selector.encode("utf-8")) > 1024
+                or any(ord(char) < 32 or 127 <= ord(char) <= 159 for char in selector)
+            ):
+                raise ValueError(f"App GUI:{name} exec must be one bounded literal selector")
+            label = declaration["name"]
+            if not isinstance(label, dict) or not isinstance(label.get("en"), str) or (
+                not label["en"].strip() or any(not isinstance(value, str) for value in label.values())
+            ):
+                raise ValueError(f"App GUI:{name} requires its own localized name including en")
+            if not isinstance(declaration["needs"], list):
+                raise ValueError(f"App GUI:{name} needs must be an explicit array")
+            if "optional_needs" in declaration and not isinstance(declaration["optional_needs"], list):
+                raise ValueError(f"App GUI:{name} optional_needs must be an explicit array")
+            if "panel_applet" in declaration and not isinstance(declaration["panel_applet"], bool):
+                raise ValueError(f"App GUI:{name} panel_applet is only a boolean presentation hint")
     if "mcp" in manifest:
         mcp = manifest["mcp"]
         if not isinstance(mcp, dict):
@@ -186,9 +228,18 @@ def manifest_entries(manifest):
         if mcp.get("lifecycle", "lazy") not in ("lazy", "always-on", "while-app-running"):
             raise ValueError("App MCP lifecycle must use the public service contract")
         entries.append(("MCP/background", mcp.get("entry", server)))
+    entries.extend((f"GUI:{name}", declaration["entry"]) for name, declaration in sorted(additional.items()))
     for _, entry in entries:
         app_path(entry)
     return entries
+
+
+def _gui_entry_path(value):
+    path = app_path(value)
+    if not value.isascii() or len(value) > 512 or len(path.parts) > 16 or any(
+        len(part) > 128 for part in path.parts
+    ):
+        raise ValueError(f"GUI entries require bounded canonical signed-tree paths: {value!r}")
 
 
 def validate_manifest_entries(root, manifest, entries):
