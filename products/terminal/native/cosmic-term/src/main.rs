@@ -1669,7 +1669,7 @@ impl App {
                                     return self.update(Message::TabNewNoProfile);
                                 }
                                 Err(err) => {
-                                    log::error!("failed to open terminal: {}", err);
+                                    eprintln!("failed to open terminal: {err}");
                                     // Clean up partially created tab
                                     return self.update(Message::TabClose(Some(entity)));
                                 }
