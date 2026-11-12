@@ -114,21 +114,24 @@ class PackageInstallTests(unittest.TestCase):
         self.assertEqual(failed, [])
         self.assertEqual(errors, {})
         argv = runner.call_args[0][0]
-        self.assertEqual(argv, ["/usr/local/bin/cos", "__package", "--retained", "install", "curl"])
+        self.assertEqual(argv, [
+            "/usr/local/bin/cos", "__package", "--retained", "ensure-packages", "curl",
+        ])
         self.assertEqual(pending[0]["request_id"], "a" * 32)
         self.assertNotIn("after", pending[0])
 
     def test_need_submits_one_batch_before_the_requesting_app_can_be_retired(self):
         payload = json.dumps({"status": "accepted", "accepted": True, "request_id": "b" * 32})
         with _allow_policy(), mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
-            main, "_dpkg_check", return_value=False
-        ), mock.patch.object(main.subprocess, "run", return_value=_fake_completed(stdout=payload)) as runner:
+            main.subprocess, "run", return_value=_fake_completed(stdout=payload)
+        ) as runner:
             result = cmd_need(["curl", "git"])
         runner.assert_called_once()
         self.assertEqual(runner.call_args.args[0], [
-            "/usr/local/bin/cos", "__package", "--retained", "install-packages", "curl", "git"
+            "/usr/local/bin/cos", "__package", "--retained", "ensure-packages", "curl", "git"
         ])
         self.assertEqual(result["status"], "accepted")
+        self.assertEqual(result["preflight"], "retained")
         self.assertEqual(result["installed"], [])
         self.assertEqual(result["failed"], [])
         self.assertEqual(result["transactions"][0]["packages"], ["curl", "git"])
