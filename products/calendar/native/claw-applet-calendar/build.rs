@@ -14,13 +14,7 @@ fn main() {
     let desktop = app
         .expand_desktop(&format!("data/{ID}.desktop"), &context)
         .unwrap();
-    // OUT_DIR also follows --target-dir, unlike reading CARGO_TARGET_DIR alone.
-    let out = PathBuf::from(env::var_os("OUT_DIR").unwrap());
-    let destination = out
-        .ancestors()
-        .nth(4)
-        .expect("Cargo target directory")
-        .join("xdgen");
+    let destination = PathBuf::from(env::var_os("OUT_DIR").unwrap());
     fs::create_dir_all(&destination).unwrap();
     fs::write(destination.join(format!("{ID}.desktop")), desktop).unwrap();
 }
