@@ -48,27 +48,22 @@ def main():
             " print(json.dumps({'wire_version':1,'ok':False,'error':{'code':'denied','message':'fixture denied'}}));sys.exit(1)\n"
             "if args[1]=='__policy':data={'decision':'allow','verb':args[3]}\n"
             "elif args[1]=='__desktop':data={'launched':True,'app_id':'com.clawos.Store','launcher':'/usr/bin/cosmic-store'}\n"
+            "elif args[1]=='__package_query':\n"
+            " with (root/'queries').open('a') as f:f.write(json.dumps(args[2:])+'\\n')\n"
+            " if (root/'query-error').exists():\n"
+            "  print(json.dumps({'wire_version':1,'ok':False,'error':{'code':'unavailable','message':'synthetic catalog failure'}}));sys.exit(1)\n"
+            " if args[2]=='search' and len(args)==5:\n"
+            "  query,limit=args[3],int(args[4]);assert 1<=limit<=100\n"
+            "  rows=[{'name':'fixture-one','summary':'First package'},{'name':'fixture-two','summary':'Second package'}]\n"
+            "  data={'query':query,'results':rows[:limit],'count':min(limit,len(rows)),'truncated':limit<len(rows)}\n"
+            " elif args[2:]==['installed']:data={'packages':['fixture-one','fixture-two']}\n"
+            " elif args[2:]==['show','fixture-one']:data={'name':'fixture-one','found':True,'version':'1.2','summary':'First package','description':'Long description'}\n"
+            " else:raise SystemExit(98)\n"
             "else:raise SystemExit(99)\n"
             "if (root/'wrong-target').exists():data['app_id']='com.clawos.Term'\n"
             "print(json.dumps({'wire_version':1,'ok':True,'data':data}))\n"
         )
         broker.chmod(0o755)
-        for name in ("apt-cache", "dpkg"):
-            child = fixture / name
-            child.write_text(
-                "#!/usr/bin/python3\n"
-                "import json,pathlib,sys,os\n"
-                f"root=pathlib.Path({namespace!r})\n"
-                "assert 'OPENAI_API_KEY' not in os.environ\n"
-                "with (root/'queries').open('a') as f:f.write(json.dumps(sys.argv)+'\\n')\n"
-                "if (root/'query-error').exists(): print('synthetic catalog failure',file=sys.stderr);sys.exit(7)\n"
-                "args=sys.argv[1:]\n"
-                "if args == ['--get-selections']: print('fixture-one\\tinstall\\nfixture-two\\tinstall')\n"
-                "elif args[:2] == ['search','--names-only']: print('fixture-one - First package\\nfixture-two - Second package')\n"
-                "elif args == ['show','fixture-one']: print('Package: fixture-one\\nVersion: 1.2\\nDescription: First package\\n Long description\\nDepends: fixture-two')\n"
-                "else:raise SystemExit(98)\n"
-            )
-            child.chmod(0o755)
         command = [
             "bwrap", "--die-with-parent", "--unshare-net", "--ro-bind", "/", "/",
             "--dev", "/dev", "--tmpfs", "/run", "--tmpfs", "/usr/lib",
@@ -84,8 +79,6 @@ def main():
             "--ro-bind", str(broker), "/usr/local/bin/cos",
             "--ro-bind", str(binary), "/usr/bin/cosmic-store",
         ]
-        for name in ("apt-cache", "dpkg"):
-            command += ["--ro-bind", str(fixture / name), "/usr/bin/" + name]
         for name, value in {
             "COS_MCP_SERVER": "1", "COS_APP_MANIFEST": "/usr/lib/cos/apps/cosmic-store/app.json",
             "COS_SESSION": "worker-session", "COS_DATA_DIR": namespace + "/data",
@@ -172,12 +165,12 @@ def main():
         assert call("open", {})["result"]["isError"]
         calls = [json.loads(line) for line in (fixture / "calls").read_text().splitlines()]
         assert all("app" not in args and "__package" not in args and sid == "worker-session" for args, sid in calls)
-        assert any(args[1:] == ["__policy", "check", "sys.observe", "--name", "packages"] for args, _ in calls)
-        assert any(args[1:] == ["__policy", "check", "sys.observe", "--name", "fixture-one"] for args, _ in calls)
+        assert any(args[1:] == ["__package_query", "search", "--limit", "1"] for args, _ in calls)
+        assert any(args[1:] == ["__package_query", "show", "fixture-one"] for args, _ in calls)
         assert any("apt://fixture-one" in args for args, _ in calls)
         queries = [json.loads(line) for line in (fixture / "queries").read_text().splitlines()]
-        assert queries[0][1:] == ["search", "--names-only", "--", "--limit"]
-        print("Store installed binary: four authenticated tools; synthetic catalog/launch, errors, exact scopes, denial, expiry, no App dispatch or package transactions passed")
+        assert queries[0] == ["search", "--limit", "1"]
+        print("Store installed binary: four authenticated tools; controlled catalog/launch, errors, denial, expiry, no local apt/dpkg, App dispatch or package transactions passed")
     finally:
         if process is not None:
             process.terminate()

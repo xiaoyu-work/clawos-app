@@ -1,8 +1,8 @@
 //! MCP tool surface for `cosmic-store`.
 //!
 //! Launched with `COS_MCP_SERVER=1`, the binary becomes a stdio MCP
-//! server instead of opening the store GUI. Queries share Store's compiled-in
-//! catalog library and retain this App's authenticated observation grants.
+//! server instead of opening the store GUI. Queries use the controlled OS
+//! package reader under this App's authenticated observation grants.
 //!
 //! The authoritative tool catalog and capability contract live in
 //! `apps/cosmic-store/app.json`.
