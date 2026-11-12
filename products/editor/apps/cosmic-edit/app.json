@@ -11,7 +11,31 @@
   "runtime": "binary",
   "entry": "bin/cosmic-edit",
   "desktop": {
-    "exec": "--gui"
+    "exec": "--gui",
+    "needs": [
+      {
+        "verb": "fs.meta",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Browse Home names and metadata in this editor window; opening and saving file content require separate selection and permission."}
+      }
+    ],
+    "optional_needs": [
+      {
+        "verb": "fs.read",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Read the file you separately select for this editor window."}
+      },
+      {
+        "verb": "fs.write",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Save a file through a separate protected write selection for this editor window."}
+      },
+      {
+        "verb": "ai.chat.untrusted",
+        "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
+        "why": {"en": "Use optional AI tools on the untrusted editor buffer after this App's separate AI consent and budget checks."}
+      }
+    ]
   },
   "ai": {
     "budget": {

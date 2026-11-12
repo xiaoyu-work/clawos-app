@@ -43,6 +43,11 @@ authority, never unchecked Exec arguments.
 The on-screen UI continues to use the OS-owned launcher backend service and
 shared restyled toolkit. That service's catalog/history is not unified with
 the product MCP backend; no shell history or user state is migrated.
+The coordinated 0.2.1 GUI declaration separately requests the high-risk
+`ui.panel` capability for its Layer-shell overlay. It needs protected owner
+approval and is never inherited by MCP tools. It grants no catalog/history,
+application-launch, clipboard or global-input authority. Backend/resource
+admission remains an independent installed-runtime prerequisite.
 
 ```bash
 python3 tools/test.py launcher

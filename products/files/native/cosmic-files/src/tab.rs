@@ -83,12 +83,16 @@ pub static THUMB_SEMAPHORE: LazyLock<tokio::sync::Semaphore> =
 
 pub(crate) static SORT_OPTION_FALLBACK: LazyLock<FxHashMap<String, (HeadingOptions, bool)>> =
     LazyLock::new(|| {
-        FxHashMap::from_iter(dirs::download_dir().into_iter().map(|dir| {
-            (
-                Location::Path(dir).normalize().to_string(),
-                (HeadingOptions::Modified, false),
-            )
-        }))
+        FxHashMap::from_iter(
+            crate::gui_user_path(dirs::download_dir())
+                .into_iter()
+                .map(|dir| {
+                    (
+                        Location::Path(dir).normalize().to_string(),
+                        (HeadingOptions::Modified, false),
+                    )
+                }),
+        )
     });
 
 static MODE_NAMES: LazyLock<Vec<String>> = LazyLock::new(|| {
@@ -114,31 +118,31 @@ static MODE_NAMES: LazyLock<Vec<String>> = LazyLock::new(|| {
 
 static SPECIAL_DIRS: LazyLock<FxHashMap<PathBuf, &'static str>> = LazyLock::new(|| {
     let mut special_dirs = FxHashMap::default();
-    if let Some(dir) = dirs::document_dir() {
+    if let Some(dir) = crate::gui_user_path(dirs::document_dir()) {
         special_dirs.insert(dir, "folder-documents");
     }
-    if let Some(dir) = dirs::download_dir() {
+    if let Some(dir) = crate::gui_user_path(dirs::download_dir()) {
         special_dirs.insert(dir, "folder-download");
     }
-    if let Some(dir) = dirs::audio_dir() {
+    if let Some(dir) = crate::gui_user_path(dirs::audio_dir()) {
         special_dirs.insert(dir, "folder-music");
     }
-    if let Some(dir) = dirs::picture_dir() {
+    if let Some(dir) = crate::gui_user_path(dirs::picture_dir()) {
         special_dirs.insert(dir, "folder-pictures");
     }
-    if let Some(dir) = dirs::public_dir() {
+    if let Some(dir) = crate::gui_user_path(dirs::public_dir()) {
         special_dirs.insert(dir, "folder-publicshare");
     }
-    if let Some(dir) = dirs::template_dir() {
+    if let Some(dir) = crate::gui_user_path(dirs::template_dir()) {
         special_dirs.insert(dir, "folder-templates");
     }
-    if let Some(dir) = dirs::video_dir() {
+    if let Some(dir) = crate::gui_user_path(dirs::video_dir()) {
         special_dirs.insert(dir, "folder-videos");
     }
-    if let Some(dir) = dirs::desktop_dir() {
+    if let Some(dir) = crate::gui_user_path(dirs::desktop_dir()) {
         special_dirs.insert(dir, "user-desktop");
     }
-    if let Some(dir) = dirs::home_dir() {
+    if let Some(dir) = crate::gui_user_path(dirs::home_dir()) {
         special_dirs.insert(dir, "user-home");
     }
     special_dirs
@@ -1615,7 +1619,7 @@ impl Location {
         let mut components = path.components();
         match components.next() {
             Some(path::Component::Normal(os_str)) if os_str == "~" => {
-                if let Some(home) = dirs::home_dir() {
+                if let Some(home) = crate::gui_user_path(dirs::home_dir()) {
                     home.join(components.as_path())
                 } else {
                     path

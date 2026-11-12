@@ -112,9 +112,51 @@ preserved. The `cli::tests::` Rust filter exercises the actual parser with
 injected canonicalization and a real local file URL. The auxiliary applet
 and GIO examples do not use this adaptation.
 
-`native_payload` binds both primary GUI and MCP to the real
-`bin/cosmic-files`. App-only preparation also preserves `cosmic-files-applet`
-as a signed file; it is not a second declared Host entry. Compatibility
-installation therefore refuses that auxiliary surface instead of retaining
-an unsandboxed binary or choosing a new identity. See
-[native payloads](../../docs/native-payloads.md) for resource and argv gates.
+`native_payload` binds the default GUI, operations and MCP to the real
+`bin/cosmic-files`. `desktop.entries.applet` explicitly selects the separate
+`bin/cosmic-files-applet` with its own literal `--gui` selector, localized name
+and filesystem needs. Both are signed executable entries under the same
+`cosmic-files` identity, owner data and audit; the original separate Cargo
+feature/renderer graphs remain unchanged. The compatibility applet command is
+only `cos app cosmic-files --gui:applet "$@"`; the main command is unchanged.
+
+Each GUI declares only `fs.meta` as a required filesystem need. Content read,
+watch, write and delete are separate `desktop.optional_needs`; their acquisition
+must remain feature-local rather than preventing initial browsing.
+All five filesystem declarations use the generic `owner-path` binding:
+`path: "**"` for the main
+GUI and `path: "Desktop/**"` for the desktop applet. Root alone resolves these
+relative paths from its authenticated owner's home into bounded Path
+capabilities. They use ordinary exact-owner approval, including delete;
+missing launcher rights are not supplied by an Admin bootstrap or an unbounded
+wildcard. Metadata consent is not a content selection or a read/write grant.
+Existing legacy wildcard semantics are unchanged.
+The desktop applet separately requests the high-risk `ui.panel` capability;
+the main Files window does not. This needs protected owner approval and does
+not confer clipboard, input, capture or another App's authority.
+
+Neither GUI inherits MCP AI, memory, process, Recoll or desktop-launch needs.
+The binding is not a home mount or an exception to protected-resource checks:
+requests covering credential roots may still refuse. A configured desktop
+outside the declared owner-relative `Desktop/` tree is not silently added.
+Layer-shell admission uses that explicit live `ui.panel` grant, never entry
+names or panel metadata. Installed display/resource acceptance remains pending.
+
+GUI Home, built-in user-folder shortcuts and tilde navigation use the public
+SDK's owner-home hint instead of the private App-state HOME. Explicit saved
+paths remain unchanged. This translates UI locations only: it neither exposes
+raw Home nor supplies metadata/content permissions or a selected-resource grant.
+
+The desktop applet is UI-only. The OS owns `org.freedesktop.FileManager1` and
+routes same-owner `ShowFolders`, `ShowItems` and `ShowItemProperties` intents
+through the authenticated default-GUI Host. The App neither registers the
+service nor opens the raw owner bus or spawns another App. The OS fixture
+verifies literal arguments, real signed GUI launches, cross-UID refusal before
+spawn, private audit and checked PAM/session teardown. That synthetic transport
+acceptance does not establish real Files resource access or visual acceptance.
+
+This source consumes the coordinated generic multi-GUI contract for platform
+`0.2.1`; the unchanged production `0.2.0` pin does not validate these new
+manifest fields. Publication, real artifact adoption, both native builds and
+installed Files display/resource/intent acceptance remain separate gates. See
+[native payloads](../../docs/native-payloads.md).

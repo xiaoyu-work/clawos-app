@@ -11,7 +11,78 @@
   "runtime": "binary",
   "entry": "bin/cosmic-files",
   "desktop": {
-    "exec": "--gui"
+    "exec": "--gui",
+    "entry": "bin/cosmic-files",
+    "needs": [
+      {
+        "verb": "fs.meta",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Browse Home names and metadata for this window; file content needs separate selection and permission."}
+      }
+    ],
+    "optional_needs": [
+      {
+        "verb": "fs.read",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Read files you separately select within the authenticated owner's home."}
+      },
+      {
+        "verb": "fs.watch",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Watch for filesystem changes within the authenticated owner's home."}
+      },
+      {
+        "verb": "fs.write",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Create or update files within the owner's approved home scope."}
+      },
+      {
+        "verb": "fs.delete",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Remove selected files within the owner's approved home scope."}
+      }
+    ],
+    "entries": {
+      "applet": {
+        "entry": "bin/cosmic-files-applet",
+        "exec": "--gui",
+        "name": {"en": "Files Desktop"},
+        "needs": [
+          {
+            "verb": "ui.panel",
+            "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
+            "why": {"en": "Display desktop file icons through an independently authorized panel surface."}
+          },
+          {
+            "verb": "fs.meta",
+            "scope": {"kind": "owner-path", "path": "Desktop/**"},
+            "why": {"en": "Browse Desktop names and metadata for this surface; file content needs separate selection and permission."}
+          }
+        ],
+        "optional_needs": [
+          {
+            "verb": "fs.read",
+            "scope": {"kind": "owner-path", "path": "Desktop/**"},
+            "why": {"en": "Read files you separately select in the owner's Desktop directory."}
+          },
+          {
+            "verb": "fs.watch",
+            "scope": {"kind": "owner-path", "path": "Desktop/**"},
+            "why": {"en": "Watch the owner's Desktop directory to refresh its file icons."}
+          },
+          {
+            "verb": "fs.write",
+            "scope": {"kind": "owner-path", "path": "Desktop/**"},
+            "why": {"en": "Create or rename files in the owner's approved Desktop directory."}
+          },
+          {
+            "verb": "fs.delete",
+            "scope": {"kind": "owner-path", "path": "Desktop/**"},
+            "why": {"en": "Remove selected files from the owner's approved Desktop directory."}
+          }
+        ]
+      }
+    }
   },
   "ai": {
     "budget": {

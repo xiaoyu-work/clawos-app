@@ -127,7 +127,7 @@ impl Backend for Pkgar {
         &self,
         _op: &Operation,
         _f: Box<dyn FnMut(f32) + 'static>,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<crate::package::Tracked, Box<dyn Error>> {
         Err("Pkgar::operation not implemented".into())
     }
 }

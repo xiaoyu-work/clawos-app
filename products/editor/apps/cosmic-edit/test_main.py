@@ -18,6 +18,13 @@ def test_manifest_preserves_exact_authority_and_ai_identity():
     )
     assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-edit"
     assert manifest["desktop"]["exec"] == "--gui"
+    metadata, = manifest["desktop"]["needs"]
+    assert metadata["verb"] == "fs.meta"
+    assert metadata["scope"] == {"kind": "owner-path", "path": "**"}
+    optional = {need["verb"]: need for need in manifest["desktop"]["optional_needs"]}
+    assert set(optional) == {"fs.read", "fs.write", "ai.chat.untrusted"}
+    for verb in ("fs.read", "fs.write"):
+        assert optional[verb]["scope"] == {"kind": "owner-path", "path": "**"}
     assert manifest["ai"] == {
         "budget": {"monthly_units": 200000},
         "safety": "strict", "origins": ["external-content"],

@@ -1772,7 +1772,9 @@ impl App {
                 } else {
                     Vec::new()
                 };
-                let storage = dirs::home_dir().as_deref().and_then(finder_storage_usage);
+                let storage = crate::gui_user_path(dirs::home_dir())
+                    .as_deref()
+                    .and_then(finder_storage_usage);
                 HomeDashboardData { recents, storage }
             })
             .await
@@ -2896,7 +2898,7 @@ impl App {
             (fl!("home-dashboard-videos"), dirs::video_dir()),
         ]
         .into_iter()
-        .filter_map(|(label, path)| path.map(|path| (label, path)))
+        .filter_map(|(label, path)| crate::gui_user_path(path).map(|path| (label, path)))
         .collect();
 
         let folder_cards: Element<'_, Message> = if compact {
@@ -3205,7 +3207,7 @@ fn finder_free_space(path: &std::path::Path) -> Option<u64> {
 fn is_home_location(location: &Location) -> bool {
     matches!(
         location,
-        Location::Path(path) if dirs::home_dir().as_ref() == Some(path)
+        Location::Path(path) if crate::gui_user_path(dirs::home_dir()).as_ref() == Some(path)
     )
 }
 
@@ -4793,7 +4795,7 @@ impl Application for App {
                 log::debug!("{events:?}");
 
                 let refresh_dashboard = self.home_dashboard_active()
-                    || dirs::home_dir().is_some_and(|home| {
+                    || crate::gui_user_path(dirs::home_dir()).is_some_and(|home| {
                         events
                             .iter()
                             .flat_map(|event| &event.paths)

@@ -1,5 +1,5 @@
 //! Human Store UI adapters to OS policy, snapshots and Agent activation.
-//! Native Flatpak/PackageKit transactions retain their original human policies.
+//! Package effects use the retained Root service, never provider dialogs.
 
 use std::{io, path::Path};
 use cos_runtime::{ask_claw, BridgeError, policy};
@@ -13,19 +13,23 @@ pub fn user_message(err: &BridgeError) -> String {
     }
 }
 
-fn human_ui() -> Result<(), BridgeError> {
+pub(crate) fn human_ui() -> Result<(), BridgeError> {
     if std::env::var("COS_MCP_SERVER").as_deref() == Ok("1") {
         return Err(io::Error::new(io::ErrorKind::PermissionDenied, "human UI access is unavailable in MCP").into());
     }
     Ok(())
 }
 
-pub fn read_bytes(path: &Path) -> Result<Vec<u8>, BridgeError> {
+pub(crate) fn read_path(path: &Path) -> Result<std::path::PathBuf, BridgeError> {
     human_ui()?;
     let path = std::path::absolute(path)?;
     policy::require("fs.read", policy::Scope::path(path.to_string_lossy()))
         .map_err(io::Error::other)?;
-    Ok(std::fs::read(path)?)
+    Ok(path)
+}
+
+pub fn read_bytes(path: &Path) -> Result<Vec<u8>, BridgeError> {
+    Ok(std::fs::read(read_path(path)?)?)
 }
 
 pub fn fs_rm(path: &Path) -> Result<(), BridgeError> {

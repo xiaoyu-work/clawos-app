@@ -41,6 +41,8 @@ def test_native_manifest_and_install_identity(service):
     assert manifest["runtime"] == "binary"
     assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-launcher"
     assert manifest["desktop"]["exec"] == "--gui"
+    assert {need["verb"] for need in manifest["desktop"]["needs"]} == {"ui.panel"}
+    assert all(need["verb"] != "ui.panel" for tool in manifest["mcp"]["tools"] for need in tool["needs"])
     tools = service.app._handle_request("tools/list", {}, True)["tools"]
     assert {tool["name"] for tool in tools} == {
         "launcher.find", "launcher.list", "launcher.open", "launcher.recent",

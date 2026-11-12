@@ -52,6 +52,10 @@ handling; other native arguments retain their ignored behavior.
 
 Tools accept no arguments and never start/modify tasks or invoke a model.
 One card cannot borrow the GUI's grant union or another card's permission.
+The coordinated 0.2.1 `desktop.needs` explicitly requests those three reads
+and the separate high-risk `ui.panel` capability for native presentation.
+Protected owner approval, not widget metadata or read authority, admits the
+panel surface. None of the three MCP tools requests or inherits `ui.panel`.
 The OS retains owner/session authorization and state. Calls have a 12-second bound;
 cancellation/deadlines drop the public SDK CLI future. The Web page renders
 real event/task/resource fields with independent loading, denied/unavailable
@@ -80,8 +84,8 @@ ELF and generated desktop entry. `native_payload` preserves that ELF, resources
 and original GPL license inside the package-local App; source staging never
 fabricates a runnable binary. Compatibility launchers use the common Host.
 The binary no longer needs `claw-os-applet-provider`; shared release metadata
-still lists the historical `claw-os-applet-services-v1 (= 1)` dependency pending
-owner-coordinated packaging cleanup. `cosmic-applets` reads
+requires the Agent-provided `claw-os-calendar-read-v1 (= 1)` and
+`claw-os-observation-v1 (= 1)` interfaces. `cosmic-applets` reads
 none of its source/assets. The recipe requires an explicit non-root staging
 `rootdir`; it installs files, never permissions or installed-system hooks.
 Original UI tests remain and the integration test

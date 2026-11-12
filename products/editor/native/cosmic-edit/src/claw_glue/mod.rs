@@ -4,9 +4,8 @@
 //
 // Each function turns a `BridgeError` into a plain `io::Error` so call
 // sites can keep their `match … { Ok / Err(io::Error) }` shape. A
-// kernel "denied" decision surfaces as `io::ErrorKind::PermissionDenied`
-// so the existing pkexec fallback in `tab.rs::save` keeps working
-// unchanged.
+// kernel "denied" decision surfaces as `io::ErrorKind::PermissionDenied`;
+// only OS-owned consent can authorize a retry.
 //
 // AI helpers (`summarize` / `explain` / `rewrite`) live in the [`ai`]
 // submodule. They are `async` and return `Result<_, String>` because
@@ -20,6 +19,12 @@ use std::path::Path;
 
 use cos_runtime::{BridgeError, ask_claw, desktop, filesystem};
 use serde::Serialize;
+
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub enum FileSelection {
+    Existing(String, u64),
+    Create(String, u64),
+}
 
 fn map_err(err: BridgeError) -> io::Error {
     let kind = if err.is_denied() {
@@ -40,21 +45,62 @@ fn path_str(path: &Path) -> io::Result<&str> {
 }
 
 /// User-intent file read (reload tab from disk after an external change).
+/// Managed GUI reads remain behind the selected native FUSE resource.
 ///
 /// Hot-path reads (syntax highlighting, project tree population, etc.)
 /// MUST keep using `std::fs` directly — those happen on every keystroke
 /// and routing each one through a subprocess would tank the editor.
 pub fn read_to_string(path: &Path) -> io::Result<String> {
+    if claw_os_sdk::gui::is_gui_launch()
+        && std::env::var("COS_MCP_SERVER").as_deref() != Ok("1")
+    {
+        return std::fs::read_to_string(path);
+    }
     let p = path_str(path)?;
     filesystem::read(p).map(|r| r.content).map_err(map_err)
 }
 
 /// User-intent file save.
 ///
-/// Returns `io::ErrorKind::PermissionDenied` on a kernel denial — the
-/// caller may then prompt the user for elevation (pkexec) exactly as
-/// it did before claw-os-sdk existed.
-pub fn write_text(path: &Path, contents: &str) -> io::Result<()> {
+/// A denied save leaves the buffer unsaved; no privileged fallback is used.
+pub fn write_text(path: &Path, contents: &str, selection: Option<&FileSelection>) -> io::Result<()> {
+    if claw_os_sdk::gui::is_gui_launch()
+        && std::env::var("COS_MCP_SERVER").as_deref() != Ok("1")
+    {
+        use std::io::Write;
+        use std::os::unix::fs::MetadataExt;
+
+        let selection = selection.ok_or_else(|| io::Error::new(
+            io::ErrorKind::PermissionDenied, "this file needs a separate protected write selection",
+        ))?;
+        let (parent_node, name) = match selection {
+            FileSelection::Existing(id, node) => {
+                let reserved = claw_os_sdk::gui::reserve_file_save(id, *node).map_err(map_err)?;
+                (reserved.parent_node, reserved.name)
+            }
+            FileSelection::Create(id, node) => {
+                let reserved = claw_os_sdk::gui::reserve_file_create(id, *node).map_err(map_err)?;
+                if path.file_name().and_then(|name| name.to_str()) != Some(reserved.target_name.as_str()) {
+                    return Err(io::Error::new(io::ErrorKind::InvalidData, "creation reservation has another target"));
+                }
+                (reserved.parent_node, reserved.name)
+            }
+        };
+        let parent = path.parent().ok_or_else(|| io::Error::new(
+            io::ErrorKind::InvalidInput, "save target has no parent",
+        ))?;
+        if std::fs::symlink_metadata(parent)?.ino() != parent_node {
+            return Err(io::Error::new(io::ErrorKind::InvalidData, "save reservation has another parent"));
+        }
+        let scratch = parent.join(name);
+        let mut file = std::fs::OpenOptions::new().write(true).create_new(true).open(&scratch)?;
+        file.write_all(contents.as_bytes())?;
+        file.sync_all()?;
+        drop(file);
+        std::fs::rename(scratch, path)?;
+        std::fs::File::open(parent)?.sync_all()?;
+        return Ok(());
+    }
     let p = path_str(path)?;
     filesystem::write(p, contents).map(|_| ()).map_err(map_err)
 }

@@ -54,6 +54,7 @@ mod backend;
 mod claw_glue;
 mod mcp;
 mod product;
+mod package;
 
 use config::{AppTheme, CONFIG_VERSION, Config};
 mod config;
@@ -314,7 +315,9 @@ pub enum Message {
     OpenDesktopId(String),
     Operation(OperationKind, BackendName, AppId, Arc<AppInfo>),
     PeriodicUpdateCheck,
-    PendingComplete(u64),
+    PendingHandoff(u64, package::Tracked),
+    PackageIntent(String, package::Mode),
+    PackageIntentUpdated(package::Tracked),
     PendingDismiss,
     PendingError(u64, String),
     PendingProgress(u64, f32),
@@ -434,7 +437,9 @@ pub struct App {
     pub pending_operation_id: u64,
     pub pending_operations: BTreeMap<u64, (Operation, f32)>,
     pub progress_operations: BTreeSet<u64>,
-    pub complete_operations: BTreeMap<u64, Operation>,
+    pub root_operations: BTreeMap<String, package::Tracked>,
+    pub root_refreshing: BTreeSet<String>,
+    pub package_history_error: Option<String>,
     pub failed_operations: BTreeMap<u64, (Operation, f32, String)>,
     pub repos_changing: Vec<(BackendName, String, bool)>,
     pub scrollable_id: widget::Id,
@@ -535,6 +540,28 @@ impl App {
     }
 
     fn operation(&mut self, operation: Operation) {
+        let id = self.pending_operation_id;
+        self.pending_operation_id += 1;
+        if operation.backend_name == BackendName::Packagekit {
+            let names: Vec<_> = operation.infos.iter().flat_map(|info| &info.pkgnames).collect();
+            let conflict = self.root_operations.values().find(|request| {
+                !request.terminal()
+                    && request.intent.packages.iter().any(|name| names.contains(&name))
+            });
+            let inflight = self.pending_operations.values().any(|(op, _)| {
+                op.backend_name == BackendName::Packagekit
+                    && op.infos.iter().flat_map(|info| &info.pkgnames)
+                        .any(|name| names.contains(&name))
+            });
+            let error = self.package_history_error.clone().or_else(|| conflict.map(|request| {
+                fl!("package-request-overlap", invocation = request.intent.invocation_id.as_str())
+            })).or_else(|| inflight.then(|| fl!("package-request-submitting")));
+            if let Some(error) = error {
+                self.failed_operations.insert(id, (operation, 0.0, error));
+                self.dialog_pages.push_back(DialogPage::FailedOperation(id));
+                return;
+            }
+        }
         match &operation.kind {
             OperationKind::RepositoryAdd(adds) => {
                 for add in adds.iter() {
@@ -551,8 +578,6 @@ impl App {
             _ => {}
         }
 
-        let id = self.pending_operation_id;
-        self.pending_operation_id += 1;
         self.progress_operations.insert(id);
         self.pending_operations.insert(id, (operation, 0.0));
     }
@@ -1686,12 +1711,8 @@ impl App {
             children.push(section.into());
         }
 
-        if !self.complete_operations.is_empty() {
-            let mut section = widget::settings::section().title(fl!("complete"));
-            for (_id, op) in self.complete_operations.iter().rev() {
-                section = section.add(widget::text(op.completed_text()));
-            }
-            children.push(section.into());
+        if !self.root_operations.is_empty() {
+            children.push(self.root_package_requests());
         }
 
         if children.is_empty() {
@@ -1701,6 +1722,32 @@ impl App {
         widget::column::with_children(children)
             .spacing(space_m)
             .into()
+    }
+
+    fn root_package_requests(&self) -> Element<'_, Message> {
+        let mut section = widget::settings::section()
+            .title(fl!("package-requests"));
+        for (id, request) in self.root_operations.iter().rev() {
+            let mut actions = widget::row::with_capacity(3);
+            if !self.root_refreshing.contains(id) {
+                actions = actions.push(widget::button::standard(fl!("package-check-status"))
+                    .on_press(Message::PackageIntent(id.clone(), package::Mode::Status)));
+                actions = actions.push(widget::button::standard(fl!("package-read-only-recovery"))
+                    .on_press(Message::PackageIntent(id.clone(), package::Mode::Recover)));
+                if matches!(request.state, package::State::PermissionRequired(_) | package::State::PermissionReady) {
+                    actions = actions.push(widget::button::standard(fl!("package-continue-approved"))
+                        .on_press(Message::PackageIntent(id.clone(), package::Mode::Submit)));
+                } else if matches!(request.state, package::State::Unconfirmed(_)) {
+                    actions = actions.push(widget::button::standard(fl!("package-request-review"))
+                        .on_press(Message::PackageIntent(id.clone(), package::Mode::Review)));
+                }
+            }
+            section = section.add(widget::column![
+                widget::text(request.message()),
+                actions,
+            ]);
+        }
+        section.into()
     }
 
     fn release_notes(&self, index: usize) -> Element<'_, Message> {
@@ -2052,7 +2099,9 @@ impl Application for App {
             pending_operation_id: 0,
             pending_operations: BTreeMap::new(),
             progress_operations: BTreeSet::new(),
-            complete_operations: BTreeMap::new(),
+            root_operations: BTreeMap::new(),
+            root_refreshing: BTreeSet::new(),
+            package_history_error: None,
             failed_operations: BTreeMap::new(),
             repos_changing: Vec::new(),
             // XX must be a named id or responsive widget will discard the state
@@ -2079,6 +2128,20 @@ impl Application for App {
             update_apps_in_progress: false,
             uninstall_purge_data: false,
         };
+
+        if matches!(&app.mode, Mode::Normal) {
+            match package::history() {
+                Ok(history) => {
+                    for request in history {
+                        app.root_operations.insert(request.intent.invocation_id.clone(), request);
+                    }
+                }
+                Err(error) => {
+                    log::warn!("package handoff history unavailable: {error}");
+                    app.package_history_error = Some(error.to_string());
+                }
+            }
+        }
 
         // Load cached explore results for instant display
         let cache_start = Instant::now();
@@ -2362,13 +2425,6 @@ impl Application for App {
             count += 1;
         }
         let running = count;
-        // Adjust the progress bar so it does not jump around when operations finish
-        for id in self.progress_operations.iter() {
-            if self.complete_operations.contains_key(id) {
-                total_progress += 100.0;
-                count += 1;
-            }
-        }
         let finished = count - running;
         total_progress /= count as f32;
         if running > 1 {
@@ -2538,18 +2594,23 @@ impl Application for App {
                         ]));
                     }
 
-                    for (_id, op) in self.complete_operations.iter().rev() {
-                        list = list.add(widget::text(op.completed_text()));
+                    if !self.root_operations.is_empty() {
+                        list = list.add(self.root_package_requests());
                     }
 
                     dialog = dialog.control(widget::scrollable(list));
                     if self.pending_operations.is_empty() {
-                        let code = if self.failed_operations.is_empty() {
+                        let code = if self.failed_operations.is_empty()
+                            && self.root_operations.values().all(package::Tracked::confirmed_applied)
+                        {
                             dialog = dialog.control(widget::text(fl!("codec-installed")));
                             GStreamerExitCode::Success
-                        } else {
+                        } else if !self.failed_operations.is_empty() {
                             dialog = dialog.control(widget::text(fl!("codec-error")));
                             GStreamerExitCode::Error
+                        } else {
+                            dialog = dialog.control(widget::text(fl!("codec-installation-unconfirmed")));
+                            GStreamerExitCode::UserAbort
                         };
                         dialog = dialog.secondary_action(
                             widget::button::standard(fl!("close"))
@@ -2798,32 +2859,8 @@ impl Application for App {
                                             });
                                         })
                                     };
-                                    let msg_tx = msg_tx.clone();
                                     tokio::task::spawn_blocking(move || {
-                                        match backend.operation(&op, on_progress) {
-                                            Ok(()) => Ok(()),
-                                            Err(err) => {
-                                                match err.downcast_ref::<RepositoryRemoveError>() {
-                                                    Some(repo_rm) => {
-                                                        let _ =
-                                                            futures::executor::block_on(async {
-                                                                msg_tx
-                                                            .lock()
-                                                            .await
-                                                            .send(Message::DialogPage(
-                                                                DialogPage::RepositoryRemove(
-                                                                    op.backend_name,
-                                                                    repo_rm.clone(),
-                                                                ),
-                                                            ))
-                                                            .await
-                                                            });
-                                                        Ok(())
-                                                    }
-                                                    None => Err(err.to_string()),
-                                                }
-                                            }
-                                        }
+                                        backend.operation(&op, on_progress).map_err(|error| error.to_string())
                                     })
                                     .await
                                     .unwrap()
@@ -2832,11 +2869,11 @@ impl Application for App {
                             };
 
                             match res {
-                                Ok(()) => {
+                                Ok(request) => {
                                     let _ = msg_tx
                                         .lock()
                                         .await
-                                        .send(Message::PendingComplete(id))
+                                        .send(Message::PendingHandoff(id, request))
                                         .await;
                                 }
                                 Err(err) => {

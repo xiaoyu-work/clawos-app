@@ -10,6 +10,13 @@ discovery/queue/printing tools, and `user-manager`'s twelve identity tools.
 All eleven management App sources assigned to Settings have moved.
 The complete native `cosmic-settings` workspace, UI, MCP and resources also live
 here, retaining its separate twelfth identity and original default pages.
+The coordinated 0.2.1 native GUI requests Users observation/account management
+and Applications permission management as `desktop.optional_needs`. Missing,
+denied or unapproved rights cannot prevent the Settings window from opening;
+the affected page/action remains unauthorized. These are this App's declared
+requests, not grants borrowed from the eleven management identities. Exact
+secret/icon-file authority, other page/resource integration and protected OS
+approval remain separate requirements.
 
 | Path | Responsibility |
 | --- | --- |

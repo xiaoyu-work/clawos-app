@@ -57,6 +57,11 @@ not empty agendas. The native UI continues to run independently of MCP or an
 active Agent/model. MCP dispatch precedes GUI initialization and the existing
 direct `--version` handling; other native arguments retain their ignored behavior.
 
+The coordinated 0.2.1 `desktop.needs` requests the Calendar read and a separate
+high-risk `ui.panel` capability for the native panel surface. That authority
+requires protected owner approval; neither panel metadata nor Calendar access
+grants it. The read-only MCP tool never requests or inherits `ui.panel`.
+
 The Rust UI uses the same verified App manifest, identity/session, capability
 and sandbox contract as any other App. Neither its language nor its package
 origin grants privilege. The public data service is available to other Apps
@@ -112,9 +117,9 @@ and original scalable Calendar icon. Its `rootdir`, `prefix`, `targetdir` and
 Installation is build-time staging and requires an explicit non-root `rootdir`.
 It installs files only, not permissions or installed-system hooks.
 
-The binary no longer depends on `claw-os-applet-provider`; the shared release
-metadata's historical `claw-os-applet-services-v1 (= 1)` dependency remains an
-owner-coordinated packaging cleanup, not a runtime fallback. The OS shell
+The binary no longer depends on `claw-os-applet-provider`; shared release
+metadata requires the Agent-provided `claw-os-calendar-read-v1 (= 1)` interface,
+not the Desktop-only applet provider. The OS shell
 neither links this UI nor generates its resources. Native tests
 retain selected-day injection, stale generations, queued refreshes and visible
 denial, exercise synthetic public CLI/MCP reads and execute the actual standalone

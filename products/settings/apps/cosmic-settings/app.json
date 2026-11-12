@@ -11,7 +11,25 @@
   "runtime": "binary",
   "entry": "bin/cosmic-settings",
   "desktop": {
-    "exec": "--gui"
+    "exec": "--gui",
+    "needs": [],
+    "optional_needs": [
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "identities"}},
+        "why": {"en": "Read account details for the optional Users page through the OS."}
+      },
+      {
+        "verb": "sys.identity",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "manage"}},
+        "why": {"en": "Apply explicitly requested account changes through the OS; the Settings window can open without this permission."}
+      },
+      {
+        "verb": "sys.permissions",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "manage"}},
+        "why": {"en": "Inspect and request or revoke App permissions for this owner; protected OS approval remains separate."}
+      }
+    ]
   },
   "mcp": {
     "entry": "bin/cosmic-settings",

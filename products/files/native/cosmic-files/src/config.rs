@@ -89,16 +89,16 @@ impl Favorite {
     }
 
     pub fn path_opt(&self) -> Option<PathBuf> {
-        match self {
+        let path = match self {
             Self::Home => dirs::home_dir(),
             Self::Documents => dirs::document_dir(),
             Self::Downloads => dirs::download_dir(),
             Self::Music => dirs::audio_dir(),
             Self::Pictures => dirs::picture_dir(),
             Self::Videos => dirs::video_dir(),
-            Self::Path(path) => Some(path.clone()),
-            Self::Network { path, .. } => Some(path.clone()),
-        }
+            Self::Path(path) | Self::Network { path, .. } => return Some(path.clone()),
+        };
+        crate::gui_user_path(path)
     }
 }
 
@@ -118,12 +118,16 @@ pub struct State {
 impl Default for State {
     fn default() -> Self {
         Self {
-            sort_names: FxOrderMap::from_iter(dirs::download_dir().into_iter().map(|dir| {
-                (
-                    Location::Path(dir).normalize().to_string(),
-                    (HeadingOptions::Modified, false),
-                )
-            })),
+            sort_names: FxOrderMap::from_iter(
+                crate::gui_user_path(dirs::download_dir())
+                    .into_iter()
+                    .map(|dir| {
+                        (
+                            Location::Path(dir).normalize().to_string(),
+                            (HeadingOptions::Modified, false),
+                        )
+                    }),
+            ),
         }
     }
 }

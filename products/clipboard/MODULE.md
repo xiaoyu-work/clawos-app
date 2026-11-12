@@ -53,6 +53,11 @@ need. Old history grants alone cannot restore, and are not widened or migrated.
 Existing history remains untouched. No other App's identity, state or consent
 is borrowed.
 
+The coordinated 0.2.1 native `desktop.needs` separately requests `ui.panel`
+alongside the exact history/selection rights. Protected owner approval is
+required for that high-risk display capability; clipboard rights or panel
+metadata do not grant it. No MCP history tool requests `ui.panel`.
+
 The OS alone validates the default owner CopyQ endpoint and system executable,
 holds the authenticated provider connection and executes closed scripts.
 The unprivileged fixed CLI sees only a private credential-checked relay, not
@@ -84,8 +89,8 @@ installed-system hook or permission installer.
 The product declares the real `bin/claw-applet-clipboard` as both primary and
 MCP entry and uses the existing native payload builder/signer contract. Its
 original ELF, resources and GPL license are preserved; source staging does not
-invent a binary. Shared release dependency metadata still needs coordinated
-adoption of the generic clipboard broker instead of the legacy applet helper.
+invent a binary. Shared release metadata requires the Agent-provided
+`claw-os-clipboard-history-v1 (= 1)` interface instead of the Desktop-only applet helper.
 The native integration test executes the actual ELF without desktop transports.
 These fixtures are not live installed CopyQ, Wayland or GUI acceptance, and
 publication gates remain unchanged.

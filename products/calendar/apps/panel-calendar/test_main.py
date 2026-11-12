@@ -32,3 +32,5 @@ def test_day_tool_is_read_only_and_uses_only_the_existing_calendar_scope():
         ("date", "text", True),
     ]
     assert [effect["kind"] for effect in tools[0]["effects"]] == ["read"]
+    assert {need["verb"] for need in manifest["desktop"]["needs"]} == {"data.db.read", "ui.panel"}
+    assert "ui.panel" not in {need["verb"] for need in tools[0]["needs"]}

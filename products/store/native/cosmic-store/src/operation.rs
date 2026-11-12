@@ -69,6 +69,9 @@ impl std::error::Error for RepositoryRemoveError {}
 
 impl Operation {
     pub fn pending_text(&self, progress: i32) -> String {
+        if self.backend_name == BackendName::Packagekit {
+            return format!("Requesting protected Root review/handoff for {:?}; package effects are not confirmed.", self.kind);
+        }
         //TODO: translate
         let verb = match &self.kind {
             OperationKind::Install => "Installing",
@@ -92,25 +95,6 @@ impl Operation {
         format!(
             "{} {} from {} ({}%)...",
             verb, self.infos[0].name, self.infos[0].source_name, progress
-        )
-    }
-
-    pub fn completed_text(&self) -> String {
-        //TODO: translate
-        let verb = match &self.kind {
-            OperationKind::Install => "Installed",
-            OperationKind::Uninstall { .. } => "Uninstalled",
-            OperationKind::Update => "Updated",
-            OperationKind::RepositoryAdd(adds) => {
-                return format!("Added repositories {:?}", RepositoryAdd::ids(adds));
-            }
-            OperationKind::RepositoryRemove(rms, _force) => {
-                return format!("Removed repositories {:?}", RepositoryRemove::ids(rms));
-            }
-        };
-        format!(
-            "{} {} from {}",
-            verb, self.infos[0].name, self.infos[0].source_name
         )
     }
 

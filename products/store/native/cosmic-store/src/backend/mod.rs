@@ -90,7 +90,7 @@ pub trait Backend: fmt::Debug + Send + Sync {
         &self,
         op: &Operation,
         f: Box<dyn FnMut(f32) + 'static>,
-    ) -> Result<(), Box<dyn Error>>;
+    ) -> Result<crate::package::Tracked, Box<dyn Error>>;
 }
 
 // BTreeMap for stable sort order

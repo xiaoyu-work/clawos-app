@@ -45,8 +45,21 @@ pub(crate) fn err_str<T: ToString>(err: T) -> String {
     err.to_string()
 }
 
+pub(crate) fn gui_user_path(path: Option<PathBuf>) -> Option<PathBuf> {
+    let path = path?;
+    // Navigation follows the owner hint; HOME and App state stay private.
+    if claw_os_sdk::gui::is_gui_launch()
+        && let (Some(owner), Some(private)) =
+            (claw_os_sdk::gui::owner_home(), dirs::home_dir())
+        && let Ok(relative) = path.strip_prefix(private)
+    {
+        return Some(owner.join(relative));
+    }
+    Some(path)
+}
+
 pub fn desktop_dir() -> PathBuf {
-    if let Some(path) = dirs::desktop_dir() {
+    if let Some(path) = gui_user_path(dirs::desktop_dir()) {
         path
     } else {
         let path = home_dir().join("Desktop");
@@ -59,7 +72,7 @@ pub fn desktop_dir() -> PathBuf {
 }
 
 pub fn home_dir() -> PathBuf {
-    if let Some(home) = dirs::home_dir() {
+    if let Some(home) = gui_user_path(dirs::home_dir()) {
         home
     } else {
         let path = PathBuf::from("/");

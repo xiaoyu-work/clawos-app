@@ -50,6 +50,8 @@ def test_history_tools_keep_exact_grants_and_separate_selection_write():
         ("clipboard.read", "history"), ("clipboard.write", "history"),
         ("clipboard.write", "selection"),
     ]
+    assert manifest["desktop"]["needs"][-1]["verb"] == "ui.panel"
+    assert all(need["verb"] != "ui.panel" for tool in tools.values() for need in tool["needs"])
 
 
 def test_web_history_is_explicit_text_only_and_calls_only_owning_tools():

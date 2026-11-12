@@ -9,9 +9,8 @@ use cosmic_text::{Attrs, Buffer, Cursor, Edit, Selection, Shaping, SyntaxEditor,
 use regex::Regex;
 use std::{
     fs,
-    io::{self, Write},
+    io,
     path::{self, PathBuf},
-    process::{Command, Stdio},
     sync::{Arc, Mutex},
 };
 
@@ -49,6 +48,7 @@ pub struct GitDiffTab {
 
 pub struct EditorTab {
     pub path_opt: Option<PathBuf>,
+    pub write_selection: Option<crate::claw_glue::FileSelection>,
     attrs: Attrs<'static>,
     pub editor: Mutex<ViEditor<'static, 'static>>,
     pub context_menu: Option<Point>,
@@ -73,6 +73,7 @@ impl EditorTab {
 
         let mut tab = Self {
             path_opt: None,
+            write_selection: None,
             attrs,
             editor: Mutex::new(ViEditor::new(editor)),
             context_menu: None,
@@ -104,6 +105,7 @@ impl EditorTab {
     }
 
     pub fn open(&mut self, path: PathBuf) {
+        self.write_selection = None;
         let mut editor = self.editor.lock().unwrap();
         let mut font_system = font_system().write().unwrap();
         let mut editor = editor.borrow_with(font_system.raw());
@@ -214,67 +216,27 @@ impl EditorTab {
         }
     }
 
-    pub fn save(&mut self) {
+    pub fn save(&mut self) -> io::Result<()> {
         if let Some(path) = &self.path_opt {
             let mut editor = self.editor.lock().unwrap();
             let text = editor_text(&editor);
-            match crate::claw_glue::write_text(path, &text) {
+            match crate::claw_glue::write_text(path, &text, self.write_selection.as_ref()) {
                 Ok(()) => {
+                    if matches!(self.write_selection, Some(crate::claw_glue::FileSelection::Create(..))) {
+                        self.write_selection = None;
+                    }
                     editor.save_point();
                     log::info!("saved {:?}", path);
+                    Ok(())
                 }
                 Err(err) => {
-                    if err.kind() == std::io::ErrorKind::PermissionDenied {
-                        log::warn!("Permission denied. Attempting to save with pkexec.");
-
-                        // FIXME(claw): pkexec is an OS-level escalation
-                        // path that bypasses Claw OS caps. Once the
-                        // kernel grows an "approval" UI we should route
-                        // re-tries through it instead of pkexec.
-                        if let Ok(mut output) = Command::new("pkexec")
-                            .arg("tee")
-                            .arg(path)
-                            .stdin(Stdio::piped())
-                            .stdout(Stdio::null()) // Redirect stdout to /dev/null
-                            .stderr(Stdio::inherit()) // Retain stderr for error visibility
-                            .spawn()
-                        {
-                            if let Some(mut stdin) = output.stdin.take() {
-                                if let Err(e) = stdin.write_all(text.as_bytes()) {
-                                    log::error!("Failed to write to stdin: {}", e);
-                                }
-                            } else {
-                                log::error!("Failed to access stdin of pkexec process.");
-                            }
-
-                            // Ensure the child process is reaped
-                            match output.wait() {
-                                Ok(status) => {
-                                    if status.success() {
-                                        // Mark the editor's state as saved if the process succeeds
-                                        editor.save_point();
-                                        log::info!("File saved successfully with pkexec.");
-                                    } else {
-                                        log::error!(
-                                            "pkexec process exited with a non-zero status: {:?}",
-                                            status
-                                        );
-                                    }
-                                }
-                                Err(e) => {
-                                    log::error!("Failed to wait on pkexec process: {}", e);
-                                }
-                            }
-                        } else {
-                            log::error!(
-                                "Failed to spawn pkexec process. Check permissions or path."
-                            );
-                        }
-                    }
+                    log::error!("failed to save {:?}: {}", path, err);
+                    Err(err)
                 }
             }
         } else {
             log::warn!("tab has no path yet");
+            Err(io::Error::new(io::ErrorKind::InvalidInput, "tab has no save path"))
         }
     }
 
