@@ -25,7 +25,7 @@ migration, policy and credential authority. App-owned support comes from
 `bin/claw-applet-calendar` ELF for GUI and lazy stdio MCP. The compatibility
 command is exported through the common Host, not `cosmic-applets`.
 The binary retains the existing UI and internal `AgendaProvider` seam. Both
-surfaces use the published SDK 0.2.0 generic wire client with the fixed
+surfaces use the published SDK 0.2.1 generic wire client with the fixed
 `/usr/local/bin/cos __calendar day <year> <month> <day>` OS command and SDK
 `CalendarEvent` records. No Desktop-only applet-provider, other App, raw
 database, user bus or process-global credential override is used.
@@ -61,6 +61,13 @@ The coordinated 0.2.1 `desktop.needs` requests the Calendar read and a separate
 high-risk `ui.panel` capability for the native panel surface. That authority
 requires protected owner approval; neither panel metadata nor Calendar access
 grants it. The read-only MCP tool never requests or inherits `ui.panel`.
+The standalone GUI explicitly creates one ordinary top-right Layer Shell
+surface through the published toolkit, using the original applet's icon/padding
+geometry and no keyboard interactivity. It suppresses the toolkit's default
+XDG main window; the original picker/agenda popup and SDK reader are unchanged.
+No panel environment, OS shell embedding, user bus or App-name entitlement
+supplies Layer Shell authority. Real panel pixels/lifetime and an interacted
+popup/Calendar-service read remain distinct acceptance gates.
 
 The Rust UI uses the same verified App manifest, identity/session, capability
 and sandbox contract as any other App. Neither its language nor its package

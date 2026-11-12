@@ -31,5 +31,8 @@ pub fn run_mcp() -> Result<(), Box<dyn std::error::Error>> {
 /// Presentation owns no authority; the standalone entry uses the OS SDK provider.
 pub fn run(provider: AgendaProvider) -> cosmic::iced::Result {
     localize::localize();
-    cosmic::applet::run::<app::CalendarApplet>(provider)
+    let settings = cosmic::applet::Context::default()
+        .window_settings()
+        .no_main_window(true);
+    cosmic::app::run::<app::CalendarApplet>(settings, provider)
 }

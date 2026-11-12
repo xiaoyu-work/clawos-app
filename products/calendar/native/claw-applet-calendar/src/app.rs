@@ -7,7 +7,11 @@ use cosmic::{
     cosmic_theme::{Spacing, palette::WithAlpha},
     iced::{
         Alignment, Background, Border, Color, Length, Shadow, Subscription, Vector,
-        platform_specific::shell::wayland::commands::popup::{destroy_popup, get_popup},
+        platform_specific::shell::wayland::commands::{
+            layer_surface::{Anchor, KeyboardInteractivity, Layer, get_layer_surface},
+            popup::{destroy_popup, get_popup},
+        },
+        runtime::platform_specific::wayland::layer_surface::SctkLayerSurfaceSettings,
         time,
         widget::{column, container, row, scrollable},
         window,
@@ -63,7 +67,14 @@ impl cosmic::Application for CalendarApplet {
 
     const APP_ID: &'static str = "com.clawos.PanelCalendarButton";
 
-    fn init(core: cosmic::app::Core, provider: AgendaProvider) -> (Self, app::Task<Message>) {
+    fn init(mut core: cosmic::app::Core, provider: AgendaProvider) -> (Self, app::Task<Message>) {
+        let panel = panel_settings(&core.applet);
+        core.set_main_window_id(Some(panel.id));
+        core.window.show_headerbar = false;
+        core.window.sharp_corners = true;
+        core.window.show_maximize = false;
+        core.window.show_minimize = false;
+        core.window.use_template = false;
         (
             Self {
                 provider,
@@ -76,7 +87,7 @@ impl cosmic::Application for CalendarApplet {
                 first_day: locale_first_day(),
                 refresh_generation: 0,
             },
-            Task::none(),
+            get_layer_surface(panel),
         )
     }
 
@@ -246,6 +257,19 @@ impl cosmic::Application for CalendarApplet {
 
     fn on_close_requested(&self, id: window::Id) -> Option<Message> {
         Some(Message::CloseRequested(id))
+    }
+}
+
+fn panel_settings(context: &cosmic::applet::Context) -> SctkLayerSurfaceSettings {
+    let (width, height) = context.suggested_window_size();
+    SctkLayerSurfaceSettings {
+        id: window::Id::RESERVED,
+        namespace: <CalendarApplet as cosmic::Application>::APP_ID.into(),
+        layer: Layer::Top,
+        keyboard_interactivity: KeyboardInteractivity::None,
+        anchor: Anchor::TOP | Anchor::RIGHT,
+        size: Some((Some(width.get()), Some(height.get()))),
+        ..Default::default()
     }
 }
 
