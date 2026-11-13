@@ -120,6 +120,19 @@ items after GUI retirement and then exited explicitly.
 The coordinated Agent package, not Desktop or this App, owns the original
 shared Cosmic icon theme and its attribution. Root converts CopyQ's hexadecimal
 SHA-256 hashes to the unchanged public base64 raw-digest identities.
-These bounded offscreen read/mutation proofs do not establish live selection
-Restore, display/provider binding, hardware rendering or full publication
-readiness.
+The [authenticated Root restore run](https://github.com/xiaoyu-work/claw-os/actions/runs/43431495753)
+also exercised the original Restore control. CopyQ supplied only the matched
+standard MIME data; Root installed it into the authenticated display's actual
+Smithay selection and checked plain-text and HTML descriptor transfers.
+The existing compound history read/write and independent selection-write grant
+was spent once, without borrowing selection read. History counts remained
+two after Restore, then changed to one and zero through the original controls.
+An unavailable or ambiguous authenticated display refuses restoration; there
+is no owner-socket discovery or CopyQ clipboard fallback.
+
+The OS-owned selection source belongs to the display, not the App GUI or AI
+runtime. Root acknowledges applied selection state; acknowledgement loss is an
+indeterminate outcome, not success or a retry. The coordinated Agent/Desktop
+0.2.1 compatibility floor covers this internal protocol, without changing the
+public SDK pin. These headless software proofs do not establish physical
+display/hardware acceptance or full publication readiness.
