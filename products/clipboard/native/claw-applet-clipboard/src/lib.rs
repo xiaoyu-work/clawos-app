@@ -32,5 +32,8 @@ pub fn run(policy: HistoryPolicy) -> cosmic::iced::Result {
 
 fn run_with_policy(policy: Option<HistoryPolicy>) -> cosmic::iced::Result {
     localize::localize();
-    cosmic::applet::run::<app::ClipboardApplet>(policy)
+    let settings = cosmic::applet::Context::default()
+        .window_settings()
+        .no_main_window(true);
+    cosmic::app::run::<app::ClipboardApplet>(settings, policy)
 }

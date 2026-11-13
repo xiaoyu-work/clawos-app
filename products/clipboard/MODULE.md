@@ -57,6 +57,10 @@ The coordinated 0.2.1 native `desktop.needs` separately requests `ui.panel`
 alongside the exact history/selection rights. Protected owner approval is
 required for that high-risk display capability; clipboard rights or panel
 metadata do not grant it. No MCP history tool requests `ui.panel`.
+The standalone entry explicitly creates the original icon-sized Layer Shell
+button without keyboard interactivity and suppresses the default XDG window.
+The existing history popup, optional linked policy seam and separate Root
+history/selection checks remain unchanged; geometry supplies no authority.
 
 The OS alone validates the default owner CopyQ endpoint and system executable,
 holds the authenticated provider connection and executes closed scripts.
