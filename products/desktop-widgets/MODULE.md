@@ -99,3 +99,14 @@ Original UI tests remain and the integration test
 runs the real binary headlessly. Synthetic CLI/MCP fixtures cover the declared
 reads and independent denials without real services or accounts. These checks do not replace interactive
 Wayland or full-image acceptance.
+
+The separate clean-CI Widget Rail lane at OS source
+`6024681b09b1df921c2c5015549051cc7dd3bc55`, using immutable App source
+`4aa63d3c9abc765568db88a3ae6dddd4489ce7e3`, verified the original signed
+standalone panel, three independent owner-scoped SDK reads and checked
+process/cgroup/runtime/window/PAM retirement without a model. Protected
+same-instance SHM bytes were inspected directly: the themed header, Calendar
+event, empty task state, memory/storage and deterministic suggestions were
+readable. CPU/network warm-up retained the OS's unavailable first samples.
+This closes that bounded read-only UI/resource gate, not hardware/default-WGPU,
+other native surfaces or full release readiness.
