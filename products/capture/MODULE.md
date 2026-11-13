@@ -17,10 +17,10 @@ file-chooser dependency, bundled font or optional Cargo feature to substitute.
 Only the allowlisted immutable SDK/runtime inputs come from `platform.lock.json`.
 Generated inputs belong under `build/capture-native`, not another checkout.
 
-The OS owns capture permission, authenticated session selection, the fixed
-native process, deadlines, output-directory pinning, non-overwriting persistence
-and task snapshots. UI and MCP share the non-interactive service and native
-portal implementation, not another App. Human-only interactive destinations
+The OS owns capture permission, authenticated session selection, its portal
+helper, deadlines, output-directory pinning, non-overwriting persistence
+and task snapshots. UI and MCP share the non-interactive OS service,
+not another App. Human-only interactive destinations
 and clipboard actions remain in the OS portal; their user settings do not move.
 
 From the repository root on Linux/WSL:
@@ -46,6 +46,8 @@ preserving its original defaults, boolean/value syntax, save-path bytes,
 help/version, errors and MCP-first ordering. CLI early exits precede localization;
 MCP retains its existing localization initialization. The focused parser filter is
 `native_gui_argv_` in `test/unit/main.rs`.
-This does not establish the OS provider's `--portal-capture-stdout` contract or
-GUI resource/authority admission. Those paths remain gated rather than gain a
+The non-interactive OS provider uses its own gated `clawd` helper rather than
+invoking this App's compatibility launcher or private pipe mode.
+This does not establish interactive GUI resource/authority admission.
+Those paths remain gated rather than gain a
 special launcher exception; see [native payloads](../../docs/native-payloads.md).
