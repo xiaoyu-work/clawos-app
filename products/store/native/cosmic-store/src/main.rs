@@ -2203,6 +2203,7 @@ impl Application for App {
             // Search for term
             self.search_active = true;
             self.search_input = action;
+            self.selected_opt = None;
             tasks.push(self.search());
         }
         Task::batch(tasks)
