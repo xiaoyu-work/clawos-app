@@ -6,7 +6,12 @@ use cosmic::{
     cosmic_theme::palette::WithAlpha,
     iced::{
         Alignment, Background, Border, Color, Length, Limits, Shadow, Subscription, Vector, time,
+        platform_specific::shell::wayland::commands::layer_surface::{
+            Anchor, KeyboardInteractivity, Layer, get_layer_surface,
+        },
+        runtime::platform_specific::wayland::layer_surface::SctkLayerSurfaceSettings,
         widget::{column, container, row, scrollable, space::horizontal as horizontal_space, text},
+        window,
     },
     theme,
     widget::icon,
@@ -15,6 +20,7 @@ use jiff::{Timestamp, Zoned, fmt::strtime, tz::TimeZone};
 use std::time::Duration;
 
 const REFRESH_SECONDS: u64 = 5;
+const RAIL_WIDTH: u32 = 360;
 const RAIL_HEIGHT: f32 = 620.0;
 
 #[derive(Clone)]
@@ -59,7 +65,22 @@ impl cosmic::Application for WidgetRail {
 
     const APP_ID: &'static str = "com.clawos.AppletWidgetRail";
 
-    fn init(core: cosmic::app::Core, providers: Providers) -> (Self, app::Task<Message>) {
+    fn init(mut core: cosmic::app::Core, providers: Providers) -> (Self, app::Task<Message>) {
+        let panel = SctkLayerSurfaceSettings {
+            id: window::Id::RESERVED,
+            namespace: Self::APP_ID.into(),
+            layer: Layer::Top,
+            keyboard_interactivity: KeyboardInteractivity::None,
+            anchor: Anchor::TOP | Anchor::RIGHT,
+            size: Some((Some(RAIL_WIDTH), Some(RAIL_HEIGHT as u32 + 8))),
+            ..Default::default()
+        };
+        core.set_main_window_id(Some(panel.id));
+        core.window.show_headerbar = false;
+        core.window.sharp_corners = true;
+        core.window.show_maximize = false;
+        core.window.show_minimize = false;
+        core.window.use_template = false;
         let refreshes = IcedTask::batch([
             refresh_calendar(&providers),
             refresh_tasks(&providers),
@@ -77,7 +98,7 @@ impl cosmic::Application for WidgetRail {
         };
         (
             rail,
-            refreshes,
+            IcedTask::batch([get_layer_surface(panel), refreshes]),
         )
     }
 

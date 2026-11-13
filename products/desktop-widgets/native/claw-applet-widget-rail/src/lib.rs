@@ -19,5 +19,8 @@ pub fn run_mcp() -> Result<(), Box<dyn std::error::Error>> {
 
 pub fn run(providers: Providers) -> cosmic::iced::Result {
     localize();
-    cosmic::applet::run::<app::WidgetRail>(providers)
+    let settings = cosmic::applet::Context::default()
+        .window_settings()
+        .no_main_window(true);
+    cosmic::app::run::<app::WidgetRail>(settings, providers)
 }
