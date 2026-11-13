@@ -109,9 +109,17 @@ open-popup pixels showed both public synthetic history texts. Automated
 reply-decode/text assertions remain false; the late closing frame is not the
 open reader result.
 
+A subsequent clean OS [history mutation run](https://github.com/xiaoyu-work/claw-os/actions/runs/43412198729)
+exercised the original popup's delete and confirmed-clear controls. Real CopyQ
+history changed from two synthetic items to the correct remaining item, then
+zero. Opening the confirmation did not clear history. The five actual Root
+calls spent only their respective history read, read/write, read, write and
+read rights; selection rights were not borrowed. The provider retained zero
+items after GUI retirement and then exited explicitly.
+
 The coordinated Agent package, not Desktop or this App, owns the original
 shared Cosmic icon theme and its attribution. Root converts CopyQ's hexadecimal
 SHA-256 hashes to the unchanged public base64 raw-digest identities.
-This bounded offscreen read/UI proof does not establish live selection Restore,
-delete/clear controls, display/provider binding, hardware rendering or full
-publication readiness.
+These bounded offscreen read/mutation proofs do not establish live selection
+Restore, display/provider binding, hardware rendering or full publication
+readiness.
