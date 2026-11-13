@@ -26,6 +26,9 @@ permissions:
 jobs:
   contracts:
     runs-on: ubuntu-24.04
+    env:
+      PROVENANCE_COS_URL: https://github.com/xiaoyu-work/claw-os/releases/download/sdk-v0.2.1/cos-provenance-linux-amd64
+      PROVENANCE_COS_SHA256: df30cf7d57fe3dc81532e2c5599ce61de91ad3a625d1305b2f848640f5ed2a9b
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
@@ -37,10 +40,27 @@ jobs:
       - name: Plan the full validation selection without publishing
         run: python3 tools/release.py plan --select all --version 0.2.1
       - run: python3 tools/release_ci.py test --plan build/release-plan.json
+      - name: Verify the published provenance CLI fixture
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, "tools")
+          from platform_dependency import _download
+          from release_common import digest
+          tool = Path("build/provenance-cos")
+          _download(os.environ["PROVENANCE_COS_URL"], tool)
+          if digest(tool) != os.environ["PROVENANCE_COS_SHA256"]:
+              raise ValueError("Public provenance fixture SHA256 mismatch")
+          tool.chmod(0o755)
+          PY
       - name: Test all selected product and capability contracts together
         run: |
           export TMPDIR="$PWD/build/ci-work"
           python3 tools/release.py test --plan build/release-plan.json --architecture all
       - run: |
           export TMPDIR="$PWD/build/ci-work"
-          python3 -m pytest -q tests/release --basetemp=build/release-tests
+          python3 -m pytest -q tests/release --basetemp=build/release-tests \
+            --provenance-cos-fixture="$PWD/build/provenance-cos" \
+            --provenance-cos-sha256="$PROVENANCE_COS_SHA256"
