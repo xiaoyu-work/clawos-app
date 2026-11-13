@@ -147,11 +147,21 @@ are never passed to Debian, and no App-owned root D-Bus/helper exception exists.
 Catalog refresh rereads existing metadata rather than activating privileged
 PackageKit/Flatpak refresh helpers.
 
-This read-client cutover does not establish managed GUI/resource acceptance.
-Controlled catalog icons, codec/archive providers, installed-data migration,
-genuine GUI self-handoff against private APT, full-image integration and interactive/visual
-acceptance remain separate gates. This source does not complete native Store
-acceptance or approve publication, an SDK freeze or adoption of a new App pin.
+The separate clean-CI Store lane at OS source
+`d18c4dc5cba0227662f46a88a4534b70584410c7` verified this App's original
+installed-detail/uninstall UI against private signed APT. Exact protected
+Critical consent and ordinary continuation input produced one retained,
+confirmed applied removal of the package owning the running Store. One real
+APT child exited successfully, the native payload disappeared, separate support
+remained installed, and checked process/provider/window/PAM retirement and
+ordinary-owner read-only recovery outside the App passed. Consent and input delivery alone
+were explicitly checked not to change package state.
+
+This closes that bounded genuine GUI self-handoff gate, not complete native
+Store acceptance. Controlled catalog icons, codec/archive providers,
+installed-data migration, full-image integration and remaining interactive,
+resource and hardware acceptance remain separate gates. It does not approve
+publication, an SDK freeze or adoption of a new App pin.
 
 The native payload binds GUI and MCP to the real `bin/cosmic-store`, preserving
 resources and licenses. Its compatibility command enters the existing common
