@@ -58,7 +58,7 @@ def test_selected_python_products_do_not_schedule_unrelated_native_builds():
     assert {entry["package"] for entry in plan["packages"]} == {"claw-app-files", "claw-app-files-desktop"}
 
 
-@pytest.mark.parametrize("product", ["calendar", "clipboard", "desktop-widgets"])
+@pytest.mark.parametrize("product", ["calendar", "clipboard", "desktop-widgets", "launcher"])
 def test_standalone_applet_packages_require_the_versioned_os_service_only_for_desktop(product, tmp_path):
     packages = release.packages_for(product)
     native = [entry for entry in packages if entry["variant"] == "desktop"]
@@ -74,6 +74,9 @@ def test_standalone_applet_packages_require_the_versioned_os_service_only_for_de
         )
         assert ("claw-os-observation-v1 (= 1)" in dependencies) == (
             product == "desktop-widgets" and entry["variant"] == "desktop"
+        )
+        assert ("claw-os-launcher-backend-v1 (= 1)" in dependencies) == (
+            product == "launcher" and entry["variant"] == "desktop"
         )
         assert "claw-os-app-runtime-v1 (>= 0.2.1)" in dependencies
         root = tmp_path / entry["package"] / entry["architecture"]

@@ -48,6 +48,11 @@ The coordinated 0.2.1 GUI declaration separately requests the high-risk
 approval and is never inherited by MCP tools. It grants no catalog/history,
 application-launch, clipboard or global-input authority. Backend/resource
 admission remains an independent installed-runtime prerequisite.
+The native package explicitly depends on the Agent-provided
+`claw-os-launcher-backend-v1 (= 1)`. The unprivileged backend, original plugin
+manifests, scripts and licenses remain OS-owned and no longer require Desktop
+ownership. Availability is not authority: catalog/history, launch and overlay
+resources still require their own normal App grants and controlled admission.
 
 ```bash
 python3 tools/test.py launcher
