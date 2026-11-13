@@ -13,7 +13,7 @@ work; Calendar never calls another App.
 | `apps/panel-calendar/` | Existing native identity, manifest-bound GUI/MCP entry and unchanged named Calendar read grant |
 | `native/claw-applet-calendar/` | Complete monthly picker, popup, selected-day agenda, translations, icon and desktop entry |
 | `native/claw-applet-calendar/src/main.rs`, `src/service.rs`, `src/mcp.rs` | MCP-first binary entry and shared read-only public OS SDK agenda client |
-| `native/claw-applet-calendar/build.rs`, `desktop_metadata.py`, `justfile` | Product-owned localized desktop generation, Cargo-reported output discovery and native installation |
+| `native/claw-applet-calendar/build.rs`, `justfile` | Product-owned localized desktop generation and native installation through the shared App build helper |
 | `native/build.py`, `native/Cargo.lock`, `../../tools/native_build.py` | Locked standalone native build/test against declared SDK/toolkit inputs |
 | `PROVENANCE.md`, `native/LICENSE` | Native source origin and preserved GPL terms |
 | `package.json` | Product-owned installation and additional test inputs |
@@ -122,7 +122,8 @@ installs the compiled binary, generated `com.clawos.PanelCalendarButton.desktop`
 and original scalable Calendar icon. Its `rootdir`, `prefix`, `targetdir` and
 `debug` parameters follow the original applet installer style.
 Localized metadata stays inside Cargo's `OUT_DIR`; the installer resolves
-this exact package's build-script output through stable Cargo JSON messages,
+this exact package's build-script output through the shared
+`tools/native_desktop_metadata.py` helper and stable Cargo JSON messages,
 not an assumed intermediate-directory depth. It reuses the same locked
 profile/target build and refuses missing, foreign or ambiguous output.
 Installation is build-time staging and requires an explicit non-root `rootdir`.

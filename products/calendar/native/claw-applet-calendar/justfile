@@ -21,7 +21,7 @@ install:
     test -n "{{ rootdir }}"
     stage="$(realpath -m -- "{{ rootdir }}")"
     test "$stage" != /
-    metadata="$(python3 -B desktop_metadata.py '{{ target }}')"
+    metadata="$(python3 -B "${CLAW_NATIVE_DESKTOP_METADATA:?use tools/native_build.py}" '{{ target }}' '{{ appid }}')"
     install -Dm0755 {{ targetdir }}/{{ target }}/{{ name }} {{ bindir }}/{{ name }}
     install -Dm0644 "$metadata" {{ sharedir }}/applications/{{ appid }}.desktop
     install -Dm0644 data/icons/scalable/actions/{{ appid }}-symbolic.svg {{ sharedir }}/icons/hicolor/scalable/actions/{{ appid }}-symbolic.svg

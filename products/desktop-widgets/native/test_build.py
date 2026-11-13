@@ -75,13 +75,22 @@ def test_install_requires_explicit_build_staging_not_live_root(tmp_path):
     installer = tmp_path / "install"
     installer.write_text('#!/bin/sh\nprintf called > "$INSTALL_PROBE"\nexit 99\n')
     installer.chmod(0o700)
-    env = {"PATH": f"{tmp_path}{os.pathsep}{os.defpath}", "INSTALL_PROBE": str(probe)}
+    generation = tmp_path / "unexpected-generation"
+    python = tmp_path / "python3"
+    python.write_text('#!/bin/sh\nprintf called > "$GENERATION_PROBE"\nprintf "%s\\n" "$DESKTOP_PROBE"\n')
+    python.chmod(0o700)
+    env = {
+        "PATH": f"{tmp_path}{os.pathsep}{os.defpath}", "INSTALL_PROBE": str(probe),
+        "GENERATION_PROBE": str(generation), "DESKTOP_PROBE": str(tmp_path / "generated.desktop"),
+        "CLAW_NATIVE_DESKTOP_METADATA": str(ROOT / "tools/native_desktop_metadata.py"),
+    }
     command = [just, "--justfile", str(NATIVE / "claw-applet-widget-rail/justfile")]
     for root in ["", "/", "//", "/usr/.."]:
         result = subprocess.run(command + [f"rootdir={root}", "install"],
                                 env=env, capture_output=True, text=True, timeout=10)
         assert result.returncode != 0
         assert not probe.exists(), result.stderr
+        assert not generation.exists(), result.stderr
     result = subprocess.run(command + [f"rootdir={tmp_path / 'stage'}", "install"],
                             env=env, capture_output=True, text=True, timeout=10)
     assert probe.read_text() == "called", result.stderr
