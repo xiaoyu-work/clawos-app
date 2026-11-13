@@ -93,9 +93,10 @@ Native Debian install/remove/purge/update actions now submit one exact single
 or bounded batch intent to the existing Root package controller. The GUI declares
 only ordinary `sys.observe:packages` as mandatory, settled through the normal
 protected GUI read review. It starts without Critical package authority.
-Late background results for the same search query retain an already selected
-detail page. A changed query, explicit search submission or activation still
-opens its search results; background refresh cannot undo the user's selection.
+Changing the query clears the selected detail before the new search starts.
+Delayed results cannot undo a selection made while those results were pending,
+even when the displayed list still came from an earlier query.
+Explicit search submission or activation still opens its search results.
 Its optional package declaration describes the feature, not consent.
 Root must bind this exact signed GUI, owner/session, action, package set and
 invocation to ordinary protected Critical `sys.package` reviews. Only Root
