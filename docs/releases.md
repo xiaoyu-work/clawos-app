@@ -274,13 +274,14 @@ deny; an App UI cannot replace those presenters or acknowledge for its user.
 Official Store/APT/first-use integration must honor that same protected review
 contract before publication, without installing snapshots as a fallback.
 
-**Not yet production inputs:** a versioned public CLI/runtime artifact exposing
-`cos provenance sign`, `cos provenance verify` and the reviewed install API;
-its verified executable digest; and the checked-in App Ed25519
-`package-signing` publisher/trust contract. The development SDK/runtime export
-does not currently supply this CLI, and installed `cos` 0.1.0 lacks provenance.
-An explicitly supplied local CLI fixture supports signature-format testing,
-not a production artifact pin. The implemented package-local entry contract
+**Public provenance tool:** the published [SDK 0.2.1](#platform-publication-status)
+includes provenance-capable amd64/arm64 CLIs. The
+[release contract workflow](../.github/workflows/release-contracts.yml) verifies
+the exact amd64 fixture digest and runs the existing real-signature tests in
+private trust namespaces. Fixture keys are not production publishers.
+Production publication still requires the approved public CLI URL/digest and
+the separately configured App `package-signing` publisher and signing secrets.
+The implemented package-local entry contract
 does not add resource mounts, dependency activation or Browser/Mail registration.
 Existing Python operation/GUI wrappers still require `main.py`; that limitation
 must neither become a rewritten fallback manifest nor restrict valid MCP-only

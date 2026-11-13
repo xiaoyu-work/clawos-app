@@ -226,7 +226,9 @@ No App entrypoint or root hook runs. Catalog data is never human approval or a
 permission grant; the OS's authenticated review/confirmation/update/activation
 contract remains mandatory. Tests in `tests/release/test_snapshots.py` use an
 explicit CLI fixture with isolated trust namespaces; no fixture becomes a
-production pin. Consistent terminal/desktop review and per-App scoped allow,
+production pin. The release contract workflow supplies the digest-verified
+published SDK CLI so real-signature cases run rather than skip.
+Consistent terminal/desktop review and per-App scoped allow,
 ask, deny and real revocation are OS-owned, not App UI or publisher behavior.
 See [the producer/consumer contract](../docs/releases.md#verified-app-snapshot-producer).
 
