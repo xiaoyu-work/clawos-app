@@ -83,6 +83,9 @@ The product's `just install` copies the actual `/usr/bin/claw-applet-widget-rail
 ELF and generated desktop entry. `native_payload` preserves that ELF, resources
 and original GPL license inside the package-local App; source staging never
 fabricates a runnable binary. Compatibility launchers use the common Host.
+Canonical native builds select the shared App build helper for the exact
+current Cargo-reported desktop entry; custom target directories and Cargo
+output-layout changes do not select a guessed or stale `xdgen` file.
 The binary no longer needs `claw-os-applet-provider`; shared release metadata
 requires the Agent-provided `claw-os-calendar-read-v1 (= 1)` and
 `claw-os-observation-v1 (= 1)` interfaces. `cosmic-applets` reads

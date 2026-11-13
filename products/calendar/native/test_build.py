@@ -78,6 +78,7 @@ def test_install_requires_explicit_build_staging_not_live_root(tmp_path):
     env = {
         "PATH": f"{tmp_path}{os.pathsep}{os.defpath}", "INSTALL_PROBE": str(probe),
         "GENERATION_PROBE": str(generation), "DESKTOP_PROBE": str(tmp_path / "generated.desktop"),
+        "CLAW_NATIVE_DESKTOP_METADATA": str(ROOT / "tools/native_desktop_metadata.py"),
     }
     command = [just, "--justfile", str(NATIVE / "claw-applet-calendar/justfile")]
     for root in ["", "/", "//", "/usr/.."]:
@@ -91,15 +92,23 @@ def test_install_requires_explicit_build_staging_not_live_root(tmp_path):
     assert probe.read_text() == "called", result.stderr
 
 
-def test_desktop_install_uses_only_this_packages_cargo_reported_output(tmp_path):
-    helper = module(NATIVE / "claw-applet-calendar/desktop_metadata.py")
-    package_id = "opaque-calendar-package-id"
+@pytest.mark.parametrize("product,component,desktop_id", [
+    ("calendar", "claw-applet-calendar", "com.clawos.PanelCalendarButton"),
+    ("desktop-widgets", "claw-applet-widget-rail", "com.clawos.AppletWidgetRail"),
+    ("clipboard", "claw-applet-clipboard", "com.clawos.AppletClipboard"),
+])
+def test_desktop_install_uses_only_this_packages_cargo_reported_output(
+    tmp_path, product, component, desktop_id,
+):
+    helper = module(ROOT / "tools/native_desktop_metadata.py")
+    root = ROOT / "products" / product / "native" / component
+    package_id = f"opaque-{product}-package-id"
     metadata = {"packages": [{
-        "id": package_id, "manifest_path": str(NATIVE / "claw-applet-calendar/Cargo.toml"),
+        "id": package_id, "manifest_path": str(root / "Cargo.toml"),
     }]}
     generated = tmp_path / "new-cargo-layout/intermediate/package/out"
     generated.mkdir(parents=True)
-    desktop = generated / "com.clawos.PanelCalendarButton.desktop"
+    desktop = generated / f"{desktop_id}.desktop"
     desktop.write_text("original localized build output")
     messages = [
         {"reason": "build-script-executed", "package_id": "unrelated-dependency", "out_dir": str(tmp_path)},
@@ -108,10 +117,10 @@ def test_desktop_install_uses_only_this_packages_cargo_reported_output(tmp_path)
     with mock.patch.object(helper.subprocess, "check_output", side_effect=[
         json.dumps(metadata), "\n".join(map(json.dumps, messages)),
     ]) as cargo:
-        assert helper.desktop_file("release") == desktop
+        assert helper.desktop_file("release", desktop_id, root) == desktop
     assert "--release" in cargo.call_args.args[0]
     for records in [messages[:1], messages + [messages[-1]]]:
         with mock.patch.object(helper.subprocess, "check_output", side_effect=[
             json.dumps(metadata), "\n".join(map(json.dumps, records)),
         ]), pytest.raises(RuntimeError, match="Cargo did not report"):
-            helper.desktop_file("release")
+            helper.desktop_file("release", desktop_id, root)

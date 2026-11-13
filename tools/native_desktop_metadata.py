@@ -6,10 +6,10 @@ import subprocess
 import sys
 
 
-def desktop_file(profile):
+def desktop_file(profile, desktop_id, directory=None):
     if profile not in ("debug", "release"):
         raise ValueError("desktop metadata requires debug or release")
-    root = Path(__file__).resolve().parent
+    root = Path(directory or Path.cwd()).resolve()
     metadata = json.loads(subprocess.check_output(
         ["cargo", "metadata", "--locked", "--format-version", "1", "--no-deps"],
         cwd=root,
@@ -24,11 +24,11 @@ def desktop_file(profile):
     for line in output.splitlines():
         message = json.loads(line)
         if message.get("reason") == "build-script-executed" and message["package_id"] == package["id"]:
-            paths.append(Path(message["out_dir"]) / "com.clawos.PanelCalendarButton.desktop")
+            paths.append(Path(message["out_dir"]) / f"{desktop_id}.desktop")
     if len(paths) != 1 or not paths[0].is_file():
-        raise RuntimeError("Cargo did not report this Calendar build's generated desktop entry")
+        raise RuntimeError("Cargo did not report this package's generated desktop entry")
     return paths[0]
 
 
 if __name__ == "__main__":
-    print(desktop_file(sys.argv[1]))
+    print(desktop_file(sys.argv[1], sys.argv[2]))

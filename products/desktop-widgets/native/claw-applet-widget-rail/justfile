@@ -16,6 +16,11 @@ build-debug *args:
 build-release *args: (build-debug '--release' args)
 
 install:
-    test -n "{{ rootdir }}" && stage="$(realpath -m -- "{{ rootdir }}")" && test "$stage" != /
+    #!/usr/bin/env bash
+    set -euo pipefail
+    test -n "{{ rootdir }}"
+    stage="$(realpath -m -- "{{ rootdir }}")"
+    test "$stage" != /
+    metadata="$(python3 -B "${CLAW_NATIVE_DESKTOP_METADATA:?use tools/native_build.py}" '{{ target }}' '{{ appid }}')"
     install -Dm0755 {{ targetdir }}/{{ target }}/{{ name }} {{ bindir }}/{{ name }}
-    install -Dm0644 {{ targetdir }}/xdgen/{{ appid }}.desktop {{ sharedir }}/applications/{{ appid }}.desktop
+    install -Dm0644 "$metadata" {{ sharedir }}/applications/{{ appid }}.desktop

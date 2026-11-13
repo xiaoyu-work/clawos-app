@@ -141,6 +141,7 @@ def main(product=None):
     target_dir = options.target_dir.resolve()
     environment = dict(os.environ)
     environment["CARGO_TARGET_DIR"] = str(target_dir)
+    environment["CLAW_NATIVE_DESKTOP_METADATA"] = str(ROOT / "tools/native_desktop_metadata.py")
     if output:
         # Build-time resource paths must describe the installed system, not staging.
         environment["INSTALL_DIR"] = "/usr/share"

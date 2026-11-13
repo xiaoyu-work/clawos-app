@@ -84,6 +84,13 @@ See [`../shared/MODULE.md`](../shared/MODULE.md) for ownership and dependencies.
 Native builds remain owned by each product. These scripts must not download
 mutable branches at runtime, change App permissions, or overwrite an existing
 installed App. Test staging through `tests/test_stage.py`.
+Calendar, Clipboard and Widget Rail generate localized desktop entries only in
+Cargo's `OUT_DIR`. Their original installers use the shared
+`native_desktop_metadata.py` build helper selected by `native_build.py` to
+consume the current package's exact Cargo JSON output, including cached builds.
+They never infer Cargo directory depth or search stale build directories.
+The helper retains its GPL-3.0-only notice, runs only during unprivileged build
+staging and is not installed as an App dependency or runtime provider.
 CI refreshes the Ubuntu runner's declared distribution sources only, not
 unrelated preconfigured third-party repositories. A missing source definition
 or failed refresh stops dependency installation; APT signature and hash checks
