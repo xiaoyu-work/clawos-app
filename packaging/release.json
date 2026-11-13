@@ -27,6 +27,7 @@
   },
   "desktop_dependencies": {
     "mail": ["thunderbird"],
+    "launcher": ["claw-os-launcher-backend-v1 (= 1)"],
     "calendar": ["claw-os-calendar-read-v1 (= 1)"],
     "clipboard": ["copyq", "claw-os-clipboard-history-v1 (= 1)"],
     "desktop-widgets": ["claw-os-calendar-read-v1 (= 1)", "claw-os-observation-v1 (= 1)"],
