@@ -54,6 +54,14 @@ manifests, scripts and licenses remain OS-owned and no longer require Desktop
 ownership. Availability is not authority: catalog/history, launch and overlay
 resources still require their own normal App grants and controlled admission.
 
+For a managed GUI launch, the existing SDK mode hint selects direct toolkit
+startup and opens the original palette without session-bus activation or the
+legacy hidden dummy surface. Input/AltTab activation shares the same command
+handling as the legacy single-instance path. Closing the managed palette exits
+its process for normal `clawd` retirement; ordinary desktop CLI startup keeps
+its original background/single-instance behavior. The hint supplies no
+authority, and source/build checks do not establish installed GUI acceptance.
+
 ```bash
 python3 tools/test.py launcher
 python3 tools/stage.py launcher --root build/launcher-stage
