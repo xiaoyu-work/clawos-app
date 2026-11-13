@@ -98,3 +98,20 @@ invent a binary. Shared release metadata requires the Agent-provided
 The native integration test executes the actual ELF without desktop transports.
 These fixtures are not live installed CopyQ, Wayland or GUI acceptance, and
 publication gates remain unchanged.
+
+A separate clean OS [acceptance run](https://github.com/xiaoyu-work/claw-os/actions/runs/43404862443)
+used App revision `92f389d6`, the published `0.2.1` platform and the original
+signed ELF. It verified ordinary popup open/close, one real protected CopyQ
+history read, exact history-read authority and whole GUI/PAM retirement.
+The independent provider retained its two synthetic items after GUI retirement
+and then stopped explicitly. Manual inspection of the separately checked
+open-popup pixels showed both public synthetic history texts. Automated
+reply-decode/text assertions remain false; the late closing frame is not the
+open reader result.
+
+The coordinated Agent package, not Desktop or this App, owns the original
+shared Cosmic icon theme and its attribution. Root converts CopyQ's hexadecimal
+SHA-256 hashes to the unchanged public base64 raw-digest identities.
+This bounded offscreen read/UI proof does not establish live selection Restore,
+delete/clear controls, display/provider binding, hardware rendering or full
+publication readiness.
