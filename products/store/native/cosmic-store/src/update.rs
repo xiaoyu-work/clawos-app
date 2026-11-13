@@ -654,6 +654,7 @@ impl App {
             }
             Message::SearchInput(input) => {
                 if input != self.search_input {
+                    self.selected_opt = None;
                     self.search_input = input;
                     // This performs live search
                     if !self.search_input.is_empty() {
@@ -665,13 +666,6 @@ impl App {
                 if input == self.search_input {
                     if let Some((_, old_results)) = &self.search_results {
                         preserve_icons_from(old_results, &mut results);
-                    }
-                    if !self
-                        .search_results
-                        .as_ref()
-                        .is_some_and(|(query, _)| query == &input)
-                    {
-                        self.selected_opt = None;
                     }
                     if auto_select && results.len() == 1 {
                         // This drops update_scroll's command, it will be done again later
