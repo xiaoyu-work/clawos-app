@@ -56,6 +56,10 @@ The coordinated 0.2.1 `desktop.needs` explicitly requests those three reads
 and the separate high-risk `ui.panel` capability for native presentation.
 Protected owner approval, not widget metadata or read authority, admits the
 panel surface. None of the three MCP tools requests or inherits `ui.panel`.
+The standalone entry explicitly creates a top-right Layer Shell surface with
+no keyboard interactivity and suppresses the toolkit's default XDG window.
+Its 360-by-628 presentation preserves the original 620-pixel scrollable cards
+and padding. Geometry and panel metadata supply no display authority.
 The OS retains owner/session authorization and state. Calls have a 12-second bound;
 cancellation/deadlines drop the public SDK CLI future. The Web page renders
 real event/task/resource fields with independent loading, denied/unavailable
