@@ -346,12 +346,16 @@ impl WidgetRail {
 }
 
 fn rail_header() -> Element<'static, Message> {
-    column![
-        text(fl!("rail-eyebrow")).size(10),
-        text(fl!("rail-title")).size(24),
-    ]
-    .spacing(1)
-    .padding([2, 4, 4, 4])
+    container(
+        column![
+            text(fl!("rail-eyebrow")).size(10),
+            text(fl!("rail-title")).size(24),
+        ]
+        .spacing(1)
+        .padding([2, 4, 4, 4]),
+    )
+    .width(Length::Fill)
+    .class(theme::Container::custom(glass_card_style))
     .into()
 }
 
