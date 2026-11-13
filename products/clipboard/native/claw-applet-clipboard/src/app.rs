@@ -11,7 +11,11 @@ use cosmic::{
     cosmic_theme::{Spacing, palette::WithAlpha},
     iced::{
         Alignment, Background, Border, Color, Length, Shadow, Vector,
-        platform_specific::shell::wayland::commands::popup::{destroy_popup, get_popup},
+        platform_specific::shell::wayland::commands::{
+            layer_surface::{Anchor, KeyboardInteractivity, Layer, get_layer_surface},
+            popup::{destroy_popup, get_popup},
+        },
+        runtime::platform_specific::wayland::layer_surface::SctkLayerSurfaceSettings,
         widget::{column, container, row, scrollable},
         window,
     },
@@ -67,7 +71,23 @@ impl cosmic::Application for ClipboardApplet {
 
     const APP_ID: &'static str = "com.clawos.AppletClipboard";
 
-    fn init(core: cosmic::app::Core, policy: Option<HistoryPolicy>) -> (Self, app::Task<Message>) {
+    fn init(mut core: cosmic::app::Core, policy: Option<HistoryPolicy>) -> (Self, app::Task<Message>) {
+        let (width, height) = core.applet.suggested_window_size();
+        let panel = SctkLayerSurfaceSettings {
+            id: window::Id::RESERVED,
+            namespace: Self::APP_ID.into(),
+            layer: Layer::Top,
+            keyboard_interactivity: KeyboardInteractivity::None,
+            anchor: Anchor::TOP | Anchor::RIGHT,
+            size: Some((Some(width.get()), Some(height.get()))),
+            ..Default::default()
+        };
+        core.set_main_window_id(Some(panel.id));
+        core.window.show_headerbar = false;
+        core.window.sharp_corners = true;
+        core.window.show_maximize = false;
+        core.window.show_minimize = false;
+        core.window.use_template = false;
         (
             Self {
                 core,
@@ -79,7 +99,7 @@ impl cosmic::Application for ClipboardApplet {
                 busy: false,
                 policy,
             },
-            Task::none(),
+            get_layer_surface(panel),
         )
     }
 
