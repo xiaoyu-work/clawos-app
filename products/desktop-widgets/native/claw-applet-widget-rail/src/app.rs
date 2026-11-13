@@ -194,7 +194,7 @@ impl cosmic::Application for WidgetRail {
                 .height(Length::Fixed(RAIL_HEIGHT))
                 .width(Length::Fill),
         )
-        .width(Length::Fill)
+        .width(Length::Fixed(RAIL_WIDTH as f32))
         .padding(4);
 
         let mut limits = Limits::NONE.min_width(1.0).min_height(1.0);
