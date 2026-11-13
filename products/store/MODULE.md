@@ -110,6 +110,10 @@ bookkeeping, but the OS retains the actual transaction evidence.
 Accepted requests appear as handed off, not Installed/Removed; Root
 may stop Store itself. Check OS status and read-only recovery are explicit,
 bounded requests, not a GUI-blocked wait or an automatic mutation retry.
+Their standard action buttons use a full-width vertical stack inside the
+scrollable context drawer, so the exact-request continuation and read-only
+recovery labels remain visible in narrow windows. Layout supplies no permission
+or package-completion evidence.
 Recovery itself is retained by Root before returning so it cannot wait on
 publication while the controller waits for this GUI provider to retire.
 Only a matching authenticated Root `applied` record with confirmed completion
