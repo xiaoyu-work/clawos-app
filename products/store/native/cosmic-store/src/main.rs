@@ -1725,20 +1725,27 @@ impl App {
     }
 
     fn root_package_requests(&self) -> Element<'_, Message> {
+        let space_xs = theme::active().cosmic().spacing.space_xs;
         let mut section = widget::settings::section()
             .title(fl!("package-requests"));
         for (id, request) in self.root_operations.iter().rev() {
-            let mut actions = widget::row::with_capacity(3);
+            let mut actions = widget::column::with_capacity(3)
+                .spacing(space_xs)
+                .width(Length::Fill);
             if !self.root_refreshing.contains(id) {
                 actions = actions.push(widget::button::standard(fl!("package-check-status"))
+                    .width(Length::Fill)
                     .on_press(Message::PackageIntent(id.clone(), package::Mode::Status)));
                 actions = actions.push(widget::button::standard(fl!("package-read-only-recovery"))
+                    .width(Length::Fill)
                     .on_press(Message::PackageIntent(id.clone(), package::Mode::Recover)));
                 if matches!(request.state, package::State::PermissionRequired(_) | package::State::PermissionReady) {
                     actions = actions.push(widget::button::standard(fl!("package-continue-approved"))
+                        .width(Length::Fill)
                         .on_press(Message::PackageIntent(id.clone(), package::Mode::Submit)));
                 } else if matches!(request.state, package::State::Unconfirmed(_)) {
                     actions = actions.push(widget::button::standard(fl!("package-request-review"))
+                        .width(Length::Fill)
                         .on_press(Message::PackageIntent(id.clone(), package::Mode::Review)));
                 }
             }
