@@ -36,7 +36,7 @@ use cosmic::widget::icon::IconFallback;
 use cosmic::widget::space::{horizontal as horizontal_space, vertical as vertical_space};
 use cosmic::widget::text_input;
 use cosmic::widget::{autosize, button, divider, icon, id_container, mouse_area, scrollable, text};
-use cosmic::{Element, keyboard_nav, surface};
+use cosmic::{Application, Element, keyboard_nav, surface};
 use iced::keyboard::Key;
 use iced::{Alignment, Color};
 use pop_launcher::{ContextOption, GpuPreference, IconSource, SearchResult, SearchResultCategory};
@@ -274,17 +274,19 @@ impl CosmicFlags for Args {
 
 pub fn run() -> cosmic::iced::Result {
     let args = argparse::parse();
-    cosmic::app::run_single_instance::<CosmicLauncher>(
-        Settings::default()
-            .antialiasing(true)
-            .client_decorations(true)
-            .debug(false)
-            .default_text_size(16.0)
-            .scale_factor(1.0)
-            .no_main_window(true)
-            .exit_on_close(false),
-        args,
-    )
+    let settings = Settings::default()
+        .antialiasing(true)
+        .client_decorations(true)
+        .debug(false)
+        .default_text_size(16.0)
+        .scale_factor(1.0)
+        .no_main_window(true)
+        .exit_on_close(false);
+    if claw_os_sdk::gui::is_gui_launch() {
+        cosmic::app::run::<CosmicLauncher>(settings, args)
+    } else {
+        cosmic::app::run_single_instance::<CosmicLauncher>(settings, args)
+    }
 }
 
 pub fn menu_button<'a, Message: Clone + 'a>(
@@ -494,7 +496,43 @@ impl CosmicLauncher {
 
         self.surface_state = SurfaceState::Hidden;
 
+        if claw_os_sdk::gui::is_gui_launch() {
+            tasks.push(cosmic::iced::exit());
+        }
+
         Task::batch(tasks)
+    }
+
+    fn activate_task(&mut self, command: LauncherTasks) -> Task<Message> {
+        if self.surface_state == SurfaceState::Hidden {
+            self.surface_state = SurfaceState::WaitingToBeShown;
+        }
+
+        match command {
+            LauncherTasks::AltTab | LauncherTasks::ShiftAltTab => {
+                let message = if matches!(command, LauncherTasks::AltTab) {
+                    Message::AltTab
+                } else {
+                    Message::ShiftAltTab
+                };
+                if self.alt_tab {
+                    return self.update(message);
+                }
+                self.alt_tab = true;
+                self.is_loading = true;
+                self.request(launcher::Request::Search(String::new()));
+                self.queue.push_back(message);
+            }
+            LauncherTasks::Input { input } => {
+                self.is_loading = true;
+                self.request(launcher::Request::Search(String::new()));
+                if let Some(input) = input {
+                    self.hand_over.push_str(&input);
+                }
+            }
+            LauncherTasks::Close => return self.update(Message::Hide),
+        }
+        Task::none()
     }
 
     fn focus_next(&mut self) {
@@ -1092,40 +1130,47 @@ impl cosmic::Application for CosmicLauncher {
     type Flags = Args;
     const APP_ID: &'static str = "com.clawos.Launcher";
 
-    fn init(mut core: Core, _flags: Args) -> (Self, Task<Message>) {
+    fn init(mut core: Core, flags: Args) -> (Self, Task<Message>) {
         let dummy_id = window::Id::unique();
 
         core.set_keyboard_nav(false);
-        (
-            CosmicLauncher {
-                core,
-                input_value: String::new(),
-                surface_state: SurfaceState::Hidden,
-                launcher_items: Vec::new(),
-                launcher_item_icon_handles: Vec::new(),
-                tx: None,
-                menu: None,
-                cursor_position: None,
-                focused: 0,
-                last_hide: Instant::now(),
-                alt_tab: false,
-                window_id: SurfaceId::unique(),
-                queue: VecDeque::new(),
-                result_ids: (0..10)
-                    .map(|id| Id::new(id.to_string()))
-                    .collect::<Vec<_>>(),
-                margin: 0.,
-                overlap: HashMap::new(),
-                height: 100.,
-                needs_clear: false,
-                hand_over: String::default(),
-                                dummy_id,
-                ai_inline: AiInlineState::Idle,
-                ai_token: 0,
-                selected_filter: ResultFilter::All,
-                is_loading: false,
-                width: PALETTE_WIDTH,
-            },
+        let mut app = CosmicLauncher {
+            core,
+            input_value: String::new(),
+            surface_state: SurfaceState::Hidden,
+            launcher_items: Vec::new(),
+            launcher_item_icon_handles: Vec::new(),
+            tx: None,
+            menu: None,
+            cursor_position: None,
+            focused: 0,
+            last_hide: Instant::now(),
+            alt_tab: false,
+            window_id: SurfaceId::unique(),
+            queue: VecDeque::new(),
+            result_ids: (0..10)
+                .map(|id| Id::new(id.to_string()))
+                .collect::<Vec<_>>(),
+            margin: 0.,
+            overlap: HashMap::new(),
+            height: 100.,
+            needs_clear: false,
+            hand_over: String::default(),
+            dummy_id,
+            ai_inline: AiInlineState::Idle,
+            ai_token: 0,
+            selected_filter: ResultFilter::All,
+            is_loading: false,
+            width: PALETTE_WIDTH,
+        };
+        let task = if claw_os_sdk::gui::is_gui_launch() {
+            if matches!(flags.subcommand, Some(LauncherTasks::Close)) {
+                return (app, cosmic::iced::exit());
+            }
+            let activation = flags.subcommand.map(|command| app.activate_task(command));
+            let show = app.show();
+            Task::batch(activation.into_iter().chain(std::iter::once(show)))
+        } else {
             get_layer_surface(SctkLayerSurfaceSettings {
                 id: dummy_id,
                 layer: wlr_layer::Layer::Bottom,
@@ -1138,8 +1183,9 @@ impl cosmic::Application for CosmicLauncher {
                 size: Some((Some(6), Some(6))),
                 exclusive_zone: -1,
                 size_limits: Limits::NONE,
-            }),
-        )
+            })
+        };
+        (app, task)
     }
 
     fn core(&self) -> &Core {
@@ -1764,42 +1810,7 @@ impl cosmic::Application for CosmicLauncher {
                     return Task::none();
                 };
 
-                if self.surface_state == SurfaceState::Hidden {
-                    self.surface_state = SurfaceState::WaitingToBeShown;
-                }
-
-                match cmd {
-                    LauncherTasks::AltTab => {
-                        if self.alt_tab {
-                            return self.update(Message::AltTab);
-                        }
-
-                        self.alt_tab = true;
-                        self.is_loading = true;
-                        self.request(launcher::Request::Search(String::new()));
-                        self.queue.push_back(Message::AltTab);
-                    }
-                    LauncherTasks::ShiftAltTab => {
-                        if self.alt_tab {
-                            return self.update(Message::ShiftAltTab);
-                        }
-
-                        self.alt_tab = true;
-                        self.is_loading = true;
-                        self.request(launcher::Request::Search(String::new()));
-                        self.queue.push_back(Message::ShiftAltTab);
-                    }
-                    LauncherTasks::Input { input } => {
-                        self.is_loading = true;
-                        self.request(launcher::Request::Search(String::new()));
-                        if let Some(input) = input {
-                            self.hand_over.push_str(&input);
-                        };
-                    }
-                    LauncherTasks::Close => {
-                        return self.update(Message::Hide);
-                    }
-                }
+                return self.activate_task(cmd);
             }
             Details::Open { .. } => {}
         }
