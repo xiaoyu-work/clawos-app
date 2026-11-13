@@ -59,7 +59,9 @@ and do not gain authority from hints or display labels. Native/local settings
 remain unchanged. Legacy `notify` JSON is explicitly preserved in place and
 excluded from new service lists, not imported or replayed. New sends/lists use
 only the owner's distinct `app:notify` OS producer; native close stays
-native-source-only. See [README.md](README.md) for response/state compatibility
+bound to `app:cosmic-notifications`. Other authenticated Apps may use the same
+OS service with their own explicit capabilities and source, never this product's
+history or producer identity. See [README.md](README.md) for response/state compatibility
 and the actual legacy data namespace.
 
 Run on Linux/WSL from the repository root:
