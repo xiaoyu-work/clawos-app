@@ -55,18 +55,11 @@ pub const DEFAULT_COLORS: &[Color] = &[
     }),
 ];
 
-pub async fn config() -> (Config, HashMap<String, (String, (u32, u32))>) {
-    let mut displays = HashMap::new();
-
-    if let Ok(list) = cosmic_randr_shell::list().await {
-        for (_key, output) in list.outputs {
-            displays.insert(output.name, (output.model, output.physical));
-        }
-    }
-
-    let context = cosmic_bg_config::context().expect("failed to get helper for cosmic bg config");
-
-    let config = match Config::load(&context) {
+pub async fn config(
+    context: &cosmic_bg_config::Context,
+    displays: HashMap<String, (String, (u32, u32))>,
+) -> (Config, HashMap<String, (String, (u32, u32))>) {
+    let config = match Config::load(context) {
         Ok(conf) => conf,
         Err(why) => {
             tracing::warn!(?why, "Config file error, falling back to defaults");
@@ -77,14 +70,10 @@ pub async fn config() -> (Config, HashMap<String, (String, (u32, u32))>) {
     (config, displays)
 }
 
-pub fn set(config: &mut Config, entry: Entry) {
-    if let Ok(context) = cosmic_bg_config::context() {
-        let _res = context.set_same_on_all(config.same_on_all);
-
-        if let Err(why) = config.set_entry(&context, entry) {
-            tracing::error!(?why, "failed to set background");
-        }
-    }
+pub fn set(config: &mut Config, entry: Entry, context: &cosmic_bg_config::Context) -> eyre::Result<()> {
+    context.set_same_on_all(config.same_on_all)?;
+    config.set_entry(context, entry)?;
+    Ok(())
 }
 
 /// Path to directory where wallpaper thumbnails are stored.

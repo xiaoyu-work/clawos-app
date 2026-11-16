@@ -10,7 +10,7 @@ use cosmic::iced::platform_specific::shell::wayland::keymap;
 use cosmic::iced::{self, Alignment, Length};
 use cosmic::widget::{self, button, icon, list, settings, text};
 use cosmic::{Apply, Element, Task, theme};
-use cosmic_config::{ConfigGet, ConfigSet};
+use crate::owner_config::{self as cosmic_config, ConfigGet, ConfigSet};
 use cosmic_settings_config::shortcuts::{self, Action, Binding, Shortcuts};
 use cosmic_settings_page as page;
 use iced_winit::conversion;
@@ -139,7 +139,7 @@ impl Default for Model {
             shortcut_models: Slab::new(),
             shortcut_context: None,
             shortcut_title: String::new(),
-            config: shortcuts::context().unwrap(),
+            config: cosmic_config::Config::new(shortcuts::ID, 1).unwrap(),
             custom: false,
             actions: |_, _| Slab::new(),
         }

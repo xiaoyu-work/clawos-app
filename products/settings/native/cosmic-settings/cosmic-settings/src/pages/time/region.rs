@@ -10,7 +10,7 @@ use cosmic::app::{ContextDrawer, context_drawer};
 use cosmic::iced::{Alignment, Length};
 use cosmic::widget::{self, button};
 use cosmic::{Apply, Element};
-use cosmic_config::{ConfigGet, ConfigSet};
+use crate::owner_config::{self as cosmic_config, ConfigGet, ConfigSet};
 use cosmic_settings_page::Section;
 use cosmic_settings_page::{self as page, section};
 use eyre::Context;
@@ -799,18 +799,12 @@ impl std::fmt::Debug for Registry {
 }
 
 pub async fn page_reload() -> eyre::Result<PageRefresh> {
-    let conn = zbus::Connection::system()
-        .await
-        .wrap_err("zbus system connection error")?;
-
     let registry = locale::Registry::new().wrap_err("failed to get locale registry")?;
 
-    let system_locales: BTreeMap<String, SystemLocale> = locale1::locale1Proxy::new(&conn)
+    let status = crate::regional_settings::status()
         .await
-        .wrap_err("locale1 proxy connect error")?
-        .locale()
-        .await
-        .wrap_err("could not get locale from locale1")?
+        .map_err(|error| eyre::eyre!(error.message()))?;
+    let system_locales: BTreeMap<String, SystemLocale> = status.locale
         .into_iter()
         .filter_map(|expression| {
             let mut fields = expression.split('=');
@@ -855,19 +849,7 @@ pub async fn page_reload() -> eyre::Result<PageRefresh> {
 
     let mut available_languages_set = BTreeSet::new();
 
-    // Use 'locale -a' instead of 'localectl list-locales' for OpenRC compatibility
-    let output_result =
-        tokio::task::spawn_blocking(|| crate::claw_glue::run_capture(&["locale", "-a"], Some(5)))
-            .await
-            .unwrap_or_else(|e| Err(std::io::Error::other(e.to_string())));
-
-    let locale_list = match output_result {
-        Ok(output_str) => parse_locale_output(&output_str),
-        Err(why) => {
-            tracing::error!(?why, "failed to list available locales using 'locale -a'");
-            Vec::new()
-        }
-    };
+    let locale_list = parse_locale_output(&status.available_locales.join("\n"));
 
     for line in locale_list {
         if let Some(locale) = registry.locale(&line) {

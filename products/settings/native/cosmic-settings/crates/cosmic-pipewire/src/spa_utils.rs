@@ -42,7 +42,7 @@ pub unsafe fn array_from_pod<CType: Copy>(pod: &Pod) -> Option<Vec<CType>> {
 }
 
 #[repr(u32)]
-#[derive(Copy, Clone, Debug, Default, Hash, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, Hash, Eq, PartialEq, serde::Deserialize)]
 pub enum Channel {
     #[default]
     UNKNOWN = 0, // unspecified

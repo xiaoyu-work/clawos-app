@@ -1,27 +1,15 @@
-use cosmic_protocols::a11y::v1::client::cosmic_a11y_manager_v1::{self, ActiveState};
+// Copyright 2023 System76 <info@system76.com>
+// SPDX-License-Identifier: MPL-2.0
+
 use num_derive::{FromPrimitive, ToPrimitive};
-use sctk::{
-    reexports::{
-        calloop::{self, LoopSignal, channel},
-        calloop_wayland_source::WaylandSource,
-        client::{
-            ConnectError, Connection, Dispatch, Proxy, WEnum,
-            globals::{GlobalListContents, registry_queue_init},
-            protocol::wl_registry,
-        },
-    },
-    registry::RegistryState,
-};
 use tokio::sync::mpsc;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum AccessibilityEvent {
     Bound(u32),
     Magnifier(bool),
-    ScreenFilter {
-        inverted: bool,
-        filter: Option<ColorFilter>,
-    },
+    ScreenFilter { inverted: bool, filter: Option<ColorFilter> },
+    Error(String),
     Closed,
 }
 
@@ -38,268 +26,76 @@ pub enum ColorFilter {
 #[derive(Debug, Clone, Copy)]
 pub enum AccessibilityRequest {
     Magnifier(bool),
-    ScreenFilter {
-        inverted: bool,
-        filter: Option<ColorFilter>,
-    },
+    ScreenFilter { inverted: bool, filter: Option<ColorFilter> },
 }
 
-pub type Sender = calloop::channel::Sender<AccessibilityRequest>;
+pub type Sender = mpsc::UnboundedSender<AccessibilityRequest>;
 
 pub fn spawn_wayland_connection(
-    a11y_manager_min: u32,
-) -> Result<
-    (
-        channel::Sender<AccessibilityRequest>,
-        mpsc::Receiver<AccessibilityEvent>,
-    ),
-    ConnectError,
-> {
-    let (event_tx, event_rx) = mpsc::channel(10);
-    let (request_tx, request_rx) = channel::channel();
-    let conn = Connection::connect_to_env()?;
-
-    std::thread::spawn(move || {
-        if let Err(err) = wayland_thread(conn, event_tx.clone(), request_rx, a11y_manager_min) {
-            tracing::warn!("Accessibility protocol wayland thread crashed: {}", err);
-            let _ = event_tx.blocking_send(AccessibilityEvent::Closed);
+    _minimum: u32,
+) -> Result<(Sender, mpsc::Receiver<AccessibilityEvent>), String> {
+    let handle = tokio::runtime::Handle::try_current().map_err(|error| error.to_string())?;
+    let (events, receiver) = mpsc::channel(8);
+    let (sender, mut requests) = mpsc::unbounded_channel();
+    handle.spawn(async move {
+        loop {
+            match cosmic_settings_provider_client::call_async("accessibility", "status", vec![]).await {
+                Ok(value) => {
+                    let state = &value["cosmic_wayland"];
+                    let version = state["protocol_version"].as_u64().and_then(|value| u32::try_from(value).ok());
+                    if let (Some(version), Some(magnifier)) = (version, state["magnifier"].as_bool()) {
+                        if events.send(AccessibilityEvent::Bound(version)).await.is_err()
+                            || events.send(AccessibilityEvent::Magnifier(magnifier)).await.is_err() { return; }
+                        if version >= 2 {
+                            let filter = if state["filter_active"].as_bool() == Some(false) { None }
+                                else { match state["filter"].as_str() {
+                                    Some("greyscale") => Some(ColorFilter::Greyscale),
+                                    Some("deuteranopia") => Some(ColorFilter::Deuteranopia),
+                                    Some("protanopia") => Some(ColorFilter::Protanopia),
+                                    Some("tritanopia") => Some(ColorFilter::Tritanopia),
+                                    Some(_) => Some(ColorFilter::Unknown),
+                                    None => None,
+                                }};
+                            if events.send(AccessibilityEvent::ScreenFilter {
+                                inverted: state["inverted"].as_bool().unwrap_or(false), filter,
+                            }).await.is_err() { return; }
+                        }
+                    } else if events.send(AccessibilityEvent::Closed).await.is_err() { return; }
+                }
+                Err(error) => {
+                    if events.send(AccessibilityEvent::Error(error)).await.is_err()
+                        || events.send(AccessibilityEvent::Closed).await.is_err() { return; }
+                }
+            }
+            let request = tokio::select! {
+                request = requests.recv() => match request { Some(request) => Some(request), None => return },
+                _ = tokio::time::sleep(std::time::Duration::from_secs(2)) => None,
+            };
+            if let Some(request) = request {
+                let changes = match request {
+                    AccessibilityRequest::Magnifier(enabled) =>
+                        vec![("magnifier", if enabled { "on" } else { "off" })],
+                    AccessibilityRequest::ScreenFilter { inverted, filter } => vec![
+                        ("invert", if inverted { "on" } else { "off" }),
+                        ("filter", match filter {
+                            Some(ColorFilter::Greyscale) => "greyscale",
+                            Some(ColorFilter::Deuteranopia) => "deuteranopia",
+                            Some(ColorFilter::Protanopia) => "protanopia",
+                            Some(ColorFilter::Tritanopia) => "tritanopia",
+                            Some(ColorFilter::Unknown) | None => "off",
+                        }),
+                    ],
+                };
+                for (action, value) in changes {
+                    if let Err(error) = cosmic_settings_provider_client::call_async(
+                        "accessibility", action, vec!["--value".into(), value.into()],
+                    ).await {
+                        if events.send(AccessibilityEvent::Error(error)).await.is_err() { return; }
+                        break;
+                    }
+                }
+            }
         }
     });
-
-    Ok((request_tx, event_rx))
-}
-
-fn wayland_thread(
-    conn: Connection,
-    tx: mpsc::Sender<AccessibilityEvent>,
-    rx: channel::Channel<AccessibilityRequest>,
-    a11y_manager_min: u32,
-) -> Result<(), Box<dyn std::error::Error>> {
-    struct State {
-        loop_signal: LoopSignal,
-        tx: mpsc::Sender<AccessibilityEvent>,
-        global: cosmic_a11y_manager_v1::CosmicA11yManagerV1,
-
-        magnifier: bool,
-        screen_inverted: bool,
-        screen_filter: Option<ColorFilter>,
-    }
-
-    impl Dispatch<cosmic_a11y_manager_v1::CosmicA11yManagerV1, ()> for State {
-        fn event(
-            state: &mut Self,
-            _proxy: &cosmic_a11y_manager_v1::CosmicA11yManagerV1,
-            event: <cosmic_a11y_manager_v1::CosmicA11yManagerV1 as Proxy>::Event,
-            _data: &(),
-            _conn: &Connection,
-            _qhandle: &sctk::reexports::client::QueueHandle<Self>,
-        ) {
-            match event {
-                cosmic_a11y_manager_v1::Event::Magnifier { active } => {
-                    let magnifier = active
-                        .into_result()
-                        .unwrap_or(cosmic_a11y_manager_v1::ActiveState::Disabled)
-                        == cosmic_a11y_manager_v1::ActiveState::Enabled;
-                    if magnifier != state.magnifier {
-                        if state
-                            .tx
-                            .blocking_send(AccessibilityEvent::Magnifier(magnifier))
-                            .is_err()
-                        {
-                            state.loop_signal.stop();
-                            state.loop_signal.wakeup();
-                        };
-                        state.magnifier = magnifier;
-                    }
-                }
-                cosmic_a11y_manager_v1::Event::ScreenFilter { inverted, filter } => {
-                    let inverted = inverted
-                        .into_result()
-                        .unwrap_or(cosmic_a11y_manager_v1::ActiveState::Disabled)
-                        == cosmic_a11y_manager_v1::ActiveState::Enabled;
-                    let filter = match filter {
-                        WEnum::Value(cosmic_a11y_manager_v1::Filter::Disabled) => None,
-                        WEnum::Value(cosmic_a11y_manager_v1::Filter::Greyscale) => {
-                            Some(ColorFilter::Greyscale)
-                        }
-                        WEnum::Value(cosmic_a11y_manager_v1::Filter::DaltonizeProtanopia) => {
-                            Some(ColorFilter::Protanopia)
-                        }
-                        WEnum::Value(cosmic_a11y_manager_v1::Filter::DaltonizeDeuteranopia) => {
-                            Some(ColorFilter::Deuteranopia)
-                        }
-                        WEnum::Value(cosmic_a11y_manager_v1::Filter::DaltonizeTritanopia) => {
-                            Some(ColorFilter::Tritanopia)
-                        }
-                        WEnum::Value(_) | WEnum::Unknown(_) => Some(ColorFilter::Unknown),
-                    };
-
-                    if inverted != state.screen_inverted || filter != state.screen_filter {
-                        if state
-                            .tx
-                            .blocking_send(AccessibilityEvent::ScreenFilter { inverted, filter })
-                            .is_err()
-                        {
-                            state.loop_signal.stop();
-                            state.loop_signal.wakeup();
-                        };
-                        state.screen_inverted = inverted;
-                        state.screen_filter = filter;
-                    }
-                }
-                cosmic_a11y_manager_v1::Event::ScreenFilter2 {
-                    inverted,
-                    filter,
-                    filter_state,
-                } => {
-                    let inverted = inverted
-                        .into_result()
-                        .unwrap_or(cosmic_a11y_manager_v1::ActiveState::Disabled)
-                        == cosmic_a11y_manager_v1::ActiveState::Enabled;
-                    let filter = if matches!(filter_state, WEnum::Value(ActiveState::Enabled)) {
-                        match filter {
-                            WEnum::Value(cosmic_a11y_manager_v1::Filter::Disabled) => {
-                                unreachable!()
-                            }
-                            WEnum::Value(cosmic_a11y_manager_v1::Filter::Greyscale) => {
-                                Some(ColorFilter::Greyscale)
-                            }
-                            WEnum::Value(cosmic_a11y_manager_v1::Filter::DaltonizeProtanopia) => {
-                                Some(ColorFilter::Protanopia)
-                            }
-                            WEnum::Value(cosmic_a11y_manager_v1::Filter::DaltonizeDeuteranopia) => {
-                                Some(ColorFilter::Deuteranopia)
-                            }
-                            WEnum::Value(cosmic_a11y_manager_v1::Filter::DaltonizeTritanopia) => {
-                                Some(ColorFilter::Tritanopia)
-                            }
-                            WEnum::Value(_) | WEnum::Unknown(_) => Some(ColorFilter::Unknown),
-                        }
-                    } else {
-                        None
-                    };
-
-                    if inverted != state.screen_inverted || filter != state.screen_filter {
-                        if state
-                            .tx
-                            .blocking_send(AccessibilityEvent::ScreenFilter { inverted, filter })
-                            .is_err()
-                        {
-                            state.loop_signal.stop();
-                            state.loop_signal.wakeup();
-                        };
-                        state.screen_inverted = inverted;
-                        state.screen_filter = filter;
-                    }
-                }
-                _ => unreachable!(),
-            }
-        }
-    }
-    impl Dispatch<wl_registry::WlRegistry, GlobalListContents> for State {
-        fn event(
-            _state: &mut Self,
-            _proxy: &wl_registry::WlRegistry,
-            _event: <wl_registry::WlRegistry as Proxy>::Event,
-            _data: &GlobalListContents,
-            _conn: &Connection,
-            _qhandle: &sctk::reexports::client::QueueHandle<Self>,
-        ) {
-            // We don't care about any dynamic globals
-        }
-    }
-
-    let mut event_loop = calloop::EventLoop::<State>::try_new().unwrap();
-
-    let loop_handle = event_loop.handle();
-    let (globals, event_queue) = registry_queue_init(&conn).unwrap();
-    let qhandle = event_queue.handle();
-
-    WaylandSource::new(conn, event_queue)
-        .insert(loop_handle.clone())
-        .map_err(|err| err.error)?;
-
-    let registry_state = RegistryState::new(&globals);
-    let Ok(global) = registry_state.bind_one::<cosmic_a11y_manager_v1::CosmicA11yManagerV1, _, _>(
-        &qhandle,
-        a11y_manager_min..=3,
-        (),
-    ) else {
-        return Ok(());
-    };
-
-    let _ = tx.blocking_send(AccessibilityEvent::Bound(global.version()));
-
-    loop_handle
-        .insert_source(rx, |request, _, state| match request {
-            channel::Event::Msg(AccessibilityRequest::Magnifier(val)) => {
-                state.global.set_magnifier(if val {
-                    cosmic_a11y_manager_v1::ActiveState::Enabled
-                } else {
-                    cosmic_a11y_manager_v1::ActiveState::Disabled
-                });
-            }
-            channel::Event::Msg(AccessibilityRequest::ScreenFilter { inverted, filter }) => {
-                let mut filter_state = ActiveState::Enabled;
-                let filter = match filter {
-                    None => {
-                        if state.global.version() < 3 {
-                            cosmic_a11y_manager_v1::Filter::Disabled
-                        } else {
-                            filter_state = ActiveState::Disabled;
-                            cosmic_a11y_manager_v1::Filter::Unknown
-                        }
-                    }
-                    Some(ColorFilter::Greyscale) => cosmic_a11y_manager_v1::Filter::Greyscale,
-                    Some(ColorFilter::Protanopia) => {
-                        cosmic_a11y_manager_v1::Filter::DaltonizeProtanopia
-                    }
-                    Some(ColorFilter::Deuteranopia) => {
-                        cosmic_a11y_manager_v1::Filter::DaltonizeDeuteranopia
-                    }
-                    Some(ColorFilter::Tritanopia) => {
-                        cosmic_a11y_manager_v1::Filter::DaltonizeTritanopia
-                    }
-                    Some(ColorFilter::Unknown) => cosmic_a11y_manager_v1::Filter::Unknown,
-                };
-                if state.global.version() < 3 {
-                    state.global.set_screen_filter(
-                        if inverted {
-                            cosmic_a11y_manager_v1::ActiveState::Enabled
-                        } else {
-                            cosmic_a11y_manager_v1::ActiveState::Disabled
-                        },
-                        filter,
-                    );
-                } else {
-                    state.global.set_screen_filter2(
-                        if inverted {
-                            cosmic_a11y_manager_v1::ActiveState::Enabled
-                        } else {
-                            cosmic_a11y_manager_v1::ActiveState::Disabled
-                        },
-                        filter,
-                        filter_state,
-                    );
-                }
-            }
-            channel::Event::Closed => {
-                state.loop_signal.stop();
-                state.loop_signal.wakeup();
-            }
-        })
-        .map_err(|err| err.error)?;
-
-    let mut state = State {
-        loop_signal: event_loop.get_signal(),
-        tx,
-        global,
-
-        magnifier: false,
-        screen_inverted: false,
-        screen_filter: None,
-    };
-
-    event_loop.run(None, &mut state, |_| {})?;
-    Ok(())
+    Ok((sender, receiver))
 }

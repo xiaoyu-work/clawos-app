@@ -6,6 +6,8 @@
 | `native/cosmic-player/src/main.rs` | Original GStreamer/libcosmic UI and authoritative playback state |
 | `native/cosmic-player/src/argparse.rs`, `native/cosmic-player/test/unit/argparse.rs` | Native media/thumbnail arguments, bounded Host GUI selector adaptation and parser regressions |
 | `native/cosmic-player/src/playback.rs` | Shared native state snapshots and typed UI commands |
+| `native/cosmic-player/src/managed.rs` | Published generic SDK exchange for the exact managed GUI; commands and status go through the original UI event loop |
+| `native/cosmic-player/src/access.rs` | Independent protected file reads and atomic thumbnail write/create selections through the published GUI SDK |
 | `native/cosmic-player/src/mpris_backend.rs` | Original MPRIS implementation, corrected name/Stop/status and live UI publication |
 | `native/cosmic-player/src/mpris.rs` | Native subscription connecting the MPRIS backend to the existing UI event loop |
 | `native/cosmic-player/src/mcp.rs` | Authenticated MCP, strict empty arguments, deadlines/cancellation and explicit installed OS client |
@@ -25,10 +27,28 @@ The OS playback service accepts other independently authorized clients without
 requiring the caller to be `cosmic-player`. The native product keeps its own
 identity and manifest; its exact `desktop.media.observe:cosmic-player` and
 `desktop.media.control:cosmic-player` scopes name the fixed playback target.
-The provider still validates that target's owner, executable and unique MPRIS
-connection, and applies each calling App's own live grants and denial policy.
-This is not arbitrary-player discovery, an automatic grant, GUI admission or
-completion of the package-local executable/resource-binding cutover.
+The provider selects the actual running signed GUI instance and applies each
+calling App's own live grants and denial policy before releasing a command and
+returning a reply. Status is sampled by that same native UI, not a worker-owned
+cache or mutable owner-bus name. No fixed executable path is trusted as the
+package identity, and managed failures never fall back to raw D-Bus. Multiple
+running target windows remain ambiguous, not an arbitrary selection.
+
+The GUI separately requests Home metadata browsing. Optional content read and
+thumbnail write declarations do not grant startup file authority. Each media
+read and thumbnail write/create uses the existing protected native selection;
+thumbnail output is committed through Root's same-parent scratch reservation.
+Playback permission and returned filenames never grant filesystem access.
+The managed Open action uses the generic OS FileChooser presentation and its
+correlated metadata-only result, then the same protected file read. It never
+falls back to the original owner-bus dialog when managed mediation fails.
+
+Playback audio separately declares `device.audio:output`. The original
+GStreamer pipeline sends fixed stereo PCM through the fixed OS CLI transport;
+Root owns its output-only sound-server helper and lifetime. The App gets no
+PipeWire, microphone or session-bus descriptor. Its native video guard retains
+that transport until the pipeline closes. Silent thumbnail generation disables
+audio rather than acquiring playback or capture authority.
 
 Run from the repository root on Linux/WSL:
 
@@ -55,5 +75,6 @@ option values, URL order, local-path canonicalization, warning-and-continue
 behavior and help/version exits; no new `--` end-of-options state is added.
 Managed GUI launches stay in the foreground for the common Host; unmanaged
 daemonization, MCP precedence and thumbnail early exits remain unchanged.
-This does not change thumbnail admission or OS playback executable/resource
-bindings; see [native payloads](../../docs/native-payloads.md).
+Selectors do not grant thumbnail, media-file or audio authority. Managed
+delivery requires the matching OS resources and their actual acceptance;
+see [native payloads](../../docs/native-payloads.md).

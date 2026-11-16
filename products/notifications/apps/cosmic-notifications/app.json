@@ -18,6 +18,16 @@
         "verb": "ui.panel",
         "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
         "why": {"en": "Display native notification popup surfaces in your authenticated desktop."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "notifications.presentation"}},
+        "why": {"en": "Present notifications from all sources for your authenticated desktop. This is separate from this App's own notification inbox."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "notifications.presentation"}},
+        "why": {"en": "Apply your dismiss, acknowledgement and popup-mute actions to this exact native presentation."}
       }
     ]
   },

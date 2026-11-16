@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use crate::widget::selection_context_item;
+use crate::owner_config::{self as cosmic_config, ConfigGet, ConfigSet};
 use cosmic::{
     Apply, Element, Task,
     app::ContextDrawer,
-    cosmic_config::{self, ConfigGet, ConfigSet},
     iced::core::text::Wrapping,
     surface,
     widget::{self, dropdown, settings},
@@ -21,7 +21,6 @@ use icu::{
     locale::{Locale, preferences::extensions::unicode::keywords::HourCycle},
 };
 use slotmap::{Key, SlotMap};
-pub use timedate_zbus::TimeDateProxy;
 use tracing::error;
 
 crate::cache_dynamic_lazy! {
@@ -49,6 +48,8 @@ pub struct Page {
     timezone_list: Vec<String>,
     timezone_search: String,
     formatted_date: String,
+    pending: crate::regional_settings::Pending,
+    notice: Option<String>,
 }
 
 impl Default for Page {
@@ -63,7 +64,6 @@ impl Default for Page {
                 }
 
                 let default = get_locale_default_24h();
-                let _ = cosmic_applet_config.set("military_time", default);
                 default
             });
 
@@ -85,7 +85,6 @@ impl Default for Page {
                 }
 
                 let default = get_locale_default_first_day();
-                let _ = cosmic_applet_config.set("first_day_of_week", default);
                 default
             });
 
@@ -113,6 +112,8 @@ impl Default for Page {
             timezone_context: false,
             timezone_list: Vec::new(),
             timezone_search: String::new(),
+            pending: crate::regional_settings::Pending::default(),
+            notice: None,
         }
     }
 }
@@ -140,31 +141,16 @@ impl page::Page<crate::pages::Message> for Page {
     }
 
     fn on_enter(&mut self) -> Task<crate::pages::Message> {
+        let revision = self.pending.revision();
         cosmic::Task::future(async move {
-            let client = match zbus::Connection::system().await {
-                Ok(client) => client,
-                Err(why) => {
-                    return Message::Error(why.to_string());
-                }
+            let status = match crate::regional_settings::time_status().await {
+                Ok(status) => status,
+                Err(error) => return Message::RefreshError(revision, error.message()),
             };
-
-            let timedate_proxy = match TimeDateProxy::new(&client).await {
-                Ok(timedate_proxy) => timedate_proxy,
-                Err(why) => {
-                    return Message::Error(why.to_string());
-                }
-            };
-
-            let can_ntp = timedate_proxy.can_ntp().await.unwrap_or_default();
-            let ntp_enabled = can_ntp && timedate_proxy.ntp().await.unwrap_or_default();
-            let timezone_list = timedate_proxy.list_timezones().await.unwrap_or_default();
-
-            let timezone = timedate_proxy.timezone().await.unwrap_or_default();
-
-            Message::Refresh(Info {
-                ntp_enabled,
-                timezone_id: timezone_list.iter().position(|tz| tz == &timezone),
-                timezone_list,
+            Message::Refresh(revision, Info {
+                ntp_enabled: status.can_ntp && status.ntp,
+                timezone_id: status.timezones.iter().position(|tz| tz == &status.timezone),
+                timezone_list: status.timezones,
             })
         })
         .map(crate::pages::Message::DateAndTime)
@@ -244,28 +230,25 @@ impl Page {
             }
 
             Message::Timezone(timezone_id) => {
-                self.timezone = Some(timezone_id);
-
                 if let Some(timezone) = self.timezone_list.get(timezone_id).cloned() {
-                    return cosmic::Task::future(async move {
-                        let client = match zbus::Connection::system().await {
-                            Ok(client) => client,
-                            Err(why) => {
-                                return Message::Error(why.to_string());
-                            }
-                        };
-
-                        let timedate_proxy = match TimeDateProxy::new(&client).await {
-                            Ok(timedate_proxy) => timedate_proxy,
-                            Err(why) => {
-                                return Message::Error(why.to_string());
-                            }
-                        };
-
-                        match timedate_proxy.set_timezone(&timezone, true).await {
-                            Ok(_) => Message::UpdateTime,
-                            Err(why) => Message::Error(why.to_string()),
+                    let generation = match self.pending.begin() {
+                        Ok(generation) => generation,
+                        Err(error) => {
+                            self.notice = Some(error.message());
+                            return Task::none();
                         }
+                    };
+                    self.notice = Some(fl!("regional-settings", "working"));
+                    return cosmic::Task::future(async move {
+                        use crate::regional_settings::{self, Change, Failure};
+                        let timezone_result = regional_settings::call(Change::Timezone { timezone }).await;
+                        let confirmed = timezone_result.is_ok();
+                        let result = match timezone_result {
+                            Ok(()) => regional_settings::call(Change::Ntp { enabled: true }).await.map_err(|error|
+                                Failure::Unconfirmed(format!("Timezone was confirmed, but automatic time was not: {}", error.message()))),
+                            Err(error) => Err(error),
+                        };
+                        Message::TimezoneFinished(generation, timezone_id, confirmed, result)
                     })
                     .map(crate::pages::Message::DateAndTime)
                     .map(crate::Message::PageMessage);
@@ -274,24 +257,41 @@ impl Page {
 
             Message::Error(why) => {
                 tracing::error!(why, "failed to set timezone");
+                self.notice = Some(why);
                 self.timezone_context = false;
                 return cosmic::task::message(crate::pages::Message::CloseContextDrawer);
             }
 
             Message::UpdateTime => {
-                self.set_ntp(true);
                 self.update_local_time();
                 self.timezone_context = false;
                 return cosmic::task::message(crate::pages::Message::CloseContextDrawer);
             }
 
-            Message::Refresh(info) => {
+            Message::Refresh(revision, info) if revision == self.pending.revision() => {
                 self.ntp_enabled = info.ntp_enabled;
                 self.timezone_list = info.timezone_list;
                 self.timezone = info.timezone_id;
 
                 self.update_local_time();
             }
+            Message::RefreshError(revision, error) if revision == self.pending.revision() => {
+                self.notice = Some(error);
+            }
+            Message::TimezoneFinished(generation, selected, confirmed, result) => {
+                if self.pending.complete(generation) {
+                    if confirmed {
+                        self.timezone = Some(selected);
+                        self.update_local_time();
+                    }
+                    if result.is_ok() {
+                        self.ntp_enabled = true;
+                        self.timezone_context = false;
+                    }
+                    self.notice = Some(crate::regional_settings::outcome(&result));
+                }
+            }
+            Message::Refresh(..) | Message::RefreshError(..) => {}
 
             Message::Surface(a) => {
                 return cosmic::task::message(crate::app::Message::Surface(a));
@@ -301,30 +301,6 @@ impl Page {
         }
 
         Task::none()
-    }
-
-    fn set_ntp(&mut self, enable: bool) {
-        self.ntp_enabled = enable;
-
-        tokio::task::spawn(async move {
-            let client = match zbus::Connection::system().await {
-                Ok(client) => client,
-                Err(why) => {
-                    tracing::error!(?why, "zbus client error");
-                    return;
-                }
-            };
-
-            let timedate_proxy = match TimeDateProxy::new(&client).await {
-                Ok(timedate_proxy) => timedate_proxy,
-                Err(why) => {
-                    tracing::error!(?why, "zbus client error");
-                    return;
-                }
-            };
-
-            _ = timedate_proxy.set_ntp(enable, true).await;
-        });
     }
 
     fn timezone_context_view(&self) -> Element<'_, crate::pages::Message> {
@@ -363,7 +339,9 @@ pub enum Message {
     ShowSeconds(bool),
     None,
     FirstDayOfWeek(usize),
-    Refresh(Info),
+    Refresh((u64, bool), Info),
+    RefreshError((u64, bool), String),
+    TimezoneFinished(u64, usize, bool, Result<(), crate::regional_settings::Failure>),
     ShowDate(bool),
     Timezone(usize),
     TimezoneContext,
@@ -383,14 +361,17 @@ fn date() -> Section<crate::pages::Message> {
         .title(fl!("time-date"))
         .descriptions(descriptions)
         .view::<Page>(move |_binder, page, section| {
-            crate::widget::claw_section()
+            let mut section = crate::widget::claw_section()
                 .title(&section.title)
                 .add(
                     settings::item::builder(&*section.descriptions[title])
                         .description(fl!("time-date", "auto-ntp"))
                         .control(widget::text::body(&page.formatted_date)),
-                )
-                .apply(cosmic::Element::from)
+                );
+            if let Some(notice) = &page.notice {
+                section = section.add(widget::text::body(notice));
+            }
+            section.apply(cosmic::Element::from)
                 .map(crate::pages::Message::DateAndTime)
         })
 }

@@ -9,7 +9,7 @@ use cosmic::{
     widget::{self, icon, settings, svg, text},
 };
 use cosmic_comp_config::{ZoomConfig, ZoomMovement};
-use cosmic_config::{ConfigGet, ConfigSet};
+use crate::owner_config::{self as cosmic_config, ConfigGet, ConfigSet};
 use cosmic_settings_config::{Action, Binding, shortcuts};
 use cosmic_settings_page::{
     self as page, Entity,
@@ -346,6 +346,9 @@ impl Page {
             Message::Event(AccessibilityEvent::Magnifier(value)) => {
                 self.magnifier_state = value;
             }
+            Message::Event(AccessibilityEvent::Error(error)) => {
+                tracing::warn!(%error, "OS magnifier provider refused the request");
+            }
             Message::Event(
                 AccessibilityEvent::Bound(_) | AccessibilityEvent::ScreenFilter { .. },
             ) => {}
@@ -429,7 +432,7 @@ impl Page {
 }
 
 fn zoom_shortcuts() -> (Vec<Binding>, Vec<Binding>) {
-    let Some(config) = shortcuts::context().ok() else {
+    let Some(config) = cosmic_config::Config::new(shortcuts::ID, 1).ok() else {
         return (Vec::new(), Vec::new());
     };
     let shortcuts = shortcuts::shortcuts(&config);

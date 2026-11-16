@@ -9,7 +9,7 @@ use cosmic::{
     surface,
     widget::{self, settings, space::horizontal as horizontal_space},
 };
-use cosmic_config::{Config, ConfigGet, ConfigSet};
+use crate::owner_config::{Config, ConfigGet, ConfigSet};
 use cosmic_settings_page::{self as page, Section, section};
 use cosmic_settings_sound_subscription as subscription;
 use slotmap::SlotMap;

@@ -16,6 +16,10 @@ def test_native_identity_and_exact_grants():
     assert manifest["desktop"]["needs"] == []
     assert {need["verb"] for need in manifest["desktop"]["optional_needs"]} == {
         "sys.observe", "sys.identity", "sys.permissions",
+        "sys.locale", "sys.language", "sys.hostname", "sys.time",
+        "ipc.subscribe", "ipc.invoke", "ui.accessibility", "ui.prompt",
+        "device.audio", "device.microphone", "device.media-route", "device.display",
+        "fs.read", "fs.write",
     }
     tools = {tool["name"]: tool for tool in manifest["mcp"]["tools"]}
     management = {f"settings.permissions_{action}" for action in ("list", "show", "request", "revoke")}

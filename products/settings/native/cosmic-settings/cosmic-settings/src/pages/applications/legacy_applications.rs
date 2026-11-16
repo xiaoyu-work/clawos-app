@@ -6,9 +6,9 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 
+use crate::owner_config::{self as cosmic_config, ConfigGet, ConfigSet};
 use cosmic::{
     Apply, Element, Task,
-    cosmic_config::{self, ConfigGet, ConfigSet},
     iced::stream,
     surface,
     widget::{self, dropdown, settings, text},

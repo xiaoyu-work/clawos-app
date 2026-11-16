@@ -5,10 +5,10 @@ use std::sync::Arc;
 
 use cosmic::{
     Apply, Element, Task,
-    config::{CosmicTk, FontConfig},
+    config::FontConfig,
     widget,
 };
-use cosmic_config::ConfigSet;
+use crate::owner_config::{Config, ConfigSet};
 
 use crate::app;
 use crate::widget::selection_context_item;
@@ -212,7 +212,7 @@ impl Model {
 }
 
 fn update_config(variant: &str, font: FontConfig) {
-    if let Ok(config) = CosmicTk::config() {
+    if let Ok(config) = Config::new(cosmic::config::ID, 1) {
         _ = config.set(variant, font);
     }
 }

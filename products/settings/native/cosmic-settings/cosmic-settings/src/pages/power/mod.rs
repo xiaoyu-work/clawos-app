@@ -9,7 +9,7 @@ use cosmic::iced::widget::{column, row};
 use cosmic::iced::{self, Alignment, Length, stream};
 use cosmic::widget::{self, settings, space, text};
 use cosmic::{Apply, surface};
-use cosmic_config::{Config, CosmicConfigEntry};
+use crate::owner_config::{Config, CosmicConfigEntry};
 use cosmic_idle_config::CosmicIdleConfig;
 use cosmic_settings_page::{self as page, Section, section};
 use futures::{SinkExt, StreamExt};
@@ -355,24 +355,22 @@ impl Page {
             }
             Message::ScreenOffTimeChange(time) => {
                 let time = time.map(|x| x.as_millis() as u32);
-                if let Err(err) = self.idle_conf.set_screen_off_time(&self.idle_config, time) {
+                if let Err(err) = self.idle_config.edit(&mut self.idle_conf, |entry, local| entry.set_screen_off_time(local, time)) {
                     tracing::error!("failed to set screen off time: {}", err)
                 }
             }
             Message::SuspendOnAcTimeChange(time) => {
                 let time = time.map(|x| x.as_millis() as u32);
-                if let Err(err) = self
-                    .idle_conf
-                    .set_suspend_on_ac_time(&self.idle_config, time)
+                if let Err(err) = self.idle_config.edit(&mut self.idle_conf, |entry, local|
+                    entry.set_suspend_on_ac_time(local, time))
                 {
                     tracing::error!("failed to set suspend on ac time: {}", err)
                 }
             }
             Message::SuspendOnBatteryTimeChange(time) => {
                 let time = time.map(|x| x.as_millis() as u32);
-                if let Err(err) = self
-                    .idle_conf
-                    .set_suspend_on_battery_time(&self.idle_config, time)
+                if let Err(err) = self.idle_config.edit(&mut self.idle_conf, |entry, local|
+                    entry.set_suspend_on_battery_time(local, time))
                 {
                     tracing::error!("failed to set suspend on battery time: {}", err)
                 }

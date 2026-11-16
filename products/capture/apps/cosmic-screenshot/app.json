@@ -23,6 +23,18 @@
         "verb": "ui.notify",
         "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
         "why": {"en": "Report a completed screenshot using this App's own OS notification source."}
+      },
+      {
+        "verb": "fs.meta",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Locate an existing Home destination for non-interactive capture. Names and metadata grant neither content nor output writes."}
+      }
+    ],
+    "optional_needs": [
+      {
+        "verb": "fs.write",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Create only one separately reviewed screenshot filename in the selected destination; never inherit MCP directory writes or overwrite an existing file."}
       }
     ]
   },

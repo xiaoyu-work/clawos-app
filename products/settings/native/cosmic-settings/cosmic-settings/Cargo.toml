@@ -34,6 +34,7 @@ cosmic-randr-shell.workspace = true
 cosmic-randr = { workspace = true, optional = true }
 cosmic-settings-config = { git = "https://github.com/pop-os/cosmic-settings-daemon", optional = true }
 cosmic-settings-page = { path = "../page" }
+cosmic-settings-provider-client = { path = "../crates/provider-client" }
 cosmic-settings-accessibility-subscription = { path = "../subscriptions/accessibility", optional = true }
 cosmic-settings-a11y-manager-subscription = { path = "../subscriptions/a11y-manager", optional = true }
 cosmic-settings-airplane-mode-subscription = { path = "../subscriptions/airplane-mode", optional = true }
@@ -62,6 +63,7 @@ image = { version = "0.25", default-features = false, features = [
 ] }
 indexmap = "2.13.0"
 itertools = "0.14.0"
+kdl = "=6.5.0"
 itoa = "1.0.17"
 libcosmic.workspace = true
 iced_winit.workspace = true

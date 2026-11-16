@@ -10,9 +10,10 @@ use cosmic::iced;
 use cosmic::iced::core::clipboard::IconSurface;
 use cosmic::widget::{Column, button, column, container, icon, list_column, row, text, text_input};
 
+use crate::owner_config::Config;
 use cosmic::{
     Apply, Element,
-    cosmic_config::{Config, CosmicConfigEntry},
+    cosmic_config::CosmicConfigEntry,
     iced::core::{
         Clipboard, Shell, Widget, layout, renderer,
         widget::{Operation, Tree, tree},
@@ -61,7 +62,7 @@ pub struct Page {
 
 impl Default for Page {
     fn default() -> Self {
-        let config_helper = CosmicPanelConfig::cosmic_config("Panel").ok();
+        let config_helper = crate::owner_config::panel("Panel").ok();
         let current_config = config_helper.as_ref().and_then(|config_helper| {
             let panel_config = match CosmicPanelConfig::get_entry(config_helper) {
                 Ok(c) => c,
@@ -227,7 +228,7 @@ impl Page {
             error!("No panel config helper. Failed to save applets.");
             return;
         };
-        if let Err(e) = config.write_entry(helper) {
+        if let Err(e) = helper.write_entry(config) {
             error!("Failed to save applets: {:?}", e);
         }
     }

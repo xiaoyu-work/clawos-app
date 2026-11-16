@@ -28,18 +28,25 @@ call another App or maintain a second notification store.
 - Both tools retain the existing `ui.notify` Wild consent rationale. There is
   no owner-wide list/preferences/acknowledgement or other-App close authority.
 
-Native freedesktop compatibility remains: each sender owns its numeric handles,
-while the human panel uses its existing private connection for dismissal.
-The OS desktop bridge verifies the installed presenter's owner/executable and
-unique connection, renders model content as plain text, and reflects durable
-close/acknowledgement. Existing native DND remains an additional presentation
-mute; core DND/delivery preferences remain authoritative.
-Retired popup-history entries release their numeric handles without
-acknowledgement. The bridge opts its own presentations into connection-bound
-lifetime, so disconnect/crash closes orphaned popups without altering durable
-state. Ordinary freedesktop clients do not opt in and keep their original
-lifetime. The hint affects only its authenticated sender's presentations,
-never another sender or any core record.
+The original native popup runs only through the authenticated common GUI Host.
+Its explicit `ui.panel` right permits the surface, while separately approved
+`ipc.subscribe:notifications.presentation` permits cross-source display and
+`ipc.invoke` admits exact presentation controls. Neither an App name nor the
+MCP producer's `ui.notify` / own-source inbox rights supply display authority.
+Root is the single automatic desktop consumer and retains DND, retries,
+delivery leases, durable state and checked cleanup. The App receives bounded
+display tickets, not an inbox, database, owner bus or another App's grant.
+
+The OS panel descriptor terminates in an OS-owned helper. Cards, private popup
+mute and exact actions cross the existing public presentation contract.
+The original native close control and card-pointer activation report dismiss
+and acknowledgement through Root; delivery, expiry, eviction and retirement
+alone never acknowledge. Root body text is literal in both original popup and
+panel, without interpreting markup. Native popup mute retains its original key
+and schema in private App HOME, independently of Root DND. Existing owner
+configuration and legacy JSON remain untouched; neither is implicitly imported.
+The retained freedesktop server/private-library paths serve explicit isolated
+compatibility fixtures, not a production unconfined fallback.
 
 The full original 40-file fork plus the new presentation/tests is retained:
 standalone lock, nested crates, `.cargo`, Debian/Nix/hook/just/build metadata,
@@ -55,7 +62,7 @@ preparation and theme-resource selection remain App-owned. The panel's
 external SVG resources and excessive source geometry are explicit errors.
 The same existing presentation-mute preference is exposed over the private
 connection without moving its stored value or changing OS DND policy.
-The legacy private interface remains available to older hosts. New hosts
+The legacy private interface remains available to compatibility fixtures. New hosts
 require presentation v1 and surface missing/incompatible or excessive
 projections as errors, rather than reading App configuration as a fallback.
 

@@ -6,7 +6,7 @@ use cosmic::{
     cosmic_config::{ConfigSet, CosmicConfigEntry},
     widget::{settings, text},
 };
-use cosmic_panel_config::{CosmicPanelConfig, CosmicPanelContainerConfig};
+use cosmic_panel_config::CosmicPanelConfig;
 use cosmic_settings_page::{self as page, Section, section};
 use slotmap::SlotMap;
 use tracing::error;
@@ -41,7 +41,7 @@ impl Page {
                     return Task::none();
                 };
 
-                let Ok(helper) = CosmicPanelContainerConfig::cosmic_config() else {
+                let Ok(helper) = crate::owner_config::Config::new("com.clawos.Panel", 1) else {
                     return Task::none();
                 };
 
@@ -119,7 +119,7 @@ impl PanelPage for Page {
 impl Default for Page {
     fn default() -> Self {
         // TODO CosmicPanelConfig should return its own version
-        let config_helper = CosmicPanelConfig::cosmic_config("Dock").ok();
+        let config_helper = crate::owner_config::panel("Dock").ok();
 
         let panel_config = config_helper.as_ref().and_then(|config_helper| {
             let panel_config = match CosmicPanelConfig::get_entry(config_helper) {
@@ -154,7 +154,7 @@ impl Default for Page {
         })
         .ok();
 
-        let container_config = CosmicPanelContainerConfig::load().ok();
+        let container_config = crate::owner_config::panels().ok();
         Self {
             inner: PageInner {
                 config_helper,

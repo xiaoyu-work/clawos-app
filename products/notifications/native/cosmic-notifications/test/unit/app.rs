@@ -1,6 +1,62 @@
 use super::*;
 
 #[tokio::test]
+async fn managed_replacement_swaps_handles_without_closing_the_live_popup_or_acknowledging() {
+    let (tx, mut rx) = mpsc::channel(10);
+    let original = Notification::new(
+        "Label",
+        1,
+        "",
+        "Before",
+        "Plain text",
+        vec!["default", "Acknowledge"],
+        std::collections::HashMap::new(),
+        0,
+    );
+    let mut ui = CosmicNotifications {
+        core: Core::default(),
+        active_surface: true,
+        autosize_id: iced::id::Id::new("replacement"),
+        window_id: SurfaceId::unique(),
+        cards: vec![original.clone()],
+        hidden: VecDeque::new(),
+        notifications_id: id::Id::new("replacement"),
+        notifications_tx: Some(tx),
+        config: NotificationsConfig::default(),
+        dock_config: CosmicPanelConfig::default(),
+        panel_config: CosmicPanelConfig::default(),
+        anchor: None,
+    };
+    let mut replacement = original.clone();
+    replacement.id = 2;
+    replacement.summary = "After".into();
+    drop(
+        ui.update(Message::Notification(notifications::Event::ReplaceHandle {
+            previous: 1,
+            notification: replacement.clone(),
+        })),
+    );
+    assert_eq!(ui.cards, vec![replacement.clone()]);
+    assert!(
+        ui.active_surface,
+        "a replacement briefly destroyed the live Layer Shell surface"
+    );
+    drop(ui.update(Message::Timeout(1, original.time)));
+    assert_eq!(ui.cards, vec![replacement]);
+    assert!(matches!(
+        rx.recv().await,
+        Some(notifications::Input::Closed(
+            1,
+            CloseReason::CloseNotification
+        ))
+    ));
+    assert!(
+        rx.try_recv().is_err(),
+        "replacement was mistaken for a human dismissal"
+    );
+}
+
+#[tokio::test]
 async fn visible_model_keeps_presentation_and_distinguishes_expiry_from_dismissal() {
     let (tx, mut rx) = mpsc::channel(10);
     let mut ui = CosmicNotifications {

@@ -24,7 +24,7 @@ pub(crate) struct Page {
 
 impl Default for Page {
     fn default() -> Self {
-        let config_helper = CosmicPanelConfig::cosmic_config("Dock").ok();
+        let config_helper = crate::owner_config::panel("Dock").ok();
         let current_config = config_helper.as_ref().and_then(|config_helper| {
             let panel_config = match CosmicPanelConfig::get_entry(config_helper) {
                 Ok(c) => c,

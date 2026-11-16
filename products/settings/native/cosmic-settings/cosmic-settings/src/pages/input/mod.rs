@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use crate::app;
+use crate::owner_config::{self as cosmic_config, ConfigGet, ConfigSet};
 use cosmic::{
     Task,
-    cosmic_config::{self, ConfigGet, ConfigSet},
 };
 use cosmic_comp_config::input::{
     AccelConfig, AccelProfile, ClickMethod, InputConfig, ScrollConfig, ScrollMethod, TapButtonMap,

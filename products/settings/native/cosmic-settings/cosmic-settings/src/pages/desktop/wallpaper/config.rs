@@ -20,7 +20,7 @@ const ROTATION_FREQUENCY: &str = "rotation-frequency";
 #[derive(Debug, Default)]
 pub struct Config {
     context: Option<cosmic_config::Config>,
-    state: Option<cosmic_config::Config>,
+    state: Option<crate::owner_config::Config>,
     pub(super) current_folder: Option<PathBuf>,
     custom_colors: Vec<wallpaper::Color>,
     custom_images: Vec<PathBuf>,
@@ -40,7 +40,7 @@ impl Config {
             }
         };
 
-        let state = match cosmic_config::Config::new_state("com.clawos.Background", VERSION) {
+        let state = match crate::owner_config::Config::new_state("com.clawos.Background", VERSION) {
             Ok(state) => state,
             Err(why) => {
                 tracing::warn!(?why, "failed to get state");

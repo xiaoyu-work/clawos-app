@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use crate::PageCommands;
+use crate::fl;
 use crate::config::Config;
 #[cfg(feature = "page-accessibility")]
 use crate::pages::accessibility;
@@ -252,7 +253,8 @@ impl cosmic::Application for SettingsApp {
         .unwrap_or(desktop_id);
 
         let task = Task::batch([
-            cosmic::command::set_theme(cosmic::theme::system_preference()),
+            cosmic::command::set_theme(crate::owner_config::theme()
+                .unwrap_or_else(|_| cosmic::theme::system_preference())),
             app.activate_page(active_id),
         ]);
         (app, task)
@@ -353,8 +355,7 @@ impl cosmic::Application for SettingsApp {
             // Watch for configuration changes to the panel.
             // TODO: This should only be active when the panel page is active.
             #[cfg(feature = "wayland")]
-            self.core()
-                .watch_config::<CosmicPanelConfig>("com.clawos.Panel.Panel")
+            crate::owner_config::watch::<CosmicPanelConfig>("com.clawos.Panel.Panel")
                 .map(|update| {
                     for why in update.errors {
                         tracing::error!(?why, "panel config load error");
@@ -364,8 +365,7 @@ impl cosmic::Application for SettingsApp {
                 }),
             // TODO: This should only be active when the dock page is active.
             #[cfg(feature = "wayland")]
-            self.core()
-                .watch_config::<CosmicPanelConfig>("com.clawos.Panel.Dock")
+            crate::owner_config::watch::<CosmicPanelConfig>("com.clawos.Panel.Dock")
                 .map(|update| {
                     for why in update.errors {
                         tracing::error!(?why, "dock config load error");
@@ -375,8 +375,7 @@ impl cosmic::Application for SettingsApp {
                 }),
             page.subscription(self.core()).map(Message::PageMessage),
             #[cfg(feature = "cosmic-comp-config")]
-            self.core()
-                .watch_config::<CosmicCompConfig>("com.clawos.Comp")
+            crate::owner_config::watch::<CosmicCompConfig>("com.clawos.Comp")
                 .map(|update| {
                     for why in update.errors {
                         tracing::error!(?why, "comp config load error");
@@ -960,6 +959,13 @@ impl cosmic::Application for SettingsApp {
             return self.page_container(cosmic::widget::space());
         };
 
+        if let Some(error) = crate::owner_config::failure() {
+            return cosmic::widget::column::with_capacity(2)
+                .spacing(cosmic::theme::spacing().space_s)
+                .push(cosmic::widget::text::body(fl!("owner-preferences-error", detail = error.as_str())))
+                .push(view)
+                .into();
+        }
         container(view).into()
     }
 

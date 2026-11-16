@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use cosmic::{Task, cosmic_config::CosmicConfigEntry};
-use cosmic_panel_config::{CosmicPanelConfig, CosmicPanelContainerConfig};
+use cosmic_panel_config::CosmicPanelConfig;
 use cosmic_settings_page::{self as page, Section, section};
 use slotmap::SlotMap;
 
@@ -73,7 +73,7 @@ impl PanelPage for Page {
 
 impl Default for Page {
     fn default() -> Self {
-        let config_helper = CosmicPanelConfig::cosmic_config("Panel").ok();
+        let config_helper = crate::owner_config::panel("Panel").ok();
         let panel_config = config_helper.as_ref().and_then(|config_helper| {
             let panel_config = match CosmicPanelConfig::get_entry(config_helper) {
                 Ok(c) => c,
@@ -105,7 +105,7 @@ impl Default for Page {
             }
         })
         .ok();
-        let container_config = CosmicPanelContainerConfig::load().ok();
+        let container_config = crate::owner_config::panels().ok();
         Self {
             inner: PageInner {
                 config_helper,

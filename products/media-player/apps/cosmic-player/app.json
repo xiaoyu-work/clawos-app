@@ -12,7 +12,36 @@
   "runtime": "binary",
   "entry": "bin/cosmic-player",
   "desktop": {
-    "exec": "--gui"
+    "exec": "--gui",
+    "needs": [
+      {
+        "verb": "fs.meta",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Browse Home media names and metadata in this player window; file content and thumbnail output need separate protected selections."}
+      },
+      {
+        "verb": "device.audio",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "output"}},
+        "why": {"en": "Send playback audio to the OS-owned output-only PCM service, without microphone or raw PipeWire access."}
+      },
+      {
+        "verb": "ui.prompt",
+        "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
+        "why": {"en": "Open the OS-owned human file chooser; its selected filename never grants file-content access."}
+      }
+    ],
+    "optional_needs": [
+      {
+        "verb": "fs.read",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Read the media you separately select for this player window."}
+      },
+      {
+        "verb": "fs.write",
+        "scope": {"kind": "owner-path", "path": "**"},
+        "why": {"en": "Save a thumbnail through a separate protected output selection."}
+      }
+    ]
   },
   "mcp": {
     "entry": "bin/cosmic-player",

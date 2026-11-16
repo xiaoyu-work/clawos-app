@@ -76,6 +76,19 @@ enum Message {
 }
 
 impl CosmicNotifications {
+    fn presented(&self, id: u32) -> Task<Message> {
+        if !crate::subscriptions::managed::enabled() {
+            return Task::none();
+        }
+        let sender = self.notifications_tx.clone();
+        Task::future(async move {
+            if let Some(sender) = sender {
+                let _ = sender.send(notifications::Input::Presented(id)).await;
+            }
+            cosmic::Action::App(Message::Ignore)
+        })
+    }
+
     fn expire(&mut self, i: u32) {
         let Some((c_pos, _)) = self.cards.iter().enumerate().find(|(_, n)| n.id == i) else {
             return;
@@ -386,6 +399,12 @@ impl CosmicNotifications {
     }
 
     fn request_activation(&mut self, i: u32, action: Option<ActionId>) -> Task<Message> {
+        if crate::subscriptions::managed::enabled() {
+            // The controlled default action acknowledges a record, not an App launch.
+            return self
+                .activate_notification(String::new(), i, action)
+                .unwrap_or_else(Task::none);
+        }
         activation::request_token(Some(String::from(Self::APP_ID)), Some(self.window_id)).map(
             move |token| cosmic::Action::App(Message::ActivationToken(token, i, action.clone())),
         )
@@ -516,10 +535,25 @@ impl cosmic::Application for CosmicNotifications {
             }
             Message::Notification(e) => match e {
                 notifications::Event::Notification(n) => {
-                    return self.push_notification(n);
+                    let id = n.id;
+                    let update = self.push_notification(n);
+                    return Task::batch([update, self.presented(id)]);
                 }
                 notifications::Event::Replace(n) => {
-                    return self.replace_notification(n);
+                    let id = n.id;
+                    let update = self.replace_notification(n);
+                    return Task::batch([update, self.presented(id)]);
+                }
+                notifications::Event::ReplaceHandle {
+                    previous,
+                    notification,
+                } => {
+                    self.cards.retain(|card| card.id != previous);
+                    self.hidden.retain(|card| card.id != previous);
+                    let id = notification.id;
+                    let update = self.push_notification(notification);
+                    self.signal_closed(previous, CloseReason::CloseNotification);
+                    return Task::batch([update, self.presented(id)]);
                 }
                 notifications::Event::CloseNotification(id) => {
                     if let Some(c) = self.close(id, CloseReason::CloseNotification) {
@@ -528,6 +562,18 @@ impl cosmic::Application for CosmicNotifications {
                 }
                 notifications::Event::Ready(tx) => {
                     self.notifications_tx = Some(tx);
+                }
+                notifications::Event::DismissNotification(id) => {
+                    return self
+                        .close(id, CloseReason::Dismissed)
+                        .unwrap_or_else(Task::none);
+                }
+                notifications::Event::Preferences(preferences) => {
+                    self.config.do_not_disturb = preferences.muted;
+                }
+                notifications::Event::Unavailable(error) => {
+                    tracing::error!(%error, "native notification Host resource unavailable");
+                    std::process::exit(1);
                 }
                 notifications::Event::AppletActivated { id, action } => {
                     tracing::trace!("requesting token for {id}");
@@ -644,8 +690,15 @@ impl cosmic::Application for CosmicNotifications {
                 // Content: prominent semibold title (summary) over muted body.
                 let content = column![
                     text::heading(n.summary.lines().next().unwrap_or_default()).width(Length::Fill),
-                    Element::from(rich_text(html_to_spans(&n.body)).size(12.0))
-                        .map(|_: ()| Message::Ignore)
+                    Element::from(
+                        rich_text(if crate::subscriptions::managed::enabled() {
+                            crate::subscriptions::managed::body_spans(n)
+                        } else {
+                            html_to_spans(&n.body)
+                        })
+                        .size(12.0)
+                    )
+                    .map(|_: ()| Message::Ignore)
                 ]
                 .spacing(spacing.space_xxxs)
                 .width(Length::Fill);

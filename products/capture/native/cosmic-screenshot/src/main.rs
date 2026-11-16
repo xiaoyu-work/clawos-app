@@ -79,6 +79,9 @@ impl std::fmt::Display for CaptureError {
 
 pub(crate) async fn capture(opts: CaptureOptions) -> Result<CaptureOutcome, CaptureError> {
     if !opts.interactive {
+        if claw_os_sdk::gui::is_gui_launch() {
+            return gui::save_capture(opts.save_dir, opts.modal).await;
+        }
         let dir = opts
             .save_dir
             .or_else(dirs::picture_dir)

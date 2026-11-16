@@ -91,7 +91,7 @@ pub enum Message {
     /// Pan the displays view
     Pan(arrangement::Pan),
     /// Status of an applied display change.
-    RandrResult(Arc<std::io::Result<()>>),
+    RandrResult(Arc<std::io::Result<serde_json::Value>>),
     /// Set the refresh rate of a display.
     RefreshRate(usize),
     /// Set the VRR mode of a display.
@@ -148,6 +148,7 @@ pub struct Page {
     last_pan: f32,
     /// The setting to revert to if the next dialog page is cancelled.
     dialog: Option<Randr>,
+    backup_token: Option<String>,
     /// the instant the setting was changed.
     dialog_countdown: usize,
     show_display_options: bool,
@@ -171,6 +172,7 @@ impl Default for Page {
             display_arrangement_scrollable: widget::Id::unique(),
             last_pan: 0.5,
             dialog: None,
+            backup_token: None,
             dialog_countdown: 0,
             show_display_options: true,
             adjusted_scale: 0,
@@ -236,17 +238,12 @@ impl page::Page<crate::pages::Message> for Page {
 
     #[cfg(not(feature = "test"))]
     fn on_enter(&mut self) -> Task<crate::pages::Message> {
-        use std::time::Duration;
-
         self.cache.orientations = [
             fl!("orientation", "standard"),
             fl!("orientation", "rotate-90"),
             fl!("orientation", "rotate-180"),
             fl!("orientation", "rotate-270"),
         ];
-
-        let mut tasks = Vec::with_capacity(3);
-        tasks.push(cosmic::task::future(on_enter()));
 
         if let Some((canceller, handle)) = self.randr_handle.take() {
             _ = canceller.send(());
@@ -258,120 +255,25 @@ impl page::Page<crate::pages::Message> for Page {
             handle.abort();
         }
 
-        self.refreshing_page.store(true, Ordering::SeqCst);
-
-        #[cfg(feature = "wayland")]
-        {
-            let refreshing_page = self.refreshing_page.clone();
-            let (tx, rx) = cosmic_randr::channel();
-            let (canceller, cancelled) = oneshot::channel::<()>();
-            let runtime = tokio::runtime::Handle::current();
-
-            // Spawns a background service to monitor for display state changes.
-            // This must be spawned onto its own thread because `*mut wayland_sys::client::wl_display` is not Send-able.
-            tokio::task::spawn_blocking(move || {
-                let dispatcher = std::pin::pin!(async move {
-                    let Ok((mut context, mut event_queue)) = cosmic_randr::connect(tx) else {
-                        return;
-                    };
-
-                    loop {
-                        if context.dispatch(&mut event_queue).await.is_err() {
-                            return;
-                        }
-                    }
-                });
-
-                runtime.block_on(futures::future::select(cancelled, dispatcher));
-            });
-
-            // Forward messages from another thread to prevent the monitoring thread from blocking.
-            let (randr_task, randr_handle) = Task::stream(stream::channel(
-                1,
-                |mut emitter: futures::channel::mpsc::Sender<_>| async move {
-                    while let Some(message) = rx.recv().await {
-                        if let cosmic_randr::Message::ManagerDone = message
-                            && !refreshing_page.swap(true, Ordering::SeqCst)
-                        {
-                            _ = emitter.send(on_enter().await).await;
-                        }
-                    }
-                },
-            ))
-            .abortable();
-
-            tasks.push(randr_task);
-            self.randr_handle = Some((canceller, randr_handle));
-        }
-
-        // Channels for communicating messages from the DRM hotplug thread.
-        let (hotplug_cancel_tx, hotplug_cancel_rx) = oneshot::channel::<()>();
-        let (tx, mut rx) = tokio::sync::mpsc::channel(1);
-
-        // Spawn a background thread for asynchronously polling a udev monitor for DRM
-        // hotplug events. As udev is not thread-safe, it needs its own dedicated thread.
-        let tokio_handle = tokio::runtime::Handle::current();
-        std::thread::spawn(move || {
-            tokio_handle.block_on(async move {
-                let Ok(builder) = udev::MonitorBuilder::new() else {
-                    return;
-                };
-
-                let Ok(builder) = builder.match_subsystem("drm") else {
-                    return;
-                };
-
-                let Ok(socket) = builder.listen() else {
-                    return;
-                };
-
-                let Ok(mut async_fd) = tokio::io::unix::AsyncFd::new(socket) else {
-                    return;
-                };
-
-                let emitter = std::pin::pin!(async move {
-                    loop {
-                        // If any DRM events occur, a message updating the display list will be sent.
-                        if let Ok(mut guard) = async_fd.writable().await {
-                            guard.clear_ready();
-
-                            let drm_hotplug_occurred = &mut false;
-                            async_fd.get_mut().iter().for_each(|_| {
-                                *drm_hotplug_occurred = true;
-                            });
-
-                            if *drm_hotplug_occurred {
-                                _ = tx.send(on_enter().await).await;
-                            }
-                        }
-
-                        tokio::time::sleep(Duration::from_secs(3)).await;
-                    }
-                });
-
-                let cancellation = std::pin::pin!(async move {
-                    _ = hotplug_cancel_rx.await;
-                });
-
-                futures::future::select(cancellation, emitter).await;
-            });
-        });
-
-        // Forward messages from the DRM hotplug thread.
-        let (hotplug_task, hotplug_handle) = Task::stream(stream::channel(
+        let (cancel, cancelled) = oneshot::channel::<()>();
+        let (task, handle) = Task::stream(stream::channel(
             1,
             |mut emitter: futures::channel::mpsc::Sender<pages::Message>| async move {
-                while let Some(message) = rx.recv().await {
-                    _ = emitter.send(message).await;
-                }
+                let poll = async move {
+                    loop {
+                        if emitter.send(on_enter().await).await.is_err() {
+                            return;
+                        }
+                        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+                    }
+                };
+                futures::pin_mut!(poll, cancelled);
+                let _ = futures::future::select(poll, cancelled).await;
             },
         ))
         .abortable();
-
-        tasks.push(hotplug_task);
-        self.hotplug_handle = Some((hotplug_cancel_tx, hotplug_handle));
-
-        cosmic::task::batch(tasks)
+        self.randr_handle = Some((cancel, handle));
+        task
     }
 
     fn on_leave(&mut self) -> Task<crate::pages::Message> {
@@ -481,6 +383,14 @@ impl Page {
     pub fn update(&mut self, message: Message) -> Task<app::Message> {
         match message {
             Message::RandrResult(result) => {
+                if let Ok(value) = result.as_ref() {
+                    self.backup_token = value["backup_token"]
+                        .as_str()
+                        .filter(|token| {
+                            token.len() == 32 && token.bytes().all(|byte| byte.is_ascii_hexdigit())
+                        })
+                        .map(str::to_owned);
+                }
                 if let Some(Err(why)) = Arc::into_inner(result) {
                     tracing::error!(why = why.to_string(), "cosmic-randr error");
                     // Cancel the revert dialog if resolution or refresh rate did not change.
@@ -515,19 +425,29 @@ impl Page {
             }
 
             Message::DialogCancel => {
-                let Some(request) = self.dialog else {
-                    return Task::none();
-                };
-                let Some(output) = self.list.outputs.get(self.active_display) else {
-                    return Task::none();
-                };
                 self.dialog = None;
                 self.dialog_countdown = 0;
-                return self.exec_randr(output, request);
+                let Some(token) = self.backup_token.take() else {
+                    cosmic_settings_provider_client::refused(
+                        "No confirmed OS display rollback receipt is available; refresh before retrying.",
+                    );
+                    return Task::none();
+                };
+                return cosmic::Task::future(async move {
+                    let result = cosmic_settings_provider_client::call_async(
+                        "display",
+                        "restore",
+                        vec!["--token".into(), token, "--confirm".into()],
+                    )
+                    .await
+                    .map_err(std::io::Error::other);
+                    app::Message::from(Message::RandrResult(Arc::new(result)))
+                });
             }
 
             Message::DialogComplete => {
                 self.dialog = None;
+                self.backup_token = None;
                 self.dialog_countdown = 0;
             }
 
@@ -731,6 +651,7 @@ impl Page {
             return Task::none();
         }
         self.dialog = Some(revert_request);
+        self.backup_token = None;
         self.dialog_countdown = 10;
         cosmic::task::future(async {
             tokio::time::sleep(time::Duration::from_secs(1)).await;
@@ -1081,8 +1002,8 @@ impl Page {
         }
 
         let name = &*output.name;
-        let mut argv: Vec<String> = Vec::with_capacity(8);
-        argv.push("cosmic-randr".to_owned());
+        let mut options = vec!["--output".to_owned(), name.to_owned()];
+        let action;
 
         match request {
             Randr::Mirror(from_id) => {
@@ -1090,24 +1011,13 @@ impl Page {
                     return Task::none();
                 };
 
-                argv.push("mirror".to_owned());
-                argv.push(output.name.to_string());
-                argv.push(from_output.name.to_string());
+                action = "mirror";
+                options.extend(["--from".into(), from_output.name.clone()]);
             }
 
             Randr::Position(x, y) => {
-                let Some(current) = output.current.and_then(|id| self.list.modes.get(id)) else {
-                    return Task::none();
-                };
-
-                argv.push("mode".to_owned());
-                argv.push("--pos-x".to_owned());
-                argv.push(itoa::Buffer::new().format(x).to_owned());
-                argv.push("--pos-y".to_owned());
-                argv.push(itoa::Buffer::new().format(y).to_owned());
-                argv.push(name.to_owned());
-                argv.push(itoa::Buffer::new().format(current.size.0).to_owned());
-                argv.push(itoa::Buffer::new().format(current.size.1).to_owned());
+                action = "position";
+                options.extend(["--x".into(), x.to_string(), "--y".into(), y.to_string()]);
             }
 
             Randr::RefreshRate(rate) => {
@@ -1115,12 +1025,15 @@ impl Page {
                     return Task::none();
                 };
 
-                argv.push("mode".to_owned());
-                argv.push("--refresh".to_owned());
-                argv.push(format!("{}.{:03}", rate / 1000, rate % 1000));
-                argv.push(name.to_owned());
-                argv.push(itoa::Buffer::new().format(current.size.0).to_owned());
-                argv.push(itoa::Buffer::new().format(current.size.1).to_owned());
+                action = "mode";
+                options.extend([
+                    "--refresh".into(),
+                    format!("{}.{:03}", rate / 1000, rate % 1000),
+                    "--width".into(),
+                    current.size.0.to_string(),
+                    "--height".into(),
+                    current.size.1.to_string(),
+                ]);
             }
 
             Randr::VariableRefreshRate(mode) => {
@@ -1128,41 +1041,41 @@ impl Page {
                     return Task::none();
                 };
 
-                argv.push("mode".to_owned());
-                argv.push("--adaptive-sync".to_owned());
-                argv.push(<&'static str>::from(mode).to_owned());
-                argv.push(name.to_owned());
-                argv.push(itoa::Buffer::new().format(current.size.0).to_owned());
-                argv.push(itoa::Buffer::new().format(current.size.1).to_owned());
+                action = "mode";
+                options.extend([
+                    "--adaptive-sync".into(),
+                    <&'static str>::from(mode).into(),
+                    "--width".into(),
+                    current.size.0.to_string(),
+                    "--height".into(),
+                    current.size.1.to_string(),
+                ]);
             }
 
             Randr::Resolution(width, height) => {
-                argv.push("mode".to_owned());
-                argv.push(name.to_owned());
-                argv.push(itoa::Buffer::new().format(width).to_owned());
-                argv.push(itoa::Buffer::new().format(height).to_owned());
+                action = "mode";
+                options.extend([
+                    "--width".into(),
+                    width.to_string(),
+                    "--height".into(),
+                    height.to_string(),
+                ]);
             }
 
             Randr::Scale(scale) => {
-                let Some(current) = output.current.and_then(|id| self.list.modes.get(id)) else {
+                let Some(_current) = output.current.and_then(|id| self.list.modes.get(id)) else {
                     return Task::none();
                 };
 
-                let rate = current.refresh_rate;
-
-                argv.push("mode".to_owned());
-                argv.push("--scale".to_owned());
-                argv.push(format!("{}.{:02}", scale / 100, scale % 100));
-                argv.push("--refresh".to_owned());
-                argv.push(format!("{}.{:03}", rate / 1000, rate % 1000));
-                argv.push(name.to_owned());
-                argv.push(itoa::Buffer::new().format(current.size.0).to_owned());
-                argv.push(itoa::Buffer::new().format(current.size.1).to_owned());
+                action = "scale";
+                options.extend([
+                    "--scale".into(),
+                    format!("{}.{:02}", scale / 100, scale % 100),
+                ]);
             }
 
             Randr::Toggle(enable) => {
-                argv.push(if enable { "enable" } else { "disable" }.to_owned());
-                argv.push(name.to_owned());
+                action = if enable { "enable" } else { "disable" };
             }
 
             Randr::Transform(transform) => {
@@ -1170,23 +1083,22 @@ impl Page {
                     return Task::none();
                 };
 
-                argv.push("mode".to_owned());
-                argv.push("--transform".to_owned());
-                argv.push(format!("{transform}"));
-                argv.push(name.to_owned());
-                argv.push(itoa::Buffer::new().format(current.size.0).to_owned());
-                argv.push(itoa::Buffer::new().format(current.size.1).to_owned());
+                action = "mode";
+                options.extend([
+                    "--transform".into(),
+                    transform.to_string(),
+                    "--width".into(),
+                    current.size.0.to_string(),
+                    "--height".into(),
+                    current.size.1.to_string(),
+                ]);
             }
         }
 
         tasks.push(cosmic::task::future(async move {
-            tracing::debug!(?argv, "executing");
-            let result = tokio::task::spawn_blocking(move || {
-                let argv_refs: Vec<&str> = argv.iter().map(String::as_str).collect();
-                crate::claw_glue::run_output(&argv_refs, Some(5)).map(|_| ())
-            })
-            .await
-            .unwrap_or_else(|e| Err(std::io::Error::other(e.to_string())));
+            let result = cosmic_settings_provider_client::call_async("display", action, options)
+                .await
+                .map_err(std::io::Error::other);
             app::Message::from(Message::RandrResult(Arc::new(result)))
         }));
         Task::batch(tasks)
@@ -1464,7 +1376,7 @@ fn cache_rates(cached_rates: &mut Vec<String>, rates: &[u32]) {
 }
 
 pub async fn on_enter() -> crate::pages::Message {
-    let randr_fut = cosmic_randr_shell::list();
+    let randr_fut = crate::display_settings::list();
 
     crate::pages::Message::Displays(Message::Update {
         randr: Arc::new(randr_fut.await),

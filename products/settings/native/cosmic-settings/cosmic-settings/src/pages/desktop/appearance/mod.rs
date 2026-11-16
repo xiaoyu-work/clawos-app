@@ -13,12 +13,10 @@ use std::sync::Arc;
 
 use cosmic::app::ContextDrawer;
 //TODO: use embedded cosmic-files for portability
-use cosmic::config::CosmicTk;
-use cosmic::cosmic_config::{Config, ConfigSet, CosmicConfigEntry};
+use crate::owner_config::{Config, ConfigSet, CosmicConfigEntry};
 use cosmic::cosmic_theme::palette::{FromColor, Hsv, Srgb};
 use cosmic::cosmic_theme::{CornerRadii, Density, ThemeBuilder, ThemeMode};
 #[cfg(feature = "xdg-portal")]
-use cosmic::dialog::file_chooser::{self, FileFilter};
 use cosmic::iced::Subscription;
 use cosmic::iced::core::{Alignment, Length};
 use cosmic::widget::{
@@ -73,7 +71,7 @@ impl Default for Page {
 
 impl From<theme_manager::Manager> for Page {
     fn from(theme_manager: theme_manager::Manager) -> Self {
-        let tk_config = CosmicTk::config().ok();
+        let tk_config = Config::new(cosmic::config::ID, 1).ok();
         let theme_mode = theme_manager.mode();
         let theme_builder = theme_manager.builder().clone();
 
@@ -98,7 +96,7 @@ impl From<theme_manager::Manager> for Page {
 
 #[cfg(feature = "xdg-portal")]
 #[derive(Clone)]
-pub struct SaveResponse(pub Arc<file_chooser::save::Response>);
+pub struct SaveResponse(pub Arc<url::Url>);
 
 #[cfg(feature = "xdg-portal")]
 impl std::fmt::Debug for SaveResponse {
@@ -109,7 +107,7 @@ impl std::fmt::Debug for SaveResponse {
 
 #[cfg(feature = "xdg-portal")]
 #[derive(Clone)]
-pub struct OpenResponse(pub Arc<file_chooser::open::FileResponse>);
+pub struct OpenResponse(pub Arc<url::Url>);
 
 #[cfg(feature = "xdg-portal")]
 impl std::fmt::Debug for OpenResponse {
@@ -360,14 +358,11 @@ impl Page {
             #[cfg(feature = "xdg-portal")]
             Message::StartImport => {
                 tasks.push(cosmic::task::future(async move {
-                    let res = file_chooser::open::Dialog::new()
-                        .modal(true)
-                        .filter(FileFilter::glob(FileFilter::new("ron"), "*.ron"))
-                        .open_file()
-                        .await;
+                    let res = crate::file_dialog::open_theme(fl!("import"), true).await;
 
                     match res {
-                        Ok(f) => Message::ImportFile(OpenResponse(Arc::new(f))),
+                        Ok(Some(f)) => Message::ImportFile(OpenResponse(Arc::new(f))),
+                        Ok(None) => Message::ImportError,
                         Err(why) => {
                             tracing::error!(
                                 ?why,
@@ -385,13 +380,9 @@ impl Page {
                 let name = format!("{}.ron", if is_dark { fl!("dark") } else { fl!("light") });
 
                 tasks.push(cosmic::task::future(async move {
-                    let res = file_chooser::save::Dialog::new()
-                        .modal(true)
-                        .file_name(name)
-                        .save_file()
-                        .await;
+                    let res = crate::file_dialog::save_file(fl!("export"), true, name).await;
 
-                    if let Ok(f) = res {
+                    if let Ok(Some(f)) = res {
                         Message::ExportFile(SaveResponse(Arc::new(f)))
                     } else {
                         // TODO Error toast?
@@ -405,19 +396,14 @@ impl Page {
 
             #[cfg(feature = "xdg-portal")]
             Message::ImportFile(f) => {
-                let path_res =
-                    f.0.0
-                        .uris()
-                        .first()
-                        .filter(|f| f.scheme() == "file")
-                        .and_then(|f| f.to_file_path().ok());
+                let path_res = f.0.to_file_path().ok();
 
                 let Some(path) = path_res else {
                     return Task::none();
                 };
 
                 tasks.push(cosmic::task::future(async move {
-                    let res = tokio::fs::read_to_string(path).await;
+                    let res = crate::resource_files::read_text(&path).await;
                     if let Some(b) = res.ok().and_then(|s| ron::de::from_str(&s).ok()) {
                         Message::ImportSuccess(Box::new(b))
                     } else {
@@ -430,12 +416,7 @@ impl Page {
 
             #[cfg(feature = "xdg-portal")]
             Message::ExportFile(f) => {
-                let path_res =
-                    f.0.0
-                        .uris()
-                        .first()
-                        .filter(|f| f.scheme() == "file")
-                        .and_then(|f| f.to_file_path().ok());
+                let path_res = f.0.to_file_path().ok();
 
                 let Some(path) = path_res else {
                     return Task::none();
@@ -450,11 +431,7 @@ impl Page {
                         return crate::app::Message::None;
                     };
 
-                    let write_result = tokio::task::spawn_blocking(move || {
-                        crate::claw_glue::write_text(&path, &builder)
-                    })
-                    .await
-                    .unwrap_or_else(|e| Err(std::io::Error::other(e.to_string())));
+                    let write_result = crate::resource_files::write_text(&path, &builder).await;
 
                     match write_result {
                         Ok(_) => Message::ExportSuccess,
@@ -578,8 +555,8 @@ impl Page {
     // TODO: cache panel and dock configs so that they needn't be re-read
     #[cfg(feature = "wayland")]
     pub fn update_panel_radii(roundness: Roundness) {
-        let panel_config_helper = CosmicPanelConfig::cosmic_config("Panel").ok();
-        let dock_config_helper = CosmicPanelConfig::cosmic_config("Dock").ok();
+        let panel_config_helper = crate::owner_config::panel("Panel").ok();
+        let dock_config_helper = crate::owner_config::panel("Dock").ok();
 
         let mut panel_config = panel_config_helper.as_ref().and_then(|config_helper| {
             let panel_config = match CosmicPanelConfig::get_entry(config_helper) {
@@ -619,7 +596,9 @@ impl Page {
                 0
             };
 
-            if let Err(why) = panel_config.set_border_radius(panel_config_helper, radii) {
+            if let Err(why) = panel_config_helper.edit(panel_config, |entry, local| {
+                entry.set_border_radius(local, radii)
+            }) {
                 tracing::error!(?why, "Error updating panel corner radii");
             }
         }
@@ -636,7 +615,9 @@ impl Page {
                 0
             };
 
-            if let Err(why) = dock_config.set_border_radius(dock_config_helper, radii) {
+            if let Err(why) = dock_config_helper.edit(dock_config, |entry, local| {
+                entry.set_border_radius(local, radii)
+            }) {
                 tracing::error!(?why, "Error updating dock corner radii");
             }
         }
@@ -644,7 +625,7 @@ impl Page {
 
     #[cfg(feature = "wayland")]
     pub fn update_dock_padding(roundness: Roundness) {
-        let dock_config_helper = CosmicPanelConfig::cosmic_config("Dock").ok();
+        let dock_config_helper = crate::owner_config::panel("Dock").ok();
 
         let mut dock_config = dock_config_helper.as_ref().and_then(|config_helper| {
             let panel_config = match CosmicPanelConfig::get_entry(config_helper) {
@@ -668,7 +649,9 @@ impl Page {
                 Roundness::Square => 0,
             };
 
-            if let Err(why) = dock_config.set_padding(dock_config_helper, padding) {
+            if let Err(why) = dock_config_helper.edit(dock_config, |entry, local| {
+                entry.set_padding(local, padding)
+            }) {
                 tracing::error!(?why, "Error updating dock padding");
             }
         }
@@ -679,8 +662,8 @@ impl Page {
     pub fn update_panel_spacing(density: Density) {
         let spacing: cosmic::cosmic_theme::Spacing = density.into();
         let space_none = spacing.space_none;
-        let panel_config_helper = CosmicPanelConfig::cosmic_config("Panel").ok();
-        let dock_config_helper = CosmicPanelConfig::cosmic_config("Dock").ok();
+        let panel_config_helper = crate::owner_config::panel("Panel").ok();
+        let dock_config_helper = crate::owner_config::panel("Dock").ok();
         let mut panel_config = panel_config_helper.as_ref().and_then(|config_helper| {
             let panel_config = match CosmicPanelConfig::get_entry(config_helper) {
                 Ok(c) => c,
@@ -709,7 +692,9 @@ impl Page {
         if let Some(panel_config_helper) = panel_config_helper.as_ref()
             && let Some(panel_config) = panel_config.as_mut()
         {
-            let update = panel_config.set_spacing(panel_config_helper, space_none as u32);
+            let update = panel_config_helper.edit(panel_config, |entry, local| {
+                entry.set_spacing(local, space_none as u32)
+            });
             if let Err(err) = update {
                 tracing::error!(?err, "Error updating panel spacing");
             }
@@ -718,7 +703,9 @@ impl Page {
         if let Some(dock_config_helper) = dock_config_helper.as_ref()
             && let Some(dock_config) = dock_config.as_mut()
         {
-            let update = dock_config.set_spacing(dock_config_helper, space_none as u32);
+            let update = dock_config_helper.edit(dock_config, |entry, local| {
+                entry.set_spacing(local, space_none as u32)
+            });
             if let Err(err) = update {
                 tracing::error!(?err, "Error updating dock spacing");
             }
@@ -804,15 +791,14 @@ impl page::Page<crate::pages::Message> for Page {
         cosmic::task::batch(tasks)
     }
 
-    fn subscription(&self, core: &cosmic::Core) -> Subscription<crate::pages::Message> {
+    fn subscription(&self, _core: &cosmic::Core) -> Subscription<crate::pages::Message> {
         // Keep the Appearance page in sync when the daemon auto-switches light/dark.
-        core.watch_config::<ThemeMode>("com.clawos.Theme.Mode")
-            .map(|update| {
-                for why in update.errors {
-                    tracing::error!(?why, "theme mode config load error");
-                }
-                crate::pages::Message::Appearance(Message::ThemeModeUpdate(update.config))
-            })
+        crate::owner_config::watch::<ThemeMode>("com.clawos.Theme.Mode").map(|update| {
+            for why in update.errors {
+                tracing::error!(?why, "theme mode config load error");
+            }
+            crate::pages::Message::Appearance(Message::ThemeModeUpdate(update.config))
+        })
     }
 
     fn context_drawer(&self) -> Option<ContextDrawer<'_, crate::pages::Message>> {

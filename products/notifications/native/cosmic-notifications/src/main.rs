@@ -18,6 +18,10 @@ fn main() -> anyhow::Result<()> {
     if std::env::var("COS_MCP_SERVER").as_deref() == Ok("1") {
         return mcp::run();
     }
+    anyhow::ensure!(
+        subscriptions::managed::enabled(),
+        "Notifications requires the authenticated GUI Host; use cos app cosmic-notifications --gui"
+    );
 
     color_backtrace::install();
     let trace = tracing_subscriber::registry();

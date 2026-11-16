@@ -8,7 +8,6 @@ use futures::{SinkExt, Stream};
 use intmap::IntMap;
 use pipewire::Availability;
 use std::{
-    process::Stdio,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -197,10 +196,6 @@ impl Model {
                 self.update_ui_profiles();
             }
 
-            // Use pw-cli as a fallback in case it wasn't set correctly.
-            tokio::spawn(async move {
-                set_profile(device_id, index, save).await;
-            });
         }
     }
 
@@ -236,7 +231,7 @@ impl Model {
         self.set_default_sink_id(node_id);
 
         // Use pactl if the node is not a device node.
-        let virtual_sink_name: Option<String> =
+        let _virtual_sink_name: Option<String> =
             if let Some(device) = self.device_ids.get(node_id).cloned() {
                 // Get route index of the selected node and apply it to the device.
                 if let Some((card_profile_device, route_index)) = self
@@ -258,11 +253,9 @@ impl Model {
             };
 
         tokio::task::spawn(async move {
-            if let Some(node_name) = virtual_sink_name {
-                pactl_set_default_sink(&node_name).await
-            } else {
-                set_default(node_id).await
-            }
+            if let Err(error) = cosmic_settings_provider_client::call_async(
+                "audio", "output-default", vec!["--target".into(), node_id.to_string()],
+            ).await { tracing::warn!(%error, "OS did not confirm the default audio output"); }
         });
     }
 
@@ -313,7 +306,7 @@ impl Model {
         self.set_default_source_id(node_id);
 
         // Use pactl if the node is not a device node.
-        let virtual_source_name: Option<String> =
+        let _virtual_source_name: Option<String> =
             if let Some(device) = self.device_ids.get(node_id).cloned() {
                 // Get route index of the selected node and apply it to the device.
                 if let Some((card_profile_device, route_index)) = self
@@ -335,11 +328,9 @@ impl Model {
             };
 
         tokio::task::spawn(async move {
-            if let Some(node_name) = virtual_source_name {
-                pactl_set_default_source(&node_name).await
-            } else {
-                set_default(node_id).await
-            }
+            if let Err(error) = cosmic_settings_provider_client::call_async(
+                "audio", "input-default", vec!["--target".into(), node_id.to_string()],
+            ).await { tracing::warn!(%error, "OS did not confirm the default audio input"); }
         });
     }
 
@@ -415,6 +406,9 @@ impl Model {
 
     fn pipewire_update(&mut self, event: pipewire::Event) {
         match event {
+            pipewire::Event::Error(error) => {
+                tracing::warn!(%error, "OS audio provider refused the request");
+            }
             pipewire::Event::NodeProperties(id, props) => {
                 if self.active_sink_node == Some(id) {
                     if self.sink_volume_debounce {
@@ -475,18 +469,6 @@ impl Model {
                         "Device {id} profile changed from {} to {}: {}",
                         prev.index, profile.index, profile.description
                     );
-                } else {
-                    #[cfg(feature = "auto-profile-init")]
-                    if profile.index != 0 {
-                        // Use pw-cli to re-set the profile in case wireplumber has invalid state.
-                        // Profiles set by us do not need to use this. Only sets if profile is not `Off`.
-                        tracing::debug!(
-                            target: "sound",
-                            "Device {id} initialized with profile {}: {}", profile.index, profile.description
-                        );
-
-                        self.set_profile(id, profile.index as u32, false);
-                    }
                 }
             }
 
@@ -603,7 +585,7 @@ impl Model {
                                     node.object_id,
                                     node.node_name
                                 );
-                                self.set_default_sink_node_id(node.object_id);
+                                self.set_default_sink_id(node.object_id);
                             } else if let Some(device_id) = self.changing_sink_device {
                                 for (node_id, &device) in &self.device_ids {
                                     if device == device_id && self.sink_node_ids.contains(&node_id)
@@ -628,7 +610,7 @@ impl Model {
                                     node.object_id,
                                     node.node_name
                                 );
-                                self.set_default_source_node_id(node.object_id);
+                                self.set_default_source_id(node.object_id);
                             } else if let Some(device_id) = self.changing_source_device {
                                 for (node_id, &device) in &self.device_ids {
                                     if device == device_id
@@ -897,62 +879,4 @@ impl std::fmt::Debug for SubscriptionHandle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("SubscriptionHandle")
     }
-}
-
-// TODO: Use pipewire library
-pub async fn set_default(id: u32) {
-    tracing::debug!(target: "sound", "setting default node {id}");
-    let id = numtoa::BaseN::<10>::u32(id);
-    _ = tokio::process::Command::new("wpctl")
-        .args(["set-default", id.as_str()])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .await;
-}
-
-/// Use this to set a virtual sink as a default.
-/// TODO: We should be able to set this with pipewire-rs somehow.
-pub async fn pactl_set_default_sink(node_name: &str) {
-    tracing::debug!(target: "sound", "setting default virtual node {node_name}");
-    _ = tokio::process::Command::new("pactl")
-        .args(["set-default-sink", node_name])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .await;
-}
-
-/// Use this to set a virtual sink as a default.
-/// TODO: We should be able to set this with pipewire-rs somehow.
-pub async fn pactl_set_default_source(node_name: &str) {
-    _ = tokio::process::Command::new("pactl")
-        .args(["set-default-source", node_name])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .await;
-}
-
-// TODO: Use pipewire library
-pub async fn set_profile(id: u32, index: u32, save: bool) {
-    let id = numtoa::BaseN::<10>::u32(id);
-    let index = numtoa::BaseN::<10>::u32(index);
-    let value = [
-        "{ index: ",
-        index.as_str(),
-        if save {
-            ", save: true }"
-        } else {
-            ", save: false }"
-        },
-    ]
-    .concat();
-
-    _ = tokio::process::Command::new("pw-cli")
-        .args(["s", id.as_str(), "Profile", &value])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .await;
 }

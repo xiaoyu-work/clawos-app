@@ -1,7 +1,7 @@
+use crate::owner_config::{self as cosmic_config, CosmicConfigEntry};
 use cosmic::{
     Element, Task,
     cctk::sctk::reexports::client::{Proxy, backend::ObjectId, protocol::wl_output::WlOutput},
-    cosmic_config::{self, CosmicConfigEntry},
     cosmic_theme::Density,
     iced::{Alignment, Length},
     surface,
@@ -501,7 +501,7 @@ impl PageInner {
                         default.border_radius = 0;
                     }
 
-                    if let Err(err) = default.write_entry(config) {
+                    if let Err(err) = config.write_entry(default) {
                         tracing::error!(?err, "Error resetting panel config.");
                     }
                     self.size.clone_from(&default.size);
@@ -513,7 +513,7 @@ impl PageInner {
             }
             Message::FullReset => {
                 if let Some(container) = self.system_container.as_ref()
-                    && let Err(err) = container.write_entries()
+                    && let Err(err) = crate::owner_config::write_panels(container)
                 {
                     tracing::error!(?err, "Error fully resetting the panel config.");
                 }
@@ -543,19 +543,19 @@ impl PageInner {
         match message {
             Message::AutoHidePanel(enabled) => {
                 if enabled {
-                    _ = panel_config.set_exclusive_zone(helper, false);
-                    _ = panel_config.set_autohide(
-                        helper,
+                    _ = helper.edit(panel_config, |entry, local| entry.set_exclusive_zone(local, false));
+                    _ = helper.edit(panel_config, |entry, local| entry.set_autohide(
+                        local,
                         Some(AutoHide {
                             wait_time: 1000,
                             transition_time: 200,
                             handle_size: 4,
                             unhide_delay: 200,
                         }),
-                    );
+                    ));
                 } else {
-                    _ = panel_config.set_exclusive_zone(helper, true);
-                    _ = panel_config.set_autohide(helper, None);
+                    _ = helper.edit(panel_config, |entry, local| entry.set_exclusive_zone(local, true));
+                    _ = helper.edit(panel_config, |entry, local| entry.set_autohide(local, None));
                 }
             }
             Message::PanelAnchor(i) => {
@@ -568,24 +568,24 @@ impl PageInner {
                 .iter()
                 .find(|a| Anchor(**a).to_string() == self.anchors[i])
                 {
-                    _ = panel_config.set_anchor(helper, *anchor);
+                    _ = helper.edit(panel_config, |entry, local| entry.set_anchor(local, *anchor));
                 }
             }
             Message::Output(i) => {
                 if i == 0 {
-                    _ = panel_config.set_output(helper, CosmicPanelOuput::All);
+                    _ = helper.edit(panel_config, |entry, local| entry.set_output(local, CosmicPanelOuput::All));
                 } else {
-                    _ = panel_config
-                        .set_output(helper, CosmicPanelOuput::Name(self.outputs[i].clone()));
+                    _ = helper.edit(panel_config, |entry, local|
+                        entry.set_output(local, CosmicPanelOuput::Name(self.outputs[i].clone())));
                 }
             }
             Message::AnchorGap(enabled) => {
-                _ = panel_config.set_anchor_gap(helper, enabled);
+                _ = helper.edit(panel_config, |entry, local| entry.set_anchor_gap(local, enabled));
 
                 if enabled {
-                    _ = panel_config.set_margin(helper, 4);
+                    _ = helper.edit(panel_config, |entry, local| entry.set_margin(local, 4));
                 } else {
-                    _ = panel_config.set_margin(helper, 0);
+                    _ = helper.edit(panel_config, |entry, local| entry.set_margin(local, 0));
                 }
                 let theme = cosmic::theme::system_preference();
                 let theme = theme.cosmic();
@@ -600,27 +600,27 @@ impl PageInner {
                 } else {
                     new_radius = 0;
                 }
-                _ = panel_config.set_border_radius(helper, new_radius).unwrap();
+                _ = helper.edit(panel_config, |entry, local| entry.set_border_radius(local, new_radius));
             }
             Message::PanelSize(size) => {
                 self.size = size;
             }
             Message::PanelSizeCommit => {
-                _ = panel_config.set_size(helper, self.size.clone());
+                _ = helper.edit(panel_config, |entry, local| entry.set_size(local, self.size.clone()));
                 // Reset any size overrides the user might have set
-                _ = panel_config.set_size_center(helper, None);
-                _ = panel_config.set_size_wings(helper, None);
+                _ = helper.edit(panel_config, |entry, local| entry.set_size_center(local, None));
+                _ = helper.edit(panel_config, |entry, local| entry.set_size_wings(local, None));
             }
             Message::Appearance(a) => {
                 if let Some(b) = [Appearance::Match, Appearance::Light, Appearance::Dark]
                     .iter()
                     .find(|b| b.to_string() == self.backgrounds[a])
                 {
-                    _ = panel_config.set_background(helper, (*b).into());
+                    _ = helper.edit(panel_config, |entry, local| entry.set_background(local, (*b).into()));
                 }
             }
             Message::ExtendToEdge(enabled) => {
-                _ = panel_config.set_expand_to_edges(helper, enabled);
+                _ = helper.edit(panel_config, |entry, local| entry.set_expand_to_edges(local, enabled));
 
                 let theme = cosmic::theme::system_preference();
                 let theme = theme.cosmic();
@@ -635,7 +635,7 @@ impl PageInner {
                 } else {
                     new_radius = 0;
                 }
-                _ = panel_config.set_border_radius(helper, new_radius).unwrap();
+                _ = helper.edit(panel_config, |entry, local| entry.set_border_radius(local, new_radius));
             }
             Message::OpacityRequest(opacity) => {
                 panel_config.opacity = opacity;

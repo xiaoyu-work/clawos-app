@@ -91,6 +91,26 @@ if args[1] == '__capture':
         except FileExistsError: error('output already exists')
         with os.fdopen(fd, 'wb') as image: image.write((root / 'image.png').read_bytes())
         data['path'] = str(path)
+elif args[1] == '__gui-file-create':
+    assert args[3:] == ['--request-stdin'] and os.environ.get('COS_APP_GUI') == '1'
+    if not (root / 'write').exists(): error('exact output permission denied')
+    assert request['parent_node'] == (root / 'shots').stat().st_ino
+    held = root / 'held-output.json'
+    if args[2] == 'request':
+        assert set(request) == {'parent_node','name'}
+        if (root / 'shots' / request['name']).exists(): error('output already exists')
+        held.write_text(json.dumps(request))
+    selected = json.loads(held.read_text())
+    target = root / 'shots' / selected['name']
+    if args[2] == 'reserve':
+        data = {'version':1,'reservation_id':'ss-' + 'b' * 32,
+            'selection_id':'sc-' + 'a' * 32, 'parent_node':selected['parent_node'],
+            'name':'.cos-save-' + 'b' * 32,'target_name':selected['name'],'expires_in_ms':60000}
+    else:
+        data = {'version':1,'selection_id':'sc-' + 'a' * 32,
+            'parent_node':selected['parent_node'],'name':selected['name'],'access':'create',
+            'state':'created' if target.exists() else 'selected','expires_in_ms':60000,
+            'approval_request_id':'fixture-selected-output','target_display':str(target)}
 elif args[1] == '__gui-capture':
     assert args[3:] == ['--request-stdin']
     assert os.environ.get('COS_APP_GUI') == '1'
@@ -99,11 +119,15 @@ elif args[1] == '__gui-capture':
     invocation = request['request_id']
     assert len(invocation) == 32 and all(ch in '0123456789abcdef' for ch in invocation)
     held = root / 'held-gui.json'
-    if args[2] == 'request':
+    if args[2] in ('request', 'image'):
         assert set(request) == {'request_id','modal'} and isinstance(request['modal'], bool)
         if held.exists(): assert json.loads(held.read_text()) == request
         else: held.write_text(json.dumps(request))
         data = {'version':1,'request_id':invocation,'status':'pending'}
+    elif args[2] == 'read_image':
+        assert set(request) == {'request_id','offset'} and request['offset'] == 0
+        image = (root / 'image.png').read_bytes()
+        data = {'version':1,'request_id':invocation,'offset':0,'done':True,'bytes':list(image)}
     else:
         assert args[2] == 'status' and set(request) == {'request_id'}
         assert json.loads(held.read_text())['request_id'] == invocation
@@ -129,7 +153,7 @@ print(json.dumps({'ok':True,'wire_version':1,'data':data}))
             "TMPDIR": str(fixture), "COS_MCP_SERVER": "1", "COS_APP_ID": "cosmic-screenshot",
             "COS_SESSION": "broker-session",
             "COS_APP_MANIFEST": str(installed / "usr/lib/cos/apps/cosmic-screenshot/app.json"),
-            "CLAW_COS_BIN": str(broker),
+            "CLAW_COS_BIN": str(broker), "COS_OWNER_HOME": str(fixture),
         }
         process = subprocess.Popen(
             [str(binary), "--portal-capture-stdout"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -238,12 +262,16 @@ print(json.dumps({'ok':True,'wire_version':1,'data':data}))
         result = human({"status": "clipboard"})
         assert result.returncode != 0 and "notification permission denied" in result.stderr
         (fixture / "notify").touch()
+        (fixture / "held-gui.json").unlink(missing_ok=True)
+        (fixture / "gui-reply.json").write_text(json.dumps({"status":"image","length":len(PNG)}))
         result = subprocess.run(
             [str(binary), "--gui", "--interactive=false", "--notify=false", "--save-dir", str(output)],
             env=human_env, capture_output=True, text=True, timeout=10,
         )
-        assert result.returncode == 0 and result.stdout.strip() == str(destination), result.stderr
-        destination.unlink()
+        # A plain test directory is not a controlled metadata inode. The real
+        # signed PAM/FUSE acceptance, not this fake wire, covers selected output.
+        assert result.returncode != 0 and "parent_node" in result.stderr, result.stderr
+        assert not destination.exists()
         terminal_env = {key: value for key, value in human_env.items() if key not in ("COS_SESSION", "COS_APP_GUI")}
         args = [str(binary), "--interactive=false", "--notify=false", "--save-dir", str(output)]
         result = subprocess.run(args, env=terminal_env, capture_output=True, text=True, timeout=10)

@@ -7,6 +7,8 @@ license = "MPL-2.0"
 publish = true
 
 [dependencies]
+cosmic-settings-provider-client = { path = "../../crates/provider-client" }
+serde_json = "1"
 cosmic-pipewire = { path = "../../crates/cosmic-pipewire" }
 futures = "0.3.32"
 intmap = "3.1.3"

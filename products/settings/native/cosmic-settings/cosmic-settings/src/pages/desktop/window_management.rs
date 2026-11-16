@@ -9,7 +9,7 @@ use cosmic::{
 };
 
 use cosmic_comp_config::CosmicCompConfig;
-use cosmic_config::{ConfigGet, ConfigSet};
+use crate::owner_config::{self as cosmic_config, ConfigGet, ConfigSet};
 use cosmic_settings_config::{Action, Binding, Shortcuts, shortcuts};
 use cosmic_settings_page::Section;
 use cosmic_settings_page::{self as page, section};
@@ -162,19 +162,19 @@ impl Page {
                 }
             }
             Message::ShowMaximizeButton(value) => {
-                if let Ok(config) = cosmic::config::CosmicTk::config() {
-                    let _res = cosmic::config::COSMIC_TK
-                        .write()
-                        .unwrap()
-                        .set_show_maximize(&config, value);
+                if let Ok(config) = cosmic_config::Config::new(cosmic::config::ID, 1) {
+                    let _res = config.edit(
+                        &mut *cosmic::config::COSMIC_TK.write().unwrap(),
+                        |entry, local| entry.set_show_maximize(local, value),
+                    );
                 }
             }
             Message::ShowMinimizeButton(value) => {
-                if let Ok(config) = cosmic::config::CosmicTk::config() {
-                    let _res = cosmic::config::COSMIC_TK
-                        .write()
-                        .unwrap()
-                        .set_show_minimize(&config, value);
+                if let Ok(config) = cosmic_config::Config::new(cosmic::config::ID, 1) {
+                    let _res = config.edit(
+                        &mut *cosmic::config::COSMIC_TK.write().unwrap(),
+                        |entry, local| entry.set_show_minimize(local, value),
+                    );
                 }
             }
             Message::ShowActiveWindowHint(value) => {
@@ -341,7 +341,7 @@ pub fn focus_navigation() -> Section<crate::pages::Message> {
 
 fn super_key_active_config() -> Option<usize> {
     let super_binding = Binding::new(shortcuts::Modifiers::new().logo(), None);
-    let config = shortcuts::context().ok()?;
+    let config = cosmic_config::Config::new(shortcuts::ID, 1).ok()?;
 
     shortcuts::shortcuts(&config)
         .iter()
@@ -355,7 +355,7 @@ fn super_key_active_config() -> Option<usize> {
 }
 
 fn super_key_set(action: Option<shortcuts::action::System>) {
-    let Ok(config) = shortcuts::context() else {
+    let Ok(config) = cosmic_config::Config::new(shortcuts::ID, 1) else {
         return;
     };
 

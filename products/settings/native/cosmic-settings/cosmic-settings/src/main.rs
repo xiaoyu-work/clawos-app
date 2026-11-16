@@ -20,6 +20,10 @@ pub mod permissions;
 #[macro_use]
 pub mod localize;
 pub mod regional_settings;
+pub mod file_dialog;
+pub mod display_settings;
+pub mod resource_files;
+pub mod owner_config;
 #[cfg(feature = "page-users")]
 pub mod user_settings;
 pub mod pages;

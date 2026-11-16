@@ -10,6 +10,82 @@ pub enum Change {
     SystemLocale { lang: String, region: String },
     OwnerLanguage { languages: String },
     StaticHostname { hostname: String },
+    SystemKeyboard {
+        #[serde(flatten)]
+        keyboard: Keyboard,
+    },
+    Timezone { timezone: String },
+    Ntp { enabled: bool },
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Keyboard {
+    pub layout: String,
+    pub model: String,
+    pub variant: String,
+    pub options: String,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Status {
+    action: String,
+    pub locale: Vec<String>,
+    pub language: String,
+    pub hostname: String,
+    pub keyboard: Keyboard,
+    pub available_locales: Vec<String>,
+}
+
+pub async fn status() -> Result<Status, Failure> {
+    let response = claw_os_sdk::cos_call_json_async_with_binary(
+        "/usr/local/bin/cos", "regional-settings", "control",
+        ["__regional-settings".to_owned(), json_request("status")],
+    ).await.map_err(classify)?;
+    let status: Status = serde_json::from_value(response)
+        .map_err(|error| Failure::Unconfirmed(error.to_string()))?;
+    if status.action != "status" || status.locale.len() > 32
+        || status.locale.iter().any(|value| value.len() > 256)
+        || status.language.len() > 4096 || status.hostname.len() > 64
+        || status.keyboard.layout.len() > 256 || status.keyboard.model.len() > 128
+        || status.keyboard.variant.len() > 256 || status.keyboard.options.len() > 2048
+        || status.available_locales.len() > 4096
+        || status.available_locales.iter().any(|locale| locale.len() > 128)
+    {
+        return Err(Failure::Unconfirmed("invalid OS regional observation".into()));
+    }
+    Ok(status)
+}
+
+fn json_request(action: &str) -> String {
+    serde_json::json!({"action":action}).to_string()
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TimeStatus {
+    action: String,
+    pub timezone: String,
+    pub ntp: bool,
+    pub can_ntp: bool,
+    pub timezones: Vec<String>,
+}
+
+pub async fn time_status() -> Result<TimeStatus, Failure> {
+    let response = claw_os_sdk::cos_call_json_async_with_binary(
+        "/usr/local/bin/cos", "regional-settings", "control",
+        ["__regional-settings".to_owned(), json_request("time_status")],
+    ).await.map_err(classify)?;
+    let status: TimeStatus = serde_json::from_value(response)
+        .map_err(|error| Failure::Unconfirmed(error.to_string()))?;
+    if status.action != "time_status" || status.timezone.len() > 128
+        || status.timezones.len() > 4096
+        || status.timezones.iter().any(|name| name.len() > 128 || name.chars().any(char::is_control))
+    {
+        return Err(Failure::Unconfirmed("invalid OS timezone observation".into()));
+    }
+    Ok(status)
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -55,6 +131,18 @@ enum Applied {
     StaticHostname {
         status: AppliedStatus,
         hostname: String,
+    },
+    SystemKeyboard {
+        status: AppliedStatus,
+        keyboard: Keyboard,
+    },
+    Timezone {
+        status: AppliedStatus,
+        timezone: String,
+    },
+    Ntp {
+        status: AppliedStatus,
+        enabled: bool,
     },
 }
 
@@ -148,6 +236,12 @@ fn decode(change: &Change, value: Value) -> Result<(), Failure> {
                 hostname: observed,
             },
         ) => *hostname == observed,
+        (
+            Change::SystemKeyboard { keyboard },
+            Applied::SystemKeyboard { status: AppliedStatus::Applied, keyboard: observed },
+        ) => *keyboard == observed,
+        (Change::Timezone { timezone }, Applied::Timezone { status: AppliedStatus::Applied, timezone: observed }) => *timezone == observed,
+        (Change::Ntp { enabled }, Applied::Ntp { status: AppliedStatus::Applied, enabled: observed }) => *enabled == observed,
         _ => false,
     };
     if matches {

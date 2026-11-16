@@ -17,7 +17,7 @@ use cosmic::app::ContextDrawer;
 use cosmic::iced::Length;
 use cosmic::widget::{self, list::ListButton, settings, text};
 use cosmic::{Apply, Element, Task};
-use cosmic_config::ConfigGet;
+use crate::owner_config::{self as cosmic_config, ConfigGet};
 use cosmic_settings_config::Binding;
 use cosmic_settings_config::shortcuts::action::{
     Direction, FocusDirection, Orientation, ResizeDirection,
@@ -151,7 +151,7 @@ impl page::Page<crate::pages::Message> for Page {
 
     fn on_enter(&mut self) -> Task<crate::pages::Message> {
         if self.shortcuts_context.is_none() {
-            self.shortcuts_context = cosmic_settings_config::shortcuts::context().ok();
+            self.shortcuts_context = cosmic_config::Config::new(shortcuts::ID, 1).ok();
         }
 
         self.reload_search();
@@ -336,7 +336,7 @@ impl Default for Search {
         Self {
             input: String::default(),
             defaults: Shortcuts::default(),
-            config: shortcuts::context().unwrap(),
+            config: cosmic_config::Config::new(shortcuts::ID, 1).unwrap(),
             localized: SecondaryMap::default(),
             actions: SlotMap::new(),
             shortcuts: Shortcuts::default(),

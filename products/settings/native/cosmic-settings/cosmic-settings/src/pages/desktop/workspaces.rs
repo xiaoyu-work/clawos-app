@@ -3,9 +3,9 @@
 
 // TODO make settings work
 
+use crate::owner_config::{self as cosmic_config, ConfigGet, ConfigSet};
 use cosmic::{
     Apply, Element,
-    cosmic_config::{self, ConfigGet, ConfigSet},
     surface,
     widget::{self, settings},
 };

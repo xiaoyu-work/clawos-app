@@ -14,7 +14,6 @@ use std::{
 };
 
 #[cfg(feature = "xdg-portal")]
-use cosmic::dialog::file_chooser;
 use cosmic::{
     Apply, Element, Task,
     iced::core::text::{Ellipsize, EllipsizeHeightLimit},
@@ -74,10 +73,10 @@ pub struct InitUpdate {
 pub enum Message {
     /// Adds a new wallpaper folder.
     #[cfg(feature = "xdg-portal")]
-    AddFolder(Arc<Result<Url, file_chooser::Error>>),
+    AddFolder(Arc<Result<Option<Url>, String>>),
     /// Adds a new image file the system wallpaper folder.
     #[cfg(feature = "xdg-portal")]
-    AddFile(Arc<Result<Url, file_chooser::Error>>),
+    AddFile(Arc<Result<Option<Url>, String>>),
     /// Cache currently displayed image.
     CacheDisplayImage,
     /// Selects an option in the category dropdown menu.
@@ -223,7 +222,16 @@ impl page::Page<crate::pages::Message> for Page {
         }
 
         let (task, on_enter_handle) = Task::future(async move {
-            let (service_config, displays) = wallpaper::config().await;
+            let helper = crate::owner_config::Config::new(cosmic_bg_config::NAME, 1)
+                .expect("fixed background preference namespace");
+            let context = cosmic_bg_config::Context(std::ops::Deref::deref(&helper).clone());
+            let mut displays = std::collections::HashMap::new();
+            if let Ok(list) = crate::display_settings::list().await {
+                for (_, output) in list.outputs {
+                    displays.insert(output.name, (output.model, output.physical));
+                }
+            }
+            let (service_config, displays) = wallpaper::config(&context, displays).await;
 
             crate::pages::Message::DesktopWallpaper(Message::Init(Box::new(InitUpdate {
                 service_config,
@@ -271,13 +279,15 @@ impl page::Page<crate::pages::Message> for Page {
     /// Watch for state changes from the cosmic-bg session service.
     fn subscription(
         &self,
-        core: &cosmic::Core,
+        _core: &cosmic::Core,
     ) -> cosmic::iced::Subscription<crate::pages::Message> {
         let subscriptions = vec![
-            core.watch_state::<cosmic_bg_config::state::State>(cosmic_bg_config::NAME)
-                .map(|update| {
-                    crate::pages::Message::DesktopWallpaper(Message::UpdateState(update.config))
-                }),
+            crate::owner_config::watch_state::<cosmic_bg_config::state::State>(
+                cosmic_bg_config::NAME,
+            )
+            .map(|update| {
+                crate::pages::Message::DesktopWallpaper(Message::UpdateState(update.config))
+            }),
             crate::subscription::wallpapers(self.config.current_folder())
                 .map(|event| crate::pages::Message::DesktopWallpaper(Message::Event(event))),
         ];
@@ -514,7 +524,15 @@ impl Page {
             Choice::Color(ref color) => Entry::new(output, wallpaper::Source::Color(color.clone())),
         };
 
-        wallpaper::set(&mut self.wallpaper_service_config, entry);
+        if let Ok(helper) = crate::owner_config::Config::new(cosmic_bg_config::NAME, 1)
+            && let Err(error) =
+                helper.edit_raw(&mut self.wallpaper_service_config, |config, local| {
+                    wallpaper::set(config, entry, &cosmic_bg_config::Context(local.clone()))
+                        .map_err(|error| std::io::Error::other(error.to_string()).into())
+                })
+        {
+            tracing::error!(%error, "OS did not confirm the background change");
+        }
     }
 
     /// Locate the ID of a wallpaper that's already stored in memory
@@ -608,13 +626,9 @@ impl Page {
             Category::AddFolder => {
                 #[cfg(feature = "xdg-portal")]
                 return cosmic::task::future(async {
-                    let dialog_result = file_chooser::open::Dialog::new()
-                        .title(fl!("wallpaper", "folder-dialog"))
-                        .accept_label(fl!("dialog-add"))
-                        .modal(false)
-                        .open_folder()
-                        .await
-                        .map(|response| response.url().to_owned());
+                    let dialog_result =
+                        crate::file_dialog::open_folder(fl!("wallpaper", "folder-dialog"), false)
+                            .await;
 
                     let message = Message::AddFolder(Arc::new(dialog_result));
                     let page_message = crate::pages::Message::DesktopWallpaper(message);
@@ -795,13 +809,9 @@ impl Page {
             Message::ImageAddDialog => {
                 #[cfg(feature = "xdg-portal")]
                 return cosmic::Task::future(async {
-                    let dialog_result = file_chooser::open::Dialog::new()
-                        .title(fl!("wallpaper", "image-dialog"))
-                        .accept_label(fl!("dialog-add"))
-                        .modal(false)
-                        .open_file()
-                        .await
-                        .map(|response| response.url().to_owned());
+                    let dialog_result =
+                        crate::file_dialog::open_file(fl!("wallpaper", "image-dialog"), false)
+                            .await;
 
                     let message = Message::AddFile(Arc::new(dialog_result));
                     let page_message = crate::pages::Message::DesktopWallpaper(message);
@@ -874,6 +884,7 @@ impl Page {
             #[cfg(feature = "xdg-portal")]
             Message::AddFolder(result) => {
                 let path = match dialog_response(result) {
+                    DialogResponse::Cancelled => return Task::none(),
                     DialogResponse::Path(path) => path,
                     DialogResponse::Error(why) => {
                         tracing::error!(why, "dialog response error");
@@ -901,6 +912,7 @@ impl Page {
             #[cfg(feature = "xdg-portal")]
             Message::AddFile(result) => {
                 let path = match dialog_response(result) {
+                    DialogResponse::Cancelled => return Task::none(),
                     DialogResponse::Path(path) => path,
                     DialogResponse::Error(why) => {
                         tracing::error!(why, "dialog response error");
@@ -1427,29 +1439,21 @@ pub fn settings() -> Section<crate::pages::Message> {
 // }
 
 enum DialogResponse {
+    Cancelled,
     Error(String),
     Path(PathBuf),
 }
 
 #[cfg(feature = "xdg-portal")]
-fn dialog_response(result: Arc<Result<Url, file_chooser::Error>>) -> DialogResponse {
+fn dialog_response(result: Arc<Result<Option<Url>, String>>) -> DialogResponse {
     let Some(result) = Arc::into_inner(result) else {
         return DialogResponse::Error(String::from("Arc::into_inner returned None"));
     };
 
     let selection = match result {
-        Ok(response) => response,
-        Err(why) => {
-            let mut source: &dyn std::error::Error = &why;
-            let mut string = format!("open dialog subscription errored\n    cause: {source}");
-
-            while let Some(new_source) = source.source() {
-                string.push_str(&format!("\n    cause: {new_source}"));
-                source = new_source;
-            }
-
-            return DialogResponse::Error(string);
-        }
+        Ok(Some(response)) => response,
+        Ok(None) => return DialogResponse::Cancelled,
+        Err(why) => return DialogResponse::Error(why),
     };
 
     let Ok(path) = selection.to_file_path() else {

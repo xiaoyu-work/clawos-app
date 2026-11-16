@@ -8,7 +8,6 @@ use std::path::Path;
 use std::sync::{Arc, LazyLock};
 
 use anyhow::Context;
-use cosmic::dialog::file_chooser::FileFilter;
 use cosmic::task;
 use cosmic::{
     Apply, Element, Task,
@@ -1137,26 +1136,13 @@ fn update_devices(conn: zbus::Connection) -> Task<crate::app::Message> {
 }
 
 fn add_network() -> Task<crate::app::Message> {
-    let Some(dir) = dirs::download_dir().or_else(dirs::home_dir) else {
-        return Task::none();
-    };
-
-    cosmic::dialog::file_chooser::open::Dialog::new()
-        .directory(dir)
-        .title(fl!("vpn", "select-file"))
-        .filter(
-            FileFilter::new("OpenVPN")
-                .mimetype("application/x-openvpn-profile")
-                .glob("*.ovpn"),
-        )
-        .filter(FileFilter::new("WireGuard").glob("*.conf*"))
-        .open_file()
+    crate::file_dialog::open_file(fl!("vpn", "select-file"), true)
         .then(|result| async move {
             match result {
-                Ok(response) => {
-                    let response_str = response.url().as_str();
+                Ok(Some(response)) => {
+                    let response_str = response.as_str();
                     let result = if let Some(device) = response_str.strip_suffix(".conf") {
-                        let Ok(path) = response.url().to_file_path() else {
+                        let Ok(path) = response.to_file_path() else {
                             return Message::Error(
                                 ErrorKind::WireGuardConfigPath,
                                 fl!("vpn-error", "wireguard-config-path-desc"),
@@ -1175,8 +1161,7 @@ fn add_network() -> Task<crate::app::Message> {
 
                         return Message::AddWireGuardDevice(device, filename.to_owned(), path);
                     } else {
-                        super::nm_add_vpn_file("openvpn", response.url().to_file_path().unwrap())
-                            .await
+                        super::nm_add_vpn_file("openvpn", response.to_file_path().unwrap()).await
                     };
 
                     match result {
@@ -1184,7 +1169,7 @@ fn add_network() -> Task<crate::app::Message> {
                         Err(why) => Message::Error(ErrorKind::Config, why.to_string()),
                     }
                 }
-                Err(cosmic::dialog::file_chooser::Error::Cancelled) => Message::CancelDialog,
+                Ok(None) => Message::CancelDialog,
                 Err(why) => Message::Error(ErrorKind::Config, why.to_string()),
             }
         })

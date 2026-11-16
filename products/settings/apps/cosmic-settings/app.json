@@ -28,6 +28,216 @@
         "verb": "sys.permissions",
         "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "manage"}},
         "why": {"en": "Inspect and request or revoke App permissions for this owner; protected OS approval remains separate."}
+      },
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "regional"}},
+        "why": {"en": "Read system locale, keyboard defaults and this owner's account language through the OS."}
+      },
+      {
+        "verb": "sys.locale",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "system"}},
+        "why": {"en": "Apply an explicitly selected system locale through the OS; owner language is a separate permission."}
+      },
+      {
+        "verb": "sys.language",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "self"}},
+        "why": {"en": "Apply this authenticated owner's account language through the OS."}
+      },
+      {
+        "verb": "sys.hostname",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "static"}},
+        "why": {"en": "Apply an explicitly entered static computer name through the OS."}
+      },
+      {
+        "verb": "sys.locale",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "keyboard"}},
+        "why": {"en": "Apply the separately requested system/login keyboard defaults; owner typing settings never imply this permission."}
+      },
+      {
+        "verb": "sys.time",
+        "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
+        "why": {"en": "Apply explicitly selected system timezone and automatic-time changes through the OS."}
+      },
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "accessibility"}},
+        "why": {"en": "Read accessibility state through the existing OS provider, without the owner bus."}
+      },
+      {
+        "verb": "ui.accessibility",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "control"}},
+        "why": {"en": "Apply explicitly requested screen-reader, magnifier and screen-filter changes through the OS."}
+      },
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "audio"}},
+        "why": {"en": "Read the owner's audio devices, profiles, routes, defaults and volume through the existing OS provider."}
+      },
+      {
+        "verb": "device.audio",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "output"}},
+        "why": {"en": "Change the selected output's volume, balance or mute through the OS, without a PipeWire socket."}
+      },
+      {
+        "verb": "device.microphone",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "input"}},
+        "why": {"en": "Change the selected microphone's volume or mute through the OS; output control does not grant this."}
+      },
+      {
+        "verb": "device.media-route",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "pipewire"}},
+        "why": {"en": "Apply explicit audio-default, hardware-profile and route choices through the OS."}
+      },
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "display"}},
+        "why": {"en": "Read the owner's display modes and output metadata through the existing OS provider."}
+      },
+      {
+        "verb": "device.display",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "manage"}},
+        "why": {"en": "Apply explicit output changes and owner-bound OS rollback receipts, without a raw output-management connection."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.compositor"}},
+        "why": {"en": "Read this owner's compositor, keyboard and pointing-device preferences through the bounded OS service."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.keyboard-catalog"}},
+        "why": {"en": "Read only this owner's two standard custom XKB catalog files. Public system XKB catalogs need no owner-file grant."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.compositor"}},
+        "why": {"en": "Save this owner's compositor and input preferences, not system keyboard defaults or a configuration-tree mount."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.workspaces"}},
+        "why": {"en": "Read this owner's desktop workspace presentation preferences."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.workspaces"}},
+        "why": {"en": "Save this owner's desktop workspace presentation preferences."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.appearance"}},
+        "why": {"en": "Read this owner's toolkit, theme and theme-builder preferences."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.appearance"}},
+        "why": {"en": "Save this owner's toolkit and desktop appearance preferences through the OS."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.panels"}},
+        "why": {"en": "Read this owner's panel and dock configuration, without an owner bus or file mount."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.panels"}},
+        "why": {"en": "Save this owner's panel, dock and selected applet configuration; installation and App permissions stay separate."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.idle"}},
+        "why": {"en": "Read this owner's screen-off and idle-suspend preferences."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.idle"}},
+        "why": {"en": "Save this owner's screen-off and idle-suspend preferences, not issue power actions."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.audio"}},
+        "why": {"en": "Read this owner's audio preference values; live audio controls require separate device permissions."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.audio"}},
+        "why": {"en": "Save this owner's volume-amplification preferences, not acquire audio or microphone control."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.accessibility"}},
+        "why": {"en": "Read this owner's settings-daemon accessibility preferences."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.accessibility"}},
+        "why": {"en": "Save this owner's mono-audio preference through the OS settings service."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.clock"}},
+        "why": {"en": "Read this owner's clock-format and first-weekday preferences."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.clock"}},
+        "why": {"en": "Save this owner's clock presentation; system time and timezone require separate OS permission."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.shortcuts"}},
+        "why": {"en": "Read this owner's keyboard shortcuts and configured command bindings."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.shortcuts"}},
+        "why": {"en": "Configure owner keyboard shortcuts, including commands run when the owner activates a binding. This is not permission to execute a command now."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.window-rules"}},
+        "why": {"en": "Read this owner's window-management rules."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.window-rules"}},
+        "why": {"en": "Save this owner's window-management rules through the OS."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.background"}},
+        "why": {"en": "Read this owner's desktop background configuration and current background metadata, not image contents."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.background"}},
+        "why": {"en": "Save this owner's desktop background choices; no owner directory or selected-file permission is granted."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.regional"}},
+        "why": {"en": "Read this owner's ordered regional-language preferences."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.preferences.regional"}},
+        "why": {"en": "Save only this owner's ordered language preference list; system locale and account language remain separate effects."}
+      },
+      {
+        "verb": "fs.read",
+        "scope": {"kind": "wild"},
+        "why": {"en": "Read only exact resources already delegated by this launcher's bounded file authority. A file-picker result is metadata, never a read grant."}
+      },
+      {
+        "verb": "fs.write",
+        "scope": {"kind": "wild"},
+        "why": {"en": "Export a theme only within this launcher's existing bounded write authority. The picker cannot grant or widen file access."}
+      },
+      {
+        "verb": "ui.prompt",
+        "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
+        "why": {"en": "Present the original OS file chooser for this live Settings window. Its metadata-only result grants no file access or account authority."}
       }
     ]
   },

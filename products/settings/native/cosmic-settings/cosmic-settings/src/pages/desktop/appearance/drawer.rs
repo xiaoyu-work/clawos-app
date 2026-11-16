@@ -1,6 +1,5 @@
 use cosmic::app::{ContextDrawer, context_drawer};
-use cosmic::config::CosmicTk;
-use cosmic::cosmic_config::{Config, ConfigSet};
+use crate::owner_config::{self as cosmic_config, Config, ConfigSet};
 use cosmic::cosmic_theme::Spacing;
 use cosmic::iced::core::{Color, Length};
 use cosmic::widget::{
@@ -128,7 +127,7 @@ impl From<&theme_manager::Manager> for Content {
             icon_theme_active: None,
             icon_themes: Vec::new(),
             icon_handles: Vec::new(),
-            tk_config: CosmicTk::config().ok(),
+            tk_config: Config::new(cosmic::config::ID, 1).ok(),
             comp_config,
             #[cfg(feature = "cosmic-comp-config")]
             appearance_conf,

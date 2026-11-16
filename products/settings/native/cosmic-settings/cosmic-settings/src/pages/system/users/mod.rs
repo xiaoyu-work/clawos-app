@@ -8,7 +8,6 @@ use crate::{
 };
 use cosmic::{
     Apply, Element,
-    dialog::file_chooser,
     iced::{Alignment, Length},
     widget::{self, column, icon, list, row, settings, space::horizontal, text},
 };
@@ -94,7 +93,7 @@ pub enum Message {
     None,
     Refresh,
     SelectProfileImage(u32),
-    SelectedProfileImage(u32, Arc<Result<Url, file_chooser::Error>>),
+    SelectedProfileImage(u32, Arc<Result<Option<Url>, String>>),
     SelectUser(usize),
     SelectedUserDelete(u32),
     SelectedUserSetAdmin(u32, bool),
@@ -453,13 +452,9 @@ impl Page {
 
             Message::SelectProfileImage(uid) => {
                 return cosmic::task::future(async move {
-                    let dialog_result = file_chooser::open::Dialog::new()
-                        .title(fl!("users", "profile-add"))
-                        .accept_label(fl!("dialog-add"))
-                        .modal(false)
-                        .open_file()
-                        .await
-                        .map(|response| response.url().to_owned());
+                    let dialog_result = crate::file_dialog::open_file(
+                        fl!("users", "profile-add"), false,
+                    ).await;
 
                     Message::SelectedProfileImage(uid, Arc::new(dialog_result))
                 });
@@ -467,7 +462,8 @@ impl Page {
 
             Message::SelectedProfileImage(uid, image_result) => {
                 let url = match image_result.as_ref() {
-                    Ok(url) => url.clone(),
+                    Ok(Some(url)) => url.clone(),
+                    Ok(None) => return cosmic::Task::none(),
                     Err(why) => {
                         self.notice = Some(format!("{}: {why}", fl!("users-icon-requirement")));
                         return cosmic::Task::none();

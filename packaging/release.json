@@ -32,7 +32,7 @@
     "clipboard": ["copyq", "claw-os-clipboard-history-v1 (= 1)"],
     "desktop-widgets": ["claw-os-calendar-read-v1 (= 1)", "claw-os-observation-v1 (= 1)"],
     "capture": ["claw-os-capture-v1", "xdg-desktop-portal"],
-    "media-player": ["claw-os-media-player-v1", "gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good", "gstreamer1.0-libav"],
+    "media-player": ["claw-os-media-player-v1", "pipewire-bin", "gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good", "gstreamer1.0-libav"],
     "notifications": ["claw-os-notifications-v1"],
     "store": ["flatpak", "packagekit"],
     "settings": ["claw-os-app-permissions-v1", "xkb-data"]

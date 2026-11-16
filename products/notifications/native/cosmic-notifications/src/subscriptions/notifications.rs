@@ -306,6 +306,7 @@ impl Machine<Waiting> {
                             );
                         }
                     }
+                    Input::Presented(_) => {}
                 }
             } else {
                 // The channel was closed, so we are done
@@ -317,6 +318,7 @@ impl Machine<Waiting> {
 
 #[derive(Debug, Clone)]
 pub enum Input {
+    Presented(u32),
     SenderGone(String),
     Activated {
         token: String,
@@ -341,11 +343,24 @@ pub enum Event {
     Ready(Sender<Input>),
     Notification(Notification),
     Replace(Notification),
+    ReplaceHandle {
+        previous: u32,
+        notification: Notification,
+    },
     CloseNotification(u32),
-    AppletActivated { id: u32, action: ActionId },
+    DismissNotification(u32),
+    AppletActivated {
+        id: u32,
+        action: ActionId,
+    },
+    Preferences(claw_notification_presentation::Preferences),
+    Unavailable(String),
 }
 
 pub fn notifications() -> Subscription<Event> {
+    if super::managed::enabled() {
+        return super::managed::subscription();
+    }
     struct SomeWorker;
 
     Subscription::run_with(std::any::TypeId::of::<SomeWorker>(), |_| {

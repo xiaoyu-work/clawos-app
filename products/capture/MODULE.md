@@ -23,12 +23,20 @@ helper, deadlines, output-directory pinning, non-overwriting persistence
 and task snapshots. Non-interactive CLI and MCP share that OS service,
 not another App. Human-only interactive requests use the common Host's private
 per-window OS request/status path through the existing SDK generic CLI helper.
-The signed GUI explicitly requests screen capture and notification permission
-through normal Root approval, never MCP's destination-write needs. Destinations
+The signed GUI explicitly requests screen capture, notification and Home
+metadata permission through normal Root approval, never MCP's destination-write
+needs. Destinations
 and clipboard actions remain in the OS portal; their user settings do not move.
 File results are display metadata only and are never opened or moved by the App.
-Non-interactive output still requires separate exact directory-write authority;
-GUI declarations do not manufacture that permission from CLI arguments.
+The human non-interactive GUI path locates its existing Home destination only
+through the controlled metadata view. Its optional Home-write declaration is
+eligibility, not startup authority. Existing SDK request/status/reserve creation
+calls obtain one separate protected exact-filename decision before requesting
+PNG bytes. The App writes only the reserved scratch and checks canonical
+`created` after the provider's atomic no-replace finalization. Existing/racing
+targets never overwrite or become successful output. This selected-file path
+retains the platform's 8-MiB per-file limit; MCP still uses its separate exact
+directory-write grant and original bounded OS service.
 
 Root retains a single correlation and immutable modal choice per window,
 checks the original live GUI lease without a short human-response timeout, and
@@ -69,3 +77,9 @@ compatibility launcher. The obsolete hidden `--portal-capture-stdout` mode now
 refuses explicitly, rather than contacting a user bus from ordinary App code.
 This does not establish physical portal/display, installed-package or whole
 native acceptance; see [native payloads](../../docs/native-payloads.md).
+
+The private OS `native-capture` acceptance selection stages and signs this real
+ELF/resources with the unchanged published platform, enters authenticated PAM
+and the common Host, settles normal owner/window/output reviews and contacts the
+actual protected installed OS helper. Its synthetic portal is not physical
+screen/region/destination UI evidence.

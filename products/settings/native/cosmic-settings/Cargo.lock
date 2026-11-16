@@ -1527,6 +1527,7 @@ dependencies = [
 name = "cosmic-pipewire"
 version = "1.0.7"
 dependencies = [
+ "cosmic-settings-provider-client",
  "intmap",
  "libspa",
  "libspa-sys",
@@ -1607,6 +1608,7 @@ dependencies = [
  "cosmic-settings-daemon-config",
  "cosmic-settings-network-manager-subscription",
  "cosmic-settings-page",
+ "cosmic-settings-provider-client",
  "cosmic-settings-sound-subscription",
  "cosmic-settings-upower-subscription",
  "cosmic-settings-wallpaper",
@@ -1628,6 +1630,7 @@ dependencies = [
  "itertools 0.14.0",
  "itoa",
  "jiff",
+ "kdl",
  "libcosmic",
  "locale1",
  "locales-rs",
@@ -1669,9 +1672,11 @@ name = "cosmic-settings-a11y-manager-subscription"
 version = "1.0.7"
 dependencies = [
  "cosmic-protocols",
+ "cosmic-settings-provider-client",
  "iced_futures",
  "num-derive",
  "num-traits",
+ "serde_json",
  "smithay-client-toolkit",
  "tokio",
  "tracing",
@@ -1682,6 +1687,7 @@ name = "cosmic-settings-accessibility-subscription"
 version = "1.0.7"
 dependencies = [
  "cosmic-dbus-a11y",
+ "cosmic-settings-provider-client",
  "futures",
  "iced_futures",
  "tokio",
@@ -1786,6 +1792,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmic-settings-provider-client"
+version = "0.1.0"
+dependencies = [
+ "claw-os-sdk",
+ "serde_json",
+]
+
+[[package]]
 name = "cosmic-settings-pulse-subscription"
 version = "0.1.0"
 dependencies = [
@@ -1801,11 +1815,13 @@ name = "cosmic-settings-sound-subscription"
 version = "1.0.7"
 dependencies = [
  "cosmic-pipewire",
+ "cosmic-settings-provider-client",
  "futures",
  "intmap",
  "libcosmic",
  "numtoa",
  "rustix 1.1.4",
+ "serde_json",
  "tokio",
  "tracing",
 ]

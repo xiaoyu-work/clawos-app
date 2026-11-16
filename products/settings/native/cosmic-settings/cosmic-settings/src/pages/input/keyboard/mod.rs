@@ -4,11 +4,11 @@
 pub mod shortcuts;
 
 use std::cmp;
+use crate::owner_config::{self as cosmic_config, ConfigSet};
 
 use cosmic::{
     Apply, Element, Task,
     app::{ContextDrawer, context_drawer},
-    cosmic_config::{self, ConfigSet},
     iced::{Alignment, Length},
     theme,
     widget::{self, ListColumn, button, container, icon, list, row, settings},
@@ -53,6 +53,8 @@ static CAPS_LOCK_OPTIONS: &[(&str, &str)] = &[
 
 #[derive(Clone, Debug)]
 pub enum Message {
+    ApplySystemKeyboard,
+    SystemKeyboardFinished(u64, Result<(), crate::regional_settings::Failure>),
     ExpandInputSourcePopover(Option<DefaultKey>),
     InputSourceSearch(String),
     OpenSpecialCharacterContext(SpecialKey),
@@ -108,6 +110,8 @@ pub struct Page {
     active_layouts: Vec<DefaultKey>,
     expanded_source_popover: Option<DefaultKey>,
     show_extended_input_sources: bool,
+    system_pending: crate::regional_settings::Pending,
+    system_notice: Option<String>,
 }
 
 impl Default for Page {
@@ -125,6 +129,8 @@ impl Default for Page {
             keyboard_config: KeyboardConfig::default(),
             input_source_search: String::new(),
             show_extended_input_sources: false,
+            system_pending: crate::regional_settings::Pending::default(),
+            system_notice: None,
             config,
         }
     }
@@ -306,6 +312,7 @@ impl page::Page<crate::pages::Message> for Page {
     }
 
     fn on_enter(&mut self) -> Task<crate::pages::Message> {
+        let _ = self.config.refresh();
         self.xkb = super::get_config(&self.config, "xkb_config");
         self.keyboard_config = super::get_config(&self.config, "keyboard_config");
         match (
@@ -329,7 +336,7 @@ impl page::Page<crate::pages::Message> for Page {
                     .collect::<Vec<_>>();
 
                 // Add user-defined layouts if any are found
-                let user_layouts = xkb_data::user_keyboard_layouts();
+                let user_layouts = crate::owner_config::user_keyboard_layouts();
                 match user_layouts {
                     Ok(ref custom) => {
                         sorted_layouts.extend(
@@ -404,11 +411,24 @@ impl page::Page<crate::pages::Message> for Page {
                     .chain(std::iter::repeat(""));
 
                 for (layout, variant) in layouts.zip(variants) {
+                    let mut found = false;
                     for (id, (xkb_layout, xkb_variant, _desc, _source)) in &self.keyboard_layouts {
                         if layout == xkb_layout && variant == xkb_variant {
                             self.active_layouts.push(id);
+                            found = true;
                             break;
                         }
+                    }
+                    if !found {
+                        let description = if variant.is_empty() {
+                            layout.to_owned()
+                        } else {
+                            format!("{layout} ({variant})")
+                        };
+                        let id = self.keyboard_layouts.insert((
+                            layout.into(), variant.into(), description, LayoutSource::Custom,
+                        ));
+                        self.active_layouts.push(id);
                     }
                 }
             }
@@ -431,6 +451,33 @@ impl page::Page<crate::pages::Message> for Page {
 impl Page {
     pub fn update(&mut self, message: Message) -> Task<crate::app::Message> {
         match message {
+            Message::ApplySystemKeyboard => {
+                let generation = match self.system_pending.begin() {
+                    Ok(generation) => generation,
+                    Err(error) => {
+                        self.system_notice = Some(error.message());
+                        return Task::none();
+                    }
+                };
+                self.system_notice = Some(fl!("regional-settings", "working"));
+                let keyboard = crate::regional_settings::Keyboard {
+                    layout: self.xkb.layout.clone(),
+                    model: self.xkb.model.clone(),
+                    variant: self.xkb.variant.clone(),
+                    options: self.xkb.options.clone().unwrap_or_default(),
+                };
+                return cosmic::Task::future(async move {
+                    let result = crate::regional_settings::call(
+                        crate::regional_settings::Change::SystemKeyboard { keyboard },
+                    ).await;
+                    crate::pages::Message::Keyboard(Message::SystemKeyboardFinished(generation, result))
+                }).map(crate::Message::PageMessage).map(Into::into);
+            }
+            Message::SystemKeyboardFinished(generation, result) => {
+                if self.system_pending.complete(generation) {
+                    self.system_notice = Some(crate::regional_settings::outcome(&result));
+                }
+            }
             Message::InputSourceSearch(search) => {
                 self.input_source_search = search;
             }
@@ -708,6 +755,11 @@ fn input_sources() -> Section<crate::pages::Message> {
             widget::column::with_capacity(2)
                 .spacing(theme::spacing().space_xxs)
                 .push(section)
+                .push(settings::item::builder(fl!("keyboard-system-defaults"))
+                    .description(fl!("keyboard-system-defaults-description"))
+                    .control(widget::button::standard(fl!("keyboard-system-defaults-apply"))
+                        .on_press_maybe((!page.system_pending.busy()).then_some(Message::ApplySystemKeyboard))))
+                .push_maybe(page.system_notice.as_ref().map(widget::text::body))
                 .push(
                     widget::container(add_input_source)
                         .width(Length::Fill)

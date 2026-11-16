@@ -1,5 +1,5 @@
 use iced_video_player::Position;
-use image::{DynamicImage, ImageFormat, RgbaImage};
+use image::{DynamicImage, RgbaImage};
 use std::error::Error;
 use std::num::NonZero;
 use std::path::Path;
@@ -13,6 +13,7 @@ pub fn main(
     output: &Path,
     size_opt: Option<(u32, u32)>,
 ) -> Result<(), Box<dyn Error>> {
+    super::access::read(input)?;
     let mut image = {
         let thumbnails = {
             let mut video = match video::new_video(input, video::VideoSettings { mute: true }) {
@@ -49,7 +50,7 @@ pub fn main(
         image = image.thumbnail(width, height);
     }
 
-    image.save_with_format(output, ImageFormat::Png)?;
+    super::access::save_png(&image, output)?;
 
     Ok(())
 }

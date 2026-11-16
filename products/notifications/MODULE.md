@@ -8,6 +8,7 @@
 | `native/cosmic-notifications/src/app.rs` | Complete original Layer Shell UI, popup timers, configuration and presentation |
 | `native/cosmic-notifications/src/mcp.rs` | Bounded post/close intent via the fixed installed SDK CLI; no session bus |
 | `native/cosmic-notifications/src/subscriptions/` | Freedesktop server, sender-bound numeric handles and private human panel interaction |
+| `native/cosmic-notifications/src/subscriptions/managed.rs` | Published-SDK GUI resource client, real UI acceptance, plain-text cards and exact presentation actions |
 | `native/cosmic-notifications/cosmic-notifications-config/` | Private product preferences and existing storage schema |
 | `native/cosmic-notifications/cosmic-notifications-util/` | Private notification, markup and image presentation implementation |
 | `native/cosmic-notifications/src/presentation.rs` | App-owned adaptation to the OS-defined rendering/preferences contract |
@@ -21,8 +22,9 @@ The config/util libraries remain private App implementation; they are no
 longer exported for OS compilation. The OS owns the lightweight versioned
 `claw-notification-presentation` contract in the public SDK artifact. The App
 converts its existing markup, image and action behavior to bounded records
-over the existing private descriptor connection. It retains the legacy
-private interface for older hosts. No unrelated renderer is imposed.
+over the OS-controlled presentation resource and shell descriptor. Legacy
+private interfaces remain explicit compatibility-fixture inputs, not an
+unconfined production fallback. No unrelated renderer is imposed.
 
 The new preference methods map only to the existing `do_not_disturb` key.
 They preserve product defaults, reject malformed updates before writes and
@@ -52,11 +54,12 @@ still follows the OS theme and inherited button/icon state at render time.
 
 The authoritative Notification Service, owner/App identity, consent, audit,
 SQLite history, retention, DND, channel preferences and delivery leases/retries
-remain in `claw-os`. Its existing desktop bridge is the single delivery
+remain in `claw-os`. Its Root-held GUI resource is the single automatic desktop
 consumer; this product never claims that queue, reads the core database, or
 duplicates durable state. External freedesktop presentations remain untrusted
-and do not gain authority from hints or display labels. Native/local settings
-remain unchanged. Legacy `notify` JSON is explicitly preserved in place and
+and do not gain authority from hints or display labels. The original preference
+schema remains private to App HOME; no owner configuration mount or implicit
+legacy import is introduced. Legacy `notify` JSON is explicitly preserved in place and
 excluded from new service lists, not imported or replayed. New sends/lists use
 only the owner's distinct `app:notify` OS producer; native close stays
 bound to `app:cosmic-notifications`. Other authenticated Apps may use the same
@@ -89,20 +92,29 @@ notifications. Headless coverage is not visual/full-image acceptance.
 New native tests also exercise the actual App presentation server with the
 public client over a private socket pair, unchanged product preference files,
 invalid authority/configuration fields, image snapshots and unavailable channels.
-Standard native builds require a declared SDK artifact containing the new
-companion crate; local candidate experiments are not production release pins.
+Standard builds use the existing companion and stdin transport from verified
+published platform 0.2.1, never a sibling OS source dependency or new pin.
 
 `native_payload` prepares the real `bin/cosmic-notifications` as the signed
 primary/MCP entry with original licenses and all installer resources.
-The legacy primary command enters the common Host; it does not choose a new
-presentation transport, grant, default provider or resource mount. Private
-descriptor/owner integration and live popup acceptance remain OS-coordinated;
-see [native payloads](../../docs/native-payloads.md).
-The coordinated 0.2.1 GUI declaration explicitly requests high-risk `ui.panel`
-for its own Layer-shell popup surfaces, subject to protected owner approval.
-Neither it nor the separate MCP `ui.notify` send/close capability authorizes
-reading other Apps' notification data, claiming the OS delivery queue or using
-a raw session bus. No MCP tool inherits the GUI panel capability.
+The legacy primary command enters the common Host. GUI startup refuses an
+unmanaged invocation rather than opening an owner bus. The signed surface
+requests high-risk `ui.panel`, exact named
+`ipc.subscribe:notifications.presentation` for cross-source display and
+independent `ipc.invoke` for exact actions/private popup mute. Root binds the
+selected declaration to this live owner/App/session/process and keeps the
+desktop queue, DND, leases and checked cleanup. No App name grants these rights.
+Own-source `data.inbox.read` and MCP `ui.notify` remain independent and never
+inherit the display resource. The real original UI sends acceptance only after
+its notification update; delivery remains distinct from acknowledgement.
+Root notification body data stays literal in both the original popup and panel
+projection. Panel icons preserve their artwork while downsampling to 64 pixels
+for the bounded broker packet; the original popup renderer is unchanged.
+The OS shell descriptor never enters the App and supplies no raw bus or config.
+OS disposable native cases 42–43 cover actual signed popup pixels, descriptor
+preferences/dismissal, original pointer acknowledgement and checked retirement;
+physical-display and installed-image acceptance remain separate gates.
+See [native payloads](../../docs/native-payloads.md).
 
 Notifications has no CLI argument parser: ordinary argv, including `--gui`,
 `--help` and `--version`, remains ignored rather than becoming a new option

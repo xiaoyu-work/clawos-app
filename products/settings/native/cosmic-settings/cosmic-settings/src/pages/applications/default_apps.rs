@@ -15,7 +15,7 @@ use cosmic::{
     surface,
     widget::{self, dropdown, icon, settings},
 };
-use cosmic_config::{ConfigGet, ConfigSet};
+use crate::owner_config::{self as cosmic_config, ConfigGet, ConfigSet};
 use cosmic_settings_config::shortcuts::SystemActions;
 use cosmic_settings_config::shortcuts::action::System;
 use cosmic_settings_page::{self as page, Section, section};
@@ -114,7 +114,8 @@ impl page::Page<crate::pages::Message> for Page {
         }
 
         if self.shortcuts_config.is_none() {
-            self.shortcuts_config = cosmic_settings_config::shortcuts::context().ok();
+            self.shortcuts_config =
+                cosmic_config::Config::new(cosmic_settings_config::shortcuts::ID, 1).ok();
         }
 
         let (task, on_enter_handle) = Task::future(async move {

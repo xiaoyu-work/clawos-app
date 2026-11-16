@@ -15,7 +15,8 @@ use cosmic::widget::menu::action::MenuAction;
 use cosmic::widget::{self, Slider, nav_bar, segmented_button};
 use cosmic::{Application, ApplicationExt, Element, action, cosmic_theme, executor, font, theme};
 use iced_video_player::gst::prelude::*;
-use iced_video_player::{Video, VideoPlayer, gst, gst_pbutils};
+use iced_video_player::{VideoPlayer, gst, gst_pbutils};
+use crate::video::NativeVideo as Video;
 use std::any::TypeId;
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
@@ -28,10 +29,13 @@ use crate::config::{CONFIG_VERSION, Config, ConfigState, RepeatState};
 use crate::key_bind::{KeyBind, key_binds};
 use crate::project::ProjectNode;
 
+mod access;
 mod argparse;
+mod audio;
 mod config;
 mod key_bind;
 mod localize;
+mod managed;
 mod mcp;
 mod menu;
 #[cfg(feature = "mpris-server")]
@@ -265,6 +269,7 @@ pub enum Message {
     DurationChanged(Duration),
     FileClose,
     FileLoad(url::Url),
+    FileAccessReady(url::Url, Result<(), String>),
     FileOpen,
     FileClearRecents,
     FileOpenRecent(usize),
@@ -297,6 +302,7 @@ pub enum Message {
     MissingPlugin(gst::Message),
     MprisChannel(MprisMeta, MprisState, mpsc::UnboundedSender<MprisEvent>),
     MprisCommand(PlaybackCommand),
+    ManagedPlayback(managed::Request),
     NewFrame,
     Reload,
     AbRepeat,
@@ -366,6 +372,22 @@ impl App {
     }
 
     fn load(&mut self) -> Task<Message> {
+        if !claw_os_sdk::gui::is_gui_launch() {
+            return self.load_admitted();
+        }
+        if self.close() {
+            return Task::perform(async { action::app(Message::Reload) }, |message| message);
+        }
+        let Some(url) = self.flags.url_opt.clone() else { return Task::none(); };
+        Task::perform(async move {
+            let selected = url.clone();
+            let result = tokio::task::spawn_blocking(move || access::read(&selected)).await
+                .map_err(|error| error.to_string()).and_then(|result| result);
+            action::app(Message::FileAccessReady(url, result))
+        }, |message| message)
+    }
+
+    fn load_admitted(&mut self) -> Task<Message> {
         if self.close() {
             // Allow a redraw before trying to load again, to prevent deadlock
             return Task::perform(async { action::app(Message::Reload) }, |x| x);
@@ -747,26 +769,31 @@ impl App {
         self.mpris_meta = new;
     }
 
+    fn playback_state(&self) -> MprisState {
+        let mut new = MprisState {
+            fullscreen: self.fullscreen,
+            position_micros: (self.position * 1_000_000.0) as i64,
+            paused: true,
+            stopped: self.stopped || self.video_opt.is_none(),
+            volume: 0.0,
+            repeat_state: RepeatState::Disabled,
+        };
+        if let Some(video) = &self.video_opt {
+            new.paused = video.paused();
+            new.stopped |= video.eos();
+            new.volume = video.volume();
+            new.repeat_state = self.flags.config_state.player_state.repeat;
+        }
+        new
+    }
+
     fn update_mpris_state(&mut self) {
-        if let Some((_, old, tx)) = &mut self.mpris_opt {
-            let mut new = MprisState {
-                fullscreen: self.fullscreen,
-                position_micros: (self.position * 1_000_000.0) as i64,
-                paused: true,
-                stopped: self.stopped || self.video_opt.is_none(),
-                volume: 0.0,
-                repeat_state: RepeatState::Disabled,
-            };
-            if let Some(video) = &self.video_opt {
-                new.paused = video.paused();
-                new.stopped |= video.eos();
-                new.volume = video.volume();
-                new.repeat_state = self.flags.config_state.player_state.repeat;
-            }
-            if new != *old {
-                *old = new.clone();
-                let _ = tx.send(MprisEvent::State(new));
-            }
+        let new = self.playback_state();
+        if let Some((_, old, tx)) = &mut self.mpris_opt
+            && new != *old
+        {
+            *old = new.clone();
+            let _ = tx.send(MprisEvent::State(new));
         }
     }
 
@@ -1049,7 +1076,27 @@ impl Application for App {
                 self.ab_repeat = None;
                 return self.load();
             }
+            Message::FileAccessReady(url, result) => {
+                if self.flags.url_opt.as_ref() == Some(&url) {
+                    match result {
+                        Ok(()) => return self.load_admitted(),
+                        Err(error) => log::error!("media file was not authorized: {error}"),
+                    }
+                }
+            }
             Message::FileOpen => {
+                if claw_os_sdk::gui::is_gui_launch() {
+                    return Task::perform(async move {
+                        match access::choose(fl!("open-media")).await {
+                            Ok(Some(url)) => action::app(Message::FileLoad(url)),
+                            Ok(None) => action::none(),
+                            Err(error) => {
+                                log::error!("OS file picker: {error}");
+                                action::none()
+                            }
+                        }
+                    }, |message|message);
+                }
                 //TODO: embed cosmic-files dialog (after libcosmic rebase works)
                 #[cfg(feature = "xdg-portal")]
                 return Task::perform(
@@ -1208,7 +1255,8 @@ impl Application for App {
             }
             Message::AudioToggle => {
                 if let Some(video) = &mut self.video_opt {
-                    video.set_muted(!video.muted());
+                    let muted = !video.muted();
+                    video.set_muted(muted);
                     self.update_controls(true);
                 }
             }
@@ -1596,6 +1644,25 @@ impl Application for App {
             }
             Message::MprisCommand(command) => {
                 return self.update(command.into());
+            }
+            Message::ManagedPlayback(request) => {
+                if let Some(reply) = request.take_reply() {
+                    if let Some(command) = request.command() {
+                        let task = self.update(command.into());
+                        let _ = reply.send(serde_json::json!({"kind":"applied"}));
+                        return task;
+                    }
+                    let state = self.playback_state();
+                    let meta = &self.mpris_meta;
+                    let _ = reply.send(serde_json::json!({
+                        "kind":"status",
+                        "status": if state.stopped { "Stopped" } else if state.paused { "Paused" } else { "Playing" },
+                        "title": (!meta.title.is_empty()).then_some(&meta.title),
+                        "album": (!meta.album.is_empty()).then_some(&meta.album),
+                        "url": meta.url_opt.as_ref().map(ToString::to_string),
+                        "artist": meta.artists, "length_micros": meta.duration_micros,
+                    }));
+                }
             }
             Message::NewFrame => {
                 if let Some(video) = &mut self.video_opt
@@ -2084,8 +2151,11 @@ impl Application for App {
             );
         }
 
+        if claw_os_sdk::gui::is_gui_launch() {
+            subscriptions.push(managed::subscription());
+        }
         #[cfg(feature = "mpris-server")]
-        {
+        if !claw_os_sdk::gui::is_gui_launch() {
             subscriptions.push(mpris::subscription());
         }
 

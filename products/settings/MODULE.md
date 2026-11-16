@@ -10,6 +10,29 @@ discovery/queue/printing tools, and `user-manager`'s twelve identity tools.
 All eleven management App sources assigned to Settings have moved.
 The complete native `cosmic-settings` workspace, UI, MCP and resources also live
 here, retaining its separate twelfth identity and original default pages.
+Native owner preferences now consume the generic bounded OS
+`system.desktop-preferences.control` service through the published SDK's
+fixed-binary transport. The private App HOME contains presentation caches,
+never a substitute owner configuration or a mount of the owner's `.config`.
+Independent optional named IPC read/write requests cover each preference
+resource; they grant nothing at startup. Custom XKB metadata has a separate
+read-only resource for the owner's two standard catalog files. Public XKB
+catalogs remain ordinary read-only system resources.
+
+The retained Accessibility, Sound, Display, regional/time and User interfaces
+consume typed Root services rather than native privileged buses. Sound keeps
+its original model and volume conversion while the OS owns PipeWire
+enumeration/control; output, microphone and routing requests remain separate.
+Display confirmation uses owner-bound OS rollback receipts. The icon chooser
+uses the private OS metadata picker; an icon mutation still requires its exact
+file-read and identity permissions. Picker results are not grants.
+Native Network/Bluetooth/Power backend conversion and exact selected resource
+admission remain coordinated source work, not publication acceptance.
+The same OS picker supplies file/folder/save references for icons, wallpaper,
+theme import/export and VPN import; theme text reads/writes cross the separate
+capability-gated filesystem service. The original pages, feature graph,
+resources and licenses remain.
+
 The coordinated 0.2.1 native GUI requests Users observation/account management
 and Applications permission management as `desktop.optional_needs`. Missing,
 denied or unapproved rights cannot prevent the Settings window from opening;
@@ -226,20 +249,20 @@ Results are bound to their requested action/target/value; stale loads cannot
 replace a newer query or mutation state, and an observation denial never
 replaces the preceding mutation outcome.
 
-The current manifest has no GUI operation declarations for these needs.
-Parent/publisher integration must supply actual GUI selectors/operation needs
-and their versioned capability vocabulary; the existing published transport
-alone does not admit new High-risk grants. Authenticated GUI bootstrap/root-owned launch custody
-and resource/credential-reference admission remain prerequisites. No GUI rights
-are acquired by these clients or by the new Root actions. Actual direct
-locale/static-hostname/User mutations in this App use protected OS routes,
-and two indirect OS consumers retain OS-owned policy:
+The GUI's explicit optional declarations remain independent of MCP and the
+eleven management identities. Missing rights do not block startup and do not
+silently become App-private preference writes. Locale, account-language,
+hostname, keyboard-default and system-time changes each retain their exact
+OS capability. File reads/writes may inherit only already-delegated bounded
+scopes; neither picker metadata nor a configuration resource supplies them.
+Authenticated GUI custody and protected resource admission remain Root-owned.
+Two desktop/first-boot consumers retain OS-owned policy:
 
-- The keyboard page writes owner compositor `xkb_config`. OS
-  `desktop/settings-daemon/src/main.rs` watches that key and
-  `src/locale.rs::sync_cosmic_to_locale1` calls localed's `SetX11Keyboard`
-  with console conversion enabled. The existing regional Root request has no
-  protected system-keyboard operation or corresponding caller-bound daemon path.
+- The keyboard page writes owner compositor `xkb_config` through its named
+  preference resource. A separate explicit action applies system/login
+  defaults under `sys.locale:keyboard`, with matching localed readback.
+  Settings Daemon imports system changes into owner preferences but no longer
+  promotes an owner config write into a privileged system-keyboard change.
 - OS `desktop/initial-setup/src/page/user.rs` still requests
   `com.clawos.Settings.Users.Admin` while creating/configuring accounts and
   performing UID/transaction-bound first-boot rollback. Its home-overlay setup
@@ -254,8 +277,9 @@ semantics retained for these OS clients. Product install/uninstall and Debian
 delivery contain neither authority file; the complete-payload validator still
 rejects any App-supplied replacement. This does not grant Apps a user bus or
 the OS clients' authority. No account/home data is removed or migrated.
-Generic keyboard/config resource ownership, first-boot coordination, GUI
-grants and real Wayland/resource acceptance remain separate prerequisites.
+First-boot account/home transactions are not imported into the App or its
+generic User service. Native process/PAM and real-device acceptance remain
+separate gates; a source build or an OS response is not a new grant.
 
 Focused Rust tests are `regional_settings`, `pages::time::region` and
 `pages::system::about`, plus `users_service` in the independent

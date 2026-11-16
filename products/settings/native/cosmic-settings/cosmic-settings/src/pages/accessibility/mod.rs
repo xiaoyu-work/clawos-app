@@ -8,7 +8,7 @@ use cosmic::{
     widget::{dropdown, settings, text},
 };
 pub use cosmic_comp_config::ZoomMovement;
-use cosmic_config::CosmicConfigEntry;
+use crate::owner_config::{self as cosmic_config, Config, CosmicConfigEntry};
 use cosmic_settings_a11y_manager_subscription as cosmic_a11y_manager;
 use cosmic_settings_accessibility_subscription as a11y_bus;
 use cosmic_settings_daemon_config::CosmicSettingsDaemonConfig;
@@ -45,7 +45,7 @@ pub struct Page {
 
 impl Default for Page {
     fn default() -> Self {
-        let daemon_helper = CosmicSettingsDaemonConfig::config().unwrap();
+        let daemon_helper = Config::new("com.clawos.SettingsDaemon", 1).unwrap();
         Page {
             dbus_sender: None,
             entity: page::Entity::default(),
@@ -314,6 +314,9 @@ impl Page {
             Message::Event(AccessibilityEvent::Bound(version)) => {
                 self.wayland_available = Some(version);
             }
+            Message::Event(AccessibilityEvent::Error(error)) => {
+                tracing::warn!(%error, "OS accessibility provider refused the request");
+            }
             Message::Event(AccessibilityEvent::Magnifier(value)) => {
                 self.magnifier_state = value;
             }
@@ -345,9 +348,9 @@ impl Page {
                 _ = std::thread::spawn(move || {
                     let set_hc = |is_dark: bool| {
                         let builder_config = if is_dark {
-                            ThemeBuilder::dark_config()?
+                            Config::new(cosmic::cosmic_theme::DARK_THEME_BUILDER_ID, ThemeBuilder::VERSION)?
                         } else {
-                            ThemeBuilder::light_config()?
+                            Config::new(cosmic::cosmic_theme::LIGHT_THEME_BUILDER_ID, ThemeBuilder::VERSION)?
                         };
                         let mut builder = match ThemeBuilder::get_entry(&builder_config) {
                             Ok(b) => b,
@@ -368,17 +371,17 @@ impl Page {
                         } else {
                             CosmicPalette::Light(builder.palette.inner())
                         };
-                        builder.write_entry(&builder_config)?;
+                        builder_config.write_entry(&builder)?;
 
                         let new_theme = builder.build();
 
                         let theme_config = if is_dark {
-                            CosmicTheme::dark_config()?
+                            Config::new(cosmic::cosmic_theme::DARK_THEME_ID, CosmicTheme::VERSION)?
                         } else {
-                            CosmicTheme::light_config()?
+                            Config::new(cosmic::cosmic_theme::LIGHT_THEME_ID, CosmicTheme::VERSION)?
                         };
 
-                        new_theme.write_entry(&theme_config)?;
+                        theme_config.write_entry(&new_theme)?;
 
                         Result::<(), cosmic_config::Error>::Ok(())
                     };
@@ -422,9 +425,8 @@ impl Page {
                 return cosmic::task::message(crate::app::Message::Surface(a));
             }
             Message::SetSoundMono(active) => {
-                if let Err(err) = self
-                    .daemon_config
-                    .set_mono_sound(&self.daemon_helper, active)
+                if let Err(err) = self.daemon_helper.edit(&mut self.daemon_config, |entry, local|
+                    entry.set_mono_sound(local, active))
                 {
                     tracing::error!("{err:?}");
                 }
@@ -446,7 +448,6 @@ impl Page {
             },
             Message::ScreenReaderEnabled(enabled) => {
                 if let Some(tx) = &self.dbus_sender {
-                    self.reader_enabled = enabled;
                     let _ = tx.send(a11y_bus::Request::ScreenReader(enabled));
                 } else {
                     self.reader_enabled = false;

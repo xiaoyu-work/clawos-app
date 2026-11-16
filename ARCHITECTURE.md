@@ -80,7 +80,7 @@ package has completed that migration.
 | `products/editor/` | Complete native Text Editor UI, seven MCP handlers and shared SDK AI presentation; controlled filesystem/snapshot, desktop and model-provider authority remain OS-owned |
 | `products/capture/` | Complete native screenshot CLI/MCP/resources and managed GUI status client; portal I/O/UI, session/capture authority and durable output remain OS-owned |
 | `products/media-player/` | Complete native GStreamer UI/MPRIS/MCP/resources; live playback stays product-owned, and owner-bound observation/control authority stays OS-owned |
-| `products/notifications/` | Complete native Layer Shell UI/MCP/config/util libraries and original build; owner/source-bound durable notification state and the single delivery consumer stay OS-owned |
+| `products/notifications/` | Complete original Layer Shell UI/MCP/config/util and build; explicit signed-GUI presentation IPC resources, durable records, single desktop delivery consumer, shell descriptor and checked cleanup stay OS-owned |
 | `products/clipboard/` | Selection App contract and complete native CopyQ history panel; separate selection/history grants, with policy and Wayland authority OS-owned |
 | `products/notification-delivery/` | One-shot ntfy/Pushover/Webhook App sources; durable notification state, DND, delivery leases/retries and the separate Rust ntfy adapter/dispatcher remain OS-owned |
 | `tools/stage.py` | Kind-aware assembly of declared App assets and named shared Python library dependencies |

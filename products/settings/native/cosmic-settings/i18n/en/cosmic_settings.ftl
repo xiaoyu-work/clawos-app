@@ -943,6 +943,11 @@ regional-settings = OS regional settings
     .refresh-error = Current regional settings could not be refreshed. { $detail }
     .invalid-hostname = Enter a hostname of at most 64 ASCII characters, with letter, digit or hyphen labels separated by dots.
 
+owner-preferences-error = Owner desktop settings are not confirmed. No private App setting substitutes for the OS owner's preferences. { $detail }
+keyboard-system-defaults = Apply layout to system and login defaults
+keyboard-system-defaults-apply = Apply system defaults
+keyboard-system-defaults-description = Separate OS permission is required. This does not change your owner-only typing preferences.
+
 formatting = Formatting
     .dates = Dates
     .time = Time

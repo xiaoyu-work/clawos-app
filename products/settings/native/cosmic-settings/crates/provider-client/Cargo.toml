@@ -1,0 +1,10 @@
+[package]
+name = "cosmic-settings-provider-client"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+publish = false
+
+[dependencies]
+claw-os-sdk = { path = "../../../../../claw-os-sdk/rust" }
+serde_json = "1"

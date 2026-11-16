@@ -1,6 +1,19 @@
 use super::*;
 
 #[test]
+fn private_png_chunks_are_correlated_bounded_bytes_not_output_authority() {
+    let id = "a".repeat(32);
+    assert_eq!(image_chunk(json!({"version":1,"request_id":id,"offset":0,"done":true,"bytes":[137,80]}), &id, 0, 2).unwrap(), [137,80]);
+    for value in [
+        json!({"version":1,"request_id":"b".repeat(32),"offset":0,"done":true,"bytes":[137,80]}),
+        json!({"version":1,"request_id":id,"offset":1,"done":true,"bytes":[137,80]}),
+        json!({"version":1,"request_id":id,"offset":0,"done":false,"bytes":[137,80]}),
+        json!({"version":1,"request_id":id,"offset":0,"done":true,"bytes":[256,80]}),
+        json!({"version":1,"request_id":id,"offset":0,"done":true,"bytes":[137,80],"approved":true}),
+    ] { assert!(image_chunk(value, &id, 0, 2).is_err()); }
+}
+
+#[test]
 fn capture_metadata_keeps_clipboard_cancellation_and_file_distinct_without_opening_paths() {
     let id = "a".repeat(32);
     for (status, cancelled) in [("clipboard", false), ("cancelled", true)] {

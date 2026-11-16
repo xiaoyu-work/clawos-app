@@ -5,6 +5,9 @@ mod config;
 #[path = "../src/presentation.rs"]
 mod presentation;
 mod subscriptions {
+    pub mod managed {
+        include!("../src/subscriptions/managed.rs");
+    }
     pub mod applet {
         include!("../src/subscriptions/applet.rs");
     }

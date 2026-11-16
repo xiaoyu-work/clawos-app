@@ -1,4 +1,4 @@
-use cosmic::cosmic_config::{Config, ConfigSet, CosmicConfigEntry};
+use crate::owner_config::{Config, ConfigSet, CosmicConfigEntry};
 use cosmic::cosmic_theme::palette::{Srgb, Srgba};
 use cosmic::cosmic_theme::{
     CornerRadii, DARK_THEME_BUILDER_ID, LIGHT_THEME_BUILDER_ID, Spacing, Theme, ThemeBuilder,
@@ -108,7 +108,8 @@ impl Default for Manager {
     fn default() -> Self {
         let settings_config = crate::config::Config::new();
 
-        let theme_mode_config = ThemeMode::config().ok();
+        let theme_mode_config =
+            Config::new(cosmic::cosmic_theme::THEME_MODE_ID, ThemeMode::VERSION).ok();
         let theme_mode = theme_mode_config
             .as_ref()
             .map(|c| match ThemeMode::get_entry(c) {
@@ -125,14 +126,14 @@ impl Default for Manager {
         let mut manager = Self {
             mode: (theme_mode, theme_mode_config),
             light: (
-                Theme::light_config().ok(),
-                ThemeBuilder::light_config().ok(),
+                Config::new(cosmic::cosmic_theme::LIGHT_THEME_ID, Theme::VERSION).ok(),
+                Config::new(LIGHT_THEME_BUILDER_ID, ThemeBuilder::VERSION).ok(),
                 settings_config.accent_palette_light().ok(),
             )
                 .into(),
             dark: (
-                Theme::dark_config().ok(),
-                ThemeBuilder::dark_config().ok(),
+                Config::new(cosmic::cosmic_theme::DARK_THEME_ID, Theme::VERSION).ok(),
+                Config::new(DARK_THEME_BUILDER_ID, ThemeBuilder::VERSION).ok(),
                 settings_config.accent_palette_dark().ok(),
             )
                 .into(),
@@ -166,11 +167,11 @@ impl Manager {
 
                 $(
                     if $current_theme.$name != $new_theme.$name {
-                        _ = tx.set(stringify!($name), $new_theme.$name.clone());
+                        tx.set(stringify!($name), $new_theme.$name.clone())?;
                     }
                 )+
 
-                _ = tx.commit();
+                tx.commit()?;
             }
         }
 
@@ -197,12 +198,11 @@ impl Manager {
         let mut data = std::iter::once(current).chain(other);
 
         cosmic::task::future(async move {
-            for (builder, config) in data.by_ref() {
-                if let Some(config) = config {
-                    let current_theme = match Theme::get_entry(&config) {
-                        Ok(theme) => theme,
-                        Err((_errs, theme)) => theme,
-                    };
+            let result = (|| -> Result<cosmic::Theme, cosmic_config::Error> {
+                for (builder, config) in data.by_ref() {
+                    let mut config = config.ok_or(cosmic_config::Error::NoConfigDirectory)?;
+                    config.refresh()?;
+                    let current_theme = config.entry::<Theme>()?;
 
                     let new_theme = builder.build();
                     theme_transaction!(config, current_theme, new_theme, {
@@ -226,9 +226,14 @@ impl Manager {
                         accent_text;
                     });
                 }
+                crate::owner_config::theme()
+            })();
+            match result {
+                Ok(theme) => app::Message::SetTheme(theme),
+                Err(error) => app::Message::Error(format!(
+                    "OS appearance changes are not all confirmed: {error}. Refresh before retrying; no rollback was attempted."
+                )),
             }
-
-            app::Message::SetTheme(cosmic::theme::system_preference())
         })
     }
 
@@ -294,7 +299,9 @@ impl Manager {
 
     pub fn dark_mode(&mut self, enabled: bool) -> Result<bool, cosmic_config::Error> {
         if let Some(config) = self.mode.1.as_ref() {
-            return self.mode.0.set_is_dark(config, enabled);
+            return config.edit(&mut self.mode.0, |mode, local| {
+                mode.set_is_dark(local, enabled)
+            });
         }
 
         self.mode.0.is_dark = enabled;
@@ -417,7 +424,7 @@ impl ThemeCustomizer {
     /// Write theme builder to cosmic-config, notifying all subscribers.
     pub fn apply_builder(&mut self) -> &mut Self {
         if let Some(config) = self.builder.1.as_ref() {
-            let _ = self.builder.0.write_entry(config);
+            let _ = config.write_entry(&self.builder.0);
         }
 
         self
@@ -432,7 +439,7 @@ impl ThemeCustomizer {
     /// Write theme to cosmic-config, notifying all subscribers.
     pub fn apply_theme(&mut self) -> &mut Self {
         if let Some(config) = self.theme.1.as_ref() {
-            let _ = self.theme.0.write_entry(config);
+            let _ = config.write_entry(&self.theme.0);
         }
 
         self
@@ -442,10 +449,17 @@ impl ThemeCustomizer {
         let config = self.builder.1.as_ref()?;
 
         self.custom_window_hint = color;
-        self.builder.0.set_window_hint(config, color).ok()?;
+        config
+            .edit(&mut self.builder.0, |entry, local| {
+                entry.set_window_hint(local, color)
+            })
+            .ok()?;
         self.theme
-            .0
-            .set_window_hint(self.theme.1.as_ref()?, color)
+            .1
+            .as_ref()?
+            .edit(&mut self.theme.0, |entry, local| {
+                entry.set_window_hint(local, color)
+            })
             .ok()?;
 
         Some(ThemeStaged::Current)
@@ -458,16 +472,21 @@ impl ThemeCustomizer {
     pub fn set_bg_color(&mut self, color: Option<Srgba>) -> Option<ThemeStaged> {
         let config = self.builder.1.as_ref()?;
 
-        self.builder.0.set_bg_color(config, color).ok()?;
+        config
+            .edit(&mut self.builder.0, |entry, local| {
+                entry.set_bg_color(local, color)
+            })
+            .ok()?;
         Some(ThemeStaged::Current)
     }
 
     pub fn set_primary_container_bg(&mut self, color: Option<Srgba>) -> Option<ThemeStaged> {
         let config = self.builder.1.as_ref()?;
 
-        self.builder
-            .0
-            .set_primary_container_bg(config, color)
+        config
+            .edit(&mut self.builder.0, |entry, local| {
+                entry.set_primary_container_bg(local, color)
+            })
             .ok()?;
 
         Some(ThemeStaged::Current)
@@ -476,31 +495,50 @@ impl ThemeCustomizer {
     pub fn set_accent(&mut self, color: Option<Srgb>) -> Option<ThemeStaged> {
         let config = self.builder.1.as_ref()?;
 
-        self.builder.0.set_accent(config, color).ok()?;
+        config
+            .edit(&mut self.builder.0, |entry, local| {
+                entry.set_accent(local, color)
+            })
+            .ok()?;
         Some(ThemeStaged::Current)
     }
 
     pub fn set_text_tint(&mut self, color: Option<Srgb>) -> Option<ThemeStaged> {
         let config = self.builder.1.as_ref()?;
 
-        self.builder.0.set_text_tint(config, color).ok()?;
+        config
+            .edit(&mut self.builder.0, |entry, local| {
+                entry.set_text_tint(local, color)
+            })
+            .ok()?;
         Some(ThemeStaged::Current)
     }
 
     pub fn set_neutral_tint(&mut self, color: Option<Srgb>) -> Option<ThemeStaged> {
         let config = self.builder.1.as_ref()?;
 
-        self.builder.0.set_neutral_tint(config, color).ok()?;
+        config
+            .edit(&mut self.builder.0, |entry, local| {
+                entry.set_neutral_tint(local, color)
+            })
+            .ok()?;
         Some(ThemeStaged::Current)
     }
 
     pub fn set_spacing(&mut self, spacing: Spacing) -> Option<ThemeStaged> {
         let config = self.builder.1.as_ref()?;
 
-        self.builder.0.set_spacing(config, spacing).ok()?;
+        config
+            .edit(&mut self.builder.0, |entry, local| {
+                entry.set_spacing(local, spacing)
+            })
+            .ok()?;
         self.theme
-            .0
-            .set_spacing(self.theme.1.as_ref()?, spacing)
+            .1
+            .as_ref()?
+            .edit(&mut self.theme.0, |entry, local| {
+                entry.set_spacing(local, spacing)
+            })
             .ok()?;
 
         Some(ThemeStaged::Current)
@@ -509,11 +547,17 @@ impl ThemeCustomizer {
     pub fn set_corner_radii(&mut self, corner_radii: CornerRadii) -> Option<ThemeStaged> {
         let config = self.builder.1.as_ref()?;
 
-        self.builder.0.set_corner_radii(config, corner_radii).ok()?;
-
+        config
+            .edit(&mut self.builder.0, |entry, local| {
+                entry.set_corner_radii(local, corner_radii)
+            })
+            .ok()?;
         self.theme
-            .0
-            .set_corner_radii(self.theme.1.as_ref()?, corner_radii)
+            .1
+            .as_ref()?
+            .edit(&mut self.theme.0, |entry, local| {
+                entry.set_corner_radii(local, corner_radii)
+            })
             .ok()?;
 
         Some(ThemeStaged::Current)
@@ -531,12 +575,18 @@ impl ThemeCustomizer {
             gap
         };
 
-        if let Err(err) = builder.set_gaps(config, gaps) {
+        if let Err(err) = config.edit(builder, |entry, local| entry.set_gaps(local, gaps)) {
             tracing::error!(?err, "Error setting the gap");
             return None;
         }
 
-        self.theme.0.set_gaps(self.theme.1.as_ref()?, gaps).ok()?;
+        self.theme
+            .1
+            .as_ref()?
+            .edit(&mut self.theme.0, |entry, local| {
+                entry.set_gaps(local, gaps)
+            })
+            .ok()?;
         Some(ThemeStaged::Current)
     }
 
@@ -545,7 +595,9 @@ impl ThemeCustomizer {
         let config = self.builder.1.as_ref()?;
         let builder = &mut self.builder.0;
 
-        if let Err(err) = builder.set_active_hint(config, active_hint) {
+        if let Err(err) = config.edit(builder, |entry, local| {
+            entry.set_active_hint(local, active_hint)
+        }) {
             tracing::error!(?err, "Error setting the active hint");
             return None;
         }
@@ -554,15 +606,27 @@ impl ThemeCustomizer {
         if active_hint > builder.gaps.1 {
             let mut gaps = builder.gaps;
             gaps.1 = active_hint;
-            if builder.set_gaps(config, gaps).unwrap_or_default() {
-                let _ = self.theme.0.set_gaps(self.theme.1.as_ref()?, gaps);
+            if config
+                .edit(builder, |entry, local| entry.set_gaps(local, gaps))
+                .unwrap_or_default()
+            {
+                let _ = self
+                    .theme
+                    .1
+                    .as_ref()?
+                    .edit(&mut self.theme.0, |entry, local| {
+                        entry.set_gaps(local, gaps)
+                    });
             }
         }
 
         // Update the active_hint in the config
         self.theme
-            .0
-            .set_active_hint(self.theme.1.as_ref()?, active_hint)
+            .1
+            .as_ref()?
+            .edit(&mut self.theme.0, |entry, local| {
+                entry.set_active_hint(local, active_hint)
+            })
             .ok()?;
 
         Some(ThemeStaged::Current)
