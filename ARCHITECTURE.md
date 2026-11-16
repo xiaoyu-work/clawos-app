@@ -78,7 +78,7 @@ package has completed that migration.
 | `products/events-audit/` | Event service client and legacy JSONL activity App; event/audit authority remains OS-owned; `log` still needs typed audit-service integration rather than direct system-audit access |
 | `products/launcher/` | Complete native Launcher UI and Python/native MCP surfaces sharing product catalog/search/recent and typed launch logic; desktop execution and native UI backend service stay OS-owned |
 | `products/editor/` | Complete native Text Editor UI, seven MCP handlers and shared SDK AI presentation; controlled filesystem/snapshot, desktop and model-provider authority remain OS-owned |
-| `products/capture/` | Complete native screenshot portal client, MCP and resources; interactive portal UI, session/capture authority and durable output remain OS-owned |
+| `products/capture/` | Complete native screenshot CLI/MCP/resources and managed GUI status client; portal I/O/UI, session/capture authority and durable output remain OS-owned |
 | `products/media-player/` | Complete native GStreamer UI/MPRIS/MCP/resources; live playback stays product-owned, and owner-bound observation/control authority stays OS-owned |
 | `products/notifications/` | Complete native Layer Shell UI/MCP/config/util libraries and original build; owner/source-bound durable notification state and the single delivery consumer stay OS-owned |
 | `products/clipboard/` | Selection App contract and complete native CopyQ history panel; separate selection/history grants, with policy and Wayland authority OS-owned |
@@ -328,8 +328,8 @@ Headless acceptance does not establish interactive visual/full-image readiness.
 Capture preserves the independent ashpd/zbus/Tokio graph, original interactive
 portal experience, notifications, 72 locales and all icons/build inputs. It has
 no libcosmic renderer or file-chooser dependency to replace. Non-interactive
-UI/CLI and MCP use the same typed OS service and fixed product-native PNG pipe
-mode. The broker requires `desktop.capture:screen` separately from exact
+CLI and MCP use the same typed OS service and private OS-owned PNG helper.
+The broker requires `desktop.capture:screen` separately from exact
 destination write authority, bounds the owner-session process and persists
 non-overwriting private output with OS task snapshots. MCP holds no session
 bus, exposes no interactive/clipboard or arbitrary native launch route, and
@@ -337,6 +337,17 @@ does not call another App. Existing screenshot/configuration paths do not move.
 The new screen grant requires explicit consent; identities are not renamed.
 Direct human CLI requests retain an already-connected stderr terminal for the
 existing OS session bootstrap; unauthenticated headless requests remain denied.
+The GUI's explicit screen/notification needs use normal Root approval,
+independently of MCP. Its published-SDK generic CLI client uses only the common
+Host's private per-window OS portal request/status interface. Root retains one
+correlation, keeps human region/destination/clipboard decisions in the OS
+portal, and waits for terminal portal/Close proof plus helper exit at checked
+GUI teardown. Human response time is limited by the original live grant,
+not the short non-interactive timeout. File results are metadata, not grants.
+Original localized `--notify` presentation uses the generic sealed App-source
+Notification Service without a raw D-Bus fallback. The obsolete App-private PNG
+pipe mode refuses explicitly. Source and private fixture coverage do not
+establish physical-display or installed-native acceptance or authorize release.
 
 Settings preserves its nested workspace, all default pages, original toolkit
 patches and config-schema dependencies. Applications now presents verified App

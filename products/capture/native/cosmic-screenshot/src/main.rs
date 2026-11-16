@@ -1,14 +1,7 @@
-use ashpd::desktop::screenshot::Screenshot;
 use clap::{ArgAction, Parser};
-use std::{
-    collections::HashMap,
-    fs,
-    io::{Read, Write},
-    os::unix::fs::{MetadataExt, OpenOptionsExt},
-    path::PathBuf,
-};
-use zbus::{Connection, proxy, zvariant::Value};
+use std::{fs, path::PathBuf};
 
+mod gui;
 mod localize;
 mod mcp;
 
@@ -42,26 +35,9 @@ struct Args {
     /// The directory to save the screenshot to, if not performing an interactive screenshot
     #[clap(short, long)]
     save_dir: Option<PathBuf>,
-    /// Fixed OS provider protocol: PNG on stdout, empty on cancellation.
+    /// Retired private provider mode; capture helpers belong to the OS.
     #[clap(long, hide = true, conflicts_with = "save_dir")]
     portal_capture_stdout: bool,
-}
-
-#[proxy(assume_defaults = true)]
-trait Notifications {
-    /// Call the org.freedesktop.Notifications.Notify D-Bus method
-    #[allow(clippy::too_many_arguments)]
-    fn notify(
-        &self,
-        app_name: &str,
-        replaces_id: u32,
-        app_icon: &str,
-        summary: &str,
-        body: &str,
-        actions: &[&str],
-        hints: HashMap<&str, &Value<'_>>,
-        expire_timeout: i32,
-    ) -> zbus::Result<u32>;
 }
 
 /// Options that drive a single screenshot capture, shared by CLI and
@@ -116,7 +92,7 @@ pub(crate) async fn capture(opts: CaptureOptions) -> Result<CaptureOutcome, Capt
         let dir = fs::canonicalize(dir).map_err(|e| CaptureError::Io(e.to_string()))?;
         return noninteractive(dir, opts.modal, true).await;
     }
-    portal(true, opts.modal).await
+    gui::capture(opts.modal).await
 }
 
 pub(crate) async fn noninteractive(
@@ -144,137 +120,13 @@ pub(crate) async fn noninteractive(
     })
 }
 
-async fn portal(interactive: bool, modal: bool) -> Result<CaptureOutcome, CaptureError> {
-    let response = Screenshot::request()
-        .interactive(interactive)
-        .modal(modal)
-        .send()
-        .await
-        .map_err(|e| CaptureError::Portal(format!("failed to send screenshot request: {e}")))?
-        .response();
-
-    let response = match response {
-        Err(err) => {
-            if matches!(
-                err,
-                ashpd::Error::Response(ashpd::desktop::ResponseError::Cancelled)
-            ) {
-                return Ok(CaptureOutcome {
-                    path: String::new(),
-                    cancelled: true,
-                });
-            }
-            return Err(CaptureError::Portal(format!(
-                "error taking screenshot: {err}"
-            )));
-        }
-        Ok(response) => response,
-    };
-
-    let uri = response.uri();
-    let path = match uri.scheme() {
-        "file" => {
-            let response_path = uri
-                .to_file_path()
-                .map_err(|_| CaptureError::Other(format!("unsupported response URI '{uri}'")))?;
-            response_path.to_string_lossy().to_string()
-        }
-        "clipboard" => String::new(),
-        scheme => {
-            return Err(CaptureError::Other(format!(
-                "unsupported scheme '{scheme}'"
-            )));
-        }
-    };
-
-    Ok(CaptureOutcome {
-        path,
-        cancelled: false,
-    })
-}
-
-fn read_portal_png(path: &str) -> Result<Vec<u8>, CaptureError> {
-    const MAX_PNG_BYTES: usize = 64 * 1024 * 1024;
-    let file = fs::OpenOptions::new()
-        .read(true)
-        .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
-        .open(path)
-        .map_err(|e| CaptureError::Io(format!("open portal image: {e}")))?;
-    let metadata = file
-        .metadata()
-        .map_err(|e| CaptureError::Io(e.to_string()))?;
-    if !metadata.is_file()
-        || metadata.uid() != unsafe { libc::geteuid() }
-        || metadata.nlink() != 1
-        || metadata.len() > MAX_PNG_BYTES as u64
-    {
-        return Err(CaptureError::Io(
-            "portal image must be a bounded, owner-owned regular file".into(),
-        ));
-    }
-    let mut bytes = Vec::new();
-    file.take((MAX_PNG_BYTES + 1) as u64)
-        .read_to_end(&mut bytes)
-        .map_err(|e| CaptureError::Io(format!("read portal image: {e}")))?;
-    if bytes.len() > MAX_PNG_BYTES || !bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
-        return Err(CaptureError::Io(
-            "portal returned invalid or oversized PNG data".into(),
-        ));
-    }
-    let current = fs::symlink_metadata(path).map_err(|e| CaptureError::Io(e.to_string()))?;
-    if current.dev() != metadata.dev() || current.ino() != metadata.ino() {
-        return Err(CaptureError::Io(
-            "portal image changed during capture".into(),
-        ));
-    }
-    fs::remove_file(path)
-        .map_err(|e| CaptureError::Io(format!("remove consumed portal image: {e}")))?;
-    Ok(bytes)
-}
-
-async fn capture_stdout(modal: bool) -> Result<(), CaptureError> {
-    let result = portal(false, modal).await?;
-    if result.cancelled {
-        return Ok(());
-    }
-    if result.path.is_empty() {
-        return Err(CaptureError::Other(
-            "non-interactive capture cannot use the clipboard".into(),
-        ));
-    }
-    let bytes = read_portal_png(&result.path)?;
-    std::io::stdout()
-        .lock()
-        .write_all(&bytes)
-        .map_err(|e| CaptureError::Io(format!("write capture pipe: {e}")))
-}
-
-async fn send_notification(path: &str) {
-    let connection = Connection::session()
-        .await
-        .expect("failed to connect to session bus");
-
+async fn send_notification(path: &str) -> Result<(), CaptureError> {
     let message = if path.is_empty() {
         fl!("screenshot-saved-to-clipboard")
     } else {
         fl!("screenshot-saved-to")
     };
-    let proxy = NotificationsProxy::new(&connection)
-        .await
-        .expect("failed to create proxy");
-    _ = proxy
-        .notify(
-            &fl!("cosmic-screenshot"),
-            0,
-            "com.clawos.Screenshot",
-            &message,
-            path,
-            &[],
-            HashMap::from([("transient", &Value::Bool(true))]),
-            5000,
-        )
-        .await
-        .expect("failed to send notification");
+    gui::notify(fl!("cosmic-screenshot"), message, path.to_string()).await
 }
 
 //TODO: better error handling
@@ -298,11 +150,8 @@ async fn main() {
     crate::localize::localize();
 
     if args.portal_capture_stdout {
-        if let Err(error) = capture_stdout(args.modal).await {
-            eprintln!("{error}");
-            std::process::exit(1);
-        }
-        return;
+        eprintln!("private Capture pipe mode is OS-owned; use the authenticated capture service");
+        std::process::exit(1);
     }
 
     let outcome = match capture(CaptureOptions {
@@ -326,8 +175,11 @@ async fn main() {
 
     println!("{}", outcome.path);
 
-    if args.notify {
-        send_notification(&outcome.path).await;
+    if args.notify
+        && let Err(error) = send_notification(&outcome.path).await
+    {
+        eprintln!("{error}");
+        std::process::exit(1);
     }
 }
 

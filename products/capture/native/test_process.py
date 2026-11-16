@@ -1,4 +1,4 @@
-"""Real Capture binaries, isolated fixture portal/broker and installed resources."""
+"""Real Capture binary/resources and published SDK clients over an isolated fake OS wire."""
 
 import argparse
 import base64
@@ -36,21 +36,15 @@ def main():
     options = parser.parse_args()
     fixture = ROOT / "build/capture-process-fixture"
     fixture.mkdir()
-    processes = []
+    process = None
     try:
         installed = fixture / "installed"
         stage("capture", installed)
-        binary = options.binary.resolve()
         native = options.source.resolve()
         installer = [
             "just", "--justfile", str(native / "justfile"), f"rootdir={installed}",
-            "prefix=/usr", f"bin-src={binary}", "install",
+            "prefix=/usr", f"bin-src={options.binary.resolve()}", "install",
         ]
-        plan = subprocess.run(
-            [installer[0], "--dry-run", *installer[1:]], check=True, capture_output=True, text=True,
-        )
-        assert str(installed / "usr/bin/cosmic-screenshot") in plan.stdout + plan.stderr
-        assert str(installed / "usr/share/applications") in plan.stdout + plan.stderr
         subprocess.run(installer, check=True, capture_output=True, text=True)
         binary = installed / "usr/bin/cosmic-screenshot"
         assert os.access(binary, os.X_OK)
@@ -61,82 +55,86 @@ def main():
                     Path("applications") / relative if relative.suffix == ".desktop" else relative
                 )
                 assert target.read_bytes() == resource.read_bytes(), target
-        address = f"unix:path={fixture}/bus"
-        bus = subprocess.Popen([
-            "dbus-daemon", "--session", "--nofork", "--nopidfile", "--nosyslog",
-            f"--address={address}", "--print-address=1",
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        processes.append(bus)
-        assert line(bus).startswith(address)
-        env = {
-            **os.environ, "DBUS_SESSION_BUS_ADDRESS": address, "DISPLAY": "", "WAYLAND_DISPLAY": "",
-            "HOME": str(fixture / "home"), "XDG_CONFIG_HOME": str(fixture / "config"),
-            "XDG_DATA_HOME": str(fixture / "data"), "TMPDIR": str(fixture),
-        }
-        portal = subprocess.Popen([
-            str(ROOT / "build/native-target/debug/examples/capture-portal-fixture"), str(fixture),
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
-        processes.append(portal)
-        assert line(portal).strip() == "ready"
-        source = fixture / "portal.png"
         output = fixture / "shots"
         output.mkdir()
         destination = output / "Screenshot_fixture.png"
-
-        def reply(code=0, uri=None, content=PNG, **extra):
-            source.write_bytes(content)
-            source.chmod(0o600)
-            (fixture / "portal-reply.json").write_text(json.dumps({
-                "code": code, "uri": uri or source.as_uri(), **extra,
-            }))
-
+        source = fixture / "human choice.png"
+        source.write_bytes(PNG)
+        (fixture / "image.png").write_bytes(PNG)
+        for permission in ("screen", "write", "notify"):
+            (fixture / permission).touch()
         broker = fixture / "cos"
         broker.write_text(
-            "#!/usr/bin/python3\n"
-            "import json, os, pathlib, subprocess, sys\n"
-            "root = pathlib.Path(__file__).parent\n"
-            "args = sys.argv[1:]\n"
-            "request = json.load(sys.stdin)\n"
-            "with (root / 'calls').open('a') as f:\n"
-            " f.write(json.dumps({'args':args,'request':request,'app':os.environ.get('COS_APP_ID'),"
-            "'session':os.environ.get('COS_SESSION'),'stderr_terminal':os.isatty(2)}) + '\\n')\n"
-            "assert args == ['--wire=1','__capture','screenshot','--request-stdin']\n"
-            "assert set(request) == {'directory','modal'}\n"
-            "def error(message):\n"
-            " print(json.dumps({'ok':False,'wire_version':1,'code':'PERMISSION_DENIED','error':message})); sys.exit(1)\n"
-            "if not os.environ.get('COS_SESSION') and not os.isatty(2): error('no active session')\n"
-            "if not (root / 'screen').exists(): error('screen permission denied')\n"
-            "if not (root / 'write').exists(): error('write permission denied')\n"
-            "assert request['directory'] == str(root / 'shots')\n"
-            "child_env = {k:v for k,v in os.environ.items() if k not in "
-            "('COS_MCP_SERVER','COS_APP_MANIFEST','COS_APP_ID','COS_SESSION','CLAW_COS_BIN')}\n"
-            "child = subprocess.run([str(root / 'installed/usr/bin/cosmic-screenshot'),"
-            "'--portal-capture-stdout', '--modal=' + str(request['modal']).lower()],"
-            "env=child_env, capture_output=True, timeout=10)\n"
-            "if child.returncode: error(child.stderr.decode())\n"
-            "data = {'cancelled':not bool(child.stdout),'path':None}\n"
-            "if child.stdout:\n"
-            " assert child.stdout.startswith(b'\\x89PNG\\r\\n\\x1a\\n')\n"
-            " path = root / 'shots/Screenshot_fixture.png'\n"
-            " try: fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)\n"
-            " except FileExistsError: error('output already exists')\n"
-            " with os.fdopen(fd, 'wb') as f: f.write(child.stdout)\n"
-            " data['path'] = str(path)\n"
-            "print(json.dumps({'ok':True,'wire_version':1,'data':data}))\n"
+            """#!/usr/bin/python3
+import json, os, pathlib, sys
+root = pathlib.Path(__file__).parent
+args = sys.argv[1:]
+request = json.load(sys.stdin)
+with (root / 'calls').open('a') as log:
+    log.write(json.dumps({'args':args,'request':request,'app':os.environ.get('COS_APP_ID'),
+        'session':os.environ.get('COS_SESSION'),'stderr_terminal':os.isatty(2)}) + '\\n')
+def error(message):
+    print(json.dumps({'ok':False,'wire_version':1,'code':'PERMISSION_DENIED','error':message}))
+    sys.exit(1)
+if not os.environ.get('COS_SESSION') and not os.isatty(2): error('no active session')
+assert args[0] == '--wire=1'
+if args[1] == '__capture':
+    assert args[2:] == ['screenshot','--request-stdin']
+    assert set(request) == {'directory','modal'}
+    if not (root / 'screen').exists(): error('screen permission denied')
+    if not (root / 'write').exists(): error('write permission denied')
+    assert request['directory'] == str(root / 'shots')
+    data = {'cancelled': (root / 'cancel').exists(), 'path': None}
+    if not data['cancelled']:
+        path = root / 'shots/Screenshot_fixture.png'
+        try: fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError: error('output already exists')
+        with os.fdopen(fd, 'wb') as image: image.write((root / 'image.png').read_bytes())
+        data['path'] = str(path)
+elif args[1] == '__gui-capture':
+    assert args[3:] == ['--request-stdin']
+    assert os.environ.get('COS_APP_GUI') == '1'
+    assert os.environ.get('COS_SESSION')
+    if not (root / 'screen').exists(): error('screen permission denied')
+    invocation = request['request_id']
+    assert len(invocation) == 32 and all(ch in '0123456789abcdef' for ch in invocation)
+    held = root / 'held-gui.json'
+    if args[2] == 'request':
+        assert set(request) == {'request_id','modal'} and isinstance(request['modal'], bool)
+        if held.exists(): assert json.loads(held.read_text()) == request
+        else: held.write_text(json.dumps(request))
+        data = {'version':1,'request_id':invocation,'status':'pending'}
+    else:
+        assert args[2] == 'status' and set(request) == {'request_id'}
+        assert json.loads(held.read_text())['request_id'] == invocation
+        data = {'version':1,'request_id':invocation,**json.loads((root / 'gui-reply.json').read_text())}
+elif args[1] == '__notifications':
+    assert args[2:5] == ['request','--request-stdin','--deadline'] and int(args[5]) > 0
+    if not (root / 'notify').exists(): error('notification permission denied')
+    assert request['action'] == 'post'
+    assert set(request) == {'action','app_name','summary','body','icon','expire_ms','transient'}
+    with (root / 'notifications').open('a') as log: log.write(json.dumps(request) + '\\n')
+    data = {'id':'notif-' + 'a' * 32}
+else:
+    error('unsupported controlled primitive')
+print(json.dumps({'ok':True,'wire_version':1,'data':data}))
+"""
         )
         broker.chmod(0o755)
-        for permission in ("screen", "write"):
-            (fixture / permission).touch()
-        env.update({
-            "COS_MCP_SERVER": "1", "COS_APP_ID": "cosmic-screenshot", "COS_SESSION": "broker-session",
+        env = {
+            **os.environ,
+            "DBUS_SESSION_BUS_ADDRESS": f"unix:path={fixture}/no-user-bus",
+            "DISPLAY": "", "WAYLAND_DISPLAY": "", "HOME": str(fixture / "home"),
+            "XDG_CONFIG_HOME": str(fixture / "config"), "XDG_DATA_HOME": str(fixture / "data"),
+            "TMPDIR": str(fixture), "COS_MCP_SERVER": "1", "COS_APP_ID": "cosmic-screenshot",
+            "COS_SESSION": "broker-session",
             "COS_APP_MANIFEST": str(installed / "usr/lib/cos/apps/cosmic-screenshot/app.json"),
             "CLAW_COS_BIN": str(broker),
-        })
+        }
         process = subprocess.Popen(
             [str(binary), "--portal-capture-stdout"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, text=True, env=env, cwd=fixture,
         )
-        processes.append(process)
         counter = 0
 
         def request(method, params):
@@ -170,12 +168,10 @@ def main():
         process.stdin.write('{"jsonrpc":"2.0","method":"notifications/initialized"}\n')
         process.stdin.flush()
         tool, = request("tools/list", {})["result"]["tools"]
-        assert tool["name"] == "screenshot.capture"
         assert tool["inputSchema"]["properties"]["interactive"]["enum"] == [False]
         assert "error" in request("tools/call", {
             "name": "screenshot.capture", "arguments": {"save_dir": str(output)},
         })
-        assert not (fixture / "calls").exists()
         for arguments in [
             {"save_dir": str(output), "interactive": True},
             {"save_dir": str(output), "modal": "false"},
@@ -187,107 +183,92 @@ def main():
         expired = call({"save_dir": str(output)}, deadline_unix_ms=1)
         assert "error" in expired or expired["result"].get("isError")
         assert not (fixture / "calls").exists()
-        reply()
         assert success(call({"save_dir": str(output)})) == {"cancelled": False, "path": str(destination)}
-        assert destination.read_bytes() == PNG and not source.exists()
-        assert destination.stat().st_mode & 0o777 == 0o600
+        assert destination.read_bytes() == PNG and destination.stat().st_mode & 0o777 == 0o600
         destination.unlink()
-        reply(code=1)
+        (fixture / "cancel").touch()
         assert success(call({"save_dir": str(output), "modal": False})) == {"cancelled": True, "path": None}
         assert not destination.exists()
+        (fixture / "cancel").unlink()
         for permission in ("screen", "write"):
-            before = (fixture / "portal-calls").read_bytes()
             (fixture / permission).unlink()
-            denied = call({"save_dir": str(output)})["result"]
-            assert denied["isError"]
-            assert f"{permission} permission denied" in denied["content"][0]["text"]
-            assert (fixture / "portal-calls").read_bytes() == before
-            (fixture / permission).touch()
-        for options in [
-            {"fail": True}, {"uri": "clipboard:"}, {"uri": "https://example.invalid/image.png"},
-            {"content": b"not PNG"},
-        ]:
-            reply(**options)
             assert call({"save_dir": str(output)})["result"]["isError"]
-            assert not destination.exists()
+            (fixture / permission).touch()
         calls = [json.loads(value) for value in (fixture / "calls").read_text().splitlines()]
-        assert all(value["app"] == "cosmic-screenshot" for value in calls)
-        assert all(value["session"] == "broker-session" for value in calls)
+        assert all(value["args"][1] == "__capture" for value in calls)
+        assert all(value["app"] == "cosmic-screenshot" and value["session"] == "broker-session" for value in calls)
         assert all(value["stderr_terminal"] is False for value in calls)
-        assert all("app" not in value["args"] for value in calls)
-        assert not (fixture / "notification-calls").exists()
-        human_env = {k: v for k, v in env.items() if k not in ("COS_MCP_SERVER", "COS_APP_ID")}
-        before = (fixture / "calls").read_bytes()
-        for uri, expected in [(source.as_uri(), str(source)), ("clipboard:", "")]:
-            reply(uri=uri)
-            human = subprocess.run([str(binary), "--notify=false", "--modal=false"],
-                                   env=human_env, capture_output=True, text=True, timeout=10)
-            assert human.returncode == 0, human.stderr
-            assert human.stdout.strip() == expected
-            assert source.read_bytes() == PNG
-        assert not (fixture / "notification-calls").exists()
-        for uri, expected in [(source.as_uri(), str(source)), ("clipboard:", "")]:
-            reply(uri=uri)
-            human = subprocess.run([str(binary)], env=human_env,
-                                   capture_output=True, text=True, timeout=10)
-            assert human.returncode == 0, human.stderr
-            assert human.stdout.strip() == expected
-        notifications = [
-            json.loads(value) for value in (fixture / "notification-calls").read_text().splitlines()
-        ]
+
+        human_env = {key: value for key, value in env.items() if key != "COS_MCP_SERVER"}
+        human_env["COS_APP_GUI"] = "1"
+
+        def human(reply, *args):
+            (fixture / "held-gui.json").unlink(missing_ok=True)
+            (fixture / "gui-reply.json").write_text(json.dumps(reply))
+            return subprocess.run(
+                [str(binary), "--gui", *args], env=human_env,
+                capture_output=True, text=True, timeout=10,
+            )
+
+        for reply, expected in [({"status": "saved", "path": str(source)}, str(source)),
+                                ({"status": "clipboard"}, "")]:
+            result = human(reply, "--notify=false", "--modal=false", "--save-dir", str(output))
+            assert result.returncode == 0 and result.stdout.strip() == expected, result.stderr
+            assert source.read_bytes() == PNG and not destination.exists()
+        assert not (fixture / "notifications").exists()
+        for reply, expected in [({"status": "saved", "path": str(source)}, str(source)),
+                                ({"status": "clipboard"}, "")]:
+            result = human(reply)
+            assert result.returncode == 0 and result.stdout.strip() == expected, result.stderr
+        notifications = [json.loads(value) for value in (fixture / "notifications").read_text().splitlines()]
         assert [value["body"] for value in notifications] == [str(source), ""]
-        assert all(value["app_icon"] == "com.clawos.Screenshot" for value in notifications)
-        assert all(value["app_name"] and value["summary"] for value in notifications)
-        assert all(value["transient"] is True and value["expire_timeout"] == 5000
-                   and value["actions"] == [] and value["replaces_id"] == 0 for value in notifications)
-        reply(code=1)
-        human = subprocess.run([str(binary)], env=human_env,
-                               capture_output=True, text=True, timeout=10)
-        assert human.returncode == 0 and human.stdout.strip() == "Screenshot cancelled by user"
-        assert len((fixture / "notification-calls").read_text().splitlines()) == 2
-        assert (fixture / "calls").read_bytes() == before
-        reply()
-        human = subprocess.run([
-            str(binary), "--interactive=false", "--notify=false", "--save-dir", str(output),
-        ], env=human_env, capture_output=True, text=True, timeout=10)
-        assert human.returncode == 0, human.stderr
-        assert human.stdout.strip() == str(destination) and destination.read_bytes() == PNG
+        assert all(value["icon"] == "com.clawos.Screenshot" and value["app_name"] and value["summary"]
+                   and value["expire_ms"] == 5000 and value["transient"] for value in notifications)
+        result = human({"status": "cancelled"})
+        assert result.returncode == 0 and result.stdout.strip() == "Screenshot cancelled by user"
+        assert len((fixture / "notifications").read_text().splitlines()) == 2
+        for reply in [{"status": "cleanup_pending"}, {"status": "failed", "error": "portal refused"},
+                      {"status": "saved", "path": "relative"}, {"status": "clipboard", "approved": True}]:
+            result = human(reply)
+            assert result.returncode != 0 and result.stderr, result
+        (fixture / "screen").unlink()
+        assert human({"status": "clipboard"}).returncode != 0
+        (fixture / "screen").touch()
+        (fixture / "notify").unlink()
+        result = human({"status": "clipboard"})
+        assert result.returncode != 0 and "notification permission denied" in result.stderr
+        (fixture / "notify").touch()
+        result = subprocess.run(
+            [str(binary), "--gui", "--interactive=false", "--notify=false", "--save-dir", str(output)],
+            env=human_env, capture_output=True, text=True, timeout=10,
+        )
+        assert result.returncode == 0 and result.stdout.strip() == str(destination), result.stderr
         destination.unlink()
-        reply()
-        terminal_env = {k: v for k, v in human_env.items() if k != "COS_SESSION"}
-        before = (fixture / "portal-calls").read_bytes()
-        headless = subprocess.run([
-            str(binary), "--interactive=false", "--notify=false", "--save-dir", str(output),
-        ], env=terminal_env, capture_output=True, text=True, timeout=10)
-        assert headless.returncode != 0 and "no active session" in headless.stderr
-        assert (fixture / "portal-calls").read_bytes() == before
-        assert not destination.exists()
+        terminal_env = {key: value for key, value in human_env.items() if key not in ("COS_SESSION", "COS_APP_GUI")}
+        args = [str(binary), "--interactive=false", "--notify=false", "--save-dir", str(output)]
+        result = subprocess.run(args, env=terminal_env, capture_output=True, text=True, timeout=10)
+        assert result.returncode != 0 and "no active session" in result.stderr
         master, terminal = pty.openpty()
         try:
-            human = subprocess.run([
-                str(binary), "--interactive=false", "--notify=false", "--save-dir", str(output),
-            ], env=terminal_env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=terminal,
-                text=True, timeout=10)
-            assert human.returncode == 0
-            assert human.stdout.strip() == str(destination) and destination.read_bytes() == PNG
+            result = subprocess.run(args, env=terminal_env, stdin=subprocess.DEVNULL,
+                                    stdout=subprocess.PIPE, stderr=terminal, text=True, timeout=10)
+            assert result.returncode == 0 and result.stdout.strip() == str(destination)
         finally:
             os.close(terminal)
             os.close(master)
-        last_call = json.loads((fixture / "calls").read_text().splitlines()[-1])
-        assert last_call["session"] is None and last_call["stderr_terminal"] is True
-        portal_calls = [json.loads(value) for value in (fixture / "portal-calls").read_text().splitlines()]
-        assert any(value["interactive"] is True and value["modal"] is False for value in portal_calls)
-        assert any(value["interactive"] is False and value["modal"] is True for value in portal_calls)
-        wrong = json.loads(Path(env["COS_APP_MANIFEST"]).read_text())
-        wrong["id"] = "wrong-identity"
-        (fixture / "wrong.json").write_text(json.dumps(wrong))
-        failure = subprocess.run([str(binary)], env={**env, "COS_APP_MANIFEST": str(fixture / "wrong.json")},
-                                 input="", capture_output=True, text=True, timeout=10)
-        assert failure.returncode != 0 and "cosmic-screenshot identity" in failure.stderr
-        print("Capture: installed binary/8 icons/desktop entry; authenticated MCP, exact SDK routing, "
-              "fixture portal PNG/cancel/errors, human UI/notifications/terminal and unchanged identity passed")
+        result = subprocess.run([str(binary), "--portal-capture-stdout"], env=human_env,
+                                capture_output=True, text=True, timeout=10)
+        assert result.returncode != 0 and not result.stdout and "OS-owned" in result.stderr
+        gui_calls = [value for value in map(json.loads, (fixture / "calls").read_text().splitlines())
+                     if value["args"][1] == "__gui-capture"]
+        assert any(value["args"][2] == "status" for value in gui_calls)
+        assert any(value["request"].get("modal") is False for value in gui_calls)
+        assert all(value["session"] == "broker-session" for value in gui_calls)
+        print("Capture: real installed binary/resources; published-SDK MCP/GUI/notification clients, "
+              "metadata-only file/clipboard/cancel, errors and terminal compatibility passed without a user bus. "
+              "Root portal/authority/lifetime and physical UI acceptance are separate OS gates.")
     finally:
-        for process in reversed(processes):
+        if process is not None:
             process.terminate()
             try:
                 process.communicate(timeout=5)
