@@ -7,9 +7,11 @@ rust-version.workspace = true
 publish = true
 
 [dependencies]
+cosmic-settings-provider-client = { path = "../../crates/provider-client" }
+serde_json = "1"
 bluez-zbus = { git = "https://github.com/pop-os/dbus-settings-bindings" }
 futures = "0.3.32"
 iced_futures = { git = "https://github.com/pop-os/libcosmic" }
-tokio = "1.49.0"
+tokio = { version = "1.49.0", features = ["sync", "rt", "time"] }
 tracing = "0.1.44"
 zbus = "5.13.2"

@@ -1,58 +1,8 @@
-use futures::{FutureExt, Stream, StreamExt, future::join_all};
+// Copyright 2023 System76 <info@system76.com>
+// SPDX-License-Identifier: GPL-3.0-only
+
 use jiff::{Span, SpanRelativeTo, SpanRound, ToSpan, Unit};
-use upower_dbus::{BatteryState, BatteryType, DeviceProxy};
-use zbus::{Connection, zvariant::ObjectPath};
-
-mod ppdaemon;
-mod s76powerdaemon;
-
-pub trait SetPowerProfile {
-    async fn set_power_profile(&self, profile: PowerProfile);
-}
-
-pub trait GetCurrentPowerProfile {
-    async fn get_current_power_profile(&self) -> PowerProfile;
-}
-
-#[derive(Debug, Clone)]
-pub enum PowerBackendEnum {
-    S76(S76Backend),
-    PP(PPBackend),
-}
-
-impl SetPowerProfile for PowerBackendEnum {
-    async fn set_power_profile(&self, profile: PowerProfile) {
-        match self {
-            PowerBackendEnum::S76(backend) => backend.set_power_profile(profile).await,
-            PowerBackendEnum::PP(backend) => backend.set_power_profile(profile).await,
-        }
-    }
-}
-
-impl GetCurrentPowerProfile for PowerBackendEnum {
-    async fn get_current_power_profile(&self) -> PowerProfile {
-        match self {
-            PowerBackendEnum::S76(backend) => backend.get_current_power_profile().await,
-            PowerBackendEnum::PP(backend) => backend.get_current_power_profile().await,
-        }
-    }
-}
-
-pub async fn get_backend() -> Option<PowerBackendEnum> {
-    match get_s76power_daemon_proxy().await {
-        Ok(p) => match p.get_profile().await {
-            Ok(_) => Some(PowerBackendEnum::S76(S76Backend {})),
-            Err(_) => match get_power_profiles_proxy().await {
-                Ok(pr) => match pr.active_profile().await {
-                    Ok(_) => Some(PowerBackendEnum::PP(PPBackend {})),
-                    Err(_) => None,
-                },
-                Err(()) => None,
-            },
-        },
-        Err(()) => None,
-    }
-}
+use serde_json::Value;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PowerProfile {
@@ -62,11 +12,22 @@ pub enum PowerProfile {
 }
 
 impl PowerProfile {
-    fn from_string(s: &str) -> PowerProfile {
-        match s {
-            "Battery" | "power-saver" => Self::Battery,
-            "Performance" | "performance" => Self::Performance,
-            _ => Self::Balanced,
+    fn parse(value: &Value) -> Result<Self, String> {
+        match value.as_str() {
+            Some("battery") => Ok(Self::Battery),
+            Some("balanced") => Ok(Self::Balanced),
+            Some("performance") => Ok(Self::Performance),
+            _ => Err(cosmic_settings_provider_client::refused(
+                "OS power profile is unconfirmed",
+            )),
+        }
+    }
+
+    fn name(self) -> &'static str {
+        match self {
+            Self::Battery => "battery",
+            Self::Balanced => "balanced",
+            Self::Performance => "performance",
         }
     }
 
@@ -96,134 +57,38 @@ pub fn get_power_profiles() -> Vec<PowerProfile> {
 }
 
 #[derive(Debug, Clone)]
-pub struct S76Backend {}
+pub struct PowerBackendEnum {
+    pub current: PowerProfile,
+}
 
-impl SetPowerProfile for S76Backend {
-    async fn set_power_profile(&self, profile: PowerProfile) {
-        let Ok(daemon) = get_s76power_daemon_proxy().await else {
-            tracing::error!("Problem while setting power profile.");
-            return;
-        };
-
-        match profile {
-            PowerProfile::Battery => match daemon.battery().await {
-                Ok(()) => tracing::info!("Battery mode activated."),
-                Err(e) => tracing::error!("{e}"),
-            },
-            PowerProfile::Balanced => match daemon.balanced().await {
-                Ok(()) => tracing::info!("Balanced mode activated."),
-                Err(e) => tracing::error!("{e}"),
-            },
-            PowerProfile::Performance => match daemon.performance().await {
-                Ok(()) => tracing::info!("Performance mode activated."),
-                Err(e) => tracing::error!("{e}"),
-            },
+pub async fn get_backend() -> Option<PowerBackendEnum> {
+    match cosmic_settings_provider_client::call_async("power", "profile-status", vec![]).await {
+        Ok(value) if value["action"].as_str() == Some("profile-status") => {
+            PowerProfile::parse(&value["profile"])
+                .ok()
+                .map(|current| PowerBackendEnum { current })
         }
+        Ok(_) => {
+            cosmic_settings_provider_client::refused("OS power profile observation is unconfirmed");
+            None
+        }
+        Err(_) => None,
     }
 }
 
-impl GetCurrentPowerProfile for S76Backend {
-    async fn get_current_power_profile(&self) -> PowerProfile {
-        let Ok(daemon) = get_s76power_daemon_proxy().await else {
-            tracing::error!("Problem while getting power profile.");
-            return PowerProfile::Balanced;
-        };
-
-        match daemon.get_profile().await {
-            Ok(p) => PowerProfile::from_string(p.as_str()),
-            //Default
-            Err(_why) => {
-                tracing::error!("Problem while getting power profile.");
-                //Default
-                PowerProfile::Balanced
-            }
+impl PowerBackendEnum {
+    pub async fn set_power_profile(&self, requested: PowerProfile) -> Result<PowerProfile, String> {
+        let action = format!("profile-{}", requested.name());
+        let value = cosmic_settings_provider_client::call_async("power", &action, vec![]).await?;
+        if value["action"].as_str() != Some(&action)
+            || value["status"].as_str() != Some("applied")
+            || PowerProfile::parse(&value["profile"])? != requested
+        {
+            return Err(cosmic_settings_provider_client::refused(
+                "OS did not confirm the requested power profile",
+            ));
         }
-    }
-}
-
-async fn get_s76power_daemon_proxy<'a>() -> Result<s76powerdaemon::PowerDaemonProxy<'a>, ()> {
-    let connection = match Connection::system().await {
-        Ok(c) => c,
-        Err(e) => {
-            tracing::error!("zbus connection failed. {e}");
-            return Err(());
-        }
-    };
-
-    match s76powerdaemon::PowerDaemonProxy::new(&connection).await {
-        Ok(d) => Ok(d),
-        Err(e) => {
-            tracing::error!("Power daemon proxy can't be created. Is it installed? {e}");
-            Err(())
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct PPBackend {}
-
-impl SetPowerProfile for PPBackend {
-    async fn set_power_profile(&self, profile: PowerProfile) {
-        let daemon = match get_power_profiles_proxy().await {
-            Ok(c) => c,
-            Err(()) => {
-                tracing::error!("Problem while setting power profile.");
-                return;
-            }
-        };
-
-        match profile {
-            PowerProfile::Battery => match daemon.set_active_profile("power-saver").await {
-                Ok(()) => tracing::info!("Battery mode activated."),
-                Err(e) => tracing::error!("{e}"),
-            },
-            PowerProfile::Balanced => match daemon.set_active_profile("balanced").await {
-                Ok(()) => tracing::info!("Balanced mode activated."),
-                Err(e) => tracing::error!("{e}"),
-            },
-            PowerProfile::Performance => match daemon.set_active_profile("performance").await {
-                Ok(()) => tracing::info!("Performance mode activated."),
-                Err(e) => tracing::error!("{e}"),
-            },
-        }
-    }
-}
-
-impl GetCurrentPowerProfile for PPBackend {
-    async fn get_current_power_profile(&self) -> PowerProfile {
-        let Ok(daemon) = get_power_profiles_proxy().await else {
-            tracing::error!("Problem while getting power profile.");
-            return PowerProfile::Balanced;
-        };
-
-        let profile = match daemon.active_profile().await {
-            Ok(p) => p,
-            Err(_e) => {
-                tracing::error!("Problem while getting power profile.");
-                //Default
-                return PowerProfile::Balanced;
-            }
-        };
-
-        PowerProfile::from_string(&profile)
-    }
-}
-
-async fn get_power_profiles_proxy<'a>() -> Result<ppdaemon::PowerProfilesProxy<'a>, ()> {
-    let connection = match Connection::system().await {
-        Ok(c) => c,
-        Err(e) => {
-            tracing::error!("zbus connection failed. {e}");
-            return Err(());
-        }
-    };
-
-    match ppdaemon::PowerProfilesProxy::new(&connection).await {
-        Ok(d) => Ok(d),
-        Err(e) => {
-            tracing::error!("Power daemon proxy can't be created. Is it installed? {e}");
-            Err(())
-        }
+        Ok(requested)
     }
 }
 
@@ -242,142 +107,162 @@ pub struct ConnectedDevice {
     pub device_icon: &'static str,
     pub battery: Battery,
     pub device_path: String,
-    pub proxy: Option<DeviceProxy<'static>>,
 }
 
-pub async fn get_device_proxy<'a>() -> Result<upower_dbus::DeviceProxy<'a>, zbus::Error> {
-    let connection = match Connection::system().await {
-        Ok(c) => c,
-        Err(e) => {
-            tracing::error!("zbus connection failed. {e}");
-            return Err(e);
-        }
-    };
+#[derive(Debug, Clone)]
+pub struct Snapshot {
+    pub battery: Battery,
+    pub devices: Vec<ConnectedDevice>,
+}
 
-    match upower_dbus::UPowerProxy::new(&connection).await {
-        Ok(p) => p.get_display_device().await,
-        Err(e) => Err(e),
+pub async fn snapshot() -> Result<Snapshot, String> {
+    parse_snapshot(cosmic_settings_provider_client::call_async("power", "status", vec![]).await?)
+        .map_err(cosmic_settings_provider_client::refused)
+}
+
+fn field<'a>(properties: &'a Value, name: &str) -> Option<&'a Value> {
+    properties.get(name).or_else(|| {
+        properties
+            .as_object()?
+            .iter()
+            .find(|(key, _)| {
+                key.rsplit_once('.')
+                    .is_some_and(|(_, suffix)| suffix == name)
+            })
+            .map(|(_, value)| value)
+    })
+}
+
+fn battery(properties: &Value, system: bool) -> Result<Battery, String> {
+    let present = field(properties, "present")
+        .and_then(Value::as_bool)
+        .or_else(|| (!system).then_some(true))
+        .ok_or("OS battery presence is unavailable")?;
+    if !present {
+        return Ok(Battery::default());
     }
-}
-
-async fn enumerate_devices<'a>() -> Result<Vec<upower_dbus::DeviceProxy<'a>>, zbus::Error> {
-    let connection = match Connection::system().await {
-        Ok(c) => c,
-        Err(e) => {
-            tracing::error!("zbus connection failed. {e}");
-            return Err(e);
-        }
-    };
-
-    let devices = upower_dbus::UPowerProxy::new(&connection)
-        .await?
-        .enumerate_devices()
-        .await?;
-
-    let devices = futures::future::join_all(
-        devices
-            .into_iter()
-            .map(|path| DeviceProxy::new(&connection, path)),
+    let percent = field(properties, "percentage")
+        .and_then(Value::as_f64)
+        .filter(|value| value.is_finite() && (0.0..=100.0).contains(value))
+        .ok_or("OS battery percentage is unavailable")?;
+    let state = field(properties, "state")
+        .and_then(Value::as_str)
+        .ok_or("OS battery state is unavailable")?;
+    let is_charging = state == "charging";
+    let remaining_duration = field(
+        properties,
+        if is_charging {
+            "time_to_full"
+        } else {
+            "time_to_empty"
+        },
     )
-    .await;
+    .and_then(Value::as_str)
+    .and_then(|value| {
+        let mut fields = value.split_whitespace();
+        let number = fields.next()?.parse::<f64>().ok()?;
+        let scale = match fields.next()? {
+            "second" | "seconds" => 1.0,
+            "minute" | "minutes" => 60.0,
+            "hour" | "hours" => 3600.0,
+            "day" | "days" => 86400.0,
+            _ => return None,
+        };
+        let seconds = number * scale;
+        (seconds.is_finite() && (0.0..=31_536_000.0).contains(&seconds))
+            .then(|| (seconds.round() as i64).seconds())
+    })
+    .unwrap_or_default();
+    let level = [
+        (95.0, 100),
+        (80.0, 90),
+        (65.0, 80),
+        (35.0, 50),
+        (20.0, 35),
+        (14.0, 20),
+        (9.0, 10),
+        (5.0, 5),
+    ]
+    .into_iter()
+    .find(|(minimum, _)| percent > *minimum)
+    .map_or(0, |(_, level)| level);
+    let suffix = if is_charging || state == "fully-charged" {
+        "charging-"
+    } else {
+        ""
+    };
+    Ok(Battery {
+        icon_name: format!("cosmic-applet-battery-level-{level}-{suffix}symbolic"),
+        is_present: present,
+        percent,
+        is_charging,
+        remaining_duration,
+    })
+}
 
-    let errors = devices.iter().filter(|device| device.is_err());
-    if errors.count() > 0 {
-        let mut errors: Vec<zbus::Error> = devices
-            .into_iter()
-            .filter_map(std::result::Result::err)
-            .collect();
-        if errors.len() > 1 {
-            eprintln!(
-                "Multiple errors occurs when fetching connected device: {errors:?}. Only the last one will be returned."
-            );
-        }
-        return Err(errors.pop().unwrap());
+fn parse_snapshot(value: Value) -> Result<Snapshot, String> {
+    let system = &value["display_device"];
+    if system.get("error").is_some() {
+        return Err("OS system battery observation is unavailable".into());
     }
-    Ok(devices
-        .into_iter()
-        .filter_map(std::result::Result::ok)
-        .collect())
+    let battery = battery(&system["properties"], true)?;
+    let entries = value["devices"]
+        .as_array()
+        .filter(|entries| entries.len() <= 32)
+        .ok_or("invalid OS power device collection")?;
+    let mut devices = Vec::new();
+    for entry in entries {
+        let path = entry["object_path"]
+            .as_str()
+            .filter(|path| path.starts_with("/org/freedesktop/UPower/devices/"))
+            .ok_or("OS power device identity is unavailable")?;
+        let properties = &entry["properties"];
+        let kind = properties.as_object().and_then(|properties| {
+            properties
+                .keys()
+                .filter_map(|key| key.split_once('.').map(|(prefix, _)| prefix))
+                .find(|prefix| !matches!(*prefix, "line_power" | "battery"))
+        });
+        let Some(kind) = kind else {
+            continue;
+        };
+        let icon = match kind {
+            "mouse" => "input-mouse-symbolic",
+            "keyboard" => "input-keyboard-symbolic",
+            "phone" | "pda" => "smartphone-symbolic",
+            "tablet" => "tablet-symbolic",
+            "computer" => "laptop-symbolic",
+            "headset" => "audio-headset-symbolic",
+            "headphones" => "audio-headphones-symbolic",
+            "speakers" => "speaker-symbolic",
+            "gaming_input" => "input-gaming-symbolic",
+            "touchpad" => "input-touchpad-symbolic",
+            "monitor" => "display-symbolic",
+            "ups" => "uninterruptible-power-supply-symbolic",
+            _ => "bluetooth-symbolic",
+        };
+        devices.push(ConnectedDevice {
+            model: field(properties, "model")
+                .and_then(Value::as_str)
+                .map(str::to_owned)
+                .unwrap_or_else(|| fl!("connected-devices", "unknown")),
+            device_icon: icon,
+            battery: battery_from_entry(properties)?,
+            device_path: path.into(),
+        });
+    }
+    Ok(Snapshot { battery, devices })
+}
+
+fn battery_from_entry(properties: &Value) -> Result<Battery, String> {
+    battery(properties, false)
 }
 
 impl Battery {
-    pub async fn from_device(proxy: &DeviceProxy<'_>) -> Self {
-        let mut remaining_duration = Span::default();
-
-        let (is_present, percentage, battery_state) = futures::join!(
-            proxy.is_present().map(Result::unwrap_or_default),
-            proxy.percentage().map(Result::unwrap_or_default),
-            proxy.state().map(|r| r.unwrap_or(BatteryState::Unknown)),
-        );
-
-        let percent = percentage.clamp(0.0, 100.0);
-
-        let is_charging = matches!(battery_state, BatteryState::Charging);
-
-        let charged = matches!(battery_state, BatteryState::FullyCharged)
-            || matches!(battery_state, BatteryState::Charging)
-                && (percent - 100.0_f64).abs() < f64::EPSILON;
-
-        if !is_charging {
-            if let Ok(time) = proxy.time_to_empty().await {
-                remaining_duration = time.seconds();
-            }
-        } else if let Ok(time) = proxy.time_to_full().await {
-            remaining_duration = time.seconds();
-        }
-
-        let battery_percent = if percent > 95.0 {
-            100
-        } else if percent > 80.0 {
-            90
-        } else if percent > 65.0 {
-            80
-        } else if percent > 35.0 {
-            50
-        } else if percent > 20.0 {
-            35
-        } else if percent > 14.0 {
-            20
-        } else if percent > 9.0 {
-            10
-        } else if percent > 5.0 {
-            5
-        } else {
-            0
-        };
-        // Due to not having a specific icon for charged we use the charging one
-        let charging = if is_charging || charged {
-            "charging-"
-        } else {
-            ""
-        };
-
-        let icon_name =
-            format!("cosmic-applet-battery-level-{battery_percent}-{charging}symbolic",);
-
-        Self {
-            icon_name,
-            is_present,
-            percent,
-            is_charging,
-            remaining_duration,
-        }
-    }
-
-    pub async fn update_battery() -> Self {
-        let proxy = get_device_proxy().await;
-
-        if let Ok(proxy) = proxy {
-            return Self::from_device(&proxy).await;
-        }
-
-        Battery::default()
-    }
     pub fn remaining_time(&self) -> String {
         if !self.remaining_duration.is_positive() {
             return String::new();
         }
-
         let balanced = self
             .remaining_duration
             .round(
@@ -386,22 +271,16 @@ impl Battery {
                     .relative(SpanRelativeTo::days_are_24_hours()),
             )
             .unwrap();
-
-        let days = balanced.get_days();
-        let hours = balanced.get_hours();
-        let minutes = balanced.get_minutes();
-
-        let mut time: Vec<String> = Vec::new();
-        if days > 0 {
-            time.push(fl!("battery", "day", value = days));
+        let mut time = Vec::new();
+        if balanced.get_days() > 0 {
+            time.push(fl!("battery", "day", value = balanced.get_days()));
         }
-        if hours > 0 {
-            time.push(fl!("battery", "hour", value = hours));
+        if balanced.get_hours() > 0 {
+            time.push(fl!("battery", "hour", value = balanced.get_hours()));
         }
-        if minutes > 0 {
-            time.push(fl!("battery", "minute", value = minutes));
+        if balanced.get_minutes() > 0 {
+            time.push(fl!("battery", "minute", value = balanced.get_minutes()));
         }
-
         if time.len() == 3 {
             let last = time.pop().unwrap();
             time = vec![time.join(", "), last];
@@ -411,122 +290,12 @@ impl Battery {
         } else {
             time.join(&format!(" {} ", fl!("battery", "and")))
         };
-
         fl!(
             "battery",
             "remaining-time",
             time = time,
-            action = if !self.is_charging { "empty" } else { "full" }
+            action = if self.is_charging { "full" } else { "empty" }
         )
-    }
-}
-
-impl ConnectedDevice {
-    async fn from_device_maybe(proxy: DeviceProxy<'static>) -> Option<Self> {
-        let device_type = proxy.type_().await.unwrap_or(BatteryType::Unknown);
-        let device_path = proxy.clone().into_inner().path().to_string();
-        if matches!(
-            device_type,
-            BatteryType::Unknown | BatteryType::LinePower | BatteryType::Battery
-        ) {
-            return None;
-        }
-        let model = proxy
-            .model()
-            .await
-            .unwrap_or(fl!("connected-devices", "unknown"));
-        let battery = Battery::from_device(&proxy).await;
-        let device_icon = match device_type {
-            BatteryType::Ups => "uninterruptible-power-supply-symbolic",
-            BatteryType::Monitor => "display-symbolic",
-            BatteryType::Mouse => "input-mouse-symbolic",
-            BatteryType::Keyboard => "input-keyboard-symbolic",
-            BatteryType::Pda | BatteryType::Phone => "smartphone-symbolic",
-            BatteryType::MediaPlayer => "multimedia-player-symbolic",
-            BatteryType::Tablet => "tablet-symbolic",
-            BatteryType::Computer => "laptop-symbolic",
-            BatteryType::GamingInput => "input-gaming-symbolic",
-            BatteryType::Pen => "input-tablet-symbolic",
-            BatteryType::Touchpad => "input-touchpad-symbolic",
-            BatteryType::Network => "network-wired-symbolic",
-            BatteryType::Headset => "audio-headset-symbolic",
-            BatteryType::Speakers => "speaker-symbolic",
-            BatteryType::Headphones => "audio-headphones-symbolic",
-            BatteryType::Video => "video-display-symbolic",
-            BatteryType::OtherAudio => "audio-speakers-symbolic",
-            BatteryType::Printer => "printer-network-symbolic",
-            BatteryType::Scanner => "scanner-symbolic",
-            BatteryType::Camera => "camera-photo-symbolic",
-            _ => "bluetooth-symbolic",
-        };
-
-        Some(Self {
-            model,
-            device_icon,
-            battery,
-            device_path,
-            proxy: Some(proxy),
-        })
-    }
-
-    pub async fn device_removed_stream(
-        connection: &'_ Connection,
-    ) -> Result<impl Stream<Item = String> + '_, zbus::Error> {
-        let proxy = upower_dbus::UPowerProxy::new(connection).await?;
-        let stream = proxy.receive_device_removed().await?;
-
-        let transformed_stream = stream.filter_map(move |device_removed| async move {
-            let device_path: ObjectPath<'static> = match device_removed.args() {
-                Ok(args) => args.device().to_owned(),
-                Err(e) => {
-                    tracing::error!("Failed to get DeviceRemoved arguments: {e}");
-                    return None;
-                }
-            };
-            Some(device_path.to_string())
-        });
-
-        Ok(transformed_stream)
-    }
-
-    pub async fn device_added_stream(
-        connection: &'_ Connection,
-    ) -> Result<impl futures::Stream<Item = ConnectedDevice> + '_, zbus::Error> {
-        let proxy = upower_dbus::UPowerProxy::new(connection).await?;
-        let stream = proxy.receive_device_added().await?;
-
-        let transformed_stream = stream.filter_map(move |device_added| async move {
-            let device_path: ObjectPath<'static> = match device_added.args() {
-                Ok(args) => args.device().to_owned(),
-                Err(e) => {
-                    tracing::error!("Failed to get DeviceAdded arguments: {e}");
-                    return None;
-                }
-            };
-            match DeviceProxy::new(connection, &device_path).await {
-                Ok(device) => ConnectedDevice::from_device_maybe(device).await,
-                Err(e) => {
-                    tracing::error!("Failed to create DeviceProxy from {device_path}: {e}");
-                    None
-                }
-            }
-        });
-
-        Ok(transformed_stream)
-    }
-
-    pub async fn update_connected_devices() -> Vec<Self> {
-        let proxy = enumerate_devices().await;
-
-        if let Ok(devices) = proxy {
-            return join_all(devices.into_iter().map(Self::from_device_maybe))
-                .await
-                .into_iter()
-                .flatten()
-                .collect();
-        }
-
-        vec![]
     }
 }
 

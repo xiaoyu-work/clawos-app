@@ -61,7 +61,22 @@ fn failed(error: impl std::fmt::Display) -> Error {
     Error::Io(std::io::Error::other(message))
 }
 
+fn canonical_id(id: &str) -> &str {
+    // Retained shared types keep upstream IDs; the installed OS owns these namespaces.
+    match id {
+        id if id == cosmic_settings_config::shortcuts::ID => "com.clawos.Settings.Shortcuts",
+        id if id == cosmic_settings_config::window_rules::ID => "com.clawos.Settings.WindowRules",
+        id if id == cosmic_bg_config::NAME => "com.clawos.Background",
+        id if id == cosmic_settings_daemon_config::NAME => "com.clawos.SettingsDaemon",
+        "com.system76.CosmicPanel" => "com.clawos.Panel",
+        "com.system76.CosmicPanel.Panel" => "com.clawos.Panel.Panel",
+        "com.system76.CosmicPanel.Dock" => "com.clawos.Panel.Dock",
+        _ => id,
+    }
+}
+
 fn namespace(id: &str) -> Option<&'static str> {
+    let id = canonical_id(id);
     Some(match id {
         "com.clawos.Comp" => "compositor",
         "com.clawos.Workspaces" => "workspaces",
@@ -209,6 +224,7 @@ impl std::ops::Deref for Config {
 
 impl Config {
     pub fn new(id: &str, version: u64) -> Result<Self, Error> {
+        let id = canonical_id(id);
         let namespace = namespace(id).ok_or_else(|| Error::InvalidName(id.into()))?;
         if version != 1 {
             return Err(Error::InvalidName(format!("{id}/v{version}")));
@@ -252,6 +268,7 @@ impl Config {
     }
 
     pub fn system(id: &str, version: u64) -> Result<Self, Error> {
+        let id = canonical_id(id);
         Ok(Self {
             local: local::Config::system(id, version)?,
             namespace: None,
@@ -263,6 +280,7 @@ impl Config {
     }
 
     pub fn new_state(id: &str, version: u64) -> Result<Self, Error> {
+        let id = canonical_id(id);
         if id != "com.clawos.Background" {
             return Err(Error::InvalidName(id.into()));
         }

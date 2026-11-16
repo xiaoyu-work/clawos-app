@@ -26,12 +26,33 @@ enumeration/control; output, microphone and routing requests remain separate.
 Display confirmation uses owner-bound OS rollback receipts. The icon chooser
 uses the private OS metadata picker; an icon mutation still requires its exact
 file-read and identity permissions. Picker results are not grants.
-Native Network/Bluetooth/Power backend conversion and exact selected resource
-admission remain coordinated source work, not publication acceptance.
+The retained Network, Bluetooth and Power pages also use the existing typed
+Root services. Network keeps separate Ethernet, Wi-Fi, VPN and airplane
+rights, credential references and independently authorized saved-Wi-Fi
+sharing. Its profile editor replaces the external management executable;
+closed profile fields retain revisions, unknown settings and existing WPA3
+configuration. VPN imports read the selected file through the separate exact
+file service and reject executable hooks and external credential/certificate
+references. Bluetooth retains its original pairing confirmation UI while Root
+owns finite discovery and pairing correlations. Service startup is independently
+limited to `bluetooth.service`. Power observes real aggregate UPower state;
+profile changes require `ipc.invoke:desktop.power.profile`, never shutdown
+authority. Automatic theme switching asks the location provider for city-level
+coordinates only while enabled.
+
+Retained shared config crates still expose some upstream namespace constants.
+The private cache adapter maps only those closed constants to the installed
+OS namespaces, including shortcuts, window rules and background state. This
+does not add an owner path or grant. A missing preference grant/cache must not
+crash shortcut search or turn a default value into a confirmed save.
 The same OS picker supplies file/folder/save references for icons, wallpaper,
 theme import/export and VPN import; theme text reads/writes cross the separate
 capability-gated filesystem service. The original pages, feature graph,
 resources and licenses remain.
+Exact Parent-held file scopes can narrow the optional Home ceiling through the
+ordinary GUI admission path. A chooser result never expands those scopes;
+unrelated files remain denied. These source and unit/process regressions are
+not substitutes for the disposable signed-GUI acceptance lane.
 
 The coordinated 0.2.1 native GUI requests Users observation/account management
 and Applications permission management as `desktop.optional_needs`. Missing,
@@ -83,6 +104,9 @@ approval remain separate requirements.
 | `native/cosmic-settings/cosmic-settings/src/permissions.rs`, `src/pages/applications/permissions.rs` | Shared OS query/request/revoke client and cancellable Applications UI; human confirmation belongs to OS review |
 | `native/cosmic-settings/cosmic-settings/src/regional_settings.rs`, `src/pages/time/region.rs`, `src/pages/system/about.rs` | Public SDK regional client and pending/error/partial-result UI; locale, owner language and static hostname setters remain OS-owned |
 | `native/cosmic-settings/cosmic-settings/src/user_settings.rs`, `src/pages/system/users/mod.rs` | Fixed-binary public SDK User client; protected local account/UID targets, credential references, exact icon-source paths and explicit partial outcomes |
+| `native/cosmic-settings/subscriptions/network-manager/`, `cosmic-settings/src/pages/networking/` | Typed metadata/profile clients, original wired/Wi-Fi/VPN presentations, independent credential-reference use/export and no native bus/secret-agent/management executable |
+| `native/cosmic-settings/subscriptions/bluetooth/`, `cosmic-settings/src/pages/bluetooth/` | Root metadata/control, finite scans, exact pairing correlations and independent exact-unit startup |
+| `native/cosmic-settings/cosmic-settings/src/pages/power/backend/`, `src/subscription/daytime.rs` | Confirmed Root power/profile state and opt-in city-level solar scheduling; no raw UPower/location portal |
 | `native/cosmic-settings/cosmic-settings/src/claw_glue.rs`, `src/human.rs`, `human_bridge.py` | Human-only controlled filesystem/process/policy/snapshot adapters and SDK Agent context; no App dispatch |
 | `native/test_build.py`, `native/test_process.py` | Workspace/default graph, synthetic human adapters, installed resources, authenticated stdio MCP and clean-environment native permission client |
 

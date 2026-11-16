@@ -19,6 +19,9 @@ def test_native_identity_and_exact_grants():
         "sys.locale", "sys.language", "sys.hostname", "sys.time",
         "ipc.subscribe", "ipc.invoke", "ui.accessibility", "ui.prompt",
         "device.audio", "device.microphone", "device.media-route", "device.display",
+        "device.location",
+        "device.bluetooth", "sys.service",
+        "net.manage", "secret.read",
         "fs.read", "fs.write",
     }
     tools = {tool["name"]: tool for tool in manifest["mcp"]["tools"]}

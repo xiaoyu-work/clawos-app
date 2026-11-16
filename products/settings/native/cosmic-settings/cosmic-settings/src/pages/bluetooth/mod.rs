@@ -88,7 +88,7 @@ impl Model {
         &mut self,
         path: OwnedObjectPath,
         update: Vec<AdapterUpdate>,
-        connection: zbus::Connection,
+        connection: Connection,
     ) -> Option<impl Future<Output = Event> + Send + 'static> {
         if let Some(existing) = self.adapters.get_mut(&path) {
             tracing::debug!("Adapter {} updated: {update:#?}", existing.address);
@@ -150,7 +150,7 @@ impl Model {
 pub struct Page {
     model: Model,
 
-    connection: Option<zbus::Connection>,
+    connection: Option<Connection>,
     dialog: Option<Dialog>,
     heading: String,
 
@@ -184,7 +184,7 @@ impl page::Page<crate::pages::Message> for Page {
     fn on_enter(&mut self) -> cosmic::Task<crate::pages::Message> {
         // TODO start stream for new device
         cosmic::task::future(async move {
-            match zbus::Connection::system().await {
+            match cosmic_settings_bluetooth_subscription::connect().await {
                 Ok(connection) => Message::DBusConnect(connection),
                 Err(why) => Message::DBusConnectFailed(why),
             }
@@ -263,7 +263,7 @@ impl page::Page<crate::pages::Message> for Page {
 pub enum Message {
     BluetoothEvent(Event),
     ConnectDevice(OwnedObjectPath),
-    DBusConnect(zbus::Connection),
+    DBusConnect(Connection),
     DBusConnectFailed(zbus::Error),
     DisconnectDevice(OwnedObjectPath),
     ForgetDevice(OwnedObjectPath),
@@ -689,7 +689,7 @@ impl Page {
                     systemd::activate_bluetooth().await;
                     tokio::time::sleep(Duration::from_secs(3)).await;
 
-                    match zbus::Connection::system().await {
+                    match cosmic_settings_bluetooth_subscription::connect().await {
                         Ok(connection) => Message::DBusConnect(connection),
                         Err(why) => Message::DBusConnectFailed(why),
                     }
@@ -701,7 +701,7 @@ impl Page {
                     systemd::enable_bluetooth().await;
                     tokio::time::sleep(Duration::from_secs(3)).await;
 
-                    match zbus::Connection::system().await {
+                    match cosmic_settings_bluetooth_subscription::connect().await {
                         Ok(connection) => Message::DBusConnect(connection),
                         Err(why) => Message::DBusConnectFailed(why),
                     }
@@ -1011,33 +1011,43 @@ fn multiple_adapter() -> Section<crate::pages::Message> {
 impl page::AutoBind<crate::pages::Message> for Page {}
 
 mod systemd {
-    use futures::FutureExt;
-
-    pub fn activate_bluetooth() -> impl Future<Output = ()> + Send {
-        // FIXME(claw): pkexec bypasses Claw caps; route through kernel approval UI once it exists.
-        tokio::process::Command::new("pkexec")
-            .args(["systemctl", "start", "bluetooth"])
-            .status()
-            .map(|_| ())
+    pub async fn activate_bluetooth() {
+        if let Err(error) = cosmic_settings_provider_client::call_async(
+            "systemd",
+            "start",
+            vec!["bluetooth.service".into()],
+        )
+        .await
+        {
+            tracing::warn!(%error, "OS Bluetooth service startup is unconfirmed");
+        }
     }
 
-    pub fn enable_bluetooth() -> impl Future<Output = ()> + Send {
-        // FIXME(claw): pkexec bypasses Claw caps; route through kernel approval UI once it exists.
-        tokio::process::Command::new("pkexec")
-            .args(["systemctl", "enable", "--now", "bluetooth"])
-            .status()
-            .map(|_| ())
+    pub async fn enable_bluetooth() {
+        if let Err(error) = cosmic_settings_provider_client::call_async(
+            "systemd",
+            "enable",
+            vec!["bluetooth.service".into()],
+        )
+        .await
+        {
+            tracing::warn!(%error, "OS Bluetooth service enablement is unconfirmed");
+            return;
+        }
+        activate_bluetooth().await;
     }
 
     pub fn is_bluetooth_enabled() -> bool {
-        crate::claw_glue::run_output(&["systemctl", "is-enabled", "bluetooth"], Some(5))
-            .map(|output| output.status.success())
-            .unwrap_or(true)
+        cosmic_settings_provider_client::call("systemd", "status", vec!["bluetooth.service".into()])
+            .ok()
+            .and_then(|value| value["state"]["enabled"].as_bool())
+            .unwrap_or(false)
     }
 
     pub fn is_bluetooth_active() -> bool {
-        crate::claw_glue::run_output(&["systemctl", "is-active", "bluetooth"], Some(5))
-            .map(|output| output.status.success())
-            .unwrap_or(true)
+        cosmic_settings_provider_client::call("systemd", "status", vec!["bluetooth.service".into()])
+            .ok()
+            .and_then(|value| value["state"]["active"].as_bool())
+            .unwrap_or(false)
     }
 }

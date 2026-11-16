@@ -1,4 +1,17 @@
 dbus-connection-error = Failed to connect to DBus
+os-credential-reference = OS credential reference (namespace/name)
+os-network-credential-help = Enter a credential reference stored in the OS, for example network/home. Settings never sends a plaintext password or opens the owner secret bus. The exact secret permission is independent of network control.
+os-network-profile = Network profile
+os-network-save = Save profile
+os-network-name-required = A profile name is required.
+os-network-name = Profile name
+os-network-interface = Interface (empty for automatic selection)
+os-network-autoconnect = Connect automatically
+os-network-ipv4-method = IPv4 method (auto, manual, disabled, link-local, shared)
+os-network-addresses = IPv4 addresses with prefixes, separated by commas
+os-network-gateway = IPv4 gateway (optional)
+os-network-dns = IPv4 DNS servers, separated by commas
+os-network-security = Wi-Fi security (open, psk, eap)
 ok = OK
 unknown = Unknown
 
@@ -926,7 +939,7 @@ time-region = Region & language
 
 users-password-credential = Password credential (namespace/name)
 users-password-credential-confirm = Confirm password credential
-users-password-credential-hint = Select an existing OS credential reference, not a password. The OS requires a separate exact secret-read permission. Account creation is a sequence of confirmed operations; partial changes are not rolled back.
+users-password-credential-hint = Select an existing OS credential reference such as identity/new-password, not a password. The OS requires a separate exact secret-read permission. Account creation is a sequence of confirmed operations; partial changes are not rolled back.
 users-icon-requirement = Choose a local image of at most 1 MiB. The OS requires exact read permission on this file; Settings does not copy it to a differently authorized path.
 users-refresh-error = Current account state could not be refreshed. Any previous operation outcome above is unchanged. { $detail }
 

@@ -13,11 +13,11 @@ pub mod nav;
 pub mod system;
 pub mod tiling;
 
+use crate::owner_config::{self as cosmic_config, ConfigGet};
 use cosmic::app::ContextDrawer;
 use cosmic::iced::Length;
 use cosmic::widget::{self, list::ListButton, settings, text};
 use cosmic::{Apply, Element, Task};
-use crate::owner_config::{self as cosmic_config, ConfigGet};
 use cosmic_settings_config::Binding;
 use cosmic_settings_config::shortcuts::action::{
     Direction, FocusDirection, Orientation, ResizeDirection,
@@ -66,7 +66,7 @@ struct Search {
     input: String,
     actions: SlotMap<DefaultKey, Action>,
     localized: SecondaryMap<DefaultKey, String>,
-    config: cosmic_config::Config,
+    config: Option<cosmic_config::Config>,
     shortcuts: Shortcuts,
     defaults: Shortcuts,
 }
@@ -333,10 +333,18 @@ impl page::AutoBind<crate::pages::Message> for Page {
 
 impl Default for Search {
     fn default() -> Self {
+        let config = match cosmic_config::Config::new(shortcuts::ID, 1) {
+            Ok(config) => Some(config),
+            Err(error) => {
+                let error = cosmic_settings_provider_client::refused(error);
+                tracing::error!(%error,"shortcut preferences are unavailable");
+                None
+            }
+        };
         Self {
             input: String::default(),
             defaults: Shortcuts::default(),
-            config: cosmic_config::Config::new(shortcuts::ID, 1).unwrap(),
+            config,
             localized: SecondaryMap::default(),
             actions: SlotMap::new(),
             shortcuts: Shortcuts::default(),
@@ -366,7 +374,10 @@ impl Search {
     }
 
     fn retrieve_custom_actions(&self) -> Vec<(Binding, Action)> {
-        let custom_shortcusts = match self.config.get::<Shortcuts>("custom") {
+        let Some(config) = self.config.as_ref() else {
+            return Vec::new();
+        };
+        let custom_shortcusts = match config.get::<Shortcuts>("custom") {
             Ok(shortcuts) => shortcuts,
             Err(cosmic_config::Error::GetKey(_, why)) if why.kind() == io::ErrorKind::NotFound => {
                 Shortcuts::default()

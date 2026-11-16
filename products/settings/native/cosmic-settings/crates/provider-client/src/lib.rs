@@ -46,6 +46,25 @@ pub fn call(service: &str, action: &str, options: Vec<String>) -> Result<Value, 
     )
 }
 
+pub async fn call_stdin_async(
+    service: &str,
+    action: &str,
+    options: Vec<String>,
+    input: &[u8],
+) -> Result<Value, String> {
+    confirmed(
+        claw_os_sdk::cos_call_json_async_with_stdin_binary(
+            "/usr/local/bin/cos",
+            "settings",
+            service,
+            arguments(service, action, options),
+            input,
+        )
+        .await
+        .map_err(refused)?,
+    )
+}
+
 pub async fn call_async(
     service: &str,
     action: &str,

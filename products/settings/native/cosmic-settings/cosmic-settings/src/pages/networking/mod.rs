@@ -1,27 +1,20 @@
 // Copyright 2024 System76 <info@system76.com>
 // SPDX-License-Identifier: GPL-3.0-only
 
+mod editor;
 pub mod vpn;
 pub mod wifi;
 pub mod wired;
 
-use std::{ffi::OsStr, sync::Arc};
+use std::{path::Path, sync::Arc};
 
 use anyhow::Context;
 use cosmic::{Apply, Element, Task, widget};
-use cosmic_dbus_networkmanager::{
-    interface::enums::{DeviceState, DeviceType},
-    nm::NetworkManager,
-};
+use cosmic_dbus_networkmanager::interface::enums::{DeviceState, DeviceType};
 use cosmic_settings_network_manager_subscription as network_manager;
 use cosmic_settings_page::{self as page, Section, section};
-use futures::{SinkExt, StreamExt};
-use secure_string::SecureString;
+use futures::SinkExt;
 use slotmap::SlotMap;
-
-pub type SecretSender = Arc<tokio::sync::Mutex<Option<tokio::sync::oneshot::Sender<SecureString>>>>;
-
-static NM_CONNECTION_EDITOR: &str = "nm-connection-editor";
 
 #[derive(Debug, Default)]
 pub struct Page {
@@ -31,6 +24,7 @@ pub struct Page {
     vpn: page::Entity,
     wifi: page::Entity,
     wired: page::Entity,
+    editor: Option<editor::Editor>,
 }
 
 #[derive(Debug, Clone)]
@@ -38,7 +32,13 @@ pub enum Message {
     /// An error occurred.
     Error(String),
     /// Successfully connected to the system dbus.
-    NetworkManagerConnect(zbus::Connection),
+    NetworkManagerConnect(network_manager::Connection),
+    Edit {
+        uuid: Option<String>,
+        kind: &'static str,
+        return_page: page::Entity,
+    },
+    Editor(editor::Message),
     /// Open the wifi settings page with the selected device.
     OpenPage {
         page: page::Entity,
@@ -225,9 +225,9 @@ impl page::Page<crate::pages::Message> for Page {
     fn on_enter(&mut self) -> cosmic::Task<crate::pages::Message> {
         if self.nm_task.is_none() {
             return cosmic::Task::future(async move {
-                zbus::Connection::system()
+                network_manager::connect()
                     .await
-                    .context("failed to create system dbus connection")
+                    .context("OS NetworkManager provider is unavailable")
                     .map_or_else(
                         |why| Message::Error(why.to_string()),
                         Message::NetworkManagerConnect,
@@ -237,6 +237,14 @@ impl page::Page<crate::pages::Message> for Page {
         }
 
         Task::none()
+    }
+
+    fn dialog(&self) -> Option<Element<'_, crate::pages::Message>> {
+        self.editor.as_ref().map(|editor| {
+            editor
+                .view()
+                .map(|message| crate::pages::Message::Networking(Message::Editor(message)))
+        })
     }
 
     fn on_leave(&mut self) -> Task<crate::pages::Message> {
@@ -273,6 +281,61 @@ impl Page {
         let _span = span.enter();
 
         match message {
+            Message::Edit {
+                uuid,
+                kind,
+                return_page,
+            } => {
+                self.editor = Some(editor::Editor::new(kind, return_page, uuid.is_some()));
+                let mut tasks = vec![cosmic::task::message(crate::app::Message::Page(
+                    self.entity,
+                ))];
+                if let Some(uuid) = uuid {
+                    tasks.push(
+                        cosmic::Task::future(async move {
+                            Message::Editor(editor::Message::Loaded(
+                                network_manager::profile(&uuid).await,
+                            ))
+                        })
+                        .map(crate::app::Message::from),
+                    );
+                }
+                return cosmic::Task::batch(tasks);
+            }
+            Message::Editor(message) => {
+                let Some(editor) = self.editor.as_mut() else {
+                    return Task::none();
+                };
+                match message {
+                    editor::Message::Cancel => {
+                        let page = editor.return_page;
+                        self.editor = None;
+                        return cosmic::task::message(crate::app::Message::Page(page));
+                    }
+                    editor::Message::Save if !editor.busy => {
+                        let value = match editor.request() {
+                            Ok(value) => value,
+                            Err(error) => {
+                                editor.error = Some(error);
+                                return Task::none();
+                            }
+                        };
+                        editor.busy = true;
+                        return cosmic::Task::future(async move {
+                            Message::Editor(editor::Message::Saved(
+                                network_manager::save_profile(value).await.map(|_| ()),
+                            ))
+                        })
+                        .map(crate::app::Message::from);
+                    }
+                    editor::Message::Saved(Ok(())) => {
+                        let page = editor.return_page;
+                        self.editor = None;
+                        return cosmic::task::message(crate::app::Message::Page(page));
+                    }
+                    message => editor.update(message),
+                }
+            }
             Message::NetworkManagerConnect(conn) => {
                 return self.connect(conn.clone());
             }
@@ -310,38 +373,27 @@ impl Page {
         Task::none()
     }
 
-    fn connect(&mut self, conn: zbus::Connection) -> Task<crate::app::Message> {
+    fn connect(&mut self, conn: network_manager::Connection) -> Task<crate::app::Message> {
         if self.nm_task.is_none() {
             let (canceller, task) =
                 crate::utils::forward_event_loop(move |mut sender| async move {
-                    let network_manager = match NetworkManager::new(&conn).await {
-                        Ok(n) => n,
-                        Err(why) => {
-                            tracing::error!(
-                                why = why.to_string(),
-                                "failed to connect to network_manager"
-                            );
-
-                            return futures::future::pending().await;
-                        }
-                    };
-
-                    let mut devices_changed =
-                        std::pin::pin!(network_manager.receive_devices_changed().await.then(
-                            |_| async {
-                                match network_manager::devices::list(&conn, |_| true).await {
-                                    Ok(devices) => Message::UpdateDevices(
-                                        devices.into_iter().map(Arc::new).collect(),
-                                    ),
-                                    Err(why) => Message::Error(why.to_string()),
-                                }
+                    loop {
+                        let message = match network_manager::devices::list(&conn, |_| true).await {
+                            Ok(devices) => {
+                                Message::UpdateDevices(devices.into_iter().map(Arc::new).collect())
                             }
-                        ));
-
-                    while let Some(message) = devices_changed.next().await {
-                        _ = sender
+                            Err(error) => {
+                                Message::Error(cosmic_settings_provider_client::refused(error))
+                            }
+                        };
+                        if sender
                             .send(crate::pages::Message::Networking(message))
-                            .await;
+                            .await
+                            .is_err()
+                        {
+                            return;
+                        }
+                        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
                     }
                 });
 
@@ -353,52 +405,19 @@ impl Page {
     }
 }
 
-async fn nm_add_vpn_file<P: AsRef<OsStr>>(type_: &str, path: P) -> Result<(), String> {
-    let type_owned = type_.to_owned();
-    let path_owned: std::ffi::OsString = path.as_ref().to_owned();
-    tokio::task::spawn_blocking(move || {
-        let path_str = path_owned.to_string_lossy().into_owned();
-        crate::claw_glue::run_output(
-            &[
-                "nmcli",
-                "connection",
-                "import",
-                "type",
-                &type_owned,
-                "file",
-                &path_str,
-            ],
-            Some(5),
-        )
-    })
-    .await
-    .unwrap_or_else(|e| Err(std::io::Error::other(e.to_string())))
-    .apply(crate::utils::map_stderr_output)
+fn edit(
+    uuid: Option<String>,
+    kind: &'static str,
+    return_page: page::Entity,
+) -> Task<crate::app::Message> {
+    cosmic::task::message(crate::app::Message::from(Message::Edit {
+        uuid,
+        kind,
+        return_page,
+    }))
 }
 
-async fn nm_add_wired() -> Result<(), String> {
-    nm_connection_editor(&["--type=802-3-ethernet", "-c"]).await
-}
-
-async fn nm_add_wifi() -> Result<(), String> {
-    nm_connection_editor(&["--type=802-11-wireless", "-c"]).await
-}
-
-async fn nm_edit_connection(uuid: &str) -> Result<(), String> {
-    nm_connection_editor(&[&["--edit=", uuid].concat()]).await
-}
-
-async fn nm_connection_editor(args: &[&str]) -> Result<(), String> {
-    let mut argv: Vec<String> = Vec::with_capacity(args.len() + 1);
-    argv.push(NM_CONNECTION_EDITOR.to_owned());
-    for a in args {
-        argv.push((*a).to_owned());
-    }
-
-    tokio::task::spawn_blocking(move || {
-        let argv_refs: Vec<&str> = argv.iter().map(String::as_str).collect();
-        crate::claw_glue::start(&argv_refs).map_err(|err| err.to_string())
-    })
-    .await
-    .unwrap_or_else(|e| Err(e.to_string()))
+async fn import_vpn(kind: &str, name: &str, path: &Path) -> Result<(), String> {
+    let content = crate::resource_files::read_text(path).await?;
+    network_manager::import_profile(kind, name, content).await
 }

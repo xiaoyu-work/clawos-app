@@ -19,14 +19,10 @@ use cosmic_settings_network_manager_subscription::{
     self as network_manager, NetworkManagerState,
     available_wifi::{AccessPoint, NetworkType},
     current_networks::ActiveConnectionInfo,
-    nm_secret_agent,
 };
 use cosmic_settings_page::{self as page, Section, section};
 use futures::{SinkExt, StreamExt};
 use secure_string::SecureString;
-use tokio::sync::Mutex;
-
-use crate::pages::networking::SecretSender;
 
 pub static SECURE_INPUT_WIFI: LazyLock<widget::Id> = LazyLock::new(widget::Id::unique);
 
@@ -56,10 +52,8 @@ pub enum Message {
     Forget(network_manager::SSID),
     /// An update from the network manager daemon
     NetworkManager(network_manager::Event),
-    /// An update from the secret agent
-    SecretAgent(network_manager::nm_secret_agent::Event),
     /// Successfully connected to the system dbus.
-    NetworkManagerConnect(zbus::Connection),
+    NetworkManagerConnect(network_manager::Connection),
     /// Request an auth dialog
     PasswordRequest(network_manager::SSID),
     /// Update the password from the dialog
@@ -100,13 +94,13 @@ impl From<Message> for crate::pages::Message {
 
 #[derive(Clone, Debug)]
 enum WiFiDialog {
+    Error(String),
     Forget(network_manager::SSID),
     Password {
         ssid: network_manager::SSID,
         identity: Option<String>,
         password: SecureString,
         password_hidden: bool,
-        tx: SecretSender,
     },
 }
 
@@ -122,7 +116,6 @@ struct QRCodeDrawer {
 pub struct Page {
     entity: page::Entity,
     nm_task: Option<tokio::sync::oneshot::Sender<()>>,
-    secret_tx: Option<tokio::sync::mpsc::Sender<nm_secret_agent::Request>>,
     nm_state: Option<NmState>,
     /// When defined, displays connections for the specific device.
     active_device: Option<Arc<network_manager::devices::DeviceInfo>>,
@@ -140,11 +133,12 @@ pub struct Page {
     qr_drawer: Option<QRCodeDrawer>,
     /// Search query for filtering WiFi networks
     search_query: String,
+    error: Option<String>,
 }
 
 #[derive(Debug)]
 pub struct NmState {
-    conn: zbus::Connection,
+    conn: network_manager::Connection,
     sender: futures::channel::mpsc::UnboundedSender<network_manager::Request>,
     state: network_manager::NetworkManagerState,
     devices: Vec<network_manager::devices::DeviceInfo>,
@@ -172,6 +166,14 @@ impl page::Page<crate::pages::Message> for Page {
 
     fn dialog(&'_ self) -> Option<Element<'_, crate::pages::Message>> {
         self.dialog.as_ref().map(|dialog| match dialog {
+            WiFiDialog::Error(error) => widget::dialog()
+                .title(fl!("network-and-wireless"))
+                .body(error)
+                .primary_action(
+                    widget::button::standard(fl!("close")).on_press(Message::CancelDialog),
+                )
+                .apply(Element::from)
+                .map(crate::pages::Message::WiFi),
             WiFiDialog::Password {
                 password,
                 identity,
@@ -179,7 +181,7 @@ impl page::Page<crate::pages::Message> for Page {
                 ..
             } => {
                 let password = widget::text_input::secure_input(
-                    fl!("password"),
+                    fl!("os-credential-reference"),
                     password.unsecure(),
                     Some(Message::TogglePasswordVisibility),
                     *password_hidden,
@@ -211,7 +213,11 @@ impl page::Page<crate::pages::Message> for Page {
                 widget::dialog()
                     .title(fl!("auth-dialog"))
                     .icon(icon::from_name("preferences-wireless-symbolic").size(64))
-                    .body(fl!("auth-dialog", "wifi-description"))
+                    .body(
+                        self.error
+                            .clone()
+                            .unwrap_or_else(|| fl!("os-network-credential-help")),
+                    )
                     .control(control)
                     .primary_action(primary_action)
                     .secondary_action(secondary_action)
@@ -294,22 +300,17 @@ impl page::Page<crate::pages::Message> for Page {
     }
 
     fn on_enter(&mut self) -> cosmic::Task<crate::pages::Message> {
-        let (tx, rx) = tokio::sync::mpsc::channel(4);
-        self.secret_tx = Some(tx);
         if self.nm_task.is_none() {
             return Task::batch(vec![cosmic::Task::future(async move {
-                zbus::Connection::system()
+                network_manager::connect()
                     .await
-                    .context("failed to create system dbus connection")
+                    .context("OS NetworkManager provider is unavailable")
                     .map_or_else(
                         |why| Message::Error(why.to_string()),
                         Message::NetworkManagerConnect,
                     )
                     .apply(crate::pages::Message::WiFi)
-            }), cosmic::Task::stream(
-                cosmic_settings_network_manager_subscription::nm_secret_agent::secret_agent_stream("com.clawos.Settings.WiFi.NetworkManager.SecretAgent", rx),
-            )
-            .map(|m| crate::pages::Message::WiFi(Message::SecretAgent(m)))]);
+            })]);
         }
 
         Task::none()
@@ -365,18 +366,12 @@ impl Page {
                                 identity,
                                 password: SecureString::from(""),
                                 password_hidden: true,
-                                tx: Arc::new(Mutex::new(None)),
                             });
                             return task::message(Message::FocusSecureInput);
                         }
                     }
 
-                    network_manager::Request::SelectAccessPoint(
-                        ssid,
-                        network_type,
-                        _tx,
-                        _interface,
-                    ) => {
+                    network_manager::Request::SelectAccessPoint(ssid, network_type, _interface) => {
                         if success || matches!(network_type, NetworkType::Open) {
                             self.connecting.remove(ssid.as_ref());
                         } else {
@@ -386,7 +381,6 @@ impl Page {
                                     .then(String::new),
                                 password: SecureString::from(""),
                                 password_hidden: true,
-                                tx: Arc::new(Mutex::new(None)),
                             });
                             return task::message(Message::FocusSecureInput);
                         }
@@ -411,18 +405,8 @@ impl Page {
                     return connection_settings(conn.clone());
                 }
             }
-            Message::NetworkManager(
-                network_manager::Event::ActiveConns
-                | network_manager::Event::Devices
-                | network_manager::Event::WiFiEnabled(_)
-                | network_manager::Event::WirelessAccessPoints,
-            ) => {
-                if let Some(NmState { ref conn, .. }) = self.nm_state {
-                    return cosmic::Task::batch(vec![
-                        update_state(conn.clone()),
-                        update_devices(conn.clone()),
-                    ]);
-                }
+            Message::NetworkManager(network_manager::Event::Error(error)) => {
+                return self.update(Message::Error(error));
             }
             Message::ConnectionSettings(settings) => {
                 self.ssid_to_uuid = settings;
@@ -476,7 +460,7 @@ impl Page {
                 return cosmic::task::message(crate::app::Message::OpenContextDrawer(self.entity));
             }
             Message::AddNetwork => {
-                tokio::task::spawn(super::nm_add_wifi());
+                return super::edit(None, "wifi", self.entity);
             }
             Message::Connect(ssid) => {
                 if let Some(nm) = self.nm_state.as_mut() {
@@ -495,7 +479,6 @@ impl Page {
                         .unbounded_send(network_manager::Request::SelectAccessPoint(
                             ssid,
                             ap.network_type,
-                            self.secret_tx.clone(),
                             self.active_device.as_ref().map(|d| d.interface.clone()),
                         ));
                 }
@@ -525,7 +508,6 @@ impl Page {
                         identity: matches!(ap.network_type, NetworkType::EAP).then(String::new),
                         password: SecureString::from(""),
                         password_hidden: true,
-                        tx: Arc::new(Mutex::new(None)),
                     });
                     return task::message(Message::FocusSecureInput);
                 }
@@ -547,30 +529,19 @@ impl Page {
                     ssid,
                     identity,
                     password,
-                    tx,
                     ..
                 } = dialog
                     && let Some(nm) = self.nm_state.as_mut()
                 {
                     self.connecting.insert(ssid.clone());
                     let nm_sender = nm.sender.clone();
-                    let secret_tx = self.secret_tx.clone();
                     let interface = self.active_device.as_ref().map(|d| d.interface.clone());
-                    return Task::future(async move {
-                        let mut guard = tx.lock().await;
-                        if let Some(tx) = guard.take() {
-                            _ = tx.send(password);
-                        } else {
-                            _ = nm_sender.unbounded_send(network_manager::Request::Authenticate {
-                                ssid: ssid.to_string(),
-                                identity,
-                                password,
-                                secret_tx,
-                                interface,
-                            });
-                        }
-                    })
-                    .discard();
+                    _ = nm_sender.unbounded_send(network_manager::Request::Authenticate {
+                        ssid: ssid.to_string(),
+                        identity,
+                        password,
+                        interface,
+                    });
                 }
             }
             Message::TogglePasswordVisibility => {
@@ -605,7 +576,6 @@ impl Page {
                             ssid,
                             uuid.into(),
                             ap.network_type,
-                            self.secret_tx.clone(),
                         ));
                 }
             }
@@ -640,9 +610,7 @@ impl Page {
                 self.close_popup_and_apply_updates();
 
                 if let Some(uuid) = self.ssid_to_uuid.get(ssid.as_ref()).cloned() {
-                    tokio::task::spawn(
-                        async move { super::nm_edit_connection(uuid.as_ref()).await },
-                    );
+                    return super::edit(Some(uuid.to_string()), "wifi", self.entity);
                 }
             }
             Message::SubmitIdentity => {
@@ -663,6 +631,9 @@ impl Page {
             }
             Message::Error(why) => {
                 tracing::error!(why);
+                self.connecting.clear();
+                self.error = Some(why.clone());
+                self.dialog = Some(WiFiDialog::Error(why));
             }
             Message::SelectDevice(device) => {
                 // TODO: Per-device wifi connection handling.
@@ -679,75 +650,6 @@ impl Page {
                     connection_settings(conn),
                 ]);
             }
-            Message::SecretAgent(event) => match event {
-                nm_secret_agent::Event::RequestSecret {
-                    uuid,
-                    name,
-                    description: _, // TODO do we want to display the description?
-                    previous,
-                    tx,
-                } => {
-                    let ssid = self
-                        .ssid_to_uuid
-                        .iter()
-                        .find_map(|(ssid, conn_uuid)| {
-                            if conn_uuid.as_ref() == name.as_str() {
-                                Some(network_manager::SSID::from(ssid.as_ref()))
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap_or_default();
-                    let Some(ap): Option<&AccessPoint> = self.nm_state.as_ref().and_then(|nm| {
-                        nm.state
-                            .wireless_access_points
-                            .iter()
-                            .chain(nm.state.known_access_points.iter())
-                            .find(|ap| ap.ssid == ssid)
-                    }) else {
-                        tracing::error!(
-                            %uuid,
-                            %name,
-                            "received secret request for unknown connection"
-                        );
-                        return Task::none();
-                    };
-
-                    self.dialog = Some(WiFiDialog::Password {
-                        ssid,
-                        password: previous,
-                        password_hidden: true,
-                        identity: matches!(ap.network_type, NetworkType::EAP).then(String::new),
-                        tx,
-                    });
-                    return task::message(Message::FocusSecureInput);
-                }
-                nm_secret_agent::Event::CancelGetSecrets { uuid: _, name: _ } => {
-                    self.dialog = self
-                        .dialog
-                        .take()
-                        .filter(|d| !matches!(d, &WiFiDialog::Password { .. }));
-                }
-                nm_secret_agent::Event::Failed(error) => {
-                    tracing::error!(%error, "secret agent failure");
-                    if let Some(WiFiDialog::Password {
-                        ssid,
-                        password,
-                        identity,
-                        ..
-                    }) = self.dialog.take()
-                    {
-                        self.dialog = Some(WiFiDialog::Password {
-                            password,
-                            password_hidden: true,
-                            tx: Arc::new(Mutex::new(None)),
-                            ssid,
-                            identity,
-                        });
-                        return task::message(Message::FocusSecureInput);
-                    }
-                }
-            },
             Message::FocusSecureInput => {
                 // retry until the widget is in the tree and focused or the dialog is removed.
                 if matches!(self.dialog, Some(WiFiDialog::Password { .. })) {
@@ -773,20 +675,13 @@ impl Page {
         Task::none()
     }
 
-    fn connect(&mut self, conn: zbus::Connection) -> Task<crate::app::Message> {
+    fn connect(&mut self, conn: network_manager::Connection) -> Task<crate::app::Message> {
         if self.nm_task.is_none() {
             let (canceller, task) =
                 crate::utils::forward_event_loop(move |mut sender| async move {
                     let (tx, mut rx) = futures::channel::mpsc::channel(1);
 
-                    let watchers = std::pin::pin!(async move {
-                        futures::join!(
-                            network_manager::watch(conn.clone(), tx.clone()),
-                            network_manager::active_conns::watch(conn.clone(), tx.clone()),
-                            network_manager::wireless_enabled::watch(conn.clone(), tx.clone()),
-                            network_manager::watch_connections_changed(conn, tx)
-                        );
-                    });
+                    let watchers = std::pin::pin!(network_manager::watch(conn, tx));
 
                     let forwarder = std::pin::pin!(async move {
                         while let Some(message) = rx.next().await {
@@ -1274,53 +1169,34 @@ fn popup_button(message: Message, text: &str) -> Element<'_, Message> {
         .into()
 }
 
-fn connection_settings(conn: zbus::Connection) -> Task<crate::app::Message> {
+fn connection_settings(_conn: network_manager::Connection) -> Task<crate::app::Message> {
     let settings = async move {
-        let settings = network_manager::dbus::settings::NetworkManagerSettings::new(&conn).await?;
-
-        _ = settings.load_connections(&[]).await;
-
-        let settings = settings
-            // Get a list of known connections.
-            .list_connections()
-            .await?
-            // Prepare for wrapping in a concurrent stream.
-            .into_iter()
-            .map(|conn| async move { conn })
-            // Create a concurrent stream for each connection.
-            .apply(futures::stream::FuturesOrdered::from_iter)
-            // Concurrently fetch settings for each connection.
-            .filter_map(|conn| async move {
-                conn.get_settings()
-                    .await
-                    .map(network_manager::Settings::new)
-                    .ok()
-            })
-            // Reduce the settings list into a SSID->UUID map.
-            .fold(BTreeMap::new(), |mut set, settings| async move {
-                if let Some(ref wifi) = settings.wifi
-                    && let Some(ssid) = wifi
-                        .ssid
-                        .clone()
-                        .and_then(|ssid| String::from_utf8(ssid).ok())
-                    && let Some(ref connection) = settings.connection
-                    && let Some(uuid) = connection.uuid.clone()
-                {
-                    set.insert(ssid.into(), uuid.into());
-                    return set;
-                }
-
-                set
-            })
-            .await;
-
-        Ok::<_, zbus::Error>(settings)
+        let mut settings = BTreeMap::new();
+        for profile in network_manager::profiles().await? {
+            if profile["kind"] != "wifi" {
+                continue;
+            }
+            let ssid = profile["ssid"]
+                .as_str()
+                .ok_or("OS Wi-Fi profile SSID is unavailable")?;
+            let uuid = profile["uuid"]
+                .as_str()
+                .ok_or("OS Wi-Fi profile UUID is unavailable")?;
+            if settings
+                .insert(Box::<str>::from(ssid), Box::<str>::from(uuid))
+                .is_some()
+            {
+                return Err(
+                    "multiple saved profiles have this SSID; select an exact profile".to_string(),
+                );
+            }
+        }
+        Ok::<_, String>(settings)
     };
 
     cosmic::task::future(async move {
         settings
             .await
-            .context("failed to get connection settings")
             .map_or_else(
                 |why| Message::Error(why.to_string()),
                 Message::ConnectionSettings,
@@ -1329,7 +1205,7 @@ fn connection_settings(conn: zbus::Connection) -> Task<crate::app::Message> {
     })
 }
 
-pub fn update_state(conn: zbus::Connection) -> Task<crate::app::Message> {
+pub fn update_state(conn: network_manager::Connection) -> Task<crate::app::Message> {
     cosmic::task::future(async move {
         match NetworkManagerState::new(&conn).await {
             Ok(state) => Message::UpdateState(state),
@@ -1338,7 +1214,7 @@ pub fn update_state(conn: zbus::Connection) -> Task<crate::app::Message> {
     })
 }
 
-pub fn update_devices(conn: zbus::Connection) -> Task<crate::app::Message> {
+pub fn update_devices(conn: network_manager::Connection) -> Task<crate::app::Message> {
     cosmic::task::future(async move {
         let filter =
             |device_type| matches!(device_type, network_manager::devices::DeviceType::Wifi);

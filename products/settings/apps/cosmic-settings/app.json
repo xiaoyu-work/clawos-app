@@ -25,6 +25,11 @@
         "why": {"en": "Apply explicitly requested account changes through the OS; the Settings window can open without this permission."}
       },
       {
+        "verb": "secret.read",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "identity/*"}},
+        "why": {"en": "Ask Root to use an explicitly entered identity/name credential for an account password change. This is separate from identity management and Settings never receives the vault password."}
+      },
+      {
         "verb": "sys.permissions",
         "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "manage"}},
         "why": {"en": "Inspect and request or revoke App permissions for this owner; protected OS approval remains separate."}
@@ -98,6 +103,76 @@
         "verb": "device.display",
         "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "manage"}},
         "why": {"en": "Apply explicit output changes and owner-bound OS rollback receipts, without a raw output-management connection."}
+      },
+      {
+        "verb": "device.location",
+        "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
+        "why": {"en": "Query city-level location through the OS only while owner automatic light/dark switching is enabled; never expose the owner bus."}
+      },
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "network"}},
+        "why": {"en": "Read NetworkManager metadata through the OS; never expose its bus or secrets."}
+      },
+      {
+        "verb": "net.manage",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "ethernet"}},
+        "why": {"en": "Apply explicit wired profile and connection choices through the OS independently of wireless/VPN rights."}
+      },
+      {
+        "verb": "net.manage",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "wifi"}},
+        "why": {"en": "Apply Wi-Fi profile, connection and radio choices through the OS; credentials retain their own exact read check."}
+      },
+      {
+        "verb": "net.manage",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "vpn"}},
+        "why": {"en": "Import bounded data-only VPN configurations and apply explicit VPN profile/connection choices, never executable hooks."}
+      },
+      {
+        "verb": "net.manage",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "airplane"}},
+        "why": {"en": "Apply an explicit all-radio airplane choice independently of Wi-Fi, VPN or Bluetooth control."}
+      },
+      {
+        "verb": "secret.read",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "network/*"}},
+        "why": {"en": "Ask Root to use an explicitly entered network/name credential reference; Settings never receives that vault password."}
+      },
+      {
+        "verb": "secret.read",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "network.profile/*"}},
+        "why": {"en": "Explicitly export the selected saved Wi-Fi profile password for its original QR sharing UI, with an exact profile UUID check at Root."}
+      },
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "bluetooth"}},
+        "why": {"en": "Read Bluetooth adapters and devices through the existing Root provider."}
+      },
+      {
+        "verb": "device.bluetooth",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "control"}},
+        "why": {"en": "Apply explicit Bluetooth power, discovery, pairing, connection and removal choices through the OS, not the system bus."}
+      },
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "bluetooth.service"}},
+        "why": {"en": "Read the exact OS Bluetooth unit status; device observation does not grant service management."}
+      },
+      {
+        "verb": "sys.service",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "bluetooth.service"}},
+        "why": {"en": "Start or enable the exact Bluetooth unit only on explicit request, without App-owned polkit."}
+      },
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "power"}},
+        "why": {"en": "Read battery/device state and available OS power profile state through the existing Root provider."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.power.profile"}},
+        "why": {"en": "Apply an explicitly selected OS power profile; this does not authorize shutdown, suspend, reboot or another App."}
       },
       {
         "verb": "ipc.subscribe",
@@ -226,12 +301,12 @@
       },
       {
         "verb": "fs.read",
-        "scope": {"kind": "wild"},
+        "scope": {"kind": "owner-path", "path": "**"},
         "why": {"en": "Read only exact resources already delegated by this launcher's bounded file authority. A file-picker result is metadata, never a read grant."}
       },
       {
         "verb": "fs.write",
-        "scope": {"kind": "wild"},
+        "scope": {"kind": "owner-path", "path": "**"},
         "why": {"en": "Export a theme only within this launcher's existing bounded write authority. The picker cannot grant or widen file access."}
       },
       {

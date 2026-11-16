@@ -7,7 +7,9 @@ use zbus::zvariant::OwnedObjectPath;
 
 mod adapter;
 pub mod agent;
+mod backend;
 mod device;
+pub use backend::{Connection, connect};
 pub mod subscription;
 
 pub use adapter::*;

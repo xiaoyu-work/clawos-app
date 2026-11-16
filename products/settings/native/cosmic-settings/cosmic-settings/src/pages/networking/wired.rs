@@ -34,7 +34,7 @@ pub enum Message {
     /// An update from the network manager daemon
     NetworkManager(network_manager::Event),
     /// Successfully connected to the system dbus.
-    NetworkManagerConnect(zbus::Connection),
+    NetworkManagerConnect(network_manager::Connection),
     /// Refresh devices and their connection profiles
     Refresh,
     /// Create a dialog to ask for confirmation of removal.
@@ -70,6 +70,7 @@ pub type InterfaceId = String;
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum WiredDialog {
     RemoveProfile(ConnectionId),
+    Error(String),
 }
 
 #[derive(Debug, Default)]
@@ -92,7 +93,7 @@ pub struct Page {
 
 #[derive(Debug)]
 pub struct NmState {
-    conn: zbus::Connection,
+    conn: network_manager::Connection,
     sender: futures::channel::mpsc::UnboundedSender<network_manager::Request>,
     active_conns: Vec<ActiveConnectionInfo>,
     devices: Vec<Arc<network_manager::devices::DeviceInfo>>,
@@ -120,6 +121,14 @@ impl page::Page<crate::pages::Message> for Page {
 
     fn dialog(&'_ self) -> Option<Element<'_, crate::pages::Message>> {
         self.dialog.as_ref().map(|dialog| match dialog {
+            WiredDialog::Error(error) => widget::dialog()
+                .title(fl!("network-and-wireless"))
+                .body(error)
+                .primary_action(
+                    widget::button::standard(fl!("close")).on_press(Message::CancelDialog),
+                )
+                .apply(Element::from)
+                .map(crate::pages::Message::Wired),
             WiredDialog::RemoveProfile(uuid) => {
                 let primary_action = widget::button::destructive(fl!("remove"))
                     .on_press(Message::RemoveProfile(uuid.clone()));
@@ -155,9 +164,9 @@ impl page::Page<crate::pages::Message> for Page {
     fn on_enter(&mut self) -> cosmic::Task<crate::pages::Message> {
         if self.nm_task.is_none() {
             return cosmic::task::future(async move {
-                zbus::Connection::system()
+                network_manager::connect()
                     .await
-                    .context("failed to create system dbus connection")
+                    .context("OS NetworkManager provider is unavailable")
                     .map_or_else(
                         |why| Message::Error(why.to_string()),
                         Message::NetworkManagerConnect,
@@ -225,15 +234,8 @@ impl Page {
                 self.active_device = Some(device);
             }
 
-            Message::NetworkManager(
-                network_manager::Event::ActiveConns | network_manager::Event::Devices,
-            ) => {
-                if let Some(NmState { ref conn, .. }) = self.nm_state {
-                    return cosmic::Task::batch(vec![
-                        update_state(conn.clone()),
-                        update_devices(conn.clone()),
-                    ]);
-                }
+            Message::NetworkManager(network_manager::Event::Error(error)) => {
+                return self.update(Message::Error(error));
             }
 
             Message::NetworkManager(network_manager::Event::Init {
@@ -258,11 +260,7 @@ impl Page {
             Message::NetworkManager(_event) => (),
 
             Message::AddNetwork => {
-                return cosmic::task::future(async move {
-                    _ = super::nm_add_wired().await;
-                    // TODO: Update when iced is rebased to use then method.
-                    Message::Refresh
-                });
+                return super::edit(None, "ethernet", self.entity);
             }
 
             Message::Activate(uuid) => {
@@ -325,11 +323,7 @@ impl Page {
             Message::Settings(uuid) => {
                 self.close_popup_and_apply_updates();
 
-                return cosmic::task::future(async move {
-                    _ = super::nm_edit_connection(uuid.as_ref()).await;
-                    // TODO: Update when iced is rebased to use then method.
-                    Message::Refresh
-                });
+                return super::edit(Some(uuid.to_string()), "ethernet", self.entity);
             }
 
             Message::Refresh => {
@@ -347,6 +341,8 @@ impl Page {
 
             Message::Error(why) => {
                 tracing::error!(why);
+                self.connecting.clear();
+                self.dialog = Some(WiredDialog::Error(why));
             }
 
             Message::NetworkManagerConnect(conn) => {
@@ -357,19 +353,13 @@ impl Page {
         Task::none()
     }
 
-    fn connect(&mut self, conn: zbus::Connection) -> Task<crate::app::Message> {
+    fn connect(&mut self, conn: network_manager::Connection) -> Task<crate::app::Message> {
         if self.nm_task.is_none() {
             let (canceller, task) =
                 crate::utils::forward_event_loop(move |mut sender| async move {
                     let (tx, mut rx) = futures::channel::mpsc::channel(1);
 
-                    let watchers = std::pin::pin!(async move {
-                        futures::join!(
-                            network_manager::watch(conn.clone(), tx.clone()),
-                            network_manager::active_conns::watch(conn.clone(), tx.clone()),
-                            network_manager::devices::watch(conn, true, tx)
-                        )
-                    });
+                    let watchers = std::pin::pin!(network_manager::watch(conn, tx));
 
                     let forwarder = std::pin::pin!(async move {
                         while let Some(message) = rx.next().await {
@@ -623,7 +613,7 @@ fn popup_button(message: Message, text: &str) -> Element<'_, Message> {
         .into()
 }
 
-fn update_state(conn: zbus::Connection) -> Task<crate::app::Message> {
+fn update_state(conn: network_manager::Connection) -> Task<crate::app::Message> {
     cosmic::task::future(async move {
         match NetworkManagerState::new(&conn).await {
             Ok(state) => Message::UpdateState(state),
@@ -632,7 +622,7 @@ fn update_state(conn: zbus::Connection) -> Task<crate::app::Message> {
     })
 }
 
-fn update_devices(conn: zbus::Connection) -> Task<crate::app::Message> {
+fn update_devices(conn: network_manager::Connection) -> Task<crate::app::Message> {
     cosmic::task::future(async move {
         let filter =
             |device_type| matches!(device_type, network_manager::devices::DeviceType::Ethernet);
