@@ -18,6 +18,9 @@
 
 The native binary remains a standalone workspace with its original
 `iced_video_player` / libcosmic renderer and optional feature graph.
+Video uses the original WGPU shader; Tiny Skia cannot paint that primitive.
+Release dependencies include the Vulkan loader and Mesa software implementation,
+so software rendering does not require a GPU-device grant.
 The OS owns authentication, per-owner grants, executable identity, session
 selection, dispatch gating, deadlines and audit. Product code imports only
 the versioned SDK, not OS providers or other Apps. Native state is projected
