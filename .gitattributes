@@ -9,6 +9,16 @@ products/desktop-shell/native/caelestia/plugin/3rdparty/rgbcx/rgbcx.h whitespace
 products/desktop-shell/native/caelestia/plugin/src/Caelestia/Shaders/crosshatch.frag whitespace=-blank-at-eol
 products/desktop-shell/native/caelestia/plugin/src/Caelestia/Shaders/directional-wipe.frag whitespace=-blank-at-eol
 products/desktop-shell/native/caelestia/utils/scripts/fuzzysort.js whitespace=-blank-at-eof
+products/desktop-shell/native/caelestia/plugin/3rdparty/libcava/README.md whitespace=-space-before-tab
+products/desktop-shell/native/caelestia/plugin/3rdparty/libcava/SHADERS.md whitespace=-blank-at-eof
+products/desktop-shell/native/caelestia/plugin/3rdparty/libcava/cava_win/setup.iss whitespace=-blank-at-eof
+products/desktop-shell/native/caelestia/plugin/3rdparty/libcava/cavandroid/gradlew.bat whitespace=cr-at-eol
+products/desktop-shell/native/caelestia/plugin/3rdparty/libcava/example_files/test_configs/pipewire_zero_test whitespace=-blank-at-eof
+products/desktop-shell/native/caelestia/plugin/3rdparty/libcava/example_files/test_configs/pulse_zero_test whitespace=-blank-at-eof
+products/desktop-shell/native/caelestia/plugin/3rdparty/libcava/third_party/incbin.h whitespace=-blank-at-eol
+products/desktop-shell/native/caelestia/plugin/cmake/libcava.cmake text eol=lf
+products/desktop-shell/native/caelestia/plugin/CMakeLists.txt text eol=lf
+products/desktop-shell/native/caelestia/plugin/src/Caelestia/Services/CMakeLists.txt text eol=lf
 products/calendar/native/LICENSE whitespace=-blank-at-eof
 products/clipboard/native/LICENSE whitespace=-blank-at-eof
 products/desktop-widgets/native/LICENSE whitespace=-blank-at-eof

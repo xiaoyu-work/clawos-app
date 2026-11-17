@@ -20,6 +20,8 @@ Claw runtime integration.
 | `native/caelestia/CMakeLists.txt` | Original shell and native-plugin build |
 | `native/caelestia/services/Hypr.qml` | Upstream compositor-facing presentation model |
 | `native/caelestia/plugin/` | Original native C++ QML extensions |
+| `native/caelestia/plugin/cmake/libcava.cmake` | Build adapter for the pinned waveform DSP core |
+| `native/caelestia/plugin/3rdparty/libcava/` | Complete MIT libcava 1.0.0 source and notices |
 | `native/caelestia-cli/` | Complete upstream CLI source |
 | `native/m3shapes/` | Complete upstream Material shape source |
 
@@ -42,3 +44,25 @@ The initial source import is checked against the Git tree IDs recorded in
 Those are baseline identities, not hashes that should be rewritten when
 making intentional Claw modifications. Native compilation and actual
 managed-GUI acceptance are separate required checks before activation.
+
+The native plugin requires Qt 6.9 or newer, libqalculate, PipeWire, Aubio,
+FFTW and lm-sensors development files. The pinned libcava DSP core is built
+in-tree; the unrelated distribution `cava` terminal program is not a library
+substitute or a runtime dependency. Its build adapter does not authorize audio
+capture or bypass the OS resource boundary.
+
+Run from a Linux-filesystem checkout of this repository:
+
+```sh
+cmake -S products/desktop-shell/native/caelestia -B build/caelestia -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release -DVERSION=1.0.0 \
+  -DGIT_REVISION="$(git rev-parse HEAD)" -DDISTRIBUTOR=Claw \
+  '-DENABLE_MODULES=plugin;shell'
+cmake --build build/caelestia --parallel 4
+cmake -S products/desktop-shell/native/m3shapes -B build/m3shapes -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release -DM3SHAPES_BUILD_EXAMPLES=OFF
+cmake --build build/m3shapes --parallel 4
+```
+
+Both native build graphs compile with Qt 6.10.2. This does not establish a
+running Quickshell frontend, managed GUI hosting or an installed desktop.

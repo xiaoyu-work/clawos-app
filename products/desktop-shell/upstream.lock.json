@@ -14,6 +14,13 @@
       "path": "native/caelestia-cli",
       "license": "GPL-3.0"
     },
+    "libcava": {
+      "repository": "https://github.com/LukashonakV/cava.git",
+      "revision": "f03278ef9e5e7948fb206453d2f02758f8db216c",
+      "tree": "2cb38dd082c8142f1fd97d538e3e0768780dcd6c",
+      "path": "native/caelestia/plugin/3rdparty/libcava",
+      "license": "MIT"
+    },
     "m3shapes": {
       "repository": "https://github.com/soramanew/m3shapes.git",
       "revision": "32ad9ce328bb77ed349b40a3be10ee9ea610b8ab",

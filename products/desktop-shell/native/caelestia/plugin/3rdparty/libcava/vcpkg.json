@@ -1,0 +1,10 @@
+{
+  "name": "cava",
+  "version": "1.0.0",
+  "dependencies": [
+    "fftw3",
+    "pthreads",
+    "sdl2",
+    "glew"
+  ]
+}
