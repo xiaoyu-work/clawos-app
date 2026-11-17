@@ -79,10 +79,27 @@ development-library publication above does not publish those packages or
 complete their installed native UI acceptance. No unpublished artifact, URL or
 digest is substituted for the real platform pin.
 
-## One App integration contract: pending
+## One App integration contract
 
-The design is accepted; this status tracks implementation/integration acceptance,
-not an unresolved choice of App model.
+The coordinated 0.2.1 generic runtime contract is verified. This records
+implementation and private software acceptance, not publication or physical
+hardware acceptance.
+
+- [OS acceptance](https://github.com/xiaoyu-work/claw-os/actions/runs/43995119842):
+  all 21 jobs passed at `a2f1763f10319e8519399e3fbfe177b6027389d0`,
+  including the actual signed native programs, protected reviews, real
+  file read/write/create and thumbnail output, private output-only audio,
+  notification actions, revocation and checked process/resource/PAM retirement.
+- [App acceptance](https://github.com/xiaoyu-work/clawos-app/actions/runs/43845474779):
+  all 41 jobs passed at `d2a6e5250971b38c11d6593301104af671063123`,
+  including the retained native builds, original backend fixtures and product contracts.
+- [Release contracts](https://github.com/xiaoyu-work/clawos-app/actions/runs/43845887479)
+  passed with the real digest-pinned published 0.2.1 provenance CLI.
+
+The tests use isolated synthetic data and private software services. They do
+not claim KMS, physical microphones/radios/displays or existing-owner data
+migration. Final release builds still have to produce and verify every
+selected architecture's actual signed package before publication.
 
 Every App must use the same authenticated manifest, App Host, capability,
 resource-owner and sandbox contract. Language, UI, package origin and the
@@ -107,20 +124,20 @@ enforcement across GUI, MCP and background execution. No real revocation means
 no enabled UI toggle. This repository does not add a purpose/plugin flag,
 decision store, review presenter, grant or revocation implementation.
 
-**New publication is blocked** by
-`packaging/release.json`'s `integration_contract` review state. The publisher
-refuses before GitHub or signing until coordinated generic contracts and their
-regressions justify `verified-origin-neutral-app-host`. There is no environment
-override. This is a release-readiness check, not a runtime trust switch.
+`packaging/release.json` now records the reviewed
+`verified-origin-neutral-app-host` state justified by the evidence above.
+The publisher still refuses every other state before GitHub or signing, with
+no environment override. This does not start publication, grant runtime
+authority or skip package, signature, freshness or immutable-version checks.
 Authenticated refresh of existing signed APT metadata remains available.
 Local packages and compatibility archives are validation candidates, not proof
 that the runtime integration model is unified.
 
-The following dependencies were reported at the parent-verified checkpoint and
-require coordinated close-out. This producer does not establish their
-replacement or remove/weaken their protections:
+The following source-move boundaries retain their original protections.
+Generic runtime acceptance is now closed; remaining product consolidation,
+physical-device and public deployment qualifications are not App privileges.
 
-| Existing surface | Outstanding contract |
+| Existing surface | Verified contract and deployment boundary |
 | --- | --- |
 | App lifecycle and AI independence | Ordinary App launchers, including UID 0, now register through authenticated `clawd`; the local backend is an explicit unit fixture only. Apps remain independent of an active AI Agent, not of the OS service. Root install/update/rollback coordination and installed acceptance remain in progress; this does not establish publication approval. |
 | OS `core/src/worker/trusted_desktop.rs::verified_entrypoint` | Generic signed package-relative entry admission has replaced the fixed launch table. The nine native producer manifests/payload plans now use it; this does not establish runtime resource or provider integration. |
@@ -128,13 +145,13 @@ replacement or remove/weaken their protections:
 | Browser Native Messaging transport | Socket ownership, kernel Root-peer admission, bounded frames and response correlation now live in the versioned OS browser transport. The App owns only its extension/MCP and unprivileged launchers; no App Host exemption or new identity is introduced. Every tool still uses normal authenticated App hosting and its own exact grants. Final installed browser/extension acceptance remains pending. |
 | OS `core/src/clawd/packages.rs` | Fixed `pkg` client gating is replaced by the existing Critical `sys.package` authority, exact requested scope and authenticated owner/session. Each client retains its identity; global actions still require explicit wildcard authority and rollback must match recorded inverse state. Effects remain system-wide. No default App grants, installation-review bypass or publication readiness follows. |
 | OS App permission-management service | `system.app-permissions` now accepts independently authorized Apps through the existing High-risk `sys.permissions:manage` capability and authenticated owner, not a fixed Settings identity. It can inspect, request restoration and revoke supported permissions; trusted OS approval, target validation and checked retirement remain mandatory. This does not complete GUI permission acquisition or permit App-owned approval. |
-| OS media-player route | Fixed `cosmic-player` caller gating is replaced by the existing exact observation/control capabilities and authenticated owner/session. Each calling App retains its identity and live denial policy. The native playback target, executable/PID/unique-connection checks, bounded helper and dispatch gate remain fixed; this is not arbitrary-player discovery, a default grant or completion of installed-resource/GUI integration. |
+| OS media-player route | Any independently authorized client uses exact observation/control scopes. Root selects the actual signed running GUI instance; its original UI supplies live status and commands. Caller revocation, ambiguous-window refusal, protected media/thumbnail access, real output-only PCM and checked retirement are verified without an owner bus or compatibility-executable identity. |
 | App persistent storage | The OS binds the existing owner/App data partition through exact-App private idmapped views for service Hosts and, after Root registration authorization, task-host ordinary operations. Host/UID replacement does not copy, chown or delete backing files. Calendar reads now use the owner-scoped OS broker service and a bounded read-only helper, not the consumer's private directory; this does not complete installed-App or GUI resource acceptance. |
 | Native Calendar, Clipboard and Widget Rail panels | All three existing identities have real MCP-first package-local native binaries and product-owned Web workflows. Clean OS fixtures verify bounded original read-only panels, normal protected review and checked Host/resource retirement; Agent virtual ABI dependencies replace the Desktop-only applet-provider requirement. Full installed/provider/hardware acceptance remains pending; no new identity, grant or SDK pin is introduced. |
 | Clipboard history service | The [bounded native UI proofs](../products/clipboard/MODULE.md) cover the pinned CopyQ data relay, independent lifetime, two painted synthetic texts, delete/confirmed-clear effects and Restore into an authenticated Root headless display with real plain-text/HTML MIME transfers. Restore spends the original compound rights once; no selection-read union, owner-socket fallback or new collector is introduced. Matching Agent/Desktop 0.2.1 is required for the private OS effect protocol; the public SDK pin is unchanged. Physical display/hardware and full installed/publication acceptance remain separate. The Debian `copyq` dependency is availability only. |
-| Native payload/runtime integration | [`native_payload.py`](../tools/native_payload.py) prepares real package-local ELFs and common-Host exports. Native GUI argv, Files' auxiliary applet and installed-resource/provider bindings remain explicitly gated; see [the bounded contract](native-payloads.md). |
-| Settings authority ownership | The product installer no longer supplies or removes system polkit policy. The existing desktop/first-boot policies are OS-owned, retaining their authorization behavior and translations; App delivery validation has no exemption. Native User mutations use the generic Root service. Keyboard/config resource admission, first-boot coordination and installed acceptance remain pending independently. |
-| Notifications presentation boundary | OS consumers use `claw-os-sdk/rust/notification-presentation` without App config/util or an interface tree. The historical SDK 1.0.0 release has been withdrawn; see [platform publication status](#platform-publication-status). App config/util remain private; no old archive is restored, and signature/presentation definitions do not establish runtime activation. |
+| Native payload/runtime integration | Actual signed original native programs pass the common Host's software display/resource and checked-retirement lanes. Named auxiliary entries remain independently declared; no default-GUI/MCP grant union is introduced. Physical desktop layout and installed-image qualification remain separate; see [the bounded contract](native-payloads.md). |
+| Settings authority ownership | OS-owned desktop/first-boot policy is preserved. The native UI uses closed Root owner-preference, regional, Network, Bluetooth, Power and Location providers, plus independent file selection. Public config-ID normalization, exact Parent path admission, empty mandatory authority and ungranted optional startup are verified; no App-owned consent or global config mount is added. |
+| Notifications presentation boundary | The published 0.2.1 SDK carries the public presentation contract; config/util stay App-private. Real original popup rendering/reopen, descriptor, mute, durable dismiss/acknowledge, revocation and checked helper/GUI/PAM retirement pass. Root alone owns the desktop delivery consumer, DND and retries; a transport close never acknowledges notification data. |
 
 Parent verification confirms `cosmic-applets` Cargo/main/build no longer
 references Calendar, Clipboard or Widget Rail. That completed separation is

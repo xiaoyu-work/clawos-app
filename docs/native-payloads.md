@@ -167,16 +167,22 @@ uncontracted global path, such as an archive keyring, is rejected rather than
 activated. Exports use the private prepared copy, not a mutable installer path;
 empty resource directories and modes are retained inside the App.
 
-## Deliberately gated surfaces
+## Verified runtime contract and deployment boundaries
 
-| Surface | Exact unresolved boundary |
+The [coordinated runtime acceptance](releases.md#one-app-integration-contract)
+passes the complete OS 21-job and App 41-job suites using the published 0.2.1
+platform. This includes actual signed original native programs, protected
+selected file effects, real private PCM, popup actions and checked retirement.
+It is not a physical-device, KMS or complete installed-image qualification.
+
+| Surface | Enforced boundary |
 | --- | --- |
-| End-to-end GUI execution | App-side selector parsing preserves the Host's forwarded arguments, but does not establish authenticated GUI bootstrap, Wayland/resource access or single-instance activation. File/URI opens, page selection, Terminal execution, Capture modes and Player thumbnailing still require their actual admitted runtime paths. |
-| GUI permissions | Fixed operation needs now use the ordinary exact-owner approval flow when outside launcher delegation; inherited rights and independent owner approvals retain live revocation checks. Wild operation needs still require bounded delegation, and MCP-tool needs are never unioned. Later file-picker/argument-bound needs and Layer-shell authority still need their own generic resource contracts; declarations are not grants or an Admin bootstrap. |
-| Files companion | The original separate `cosmic-files-applet` ELF is explicitly bound by `desktop.entries.applet` under `cosmic-files`; its compatibility command selects `--gui:applet` through the common Host. The applet is UI-only; the OS-owned FileManager1 facade routes same-owner URI intents through default-GUI Host launch. The actual OS fixture verifies signed execution and checked teardown, not the real Files UI/resource integration. Raw owner D-Bus access is not admitted. Display/Layer-shell and installed-resource contracts remain independent blockers. |
-| Settings authority ownership | The desktop/first-boot policies now live in the OS initial-setup component with their existing authorization semantics. Product install/uninstall no longer supplies or removes them; delivery validation still rejects App authority files. Native User mutations use the generic Root service. Keyboard/config resource admission and first-boot coordination remain separate from this ownership move. |
-| Installed resources and state | Root now projects the signed App's read-only `resources/` and its `usr/share` through `COS_APP_RESOURCE_DIR` and `XDG_DATA_DIRS`; toolkit default schema lookup honors this data path. Absolute provider/helper paths, global catalogs and existing owner configuration still require their own resource contracts. `COS_OWNER_HOME` is path context, not a filesystem grant; App state remains private and no data migration is performed. |
-| Provider/helper executable identity | Both Capture modes use OS-owned, Root-gated `clawd` portal helpers rather than an App compatibility program. Interactive requests use the common Host's private per-window route under explicit GUI screen permission; destination/clipboard decisions remain in the OS portal and returned paths grant nothing. Root retains uncertain Close/helper cleanup. Physical-display and installed acceptance remain separate, as do media-player, Settings and presentation resource contracts. A Host-only wrapper is not the original ELF or a new grant; private pipe flags and Player's thumbnailer are not generic GUI authority. |
+| End-to-end GUI execution | Actual signed native software lanes cover authenticated GUI bootstrap, real configured pixels/PTYs, original argv/resources, Capture modes and protected Player thumbnail overwrite/create. The OS retains exact instance and checked process/resource/PAM retirement; no App is executed through a compatibility wrapper outside the Host. |
+| GUI permissions | Mandatory and optional needs use the ordinary exact-owner flow and live revocation. Protected file read/write/create and OS FileChooser metadata remain separate. Layer-shell requires explicit `ui.panel`; MCP needs are never unioned and neither a returned filename nor installation grants authority. |
+| Files companion | The separate signed `cosmic-files-applet` uses its explicit `desktop.entries.applet` and `ui.panel`/Desktop metadata needs. Default Files has real Home-metadata window acceptance; the auxiliary uses the independently checked generic entry/role boundary. The OS FileManager1 facade owns URI transport, without raw App owner-bus access. Physical desktop layout remains deployment qualification. |
+| Settings authority ownership | Desktop/first-boot policy remains OS-owned. Native owner config, regional and device flows use closed Root providers with independent named capabilities, while file/folder/save decisions use the shared protected picker and selected-file resources. Empty mandatory startup and every optional right ungranted are verified, without an App permission store or owner-tree mount. |
+| Installed resources and state | Signed read-only resources use `COS_APP_RESOURCE_DIR`/`XDG_DATA_DIRS`. Global catalogs use public `/usr`; existing owner config uses typed Root services and pinned files. `COS_OWNER_HOME` is path context, not a grant. App data stays private and persists across checked Host/UID replacement; no user-state migration is performed. |
+| Provider/helper executable identity | Capture uses authenticated descriptor-pinned OS portal helpers. Media uses its actual signed live UI and a Root-held output-only sound helper, never an owner bus or wrapper identity. Notifications uses the public bounded presentation contract and one Root delivery consumer. Cancellation, logout, no-clobber publication and checked cleanup remain enforced; uncertain effects are never automatic replay. |
 
 Files' explicit GUI filesystem needs use the coordinated `owner-path` binding:
 `{"kind":"owner-path","path":"**"}` for the primary GUI and
@@ -198,14 +204,15 @@ authority is separate, and permanent resource grants are not part of this
 initial contract.
 Raw Home mounts, changing a recursive request to an exact Home request, or
 removing credential protections are not substitutes. The generic resource
-runtime and actual native consumers must be completed and verified before
-publication; a path getter, signed declaration or picker-only mock is not that
-integration.
+runtime and actual native consumers are covered by the coordinated acceptance
+above. These checks must remain enforced before publication; a path getter,
+signed declaration or picker-only mock is not that integration.
 
-The pending-origin-neutral publication gate remains enabled. Signature/archive
-validity is deliberately separate from these runtime checks. Installed GUI
-containment and OS review implementation remain outside this producer-only
-validation.
+The release review now records `verified-origin-neutral-app-host`; that state
+is not a runtime trust switch or permission grant. Every selected architecture
+still needs its real package build, provenance, immutable release and signed
+Store/APT verification. Physical hardware and installed-image acceptance remain
+separate from these private software checks.
 
 ## Focused validation
 

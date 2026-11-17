@@ -109,13 +109,18 @@ def test_manifest_needs_remain_declarations_not_installed_grants(deb, name, arch
 def test_publication_requires_generic_contract_review_and_has_no_environment_override(monkeypatch):
     monkeypatch.setenv("CLAW_APPS_INTEGRATION_APPROVED", "1")
     with pytest.raises(ValueError, match="generic authenticated App Host"):
-        release_publish.require_publication_contract(config())
+        release_publish.require_publication_contract({
+            **config(), "integration_contract": "pending-origin-neutral-app-host",
+        })
     release_publish.require_publication_contract({"integration_contract": "verified-origin-neutral-app-host"})
     with pytest.raises(ValueError, match="blocked"):
         release_publish.require_publication_contract({})
 
 
 def test_pending_integration_stops_publication_before_github_or_signing(tmp_path, monkeypatch):
+    monkeypatch.setattr(release_publish, "config", lambda: {
+        **config(), "integration_contract": "pending-origin-neutral-app-host",
+    })
     monkeypatch.setattr(sys, "argv", [
         "release_publish.py", "publish", "--plan", str(tmp_path / "not-read"),
         "--artifacts", str(tmp_path / "not-read"),

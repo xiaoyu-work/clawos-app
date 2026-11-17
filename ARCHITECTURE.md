@@ -4,17 +4,18 @@
 declared shared-capability client source groups. `claw-os` owns the system
 Agent, privileged broker, runtime authority, SDK and OS image.
 
-**Integration contract is not yet unified.** Every App, regardless of origin,
+**The coordinated 0.2.1 generic runtime contract is verified.** Every App, regardless of origin,
 language or UI, must use one authenticated manifest/Host/capability/resource-owner
 and sandbox model. Package authenticity and versioned interface availability
 are not grants. The generic Host now admits signed package-relative entries
 without the former fixed launch table or native-host exemption. Source now
 includes generic GUI entry/permission contracts and OS-owned Native Messaging
-and Settings policies. Provider/helper resources, GUI/config admission and
-installation/update/rollback acceptance remain coordinated blockers, not
-approved exceptions. Preserve existing protections until equivalent generic
-checks and regressions replace them. New release publication is gated; see
-[the current contract status](docs/releases.md#one-app-integration-contract-pending).
+and Settings policies. Exact per-instance resources, protected file selections,
+typed owner/device services, durable notification presentation and checked
+mutation/retirement use that same boundary. Actual signed native software
+acceptance passed without origin or business-name exceptions. Signed package
+builds, publication and physical-device deployment remain separate checks; see
+[the current contract status](docs/releases.md#one-app-integration-contract).
 
 ```text
 Product UI ----+
@@ -49,10 +50,10 @@ error, including for independent Root clients; Root is not a second App
 integration path. Only features that explicitly request AI depend on the
 OS AI gate and its consent, capability and budget checks.
 
-The OS launch-ownership cutover and installation/update/rollback coordination
-remain tracked in [contract status](docs/releases.md#one-app-integration-contract-pending).
-This accepted boundary is not a claim that every runtime path or installed
-package has completed that migration.
+The shared OS launch and installation/update/rollback coordination are tracked
+in [contract status](docs/releases.md#one-app-integration-contract).
+Verified private software acceptance is not a claim that a public package has
+already been published or that every physical device has been exercised.
 
 ## Source ownership
 
@@ -124,7 +125,7 @@ The common Host's native argv contract is `[desktop.exec, user arguments...]`.
 Eight native parsers use the App-owned std-only adapter to consume exactly one
 leading selector in GUI mode and preserve the remaining OS strings for their
 original parsers. Notifications has no argv parser and retains its ignored-argv
-behavior. MCP dispatch still precedes GUI parsing. SDK 1.0.0 supplies the existing
+behavior. MCP dispatch still precedes GUI parsing. The published SDK 0.2.1 supplies the existing
 mode observation only; no SDK artifact, identity, session or grant changes.
 This is source-level argv adaptation, not installed GUI/authority acceptance.
 Notifications metadata no longer declares config/util exports; release and

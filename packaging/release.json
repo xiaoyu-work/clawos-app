@@ -1,6 +1,6 @@
 {
   "format": "claw.app-release/v1",
-  "integration_contract": "pending-origin-neutral-app-host",
+  "integration_contract": "verified-origin-neutral-app-host",
   "repository": "xiaoyu-work/clawos-app",
   "apt_url": "https://xiaoyu-work.github.io/clawos-app/",
   "suite": "trixie",

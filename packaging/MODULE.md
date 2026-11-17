@@ -10,7 +10,8 @@ construction or a privileged updater.
   production platform pin. OS production staging no longer copies App/support
   source. Missing official App APT artifacts or reintroduced shell/private-library
   links block OS release assembly. The real Desktop source links are removed;
-  native build/publication/integration acceptance gates remain intact.
+  native build/publication gates remain intact. Generic runtime acceptance is
+  recorded separately in the verified contract review below.
 - `apt/archive-key.asc` is the checked-in App archive public key. Its fingerprint
   must match both `release.json` and the OS repository consumer. Private signing
   material belongs only in the two dedicated GitHub Actions secrets.
@@ -25,8 +26,9 @@ construction or a privileged updater.
   explicitly; [native runtime/resource gates](../docs/native-payloads.md) remain.
 - `../tools/release_payload.py` rejects App root hooks, authority/state/grant
   payloads and privilege-bearing metadata independently of origin/language.
-  Signatures authenticate bytes, not runtime permission. New publication remains
-  gated on the pending general App Host/capability/resource-owner contract.
+  Signatures authenticate bytes, not runtime permission. New publication requires
+  the reviewed generic App Host/capability/resource-owner contract plus the
+  selected architectures' real package, signature and publication checks.
 - `../tools/release_snapshots.py` packages complete, separately authenticated
   `claw.provenance/v1` App directories and signs a manifest/artifact-bound catalog.
   It calls the existing pinned public verifier and has no OS-source dependency,
