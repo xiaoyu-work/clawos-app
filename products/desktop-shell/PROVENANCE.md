@@ -1,8 +1,10 @@
 # Desktop shell provenance
 
 These are complete source imports, not submodules or build-cache references.
-All tracked files, native plugins, resources, documentation, build metadata,
-licenses and executable modes are retained.
+Source files, native plugins, resources, documentation, build metadata,
+licenses and executable modes are retained. The libcava import excludes its
+unrelated Android signing keystore; that file is not Linux source or a build
+dependency.
 
 | Local source | Upstream | Revision | License |
 | --- | --- | --- | --- |
@@ -36,8 +38,8 @@ rights or permission to publish a release.
 The Claw CMake adapter builds only libcava's original `cavacore.c` into the
 native UI plugin, with FFTW. It does not build the terminal program or its raw
 audio-input backends, download a library during configure, or substitute a
-different Cava implementation. The complete original library tree and its
-licenses remain unchanged.
+different Cava implementation. Retained library files and licenses keep their
+original bytes; `excluded_files` records the keystore omission.
 
 No Omarchy source, OS authority implementation, user configuration, credentials
 or installed state is included in this import.

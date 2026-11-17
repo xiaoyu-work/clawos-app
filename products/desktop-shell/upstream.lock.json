@@ -19,7 +19,8 @@
       "revision": "f03278ef9e5e7948fb206453d2f02758f8db216c",
       "tree": "2cb38dd082c8142f1fd97d538e3e0768780dcd6c",
       "path": "native/caelestia/plugin/3rdparty/libcava",
-      "license": "MIT"
+      "license": "MIT",
+      "excluded_files": ["cavandroid/keystore.jks"]
     },
     "m3shapes": {
       "repository": "https://github.com/soramanew/m3shapes.git",
