@@ -133,6 +133,8 @@ jobs:
         with:
           name: app-release-plan
           path: build
+      - name: Trust the exact host-mounted checkout inside the build container
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - env:
           ARCHITECTURE: ${{ matrix.architecture }}
         run: python3 tools/release_ci.py build --plan build/release-plan.json --architecture "$ARCHITECTURE"
