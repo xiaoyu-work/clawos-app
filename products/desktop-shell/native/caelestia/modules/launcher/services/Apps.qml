@@ -1,7 +1,11 @@
 pragma Singleton
 
+import QtQuick
 import Quickshell
+import Quickshell.Io
+import Caelestia
 import Caelestia.Config
+import Caelestia.I18n
 import Caelestia.Models
 import qs.utils
 
@@ -9,15 +13,13 @@ Searcher {
     id: root
 
     function launch(entry: DesktopEntry): void {
-        appDb.incrementFrequency(entry.id);
-
-        if (entry.runInTerminal)
-            Quickshell.execDetached({
-                command: [...GlobalConfig.general.apps.terminal, `${Quickshell.shellDir}/assets/wrap_term_launch.sh`, ...entry.command],
-                workingDirectory: entry.workingDirectory
-            });
-        else
-            entry.execute();
+        if (launcher.pending) {
+            Toaster.toast(Tr.tr("Application launch pending"), Tr.tr("Wait for the current launch request to finish."), "hourglass_top");
+            return;
+        }
+        launcher.appId = entry.id;
+        launcher.pending = true;
+        launcher.running = true;
     }
 
     function search(search: string): var {
@@ -71,5 +73,43 @@ Searcher {
         path: `${Paths.state}/apps.sqlite`
         favouriteApps: GlobalConfig.launcher.favouriteApps
         entries: DesktopEntries.applications.values.filter(a => !Strings.testRegexList(GlobalConfig.launcher.hiddenApps, a.id))
+    }
+
+    Process {
+        id: launcher
+
+        property string appId
+        property bool pending: false
+
+        command: ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_launch.py"), appId]
+        stdout: StdioCollector {
+            id: launchOutput
+        }
+
+        onExited: exitCode => {
+            pending = false;
+            let response;
+            try {
+                response = JSON.parse(launchOutput.text);
+            } catch (error) {
+                Toaster.toast(Tr.tr("Could not launch application"), Tr.tr("The launch service returned an invalid response."), "error");
+                return;
+            }
+            if (response === null || typeof response !== "object" || typeof response.ok !== "boolean") {
+                Toaster.toast(Tr.tr("Could not launch application"), Tr.tr("The launch service returned an invalid response."), "error");
+                return;
+            }
+            if (exitCode === 0 && response.ok === true)
+                appDb.incrementFrequency(appId);
+            else
+                Toaster.toast(Tr.tr("Could not launch application"), String(response.error ?? Tr.tr("The launch request was not confirmed.")).slice(0, 1024), "error");
+        }
+
+        onRunningChanged: {
+            if (pending && !running) {
+                pending = false;
+                Toaster.toast(Tr.tr("Could not launch application"), Tr.tr("The launch service could not be started."), "error");
+            }
+        }
     }
 }

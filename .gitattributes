@@ -21,6 +21,8 @@ products/desktop-shell/native/caelestia/plugin/3rdparty/libcava/third_party/incb
 products/desktop-shell/native/caelestia/plugin/cmake/libcava.cmake text eol=lf
 products/desktop-shell/native/caelestia/plugin/CMakeLists.txt text eol=lf
 products/desktop-shell/native/caelestia/plugin/src/Caelestia/Services/CMakeLists.txt text eol=lf
+products/desktop-shell/native/caelestia/utils/scripts/desktop_launch.py text eol=lf
+products/desktop-shell/native/caelestia/modules/launcher/services/Apps.qml text eol=lf
 products/desktop-shell/native/quickshell/src/main.cpp text eol=lf
 products/desktop-shell/native/quickshell/src/crash/CMakeLists.txt text eol=lf
 products/desktop-shell/native/quickshell/src/bluetooth/adapter.hpp whitespace=-blank-at-eol

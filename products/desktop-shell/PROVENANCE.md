@@ -44,5 +44,10 @@ audio-input backends, download a library during configure, or substitute a
 different Cava implementation. Retained library files and licenses keep their
 original bytes; `excluded_files` records the keystore omission.
 
+The launcher delegates desktop intents to the existing OS service through the
+published SDK, rather than executing desktop-entry command strings. Its
+superseded direct terminal wrapper is removed. Native component staging is
+rebuilt before installation so deleted files cannot survive incremental builds.
+
 No Omarchy source, OS authority implementation, user configuration, credentials
 or installed state is included in this import.

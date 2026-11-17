@@ -28,6 +28,7 @@ Claw runtime integration.
 | `native/m3shapes/` | Complete upstream Material shape source |
 | `native/quickshell/` | Complete LGPL engine source, bundled with this App |
 | `native/quickshell/src/main.cpp` | Common-Host GUI selector and read-only resource adapter |
+| `native/caelestia/utils/scripts/desktop_launch.py` | Validated human desktop intent through the published SDK/kernel transport |
 
 Managed GUI mode accepts only `--gui` and requires the Host's absolute
 `COS_APP_RESOURCE_DIR`. It selects the bundled shell and QML modules there,
@@ -43,6 +44,14 @@ enforcement, App Host, capability decisions and authoritative system state.
 Replacing the visual shell must not replace those services with upstream
 notification history, raw system commands or a second permission mechanism.
 Ordinary Apps do not need to be rewritten in QML.
+
+The launcher reads the public desktop catalogue but never executes its command
+strings or a configured terminal directly. It sends one exact AppID to the OS
+desktop service through the published SDK and the fixed `cos` binary. The
+selected GUI still needs the ordinary exact `desktop.launch` grant; a click,
+catalogue entry or successful client startup supplies no authority. Denied or
+indeterminate requests have no raw-execution fallback or automatic retry.
+Launch frequency changes only after the broker confirms the request.
 
 Any later launch/payload integration must use the repository's existing
 native App packaging and public SDK/runtime contracts. The original source
@@ -61,6 +70,8 @@ FFTW and lm-sensors development files. The pinned libcava DSP core is built
 in-tree; the unrelated distribution `cava` terminal program is not a library
 substitute or a runtime dependency. Its build adapter does not authorize audio
 capture or bypass the OS resource boundary.
+The launcher also needs the Qt SQLite runtime driver (`libqt6sql6-sqlite` on
+Debian/Ubuntu); linking Qt Sql alone does not provide that plugin.
 
 Run from a Linux-filesystem checkout of this repository:
 
@@ -84,6 +95,7 @@ config. This is entry-adapter coverage, not authenticated desktop acceptance.
 
 The unified build assembles one real engine ELF and the original private QML
 libraries/resources without installing an OS runtime or upstream system hooks:
+use a fresh staging destination, as the package producer does.
 
 ```sh
 cmake -S products/desktop-shell/native -B build/desktop-shell -G Ninja \
@@ -100,3 +112,9 @@ The installed assembly passes the existing owned-tree/ELF/mode checks and
 loads its real private Caelestia and Material Shapes modules without global
 resource activation. App registration, protected services and authenticated
 desktop acceptance remain separate gates.
+Development artifacts retain the build host ABI. The current native check
+requires glibc 2.43 and Qt/private ABI 6.10.2; it is not an artifact for an older
+OS base. Target-ABI builds and explicit runtime plugin delivery remain release
+prerequisites, not a reason to weaken dependency or update gates.
+Each native component owns a freshly cleared build-staging directory, so an
+incremental build cannot retain deleted presentation resources or helpers.
