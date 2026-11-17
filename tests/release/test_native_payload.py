@@ -190,6 +190,37 @@ def test_native_preparation_resolves_flat_and_nested_app_owned_gui_support(tmp_p
     assert not (repository / "shared").exists()
 
 
+def test_gui_only_native_plan_needs_no_placeholder_mcp(tmp_path, monkeypatch):
+    source, package = stage.load_package("capture")
+    fixture = tmp_path / "source"
+    app = fixture / package["apps"][0]
+    app.mkdir(parents=True)
+    manifest = snapshots.read_metadata(source / package["apps"][0] / "app.json")
+    manifest.pop("mcp")
+    (app / "app.json").write_text(json.dumps(manifest))
+    monkeypatch.setattr(native_payload.stage, "load_package", lambda *args: (fixture, package))
+    selected = native_payload.plan("capture")
+    assert selected.entrypoints == (manifest["entry"],)
+    assert "mcp" not in json.loads(selected.manifest_bytes)
+    manifest["mcp"] = None
+    (app / "app.json").write_text(json.dumps(manifest))
+    with pytest.raises(ValueError):
+        native_payload.plan("capture")
+
+
+def test_private_qml_resources_stay_inside_the_signed_app(installer, tmp_path):
+    selected, installed = installer("capture")
+    private = installed / "usr/share/desktop-shell/qml/Panel.qml"
+    private.parent.mkdir(parents=True)
+    private.write_bytes(b"import QtQuick\nItem {}\n")
+    selected = replace(selected, private_resources=("usr/share/desktop-shell",))
+    destination = tmp_path / "installed"
+    native_payload.install(selected, installed, destination, ARCHITECTURE)
+    retained = destination / selected.installed_app / "resources" / private.relative_to(installed)
+    assert retained.read_bytes() == private.read_bytes()
+    assert not (destination / "usr/share/desktop-shell").exists()
+
+
 @pytest.mark.parametrize("product", PRODUCTS)
 @pytest.mark.parametrize("failure", ("missing", "script", "wrong_architecture", "nonexecutable", "symlink", "hardlink"))
 def test_every_native_payload_refuses_bad_executable_before_writing(product, failure, installer, tmp_path):

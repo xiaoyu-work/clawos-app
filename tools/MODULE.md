@@ -183,6 +183,11 @@ entry under the same App and export only its named common-Host route. Files
 declares that applet binding without changing either native feature graph;
 FileManager1, display and resource admission remain explicit runtime gates.
 Ordinary source staging remains source-only.
+Human-only native GUIs may omit MCP instead of inventing a stdio service.
+Explicit `native_payload.private_resources` roots retain QML/modules only in
+the signed App and never export them to global resource paths. Existing
+authority-path and inventory checks still apply; release dependency inspection
+also scans ELF libraries in those private roots.
 See [native payloads and current runtime gates](../docs/native-payloads.md).
 `release_wheels.py` stages digest-pinned pure Python dependencies absent from
 Debian, preserving their licenses and one explicit product package owner.

@@ -283,6 +283,19 @@ def native_payload(root, entry):
         binaries.append(path)
     if not binaries:
         raise ValueError("Native installer produced no real executable")
+    private_library_directories = set()
+    if native_plan:
+        for relative in native_plan.private_resources:
+            resources = root / native_plan.installed_app / "resources" / relative
+            for path in sorted(resources.rglob("*")):
+                if not path.is_file() or path.is_symlink():
+                    continue
+                with path.open("rb") as stream:
+                    is_elf = stream.read(4) == b"\x7fELF"
+                if is_elf:
+                    run(["strip", "--strip-unneeded", path])
+                    binaries.append(path)
+                    private_library_directories.add(path.parent)
     for manifest in (root / "usr/lib/cos/apps").rglob("app.json"):
         app = json.loads(manifest.read_text())
         if app["runtime"] == "binary":
@@ -295,7 +308,11 @@ def native_payload(root, entry):
         f"Source: {entry['package']}\n\nPackage: {entry['package']}\nArchitecture: any\n"
     )
     try:
-        result = run(["dpkg-shlibdeps", "-O", *(f"-e{binary}" for binary in binaries)], cwd=debian.parent)
+        result = run([
+            "dpkg-shlibdeps", "-O",
+            *(f"-l{directory}" for directory in sorted(private_library_directories)),
+            *(f"-e{binary}" for binary in binaries),
+        ], cwd=debian.parent)
         output = result.stdout.decode().strip()
         if not output.startswith("shlibs:Depends="):
             raise ValueError("Native dependency scanner did not report its runtime dependencies")

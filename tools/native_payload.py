@@ -50,6 +50,7 @@ class NativePlan:
     gui_selector: str
     gui_entries: tuple[NativeGuiEntry, ...]
     manifest_bytes: bytes = field(repr=False)
+    private_resources: tuple[str, ...] = ()
 
     def record(self):
         record = {
@@ -70,6 +71,8 @@ class NativePlan:
                 }
                 for gui in self.gui_entries
             }
+        if self.private_resources:
+            record["private_resources"] = list(self.private_resources)
         return record
 
 
@@ -90,7 +93,7 @@ def plan(product):
     if package.get("native_kind") != "binary":
         raise ValueError("A native library is not an independently runnable App payload")
     if not isinstance(declaration, dict) or (
-        set(declaration) - {"app", "program", "auxiliary_programs"}
+        set(declaration) - {"app", "program", "auxiliary_programs", "private_resources"}
         or not {"app", "program"} <= declaration.keys()
     ):
         raise ValueError("Native payload requires an explicit product-owned binary declaration")
@@ -104,6 +107,15 @@ def plan(product):
         not isinstance(name, str) or not PROGRAM.fullmatch(name) for name in auxiliary
     ) or len(set([program, *auxiliary])) != 1 + len(auxiliary):
         raise ValueError("Native auxiliary programs must be distinct declared program names")
+    private_resources = declaration.get("private_resources", [])
+    if not isinstance(private_resources, list):
+        raise ValueError("Native private resources require explicit usr/share roots")
+    for relative in private_resources:
+        path = app_path(relative)
+        if len(path.parts) < 3 or path.parts[:2] != ("usr", "share"):
+            raise ValueError("Native private resources require explicit usr/share roots")
+    if len(set(private_resources)) != len(private_resources):
+        raise ValueError("Native private resource roots must be distinct")
     apps = stage.app_entries(source, package)
     if app_id not in apps:
         raise ValueError("Native payload App must belong to this product")
@@ -114,8 +126,10 @@ def plan(product):
     mcp, desktop = manifest.get("mcp"), manifest.get("desktop")
     if manifest.get("id") != app_id or manifest.get("runtime") != "binary" or (
         manifest.get("schema_version") != 2 or manifest.get("entry") != entry
-        or not isinstance(mcp, dict) or mcp.get("entry") != entry
-        or mcp.get("transport") != "stdio"
+        or ("mcp" in manifest and (
+            not isinstance(mcp, dict) or mcp.get("entry") != entry
+            or mcp.get("transport") != "stdio"
+        ))
         or not isinstance(desktop, dict)
         or desktop.get("entry", entry) != entry
     ):
@@ -136,6 +150,7 @@ def plan(product):
         product, app_id, app, source / "native/LICENSE",
         Path("usr/lib/cos/apps") / app.relative_to(source / "apps"),
         program, tuple(auxiliary), entries, selector, gui_entries, manifest_bytes,
+        tuple(private_resources),
     )
 
 
@@ -370,6 +385,11 @@ def install(selected, installed, destination, architecture):
                         selected, gui_entry=gui_exports[Path(name).name],
                     )
                 else:
+                    if any(
+                        name == prefix or name.startswith(prefix + "/")
+                        for prefix in selected.private_resources
+                    ):
+                        continue
                     if not any(name.startswith(prefix + "/") for prefix in RESOURCE_EXPORTS):
                         raise ValueError(f"Native resource export requires an explicit OS installation contract: {name}")
                     origin = prepared.root / _payload_path(name)

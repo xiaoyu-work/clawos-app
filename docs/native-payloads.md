@@ -23,12 +23,20 @@ The selected App's existing identity, version, AI policy, MCP tools and their
 
 ## Preparation and signing
 
-The native manifests explicitly select `bin/<program>` for both `entry` and
-`mcp.entry`, with `runtime: "binary"`. `desktop.exec` retains the product's
+The native manifests explicitly select `bin/<program>` for `entry` and, when
+present, `mcp.entry`, with `runtime: "binary"`. Human-only GUI Apps omit MCP;
+they do not invent a stdio service to satisfy packaging. `desktop.exec` retains
+the product's
 `--gui` or panel `open` selector, not an executable path. The common Host
 forwards it as the first native argument, followed by the original user
 arguments.
 One real primary ELF serves both surfaces without copying it twice.
+An explicit `native_payload.private_resources` list may keep named
+`usr/share/<product>/...` roots only inside the signed App's `resources/`.
+Those files are not compatibility exports or global resource activation.
+All existing authority-path, mode, architecture and inventory checks still
+apply. The native dependency scanner includes ELF libraries in those private
+roots as well as the primary executables.
 An additional GUI is explicit `desktop.entries.<canonical-name>` metadata:
 `entry`, one literal `exec` selector, localized `name` and its own `needs` array.
 Optional `desktop.entry` changes only the default GUI entry, not operations or
