@@ -4,7 +4,8 @@
 
 Own the complete, locally editable Caelestia desktop presentation and its
 source-level CLI and Material shape dependencies. Keep QML layout, visuals,
-native UI extensions and presentation resources together.
+native UI extensions, its bundled Quickshell engine and presentation resources
+together. The engine is not an OS shared runtime.
 
 The current source baseline is not a registered or activated App. Existing
 product discovery, release matrices and installed identities are unchanged.
@@ -24,6 +25,15 @@ Claw runtime integration.
 | `native/caelestia/plugin/3rdparty/libcava/` | Complete MIT libcava 1.0.0 source and notices |
 | `native/caelestia-cli/` | Complete upstream CLI source |
 | `native/m3shapes/` | Complete upstream Material shape source |
+| `native/quickshell/` | Complete LGPL engine source, bundled with this App |
+| `native/quickshell/src/main.cpp` | Common-Host GUI selector and read-only resource adapter |
+
+Managed GUI mode accepts only `--gui` and requires the Host's absolute
+`COS_APP_RESOURCE_DIR`. It selects the bundled shell and QML modules there,
+not the working directory, an ambient Quickshell config or caller-supplied
+CLI paths. `COS_APP_GUI` chooses parsing behavior, never identity or authority;
+Root still owns the authenticated launch and its whole lifetime.
+Outside GUI mode, the original CLI remains available for source development.
 
 ## Boundaries
 
@@ -66,3 +76,7 @@ cmake --build build/m3shapes --parallel 4
 
 Both native build graphs compile with Qt 6.10.2. This does not establish a
 running Quickshell frontend, managed GUI hosting or an installed desktop.
+The bundled engine also builds with its original rendering code. Actual ELF
+checks cover upstream CLI compatibility, GUI argument/resource refusals and
+selection of a private synthetic QML resource independently of cwd and ambient
+config. This is entry-adapter coverage, not authenticated desktop acceptance.

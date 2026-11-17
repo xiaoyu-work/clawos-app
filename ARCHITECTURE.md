@@ -59,7 +59,7 @@ already been published or that every physical device has been exercised.
 
 | Surface | Owner |
 | --- | --- |
-| `products/desktop-shell/` | Complete Caelestia/CLI/Material-shape source baseline for the replacement desktop UI; not yet a registered App or installed session; display authority and system services remain OS-owned |
+| `products/desktop-shell/` | Complete Caelestia/CLI/Material-shape source and bundled Quickshell engine with common-Host entry adaptation; not yet a registered App or installed session; display authority and system services remain OS-owned |
 | `products/mail/` | Thunderbird source, Mail AI, native-account Email, extension UI and product packaging; legacy SMTP gateway retired |
 | `products/calendar/` | Local events, Google/Outlook integration, Calendar MCP and the complete native panel UI library/assets |
 | `products/files/` | Complete native Files UI/library/companion, filesystem MCP and private reviewed file plans, owner-scoped Recoll, shared document parsing and SDK AI |

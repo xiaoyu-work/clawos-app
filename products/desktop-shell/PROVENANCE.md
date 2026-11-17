@@ -12,6 +12,7 @@ dependency.
 | `native/caelestia-cli/` | <https://github.com/caelestia-dots/cli> | `9ab901f592917454da396ea012c50dd2c3f37003` | GPL-3.0 |
 | `native/caelestia/plugin/3rdparty/libcava/` | <https://github.com/LukashonakV/cava> | `f03278ef9e5e7948fb206453d2f02758f8db216c` (`1.0.0`) | MIT |
 | `native/m3shapes/` | <https://github.com/soramanew/m3shapes> | `32ad9ce328bb77ed349b40a3be10ee9ea610b8ab` | Apache-2.0 |
+| `native/quickshell/` | <https://github.com/quickshell-mirror/quickshell> | `9b0f339b19057f4731bf3b48293307d7ef241671` | LGPL-3.0 |
 
 The shell dependency revisions are selected by Caelestia's imported `flake.lock`.
 Its exact Nix package set selects the libcava 1.0.0 fork above.
@@ -24,11 +25,13 @@ Existing whitespace in imported upstream files is retained through file-scoped
 `.gitattributes` exceptions rather than rewriting the imported source or
 license text. Claw-owned files retain the normal repository checks.
 
-Quickshell itself is not copied into these directories. The matching
-`9b0f339b19057f4731bf3b48293307d7ef241671` source is available from the
-[official mirror](https://github.com/quickshell-mirror/quickshell) under
-LGPL-3.0. Building that fixed dependency does not establish a Claw engine fork.
-Qt and other upstream dependencies retain their own licenses.
+The complete 590-file Quickshell source is bundled with the Desktop Shell
+product, not supplied by an OS-private runtime. Its narrow entry adapter consumes
+the common Host's GUI selector and selects only the package resource directory;
+ordinary upstream CLI mode remains available for source development. The
+cpptrace build dependency is pinned to the exact 1.0.4 commit. Rendering and AI
+authority are not moved into the engine. Quickshell, Qt and other dependencies
+retain their original licenses; `native/LICENSE` preserves the shell's GPL terms.
 
 Subsequent Claw modifications remain subject to the applicable source
 licenses. Distribution must preserve notices and provide corresponding source
