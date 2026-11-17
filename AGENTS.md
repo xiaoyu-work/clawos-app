@@ -66,6 +66,12 @@ source group's `MODULE.md` before changing its boundary.
   bytes, use the existing signer and common Host, and keep unsupported
   resource/argument/authority integration explicitly gated.
 
+The replacement desktop UI source baseline starts at
+[`products/desktop-shell/MODULE.md`](products/desktop-shell/MODULE.md).
+It is not yet a registered or activated App. Keep compositor, login/session
+and permission authority in `claw-os`; source import does not authorize an
+upstream installer or unmanaged desktop launch.
+
 ```bash
 python3 tools/test.py mail
 python3 tools/test.py mail calendar

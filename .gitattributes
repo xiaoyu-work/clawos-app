@@ -1,5 +1,14 @@
 * text=auto
 products/mail/comm/** -text
+products/desktop-shell/native/** -text
+# Preserve the imported upstream trees without whitespace-only rewrites.
+products/desktop-shell/native/caelestia-cli/default.nix whitespace=-space-before-tab
+products/desktop-shell/native/caelestia/plugin/3rdparty/rgbcx/LICENSE whitespace=-blank-at-eol,-blank-at-eof
+products/desktop-shell/native/caelestia/plugin/3rdparty/rgbcx/rgbcx.cpp whitespace=-blank-at-eol,-blank-at-eof
+products/desktop-shell/native/caelestia/plugin/3rdparty/rgbcx/rgbcx.h whitespace=-blank-at-eol,-blank-at-eof
+products/desktop-shell/native/caelestia/plugin/src/Caelestia/Shaders/crosshatch.frag whitespace=-blank-at-eol
+products/desktop-shell/native/caelestia/plugin/src/Caelestia/Shaders/directional-wipe.frag whitespace=-blank-at-eol
+products/desktop-shell/native/caelestia/utils/scripts/fuzzysort.js whitespace=-blank-at-eof
 products/calendar/native/LICENSE whitespace=-blank-at-eof
 products/clipboard/native/LICENSE whitespace=-blank-at-eof
 products/desktop-widgets/native/LICENSE whitespace=-blank-at-eof

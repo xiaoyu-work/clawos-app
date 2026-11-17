@@ -1,0 +1,32 @@
+{
+  "sources": {
+    "caelestia": {
+      "repository": "https://github.com/caelestia-dots/shell.git",
+      "revision": "e72df8eb687246aa6c6ec6daa631073b374e5215",
+      "tree": "f3b454e394e63067aaa128cb4faccfe3934a27d8",
+      "path": "native/caelestia",
+      "license": "GPL-3.0"
+    },
+    "caelestia-cli": {
+      "repository": "https://github.com/caelestia-dots/cli.git",
+      "revision": "9ab901f592917454da396ea012c50dd2c3f37003",
+      "tree": "891bbd1dd76567bea4d783e43c22642254c668b5",
+      "path": "native/caelestia-cli",
+      "license": "GPL-3.0"
+    },
+    "m3shapes": {
+      "repository": "https://github.com/soramanew/m3shapes.git",
+      "revision": "32ad9ce328bb77ed349b40a3be10ee9ea610b8ab",
+      "tree": "8b6b21468ded39536dcce5accbfcf75efd62f406",
+      "path": "native/m3shapes",
+      "license": "Apache-2.0"
+    }
+  },
+  "runtime": {
+    "quickshell": {
+      "repository": "https://github.com/quickshell-mirror/quickshell.git",
+      "revision": "9b0f339b19057f4731bf3b48293307d7ef241671",
+      "license": "LGPL-3.0"
+    }
+  }
+}
