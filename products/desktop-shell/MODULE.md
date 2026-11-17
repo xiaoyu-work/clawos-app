@@ -19,6 +19,7 @@ Claw runtime integration.
 | `upstream.lock.json` | Exact imported source trees and matching Quickshell dependency |
 | `PROVENANCE.md` | Origins, revisions and license obligations |
 | `native/caelestia/CMakeLists.txt` | Original shell and native-plugin build |
+| `native/CMakeLists.txt` | Single staged ELF/resource assembly from all three native builds |
 | `native/caelestia/services/Hypr.qml` | Upstream compositor-facing presentation model |
 | `native/caelestia/plugin/` | Original native C++ QML extensions |
 | `native/caelestia/plugin/cmake/libcava.cmake` | Build adapter for the pinned waveform DSP core |
@@ -80,3 +81,22 @@ The bundled engine also builds with its original rendering code. Actual ELF
 checks cover upstream CLI compatibility, GUI argument/resource refusals and
 selection of a private synthetic QML resource independently of cwd and ambient
 config. This is entry-adapter coverage, not authenticated desktop acceptance.
+
+The unified build assembles one real engine ELF and the original private QML
+libraries/resources without installing an OS runtime or upstream system hooks:
+
+```sh
+cmake -S products/desktop-shell/native -B build/desktop-shell -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release -DGIT_REVISION="$(git rev-parse HEAD)"
+cmake --build build/desktop-shell --parallel 3
+DESTDIR="$PWD/build/desktop-shell-installer" \
+  cmake --install build/desktop-shell --prefix /usr
+```
+
+Engine dependencies follow the vendored Quickshell CMake files, including Qt
+Wayland/private headers, Wayland protocols 1.41+, CLI11, jemalloc, libunwind
+and zstd. The source-pinned crash libraries build inside the engine.
+The installed assembly passes the existing owned-tree/ELF/mode checks and
+loads its real private Caelestia and Material Shapes modules without global
+resource activation. App registration, protected services and authenticated
+desktop acceptance remain separate gates.

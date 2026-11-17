@@ -1,6 +1,8 @@
 * text=auto
 products/mail/comm/** -text
 products/desktop-shell/native/** -text
+products/desktop-shell/native/CMakeLists.txt text eol=lf
+products/desktop-shell/native/caelestia/CMakeLists.txt text eol=lf
 # Preserve the imported upstream trees without whitespace-only rewrites.
 products/desktop-shell/native/caelestia-cli/default.nix whitespace=-space-before-tab
 products/desktop-shell/native/caelestia/plugin/3rdparty/rgbcx/LICENSE whitespace=-blank-at-eol,-blank-at-eof
