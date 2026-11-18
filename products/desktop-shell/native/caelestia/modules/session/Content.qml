@@ -55,7 +55,7 @@ Column {
         powerAction: "poweroff"
 
         KeyNavigation.up: lock
-        KeyNavigation.down: hibernate
+        KeyNavigation.down: sleep
     }
 
     Loader {
@@ -75,10 +75,10 @@ Column {
     }
 
     SessionButton {
-        id: hibernate
+        id: sleep
 
-        icon: Config.session.icons.hibernate
-        powerAction: "hibernate"
+        icon: "bedtime"
+        powerAction: "suspend"
 
         KeyNavigation.up: shutdown
         KeyNavigation.down: reboot
@@ -90,7 +90,7 @@ Column {
         icon: Config.session.icons.reboot
         powerAction: "reboot"
 
-        KeyNavigation.up: hibernate
+        KeyNavigation.up: sleep
     }
 
     component SessionButton: IconButton {

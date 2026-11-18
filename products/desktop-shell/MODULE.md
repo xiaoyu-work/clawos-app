@@ -103,8 +103,8 @@ session. The App does not need authority to terminate a Linux user.
 The Lock button and idle lock request use `ipc.invoke:desktop.session.lock`
 through the private broker. The Shell no longer contains a lock renderer,
 PAM conversation or unlock command. The OS owns the native lock for this
-display and records acknowledgement after it has taken control. Locking
-before system sleep requires a separate coordinated system policy.
+display and records acknowledgement after it has taken control. The OS
+confirms that lock before dispatching sleep requested from the desktop menu.
 
 Power buttons and launcher power actions ask the existing OS service to
 review the selected action through the private GUI broker. The Shell shows
