@@ -92,6 +92,8 @@ These products do not consume the Rust toolkit. Their runtime SDK dependency
 still follows the validated public platform lock. GUI-only native Apps have
 no mandatory Python test module, and a missing CMake test target is an explicit
 error rather than a successful empty test run.
+`release: false` leaves development builds available while excluding an
+unqualified product from both explicit publication and aggregate package sets.
 Calendar, Clipboard and Widget Rail generate localized desktop entries only in
 Cargo's `OUT_DIR`. Their original installers use the shared
 `native_desktop_metadata.py` build helper selected by `native_build.py` to

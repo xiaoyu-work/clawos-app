@@ -78,3 +78,9 @@ install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/quickshell/src/quickshell"
     DESTINATION bin RENAME claw-desktop-shell)
 install(DIRECTORY "${shapes_payload}/usr/share/" DESTINATION share USE_SOURCE_PERMISSIONS)
 install(DIRECTORY "${presentation_payload}/usr/share/" DESTINATION share USE_SOURCE_PERMISSIONS)
+
+set(license_directory "share/claw-desktop-shell/licenses")
+install(FILES quickshell/LICENSE quickshell/LICENSE-GPL DESTINATION "${license_directory}/quickshell")
+install(FILES m3shapes/LICENSE DESTINATION "${license_directory}/material-shapes")
+install(FILES caelestia/plugin/3rdparty/libcava/LICENSE DESTINATION "${license_directory}/libcava")
+install(FILES caelestia/plugin/3rdparty/rgbcx/LICENSE DESTINATION "${license_directory}/rgbcx")

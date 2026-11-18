@@ -25,7 +25,16 @@ def selections(value):
     requested = value.split(",")
     if not value or any(item != item.strip() or not item for item in requested):
         raise ValueError("Select comma-separated product names, capability:<name>, support or sets")
-    available = [*stage.products(), *(f"capability:{name}" for name in stage.sources("capability")),
+    products = stage.products()
+    held = {
+        product for product in products
+        if stage.load_package(product, "product")[1].get("release") is False
+    }
+    requested_held = held.intersection(requested)
+    if requested_held:
+        raise ValueError(f"App build is not qualified for release: {', '.join(sorted(requested_held))}")
+    available = [*(product for product in products if product not in held),
+                 *(f"capability:{name}" for name in stage.sources("capability")),
                  "support", "sets"]
     if requested == ["all"]:
         return sorted(available)
@@ -66,6 +75,8 @@ def packages_for(selection):
                 for key, variant in (("headless_set", "agent"), ("desktop_set", "desktop"))]
     kind, name = source_selection(selection)
     source, package = stage.load_package(name, kind)
+    if package.get("release") is False:
+        raise ValueError(f"App build is not qualified for release: {selection}")
     if "native_payload" in package:
         native_apps.plan(name)
     manifests = {

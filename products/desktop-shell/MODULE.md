@@ -9,6 +9,11 @@ together. The engine is not an OS shared runtime.
 
 The product declares the GUI-only `desktop-shell` App and its CMake native
 payload. It is not yet the activated desktop session.
+The source and native producer are available, but `release: false` excludes
+this App from Debian release plans and package sets until its target ABI is
+qualified. Debian 13 supplies Qt 6.8.2; the current producer requires Qt 6.9+
+and has rendered with Qt 6.10.2. The Ubuntu build is a preview, not a Debian
+release artifact.
 Do not treat an upstream installer or direct executable launch as completed
 Claw runtime integration.
 

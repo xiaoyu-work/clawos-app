@@ -4,6 +4,7 @@
   "native": {"claw-desktop-shell": "native"},
   "native_kind": "binary",
   "native_build_system": "cmake",
+  "release": false,
   "native_payload": {
     "app": "desktop-shell",
     "program": "claw-desktop-shell",
