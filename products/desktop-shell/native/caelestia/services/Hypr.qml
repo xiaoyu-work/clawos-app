@@ -1,225 +1,157 @@
 pragma Singleton
+pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Io
+import Caelestia
 import Caelestia.I18n
-import Caelestia.Services
-import qs.components.misc
 
 Singleton {
     id: root
 
-    readonly property var toplevels: Hyprland.toplevels
-    readonly property var workspaces: Hyprland.workspaces
-    readonly property var monitors: Hyprland.monitors
-    readonly property bool usingLua: Hyprland.usingLua
+    property var desktop: ({ windows: [], workspaces: [], outputs: [], keyboard: null })
+    readonly property var toplevels: ({ values: desktop.windows })
+    readonly property var workspaces: ({ values: desktop.workspaces })
+    readonly property var monitors: ({ values: desktop.outputs })
+    readonly property var focusedMonitor: desktop.outputs.find(output => output.focused) ?? null
+    readonly property var focusedWorkspace: focusedMonitor?.activeWorkspace ?? null
+    readonly property var activeToplevel: desktop.windows.find(window => window.active) ?? null
+    readonly property int activeWsId: Math.max(1, focusedWorkspace?.id ?? 1)
+    readonly property bool capsLock: desktop.keyboard?.caps_lock ?? false
+    readonly property bool numLock: desktop.keyboard?.num_lock ?? false
+    readonly property string kbLayoutFull: desktop.keyboard?.active_name ?? ""
+    readonly property string kbLayout: desktop.keyboard?.layout ?? ""
+    readonly property string defaultKbLayout: desktop.keyboard?.default_layout ?? ""
 
-    readonly property HyprlandToplevel activeToplevel: {
-        const t = Hyprland.activeToplevel;
-        return t?.workspace?.name.startsWith("special:") || Hyprland.focusedWorkspace?.toplevels.values.length > 0 ? t : null;
+    function installState(state: var): void {
+        const outputs = state.outputs.map(output => ({
+            id: output.id, name: output.name, focused: output.focused,
+            activeWorkspace: null, lastIpcObject: { specialWorkspace: { id: 0, name: "" } }
+        }));
+        const workspaces = state.workspaces.map((ws, index) => ({
+            id: ws.number ?? -(index + 1),
+            name: ws.selector.startsWith("special:") ? ws.selector : ws.name,
+            selector: ws.selector,
+            urgent: ws.urgent,
+            monitor: outputs.find(output => output.id === ws.monitor) ?? null,
+            toplevels: { values: [] }
+        }));
+        const windows = state.windows.map(window => {
+            const geometry = window.geometry[0];
+            const entry = {
+                identifier: window.identifier,
+                title: window.title,
+                active: window.states.includes("activated"),
+                workspace: workspaces.find(ws => ws.selector === window.workspace) ?? null,
+                monitor: outputs.find(output => output.id === window.monitor) ?? null,
+                lastIpcObject: {
+                    class: window.app_id, mapped: true, floating: window.floating, xwayland: window.xwayland,
+                    pinned: window.states.includes("sticky"),
+                    fullscreen: window.states.includes("fullscreen") ? 2 : window.states.includes("maximized") ? 1 : 0,
+                    at: [geometry?.x ?? 0, geometry?.y ?? 0],
+                    size: [geometry?.width ?? 0, geometry?.height ?? 0]
+                }
+            };
+            entry.workspace?.toplevels.values.push(entry);
+            return entry;
+        });
+        outputs.forEach((output, index) => {
+            const source = state.outputs[index];
+            output.activeWorkspace = workspaces.find(ws => ws.selector === source.workspace) ?? null;
+            const special = workspaces.find(ws => ws.selector === source.special);
+            if (special)
+                output.lastIpcObject.specialWorkspace = special;
+        });
+        workspaces.sort((a, b) => a.id - b.id);
+        desktop = { windows, workspaces, outputs, keyboard: state.keyboard };
     }
-    readonly property HyprlandWorkspace focusedWorkspace: Hyprland.focusedWorkspace
-    readonly property HyprlandMonitor focusedMonitor: Hyprland.focusedMonitor
-    readonly property int activeWsId: focusedWorkspace?.id ?? 1
 
-    readonly property HyprKeyboard keyboard: extras.devices.keyboards.find(kb => kb.main) ?? null
-    readonly property bool capsLock: keyboard?.capsLock ?? false
-    readonly property bool numLock: keyboard?.numLock ?? false
-    readonly property string defaultKbLayout: keyboard?.layout.split(",")[0] ?? "??"
-    readonly property string kbLayoutFull: keyboard?.activeKeymap ?? Tr.trCtx("Unknown", "keyboard layout")
-    readonly property string kbLayout: kbMap.get(kbLayoutFull) ?? "??"
-    readonly property var kbMap: new Map()
-
-    readonly property alias extras: extras
-    readonly property alias options: extras.options
-    readonly property alias devices: extras.devices
-
-    property string lastSpecialWorkspace: ""
-
-    signal configReloaded
-
-    function dispatch(request: string): void {
-        Hyprland.dispatch(request);
-    }
-
-    function focusWorkspace(ws: var): void {
-        dispatch(usingLua ? `hl.dsp.focus({ workspace = "${ws}" })` : `workspace ${ws}`);
+    function focusWorkspace(workspace: var): void {
+        act("focus-workspace", "", String(workspace));
     }
 
     function toggleSpecial(name: string): void {
-        dispatch(usingLua ? `hl.dsp.workspace.toggle_special("${name}")` : `togglespecialworkspace ${name}`);
+        act("toggle-special", "", `special:${name}`);
     }
 
-    function cycleSpecialWorkspace(direction: string): void {
-        const openSpecials = workspaces.values.filter(w => w.name.startsWith("special:") && w.lastIpcObject.windows > 0);
-
-        if (openSpecials.length === 0)
+    function act(action: string, identifier: string, workspace: string): void {
+        if (effect.pending)
             return;
-
-        const activeSpecial = focusedMonitor.lastIpcObject.specialWorkspace.name ?? "";
-
-        if (!activeSpecial) {
-            if (lastSpecialWorkspace) {
-                const workspace = workspaces.values.find(w => w.name === lastSpecialWorkspace);
-                if (workspace && workspace.lastIpcObject.windows > 0) {
-                    focusWorkspace(lastSpecialWorkspace);
-                    return;
-                }
-            }
-            focusWorkspace(openSpecials[0].name);
-            return;
-        }
-
-        const currentIndex = openSpecials.findIndex(w => w.name === activeSpecial);
-        let nextIndex = 0;
-
-        if (currentIndex !== -1) {
-            if (direction === "next")
-                nextIndex = (currentIndex + 1) % openSpecials.length;
-            else
-                nextIndex = (currentIndex - 1 + openSpecials.length) % openSpecials.length;
-        }
-
-        focusWorkspace(openSpecials[nextIndex].name);
+        const args = ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_control.py"), action];
+        if (identifier)
+            args.push("--identifier", identifier);
+        if (workspace)
+            args.push("--workspace", workspace);
+        effect.pending = true;
+        effect.command = args;
+        effect.running = true;
     }
 
     function monitorNames(): list<string> {
-        return monitors.values.map(e => e.name);
+        return desktop.outputs.map(output => output.name);
     }
 
-    function monitorFor(screen: ShellScreen): HyprlandMonitor {
-        return Hyprland.monitorFor(screen);
+    function monitorFor(screen: ShellScreen): var {
+        return desktop.outputs.find(output => output.name === screen?.name) ?? null;
     }
 
     function trimWsName(name: string): string {
         return name.startsWith("special:") ? name.slice("special:".length) : name;
     }
 
-    function toplevelsForWs(ws: int, ignoredTags = []): list<HyprlandToplevel> {
-        return toplevels.values.filter(t => t.workspace && t.workspace.id === ws && !isToplevelIgnored(t, ignoredTags));
+    function toplevelsForWs(ws: int, ignoredTags = []): list<var> {
+        return (desktop.workspaces.find(workspace => workspace.id === ws)?.toplevels.values ?? [])
+            .filter(toplevel => !isToplevelIgnored(toplevel, ignoredTags));
     }
 
-    function isToplevelIgnored(toplevel: HyprlandToplevel, ignoredTags = []): bool {
-        const ipc = toplevel?.lastIpcObject;
-        if (!ipc?.class || !ipc.mapped)
-            return true;
-
-        return ipc.tags?.some(tag => ignoredTags.includes(tag.replace(/\*$/, ""))) ?? false;
+    function isToplevelIgnored(toplevel: var, ignoredTags = []): bool {
+        return !toplevel?.lastIpcObject.class
+            || (toplevel.lastIpcObject.tags ?? []).some(tag => ignoredTags.includes(tag.replace(/\*$/, "")));
     }
 
-    function reloadDynamicConfs(): void {
-        if (usingLua) {
-            extras.batchMessage(['eval hl.bind("Caps_Lock", hl.dsp.global("caelestia:refreshDevices"), { locked = true, non_consuming = true, ignore_mods = true, release = true })', 'eval hl.bind("Num_Lock", hl.dsp.global("caelestia:refreshDevices"), { locked = true, non_consuming = true, ignore_mods = true, release = true })', 'eval hl.bind("code:66", hl.dsp.global("caelestia:refreshDevices"), { locked = true, non_consuming = true, ignore_mods = true, release = true })']);
-        } else {
-            extras.batchMessage(["keyword bindlni ,Caps_Lock,global,caelestia:refreshDevices", "keyword bindlni ,Num_Lock,global,caelestia:refreshDevices", "keyword bindlni ,code:66,global,caelestia:refreshDevices"]);
-        }
+    Timer {
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        interval: 800
+        onTriggered: stateRead.running = true
     }
 
-    onUsingLuaChanged: reloadDynamicConfs()
-    Component.onCompleted: reloadDynamicConfs()
+    Process {
+        id: stateRead
 
-    Connections {
-        function onRawEvent(event: HyprlandEvent): void {
-            const n = event.name;
-            if (n.endsWith("v2"))
+        property string previous
+        command: ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_control.py"), "list"]
+        stdout: StdioCollector { id: listing }
+        onExited: exitCode => {
+            if (exitCode !== 0 || previous === listing.text)
                 return;
-
-            if (n === "configreloaded") {
-                root.configReloaded();
-                root.reloadDynamicConfs();
-            } else if (["workspace", "moveworkspace", "activespecial", "focusedmon"].includes(n)) {
-                Hyprland.refreshWorkspaces();
-                Hyprland.refreshMonitors();
-            } else if (["openwindow", "closewindow", "movewindow"].includes(n)) {
-                Hyprland.refreshToplevels();
-                Hyprland.refreshWorkspaces();
-            } else if (n.includes("mon")) {
-                Hyprland.refreshMonitors();
-            } else if (n.includes("workspace")) {
-                Hyprland.refreshWorkspaces();
-            } else if (n.includes("window") || n.includes("group") || ["pin", "fullscreen", "changefloatingmode", "minimize"].includes(n)) {
-                Hyprland.refreshToplevels();
-            }
-        }
-
-        target: Hyprland
-    }
-
-    Connections {
-        function onLastIpcObjectChanged(): void {
-            const specialName = root.focusedMonitor.lastIpcObject.specialWorkspace.name;
-
-            if (specialName && specialName.startsWith("special:")) {
-                root.lastSpecialWorkspace = specialName;
-            }
-        }
-
-        target: root.focusedMonitor
-    }
-
-    FileView {
-        id: kbLayoutFile
-
-        path: Quickshell.env("CAELESTIA_XKB_RULES_PATH") || "/usr/share/X11/xkb/rules/base.lst"
-        onLoaded: {
-            const layoutMatch = text().match(/! layout\n([\s\S]*?)\n\n/);
-            if (layoutMatch) {
-                const lines = layoutMatch[1].split("\n");
-                for (const line of lines) {
-                    if (!line.trim() || line.trim().startsWith("!"))
-                        continue;
-
-                    const match = line.match(/^\s*([a-z]{2,})\s+([a-zA-Z() ]+)$/);
-                    if (match)
-                        root.kbMap.set(match[2], match[1]);
-                }
-            }
-
-            const variantMatch = text().match(/! variant\n([\s\S]*?)\n\n/);
-            if (variantMatch) {
-                const lines = variantMatch[1].split("\n");
-                for (const line of lines) {
-                    if (!line.trim() || line.trim().startsWith("!"))
-                        continue;
-
-                    const match = line.match(/^\s*([a-zA-Z0-9_-]+)\s+([a-z]{2,}): (.+)$/);
-                    if (match)
-                        root.kbMap.set(match[3], match[2]);
-                }
+            const response = JSON.parse(listing.text);
+            if (response.ok) {
+                root.installState(response.result);
+                previous = listing.text;
             }
         }
     }
 
-    IpcHandler {
-        function refreshDevices(): void {
-            extras.refreshDevices();
+    Process {
+        id: effect
+
+        property bool pending: false
+        stdout: StdioCollector { id: outcome }
+        onExited: exitCode => {
+            pending = false;
+            if (exitCode === 0 && JSON.parse(outcome.text).result?.action_applied === true)
+                stateRead.running = true;
+            else
+                Toaster.toast(Tr.tr("Desktop action failed"), Tr.tr("The OS did not confirm the requested action."), "error");
         }
-
-        function cycleSpecialWorkspace(direction: string): void {
-            root.cycleSpecialWorkspace(direction);
+        onRunningChanged: {
+            if (pending && !running) {
+                pending = false;
+                Toaster.toast(Tr.tr("Desktop action failed"), Tr.tr("The OS client could not be started."), "error");
+            }
         }
-
-        function listSpecialWorkspaces(): string {
-            return root.workspaces.values.filter(w => w.name.startsWith("special:") && w.lastIpcObject.windows > 0).map(w => w.name).join("\n");
-        }
-
-        target: "hypr"
-    }
-
-    // qmllint disable unresolved-type
-    CustomShortcut {
-        // qmllint enable unresolved-type
-        name: "refreshDevices"
-        description: "Reload devices"
-        onPressed: extras.refreshDevices()
-        onReleased: extras.refreshDevices()
-    }
-
-    HyprExtras {
-        id: extras
-
-        usingLua: Hyprland.usingLua
     }
 }

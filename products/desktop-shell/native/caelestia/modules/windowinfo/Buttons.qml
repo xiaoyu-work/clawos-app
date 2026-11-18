@@ -93,16 +93,16 @@ ColumnLayout {
             WButton {
                 required property int index
                 readonly property int wsId: Math.floor((Hypr.activeWsId - 1) / 10) * 10 + index + 1
-                readonly property bool isCurrent: root.client?.workspace.id === wsId
+                readonly property bool isCurrent: root.client?.workspace?.id === wsId
 
                 onClicked: {
-                    Hypr.dispatch(Hypr.usingLua ? `hl.dsp.window.move({ window = "address:0x${root.client?.address}", workspace = "${wsId}", follow = true })` : `movetoworkspace ${wsId},address:0x${root.client?.address}`);
+                    Hypr.act("move-window", root.client.identifier, String(wsId));
                 }
 
                 color: isCurrent ? Colours.tPalette.m3surfaceContainerHighest : Colours.palette.m3tertiaryContainer
                 textColor: isCurrent ? Colours.palette.m3onSurface : Colours.palette.m3onTertiaryContainer
                 text: wsId
-                disabled: isCurrent
+                disabled: !root.client || isCurrent
             }
         }
     }
@@ -119,7 +119,8 @@ ColumnLayout {
             color: Colours.palette.m3secondaryContainer
             textColor: Colours.palette.m3onSecondaryContainer
             text: root.client?.lastIpcObject.floating ? Tr.tr("Tile") : Tr.tr("Float")
-            onClicked: Hypr.dispatch(Hypr.usingLua ? `hl.dsp.window.float({ window = "address:0x${root.client?.address}" })` : `togglefloating address:0x${root.client?.address}`)
+            disabled: !root.client
+            onClicked: Hypr.act("toggle-floating", root.client.identifier, "")
         }
 
         Loader {
@@ -133,15 +134,16 @@ ColumnLayout {
                 color: Colours.palette.m3secondaryContainer
                 textColor: Colours.palette.m3onSecondaryContainer
                 text: root.client?.lastIpcObject.pinned ? Tr.tr("Unpin") : Tr.tr("Pin")
-                onClicked: Hypr.dispatch(Hypr.usingLua ? `hl.dsp.window.pin({ window = "address:0x${root.client?.address}" })` : `pin address:0x${root.client?.address}`)
+                onClicked: Hypr.act("toggle-pin", root.client.identifier, "")
             }
         }
 
         WButton {
             color: Colours.palette.m3errorContainer
             textColor: Colours.palette.m3onErrorContainer
-            text: Tr.tr("Kill")
-            onClicked: Hypr.dispatch(Hypr.usingLua ? `hl.dsp.window.kill({ window = "address:0x${root.client?.address}" })` : `killwindow address:0x${root.client?.address}`)
+            text: Tr.tr("Close")
+            disabled: !root.client
+            onClicked: Hypr.act("close", root.client.identifier, "")
         }
     }
 

@@ -18,8 +18,6 @@ qml_module(caelestia-services
         lyrics.cpp
         sessionmanager.cpp
         networkusage.cpp
-        hyprdevices.cpp
-        hyprextras.cpp
     LIBRARIES
         Qt::Concurrent
         Qt::DBus

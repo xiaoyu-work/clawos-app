@@ -81,7 +81,7 @@ Searcher {
         property string appId
         property bool pending: false
 
-        command: ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_launch.py"), appId]
+        command: ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_control.py"), "launch", "--app-id", appId]
         stdout: StdioCollector {
             id: launchOutput
         }

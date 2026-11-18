@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Hyprland
 import M3Shapes
 import Caelestia.Components
 import Caelestia.Config
@@ -18,7 +17,7 @@ Item {
     required property int index
     required property int activeWsId
     required property int ws
-    required property HyprlandMonitor monitor
+    required property var monitor
 
     required property int displayType
     required property bool showWindows
@@ -27,7 +26,7 @@ Item {
     property string occupiedLabel
     property string label
 
-    readonly property list<HyprlandToplevel> toplevels: Hypr.toplevelsForWs(ws, GlobalConfig.bar.workspaces.ignoredTags)
+    readonly property list<var> toplevels: Hypr.toplevelsForWs(ws, GlobalConfig.bar.workspaces.ignoredTags)
     readonly property bool isOccupied: toplevels.length > 0
     readonly property bool hasWindows: isOccupied && showWindows && Config.bar.workspaces.maxWindowIcons > 0
     readonly property bool focused: activeWsId === ws
@@ -252,7 +251,7 @@ Item {
 
         property string name
         readonly property string icon: Icons.matchIconRuleList(Hypr.trimWsName(name), root.iconRules)
-        readonly property HyprlandWorkspace wsObj: Hypr.workspaces.values.find(w => w.id === root.ws) ?? null
+        readonly property var wsObj: Hypr.workspaces.values.find(w => w.id === root.ws) ?? null
 
         readonly property Connections conn: Connections {
             function onNameChanged(): void {

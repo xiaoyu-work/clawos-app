@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import Caelestia
 import Caelestia.Components
 import Caelestia.Config
@@ -13,7 +12,7 @@ import qs.services
 Item {
     id: root
 
-    required property HyprlandMonitor monitor
+    required property var monitor
 
     readonly property int activeSpecialId: monitor?.lastIpcObject.specialWorkspace?.id ?? 0
     readonly property var wsIds: {

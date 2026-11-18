@@ -64,6 +64,7 @@ ExternalProject_Add(desktop-engine
         -DDISTRIBUTOR=Claw
         -DX11=OFF
         -DI3=OFF
+        -DHYPRLAND_IPC=OFF
         -DBUILD_TESTING=OFF
         -DVENDOR_CPPTRACE=ON
         -DCPPTRACE_USE_EXTERNAL_ZSTD=ON

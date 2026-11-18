@@ -110,7 +110,7 @@ StyledRect {
                     delegate: EntryWrapper {
                         StyledText {
                             animate: true
-                            text: Hypr.kbLayout
+                            text: Hypr.kbLayout || "—"
                             color: root.colour
                             font: Tokens.font.mono.medium
                         }

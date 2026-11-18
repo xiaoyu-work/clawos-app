@@ -25,9 +25,6 @@ Singleton {
     readonly property Transparency transparency: Transparency {}
     readonly property alias wallLuminance: analyser.luminance
 
-    property bool cooldownPending
-    property real lastBaseTransparency
-
     function getLuminance(c: color): real {
         if (c.r == 0 && c.g == 0 && c.b == 0)
             return 0;
@@ -82,37 +79,6 @@ Singleton {
         Quickshell.execDetached(["caelestia", "scheme", "set", "--notify", "-m", mode]);
     }
 
-    function reloadHyprRules(): void {
-        let rule, trEnabled;
-        if (Hypr.usingLua) {
-            rule = `eval hl.layer_rule({ match = { namespace = "caelestia-drawers" }, %1 = %2 })`;
-            trEnabled = transparency.enabled;
-        } else {
-            rule = "keyword layerrule %1 %2, match:namespace caelestia-drawers";
-            trEnabled = transparency.enabled ? 1 : 0;
-        }
-        Hypr.extras.batchMessage([rule.arg("blur").arg(trEnabled), rule.arg("ignore_alpha").arg(Math.max(0, transparency.base - 0.03))]);
-    }
-
-    function requestReloadHyprRules(): void {
-        if (cooldownTimer.running) {
-            root.cooldownPending = true;
-        } else {
-            root.reloadHyprRules();
-            cooldownTimer.restart();
-        }
-    }
-
-    Component.onCompleted: root.requestReloadHyprRules()
-
-    Connections {
-        function onConfigReloaded(): void {
-            root.reloadHyprRules();
-        }
-
-        target: Hypr
-    }
-
     FileView {
         path: `${Paths.state}/scheme.json`
         watchChanges: true
@@ -126,44 +92,11 @@ Singleton {
         source: Wallpapers.current
     }
 
-    Timer {
-        id: cooldownTimer
-
-        interval: 30
-        onTriggered: {
-            if (root.cooldownPending) {
-                root.cooldownPending = false;
-                root.reloadHyprRules();
-                restart();
-            }
-        }
-    }
-
-    Timer {
-        id: cAnimCompleteTimer
-
-        interval: Tokens.anim.durations.expressiveSlowEffects
-        onTriggered: root.requestReloadHyprRules()
-    }
-
     component Transparency: QtObject {
         readonly property bool enabled: Tokens.transparency.enabled
         readonly property real base: Math.max(0, Math.min(1, Tokens.transparency.base - (root.light ? 0.1 : 0)))
         readonly property real layers: Math.max(0, Math.min(1, Tokens.transparency.layers))
 
-        onEnabledChanged: {
-            if (enabled)
-                root.requestReloadHyprRules();
-            else
-                cAnimCompleteTimer.start();
-        }
-        onBaseChanged: {
-            if (root.lastBaseTransparency > base)
-                root.requestReloadHyprRules();
-            else
-                cAnimCompleteTimer.start();
-            root.lastBaseTransparency = base;
-        }
     }
 
     component M3TPalette: QtObject {

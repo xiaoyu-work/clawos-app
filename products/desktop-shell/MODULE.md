@@ -21,7 +21,7 @@ Claw runtime integration.
 | `native/caelestia/CMakeLists.txt` | Original shell and native-plugin build |
 | `native/CMakeLists.txt` | Single staged ELF/resource assembly from all three native builds |
 | `package.json`, `apps/desktop-shell/app.json` | GUI-only App, normal capability needs and private native resources |
-| `native/caelestia/services/Hypr.qml` | Upstream compositor-facing presentation model |
+| `native/caelestia/services/Hypr.qml` | Broker-backed window, workspace and output presentation |
 | `native/caelestia/plugin/` | Original native C++ QML extensions |
 | `native/caelestia/plugin/cmake/libcava.cmake` | Build adapter for the pinned waveform DSP core |
 | `native/caelestia/plugin/3rdparty/libcava/` | Complete MIT libcava 1.0.0 source and notices |
@@ -29,7 +29,7 @@ Claw runtime integration.
 | `native/m3shapes/` | Complete upstream Material shape source |
 | `native/quickshell/` | Complete LGPL engine source, bundled with this App |
 | `native/quickshell/src/main.cpp` | Common-Host GUI selector and read-only resource adapter |
-| `native/caelestia/utils/scripts/desktop_launch.py` | Validated human desktop intent through the published SDK/kernel transport |
+| `native/caelestia/utils/scripts/desktop_control.py` | Closed desktop state and actions through the published SDK/kernel transport |
 
 Managed GUI mode accepts only `--gui` and requires the Host's absolute
 `COS_APP_RESOURCE_DIR`. It selects the bundled shell and QML modules there,
@@ -60,6 +60,13 @@ shell does not start a D-Bus notification server or persist `notifs.json`.
 Dismiss and default acknowledgement are separate broker effects; hiding a
 popup does not acknowledge the OS notification. Popup mute is a presentation
 preference separate from the OS delivery policy.
+
+The workspace bar and window controls consume Root's closed desktop channel.
+Window mutations use its epoch-bound IDs, never native addresses. The bundled
+engine does not build Hyprland's raw IPC client; Layer Shell and focus grab
+remain separate, live capability-gated Wayland protocols. Capture opens the
+existing signed Capture App, and window information uses icons and metadata
+rather than a screen-capture grant.
 
 Any later launch/payload integration must use the repository's existing
 native App packaging and public SDK/runtime contracts. The original source

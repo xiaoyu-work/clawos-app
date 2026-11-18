@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Hyprland
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
@@ -9,7 +8,7 @@ import qs.services
 ColumnLayout {
     id: root
 
-    required property HyprlandToplevel client
+    required property var client
 
     anchors.fill: parent
     spacing: Tokens.spacing.small
@@ -42,17 +41,6 @@ ColumnLayout {
     }
 
     Detail {
-        icon: "location_on"
-        text: {
-            const addr = root.client?.address;
-            if (addr)
-                return Tr.trCtx("Address: %1", "window address").arg(`0x${addr}`);
-            return Tr.trCtx("Address: unknown", "window address");
-        }
-        color: Colours.palette.m3primary
-    }
-
-    Detail {
         icon: "location_searching"
         // TRANSLATORS: %1/%2 = x and y position in pixels
         text: Tr.tr("Position: %1, %2").arg(root.client?.lastIpcObject.at[0] ?? -1).arg(root.client?.lastIpcObject.at[1] ?? -1)
@@ -68,7 +56,7 @@ ColumnLayout {
     Detail {
         icon: "workspaces"
         // TRANSLATORS: %1 = workspace name, %2 = workspace id
-        text: Tr.tr("Workspace: %1 (%2)").arg(root.client?.workspace.name ?? -1).arg(root.client?.workspace.id ?? -1)
+        text: Tr.tr("Workspace: %1").arg(root.client?.workspace?.name ?? "-")
         color: Colours.palette.m3secondary
     }
 
@@ -77,38 +65,9 @@ ColumnLayout {
         text: {
             const mon = root.client?.monitor;
             if (mon)
-                // TRANSLATORS: %1 = monitor name, %2 = monitor id, %3/%4 = x/y position in pixels
-                return Tr.tr("Monitor: %1 (%2) at %3, %4").arg(mon.name).arg(mon.id).arg(mon.x).arg(mon.y);
+                return Tr.tr("Monitor: %1").arg(mon.name);
             return Tr.tr("Monitor: unknown");
         }
-    }
-
-    Detail {
-        icon: "page_header"
-        text: {
-            const title = root.client?.lastIpcObject.initialTitle;
-            if (title)
-                return Tr.tr("Initial title: %1").arg(title);
-            return Tr.tr("Initial title: unknown");
-        }
-        color: Colours.palette.m3tertiary
-    }
-
-    Detail {
-        icon: "category"
-        text: {
-            const cls = root.client?.lastIpcObject.initialClass;
-            if (cls)
-                return Tr.tr("Initial class: %1").arg(cls);
-            return Tr.tr("Initial class: unknown");
-        }
-    }
-
-    Detail {
-        icon: "account_tree"
-        // TRANSLATORS: %1 = process id
-        text: Tr.tr("Process id: %1").arg(String(root.client?.lastIpcObject.pid ?? -1))
-        color: Colours.palette.m3primary
     }
 
     Detail {

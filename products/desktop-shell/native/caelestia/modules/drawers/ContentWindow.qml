@@ -8,6 +8,7 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import Caelestia.Blobs
 import Caelestia.Config
+import Caelestia.State
 import qs.components
 import qs.components.containers
 import qs.services
@@ -22,7 +23,7 @@ StyledWindow {
 
     readonly property ScreenState screenState: ShellState.forScreen(screen)
 
-    readonly property HyprlandMonitor monitor: Hypr.monitorFor(screen)
+    readonly property var monitor: Hypr.monitorFor(screen)
     readonly property bool hasSpecialWorkspace: (monitor?.lastIpcObject.specialWorkspace?.name.length ?? 0) > 0
     readonly property bool hasFullscreenOnNormalWs: monitor?.activeWorkspace?.toplevels.values.some(t => t.lastIpcObject.fullscreen > 1) ?? false
     readonly property bool hasFullscreen: {
@@ -39,7 +40,7 @@ StyledWindow {
     property real fsTransitionProg: hasFullscreen ? 1 : 0
     readonly property real sdfBorderOffset: 2 * fsTransitionProg // SDFs joins are not exact, so offset by 2px to ensure nothing shows
     readonly property real borderThickness: contentItem.Config.border.thickness * (1 - fsTransitionProg)
-    readonly property real borderRounding: (GameMode.enabled && GlobalConfig.utilities.gameMode.options["decoration:rounding"] === 0 ? 0 : contentItem.Config.border.rounding) * (1 - fsTransitionProg)
+    readonly property real borderRounding: (RuntimeState.gameMode ? 0 : contentItem.Config.border.rounding) * (1 - fsTransitionProg)
     readonly property real shadowOpacity: 0.7 * (1 - fsTransitionProg)
     readonly property real borderLayoutThickness: hasFullscreen ? 0 : contentItem.Config.border.thickness
 

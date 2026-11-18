@@ -82,19 +82,5 @@ Item {
             }
         }
 
-        ClippingWrapperRectangle {
-            color: "transparent"
-            radius: Tokens.rounding.medium
-
-            ScreencopyView {
-                id: preview
-
-                captureSource: Hypr.activeToplevel?.wayland ?? null
-                live: visible
-
-                constraintSize.width: Tokens.sizes.bar.windowPreviewSize
-                constraintSize.height: Tokens.sizes.bar.windowPreviewSize
-            }
-        }
     }
 }

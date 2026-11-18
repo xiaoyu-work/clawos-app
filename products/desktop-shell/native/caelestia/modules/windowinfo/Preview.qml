@@ -3,18 +3,17 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Hyprland
-import Quickshell.Wayland
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
 import qs.services
+import qs.utils
 
 Item {
     id: root
 
     required property ShellScreen screen
-    required property HyprlandToplevel client
+    required property var client
 
     Layout.preferredWidth: preview.implicitWidth + Tokens.padding.extraLargeIncreased
     Layout.fillHeight: true
@@ -28,7 +27,7 @@ Item {
         anchors.topMargin: Tokens.padding.large
         anchors.bottomMargin: Tokens.spacing.medium
 
-        implicitWidth: view.implicitWidth
+        implicitWidth: height
 
         color: Colours.tPalette.m3surfaceContainer
         radius: Tokens.rounding.medium
@@ -64,16 +63,13 @@ Item {
             }
         }
 
-        ScreencopyView {
-            id: view
-
+        Image {
             anchors.centerIn: parent
-
-            captureSource: root.client?.wayland ?? null
-            live: true
-
-            constraintSize.width: root.client ? parent.height * Math.min(root.screen.width / root.screen.height, root.client?.lastIpcObject.size[0] / root.client?.lastIpcObject.size[1]) : parent.height
-            constraintSize.height: parent.height
+            visible: !!root.client
+            width: parent.width / 2
+            height: width
+            fillMode: Image.PreserveAspectFit
+            source: Icons.getAppIcon(root.client?.lastIpcObject.class ?? "", "image-missing")
         }
     }
 
@@ -92,7 +88,7 @@ Item {
 
             const mon = client.monitor;
             // TRANSLATORS: %1 = window title, %2 = monitor name, %3/%4 = x/y position in pixels
-            return Tr.tr("%1 on monitor %2 at %3, %4").arg(client.title).arg(mon.name).arg(client.lastIpcObject.at[0]).arg(client.lastIpcObject.at[1]);
+            return Tr.tr("%1 on monitor %2 at %3, %4").arg(client.title).arg(mon?.name ?? "-").arg(client.lastIpcObject.at[0]).arg(client.lastIpcObject.at[1]);
         }
     }
 }
