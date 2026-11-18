@@ -143,6 +143,7 @@ def stage(prefix, destination):
     for module in lock["modules"]:
         shutil.copytree(source / module / "LICENSES", notices / module)
 
+    caelestia = base / "qml/Caelestia"
     for resource in sorted(base.rglob("*")):
         if resource.is_symlink():
             raise ValueError(f"Native stage must contain owned files, not links: {resource}")
@@ -155,8 +156,10 @@ def stage(prefix, destination):
         with resource.open("rb") as stream:
             if stream.read(4) != b"\x7fELF":
                 continue
-        path = os.path.relpath(qt / "lib", resource.parent)
-        run("patchelf", "--set-rpath", f"$ORIGIN:$ORIGIN/{path}", resource)
+        search = ["$ORIGIN", f"$ORIGIN/{os.path.relpath(qt / 'lib', resource.parent)}"]
+        if resource.is_relative_to(caelestia):
+            search.append(f"$ORIGIN/{os.path.relpath(caelestia / 'lib', resource.parent)}")
+        run("patchelf", "--set-rpath", ":".join(search), resource)
         run("strip", "--strip-unneeded", resource)
     binary = destination / "usr/bin/claw-desktop-shell"
     run("patchelf", "--set-rpath",

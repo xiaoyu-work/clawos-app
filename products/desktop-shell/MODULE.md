@@ -109,10 +109,12 @@ FFTW and lm-sensors development files. The pinned libcava DSP core is built
 in-tree; the unrelated distribution `cava` terminal program is not a library
 substitute or a runtime dependency. Its build adapter does not authorize audio
 capture or bypass the OS resource boundary.
-The pinned Qt stage includes the SQLite and Wayland platform plugins,
-relocatable ELF search paths, and upstream notices. Qt's installed test
-modules and static object files are excluded. No distribution Qt package
-or ambient plugin directory supplies the managed runtime.
+The pinned Qt stage includes the SQLite and Wayland platform plugins and
+upstream notices. The ELF search paths are package-relative: Caelestia's
+QML plugins find their backing libraries in `Caelestia/lib` and share the
+App's private Qt. Qt's installed test modules and static object files are
+excluded. No distribution Qt package or ambient plugin directory supplies
+the managed runtime.
 
 Run from a Linux-filesystem checkout of this repository:
 
