@@ -10,7 +10,7 @@ endif()
 
 set(GIT_REVISION "source" CACHE STRING "Desktop Shell source revision")
 set(CLAW_QT_CACHE "${CMAKE_CURRENT_BINARY_DIR}/qt-cache" CACHE PATH "Native Qt source/build cache")
-set(CLAW_QT_JOBS "8" CACHE STRING "Qt build jobs")
+set(CLAW_QT_JOBS "2" CACHE STRING "Qt build jobs")
 set(qt_prefix_file "${CMAKE_CURRENT_BINARY_DIR}/qt-prefix")
 set(qt_builder "${CMAKE_CURRENT_SOURCE_DIR}/build-qt.py")
 execute_process(

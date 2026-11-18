@@ -413,6 +413,10 @@ def test_selected(plan, architecture):
         for selection in sorted({
             entry["selection"] for entry in plan["packages"] if entry["architecture"] == architecture
         }):
+            _, package = stage.load_package(selection, "product")
+            if package.get("native_build_system") == "cmake":
+                # This graph is qualified by building its real native payload.
+                continue
             subprocess.run([sys.executable, "tools/native_build.py", selection, "test"], check=True, cwd=ROOT)
 
 

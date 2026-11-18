@@ -21,6 +21,14 @@ EXTRA_NATIVE = {
     "media-player": ["libgstreamer1.0-dev", "libgstreamer-plugins-base1.0-dev", "libglib2.0-dev"],
     "settings": ["libpipewire-0.3-dev", "libpulse-dev", "libxkbregistry-dev", "libclang-dev",
                  "gettext", "libglib2.0-dev"],
+    "desktop-shell": [
+        "ninja-build", "patchelf", "wayland-protocols", "libpam0g-dev", "libgl-dev", "libgles-dev",
+        "libharfbuzz-dev", "libicu-dev", "libglib2.0-dev", "libssl-dev", "libzstd-dev",
+        "libpng-dev", "libjpeg-dev", "libsqlite3-dev", "libpulse-dev", "libpipewire-0.3-dev",
+        "libgstreamer1.0-dev", "libgstreamer-plugins-base1.0-dev", "libqalculate-dev",
+        "libaubio-dev", "libfftw3-dev", "libsensors-dev", "libcli11-dev", "libjemalloc-dev",
+        "libunwind-dev", "libvulkan-dev",
+    ],
 }
 
 
