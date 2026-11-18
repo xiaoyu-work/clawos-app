@@ -72,8 +72,9 @@ def build(cache, jobs):
                 if module == "qtbase":
                     for patch, sha in lock["qtbase_corrections"].items():
                         patch_file = fetch(downloads, f"{release}/{patch}", patch, sha)
-                        run("patch", "--batch", "--forward", "-p1", "-i", patch_file,
-                            cwd=incoming)
+                        # The advisory also patches upstream tests whose fixtures
+                        # postdate this archive. Apply every non-test hunk strictly.
+                        run("git", "apply", "--exclude=tests/**", patch_file, cwd=incoming)
                 source.parent.mkdir(parents=True, exist_ok=True)
                 # The build tree persists after an interrupted compile, not a partial source extraction.
                 Path(incoming).rename(source)
