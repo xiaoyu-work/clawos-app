@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import stat
 import subprocess
@@ -295,6 +296,7 @@ def native_payload(root, entry):
     if not binaries:
         raise ValueError("Native installer produced no real executable")
     private_library_directories = set()
+    private_shlibs = []
     if native_plan:
         for relative in native_plan.private_resources:
             resources = root / native_plan.installed_app / "resources" / relative
@@ -307,6 +309,10 @@ def native_payload(root, entry):
                     run(["strip", "--strip-unneeded", path])
                     binaries.append(path)
                     private_library_directories.add(path.parent)
+                    for line in run(["objdump", "-p", path]).stdout.decode().splitlines():
+                        soname = re.fullmatch(r"\s+SONAME\s+([a-zA-Z0-9_+-]+)\.so\.(\d+(?:\.\d+)*)", line)
+                        if soname and path.name == soname[1] + ".so." + soname[2]:
+                            private_shlibs.append(f"{soname[1]} {soname[2]} {entry['package']}")
     for manifest in (root / "usr/lib/cos/apps").rglob("app.json"):
         app = json.loads(manifest.read_text())
         if app["runtime"] == "binary":
@@ -318,9 +324,11 @@ def native_payload(root, entry):
     (debian / "control").write_text(
         f"Source: {entry['package']}\n\nPackage: {entry['package']}\nArchitecture: any\n"
     )
+    (debian / "shlibs.local").write_text("\n".join(sorted(set(private_shlibs))) + "\n")
     try:
         result = run([
             "dpkg-shlibdeps", "-O",
+            f"-x{entry['package']}",
             *(f"-l{directory}" for directory in sorted(private_library_directories)),
             *(f"-e{binary}" for binary in binaries),
         ], cwd=debian.parent)

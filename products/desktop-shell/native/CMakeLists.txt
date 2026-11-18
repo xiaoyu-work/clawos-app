@@ -2,16 +2,29 @@ cmake_minimum_required(VERSION 3.25)
 project(claw-desktop-shell LANGUAGES NONE)
 
 include(ExternalProject)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Native build type" FORCE)
 endif()
 
 set(GIT_REVISION "source" CACHE STRING "Desktop Shell source revision")
+set(CLAW_QT_CACHE "${CMAKE_CURRENT_BINARY_DIR}/qt-cache" CACHE PATH "Native Qt source/build cache")
+set(CLAW_QT_JOBS "8" CACHE STRING "Qt build jobs")
+set(qt_prefix_file "${CMAKE_CURRENT_BINARY_DIR}/qt-prefix")
+set(qt_builder "${CMAKE_CURRENT_SOURCE_DIR}/build-qt.py")
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" "${qt_builder}" build "${CLAW_QT_CACHE}" "${CLAW_QT_JOBS}"
+        --prefix-file "${qt_prefix_file}"
+    COMMAND_ERROR_IS_FATAL ANY
+)
+file(READ "${qt_prefix_file}" qt_prefix)
 set(shapes_payload "${CMAKE_CURRENT_BINARY_DIR}/payload-shapes")
 set(presentation_payload "${CMAKE_CURRENT_BINARY_DIR}/payload-presentation")
 set(qml_directory "share/claw-desktop-shell/qml")
 set(common_args
+    "-DQt6_DIR=${qt_prefix}/lib/cmake/Qt6"
+    "-DCMAKE_PREFIX_PATH=${qt_prefix}"
     "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
     "-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON"
     "-DCMAKE_INSTALL_RPATH=$ORIGIN"
@@ -84,3 +97,11 @@ install(FILES quickshell/LICENSE quickshell/LICENSE-GPL DESTINATION "${license_d
 install(FILES m3shapes/LICENSE DESTINATION "${license_directory}/material-shapes")
 install(FILES caelestia/plugin/3rdparty/libcava/LICENSE DESTINATION "${license_directory}/libcava")
 install(FILES caelestia/plugin/3rdparty/rgbcx/LICENSE DESTINATION "${license_directory}/rgbcx")
+install(CODE "
+    if(NOT IS_ABSOLUTE \"\$ENV{DESTDIR}\" OR \"\$ENV{DESTDIR}\" STREQUAL \"/\")
+        message(FATAL_ERROR \"Desktop Shell requires a private absolute DESTDIR\")
+    endif()
+    execute_process(COMMAND \"${Python3_EXECUTABLE}\" \"${qt_builder}\" stage
+        \"${qt_prefix}\" \"\$ENV{DESTDIR}\"
+        COMMAND_ERROR_IS_FATAL ANY)
+")

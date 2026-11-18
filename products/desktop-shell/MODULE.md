@@ -10,10 +10,11 @@ together. The engine is not an OS shared runtime.
 The product declares the GUI-only `desktop-shell` App and its CMake native
 payload. It is not yet the activated desktop session.
 The source and native producer are available, but `release: false` excludes
-this App from Debian release plans and package sets until its target ABI is
-qualified. Debian 13 supplies Qt 6.8.2; the current producer requires Qt 6.9+
-and has rendered with Qt 6.10.2. The Ubuntu build is a preview, not a Debian
-release artifact.
+this App from Debian release plans and package sets until its target ABI and
+authenticated launch are qualified. `native/qt.lock.json` pins Qt 6.12.0 and
+its published corrections. The unified CMake build compiles those sources
+against the build host's ABI and uses them for every native child. Release
+payloads must be built on Debian 13, not the Ubuntu preview environment.
 Do not treat an upstream installer or direct executable launch as completed
 Claw runtime integration.
 
@@ -25,6 +26,7 @@ Claw runtime integration.
 | `PROVENANCE.md` | Origins, revisions and license obligations |
 | `native/caelestia/CMakeLists.txt` | Original shell and native-plugin build |
 | `native/CMakeLists.txt` | Single staged ELF/resource assembly from all three native builds |
+| `native/build-qt.py`, `native/qt.lock.json` | Verified Qt source build and App-private runtime staging |
 | `package.json`, `apps/desktop-shell/app.json` | GUI-only App, normal capability needs and private native resources |
 | `native/caelestia/services/Hypr.qml` | Broker-backed window, workspace and output presentation |
 | `native/caelestia/plugin/` | Original native C++ QML extensions |
@@ -95,8 +97,9 @@ FFTW and lm-sensors development files. The pinned libcava DSP core is built
 in-tree; the unrelated distribution `cava` terminal program is not a library
 substitute or a runtime dependency. Its build adapter does not authorize audio
 capture or bypass the OS resource boundary.
-The launcher also needs the Qt SQLite runtime driver (`libqt6sql6-sqlite` on
-Debian/Ubuntu); linking Qt Sql alone does not provide that plugin.
+The pinned Qt stage includes the SQLite and Wayland platform plugins,
+relocatable ELF search paths, and upstream notices. No distribution Qt
+package or ambient plugin directory supplies the managed runtime.
 
 Run from a Linux-filesystem checkout of this repository:
 

@@ -1,5 +1,10 @@
 qt_add_executable(quickshell main.cpp)
 
+qt_add_resources(quickshell "claw_qt_paths"
+    PREFIX "/qt/etc"
+    FILES qt.conf
+)
+
 install(TARGETS quickshell RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_subdirectory(build)

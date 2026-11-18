@@ -19,6 +19,9 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 	const std::string shell = std::string(resources) + "/usr/share/claw-desktop-shell";
+	::unsetenv("QT_PLUGIN_PATH");
+	::unsetenv("QT_QPA_PLATFORM_PLUGIN_PATH");
+	::unsetenv("QML2_IMPORT_PATH");
 	if (::setenv("QML_IMPORT_PATH", (shell + "/qml").c_str(), 1) != 0) {
 		std::perror("Set desktop QML import path");
 		return 1;
