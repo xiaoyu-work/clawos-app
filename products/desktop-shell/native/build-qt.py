@@ -135,7 +135,20 @@ def stage(prefix, destination):
             raise ValueError(f"Private Qt runtime is incomplete: {required}")
     if not any((qt / "plugins/platforms").glob("libqwayland*.so")):
         raise ValueError("Private Qt runtime does not include a Wayland platform plugin")
+
+    notices = base / "licenses/qt"
+    notices.mkdir(parents=True)
+    shutil.copyfile(LOCK, notices / LOCK.name)
+    source = Path((prefix / "claw-qt-source").read_text().strip())
+    for module in lock["modules"]:
+        shutil.copytree(source / module / "LICENSES", notices / module)
+
     for resource in sorted(base.rglob("*")):
+        if resource.is_symlink():
+            raise ValueError(f"Native stage must contain owned files, not links: {resource}")
+        if resource.is_dir():
+            resource.chmod(0o755)
+            continue
         if not resource.is_file():
             continue
         resource.chmod(0o644)
@@ -149,12 +162,6 @@ def stage(prefix, destination):
     run("patchelf", "--set-rpath",
         "$ORIGIN/../resources/usr/share/claw-desktop-shell/qt/lib", binary)
     run("strip", "--strip-unneeded", binary)
-    notices = base / "licenses/qt"
-    notices.mkdir(parents=True)
-    shutil.copyfile(LOCK, notices / LOCK.name)
-    source = Path((prefix / "claw-qt-source").read_text().strip())
-    for module in lock["modules"]:
-        shutil.copytree(source / module / "LICENSES", notices / module)
 
 
 def main():
