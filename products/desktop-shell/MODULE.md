@@ -116,7 +116,8 @@ upstream notices. The ELF search paths are package-relative: Caelestia's
 QML plugins find their backing libraries in `Caelestia/lib` and share the
 App's private Qt. Qt's installed test modules and static object files are
 excluded. No distribution Qt package or ambient plugin directory supplies
-the managed runtime.
+the managed runtime. The Material Symbols font is a signed private resource,
+not a system font dependency.
 
 Run from a Linux-filesystem checkout of this repository:
 
@@ -166,7 +167,9 @@ and zstd. The source-pinned crash libraries build inside the engine.
 The Debian 13 build with private Qt 6.12.0 produces the native installer tree.
 An earlier Ubuntu preview loaded Caelestia and Material Shapes without global
 resource activation; that preview used the Ubuntu ABI and is not the Debian
-artifact. App registration, protected services and authenticated desktop
-acceptance remain separate gates.
+artifact. In a separate Debian 13 KVM guest, a locally signed App rendered
+inside the ordinary GUI Host after actual greetd/PAM login and owner review.
+The icon font was staged after that run. Ordinary App launch, checked Logout,
+and release acceptance are separate gates and remain unverified.
 Each native component owns a freshly cleared build-staging directory, so an
 incremental build cannot retain deleted presentation resources or helpers.
