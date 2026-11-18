@@ -13,6 +13,13 @@ dependency.
 | `native/caelestia/plugin/3rdparty/libcava/` | <https://github.com/LukashonakV/cava> | `f03278ef9e5e7948fb206453d2f02758f8db216c` (`1.0.0`) | MIT |
 | `native/m3shapes/` | <https://github.com/soramanew/m3shapes> | `32ad9ce328bb77ed349b40a3be10ee9ea610b8ab` | Apache-2.0 |
 | `native/quickshell/` | <https://github.com/quickshell-mirror/quickshell> | `9b0f339b19057f4731bf3b48293307d7ef241671` | LGPL-3.0 |
+| `native/caelestia/assets/material-symbols/` | <https://github.com/google/material-design-icons> | `10ecc14790612ca8fd164e3f4ffe9c16fc50d5b7` | Apache-2.0 |
+
+`MaterialSymbolsRounded.ttf` is the unmodified
+`variablefont/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].ttf` asset
+(`sha256:7e74e36533ccee12c2b81e75bfcf3ccf123d3bb7e7e46d65d94445f23db0c97c`).
+The App ships and loads it with the original license, without a system font
+installation.
 
 The shell dependency revisions are selected by Caelestia's imported `flake.lock`.
 Its exact Nix package set selects the libcava 1.0.0 fork above.
