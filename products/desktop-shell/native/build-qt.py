@@ -107,14 +107,28 @@ def stage(prefix, destination):
     qt = base / "qt"
     (qt / "lib").mkdir(parents=True)
     for library in sorted((prefix / "lib").glob("libQt6*.so." + lock["version"])):
+        if library.name.startswith(("libQt6Test.so.", "libQt6QuickTest.so.",
+                                    "libQt6QuickTestUtilsPrivate.so.")):
+            continue
         names = re.findall(r"\(SONAME\).*\[([^/\]]+)\]", run("readelf", "-d", library, capture=True))
         if len(names) != 1:
             raise ValueError(f"Missing Qt SONAME: {library.name}")
         shutil.copyfile(library, qt / "lib" / names[0])
+
+    build_artifacts = shutil.ignore_patterns(
+        "*.a", "*.o", "*.prl", "*.debug", "*.pdb", "objects-*", "CMakeLists.txt",
+    )
+
+    def ignore_runtime_copy(directory, names):
+        ignored = set(build_artifacts(directory, names))
+        if Path(directory) == prefix / "qml":
+            ignored.add("QtTest")
+        elif Path(directory) == prefix / "qml" / "Qt":
+            ignored.add("test")
+        return ignored
+
     for name in ("plugins", "qml"):
-        shutil.copytree(prefix / name, qt / name, ignore=shutil.ignore_patterns(
-            "*.a", "*.prl", "*.debug", "*.pdb", "CMakeLists.txt",
-        ))
+        shutil.copytree(prefix / name, qt / name, ignore=ignore_runtime_copy)
     for required in ("lib/libQt6Core.so.6", "plugins/sqldrivers/libqsqlite.so",
                      "qml/QtQuick/qmldir", "qml/QtQuick/Controls/qmldir"):
         if not (qt / required).is_file():

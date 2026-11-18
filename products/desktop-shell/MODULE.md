@@ -110,8 +110,9 @@ in-tree; the unrelated distribution `cava` terminal program is not a library
 substitute or a runtime dependency. Its build adapter does not authorize audio
 capture or bypass the OS resource boundary.
 The pinned Qt stage includes the SQLite and Wayland platform plugins,
-relocatable ELF search paths, and upstream notices. No distribution Qt
-package or ambient plugin directory supplies the managed runtime.
+relocatable ELF search paths, and upstream notices. Qt's installed test
+modules and static object files are excluded. No distribution Qt package
+or ambient plugin directory supplies the managed runtime.
 
 Run from a Linux-filesystem checkout of this repository:
 
@@ -158,13 +159,10 @@ does not install the App, grant its needs or activate the desktop session.
 Engine dependencies follow the vendored Quickshell CMake files, including Qt
 Wayland/private headers, Wayland 1.25+, protocols 1.47+, CLI11, jemalloc, libunwind
 and zstd. The source-pinned crash libraries build inside the engine.
-The installed assembly passes the existing owned-tree/ELF/mode checks and
-loads its real private Caelestia and Material Shapes modules without global
-resource activation. App registration, protected services and authenticated
-desktop acceptance remain separate gates.
-Development artifacts retain the build host ABI. The current native check
-requires glibc 2.43 and Qt/private ABI 6.10.2; it is not an artifact for an older
-OS base. Target-ABI builds and explicit runtime plugin delivery remain release
-prerequisites, not a reason to weaken dependency or update gates.
+The Debian 13 build with private Qt 6.12.0 produces the native installer tree.
+An earlier Ubuntu preview loaded Caelestia and Material Shapes without global
+resource activation; that preview used the Ubuntu ABI and is not the Debian
+artifact. App registration, protected services and authenticated desktop
+acceptance remain separate gates.
 Each native component owns a freshly cleared build-staging directory, so an
 incremental build cannot retain deleted presentation resources or helpers.
