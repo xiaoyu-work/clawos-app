@@ -59,10 +59,12 @@ Ordinary Apps do not need to be rewritten in QML.
 The launcher reads the public desktop catalogue but never executes its command
 strings or a configured terminal directly. It sends one exact AppID to the OS
 desktop service through the published SDK and the fixed `cos` binary. The
-selected GUI still needs the ordinary exact `desktop.launch` grant; a click,
-catalogue entry or successful client startup supplies no authority. Denied or
-indeterminate requests have no raw-execution fallback or automatic retry.
-Launch frequency changes only after the broker confirms the request.
+selected GUI still needs the ordinary exact `desktop.launch` grant. The
+optional declaration borrows only exact AppIDs already delegated by the
+launcher; no delegated AppIDs means the shell still starts and the OS
+denies launches. A click and a catalogue entry are not grants.
+Denied or indeterminate requests have no raw-execution fallback or automatic
+retry. Launch frequency changes only after the broker confirms the request.
 
 The notification drawer and popups consume the common Host's leased
 `notifications.presentation` resource through the fixed SDK client. The
