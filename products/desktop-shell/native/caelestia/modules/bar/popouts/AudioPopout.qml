@@ -48,6 +48,7 @@ Item {
 
                 Layout.fillWidth: true
                 ButtonGroup.group: sinks
+                enabled: Audio.canRoute
                 checked: Audio.sink?.id === modelData.id
                 onClicked: Audio.setAudioSink(modelData)
                 text: modelData.description
@@ -68,6 +69,7 @@ Item {
 
                 Layout.fillWidth: true
                 ButtonGroup.group: sources
+                enabled: Audio.canRoute
                 checked: Audio.source?.id === modelData.id
                 onClicked: Audio.setAudioSource(modelData)
                 text: modelData.description
@@ -76,13 +78,15 @@ Item {
 
         StyledText {
             Layout.topMargin: Tokens.spacing.medium
-            text: Audio.muted ? Tr.tr("Volume (muted)") : Tr.tr("Volume (%1%)").arg(Math.round(Audio.volume * 100))
+            text: !ShellState.observeAudio ? Tr.tr("Audio unavailable")
+                : Audio.muted ? Tr.tr("Volume (muted)") : Tr.tr("Volume (%1%)").arg(Math.round(Audio.volume * 100))
             font: Tokens.font.body.builders.medium.weight(Font.Medium).build()
         }
 
         CustomMouseArea {
             Layout.fillWidth: true
             implicitHeight: Tokens.padding.medium * 3
+            enabled: Audio.canSetOutput
 
             onWheel: event => {
                 if (event.angleDelta.y > 0)

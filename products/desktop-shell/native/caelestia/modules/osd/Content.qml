@@ -42,6 +42,7 @@ Item {
 
             implicitWidth: Tokens.sizes.osd.sliderWidth
             implicitHeight: Tokens.sizes.osd.sliderHeight
+            enabled: Audio.canSetOutput
 
             FilledSlider {
                 anchors.fill: parent
@@ -67,6 +68,7 @@ Item {
 
                 implicitWidth: Tokens.sizes.osd.sliderWidth
                 implicitHeight: Tokens.sizes.osd.sliderHeight
+                enabled: Audio.canSetInput
 
                 FilledSlider {
                     anchors.fill: parent
@@ -102,6 +104,7 @@ Item {
 
                     icon: `brightness_${(Math.round(value * 6) + 1)}`
                     value: root.brightness
+                    enabled: root.monitor?.adjustable ?? false
                     onMoved: root.monitor?.setBrightness(value)
                 }
             }

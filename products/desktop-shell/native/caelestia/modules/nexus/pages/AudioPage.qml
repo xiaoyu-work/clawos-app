@@ -26,22 +26,25 @@ PageBase {
             label: Tr.trCtx("Output", "audio output")
             valueLabel: Strings.percentOne(value)
             value: Audio.volume
-            enabled: !Audio.muted
+            enabled: Audio.canSetOutput && !Audio.muted
             onMoved: v => Audio.setVolume(v)
         }
 
         ToggleRow {
             text: Tr.trCtx("Muted", "audio output muted")
+            enabled: Audio.canSetOutput
             checked: Audio.muted
             onToggled: Audio.setMuted(false, checked)
         }
 
         AudioDeviceList {
             nodes: Audio.sinks
+            enabled: Audio.canRoute
             currentId: Audio.sink?.id ?? -1
             iconName: "speaker"
             placeholderIcon: "speaker"
-            placeholderText: Tr.trCtx("No output devices", "no audio outputs")
+            placeholderText: ShellState.observeAudio
+                ? Tr.trCtx("No output devices", "no audio outputs") : Tr.tr("Audio unavailable")
             onSelected: node => Audio.setAudioSink(node)
         }
 
@@ -53,22 +56,25 @@ PageBase {
             label: Tr.trCtx("Input", "audio input")
             valueLabel: Strings.percentOne(value)
             value: Audio.sourceVolume
-            enabled: !Audio.sourceMuted
+            enabled: Audio.canSetInput && !Audio.sourceMuted
             onMoved: v => Audio.setSourceVolume(v)
         }
 
         ToggleRow {
             text: Tr.trCtx("Muted", "audio input muted")
+            enabled: Audio.canSetInput
             checked: Audio.sourceMuted
             onToggled: Audio.setMuted(true, checked)
         }
 
         AudioDeviceList {
             nodes: Audio.sources
+            enabled: Audio.canRoute
             currentId: Audio.source?.id ?? -1
             iconName: "mic"
             placeholderIcon: "mic_off"
-            placeholderText: Tr.trCtx("No input devices", "no audio inputs")
+            placeholderText: ShellState.observeAudio
+                ? Tr.trCtx("No input devices", "no audio inputs") : Tr.tr("Audio unavailable")
             onSelected: node => Audio.setAudioSource(node)
         }
 

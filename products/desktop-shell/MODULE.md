@@ -90,6 +90,12 @@ The shell displays and changes a backlight only when the OS reports one
 unambiguous output and backlight. It does not open DDC, I²C or backlight
 devices, or guess which device belongs to an external monitor.
 
+Audio and brightness skip observation without the corresponding optional
+permission and leave unapproved controls disabled. `services/ShellState.qml`
+uses the Host's startup projection in the order of `desktop.optional_needs`
+in the signed manifest. This affects presentation only: Root still checks
+live authorization for every request.
+
 The unlocked session's Logout action exits this shell. The authenticated OS
 session subscriber observes that exit and lets PAM retire the exact display
 session. The App does not need authority to terminate a Linux user.

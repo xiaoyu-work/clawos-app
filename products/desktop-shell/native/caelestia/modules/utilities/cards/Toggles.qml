@@ -101,6 +101,7 @@ StyledRect {
                     roleValue: "mic"
                     delegate: Toggle {
                         icon: "mic"
+                        enabled: Audio.canSetInput
                         checked: !Audio.sourceMuted
                         onClicked: Audio.setMuted(true, !Audio.sourceMuted)
                     }

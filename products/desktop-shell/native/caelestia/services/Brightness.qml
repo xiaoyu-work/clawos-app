@@ -22,7 +22,7 @@ Singleton {
 
     function adjust(step: real): void {
         const monitor = variants.instances.find(m => Hypr.monitorFor(m.modelData)?.focused);
-        if (monitor?.available)
+        if (monitor?.adjustable)
             monitor.setBrightness(monitor.brightness + step);
     }
 
@@ -33,7 +33,7 @@ Singleton {
     }
 
     Timer {
-        running: true
+        running: ShellState.observeBrightness
         repeat: true
         triggeredOnStart: true
         interval: 5000
@@ -76,10 +76,11 @@ Singleton {
         required property ShellScreen modelData
         readonly property bool available: root.backlight !== null
             && root.state.outputs[0].name === modelData.name
+        readonly property bool adjustable: available && ShellState.controlBrightness
         readonly property real brightness: available ? root.backlight.percent / 100 : 0
 
         function setBrightness(value: real): void {
-            if (!available || !Number.isFinite(value) || effect.running)
+            if (!adjustable || !Number.isFinite(value) || effect.running)
                 return;
             const percent = Math.max(1, Math.min(100, Math.round(value * 100)));
             if (percent === root.backlight.percent)

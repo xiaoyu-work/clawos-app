@@ -22,14 +22,17 @@ Singleton {
     readonly property real volume: state.defaults?.output?.volume?.linear ?? 0
     readonly property real sourceVolume: state.defaults?.input?.volume?.linear ?? 0
     readonly property string script: Quickshell.shellPath("utils/scripts/audio_control.py")
+    readonly property bool canSetOutput: ShellState.controlOutput && sink !== null
+    readonly property bool canSetInput: ShellState.controlInput && source !== null
+    readonly property bool canRoute: ShellState.observeAudio && ShellState.routeAudio
 
     function setVolume(value: real): void {
-        if (sink)
+        if (canSetOutput)
             apply("output-volume", "--value", Math.round(100 * Math.max(0, Math.min(1.5, GlobalConfig.services.maxVolume, value))));
     }
 
     function setSourceVolume(value: real): void {
-        if (source)
+        if (canSetInput)
             apply("input-volume", "--value", Math.round(100 * Math.max(0, Math.min(1, value))));
     }
 
@@ -50,17 +53,17 @@ Singleton {
     }
 
     function setAudioSink(node: var): void {
-        if (node?.id)
+        if (canRoute && node?.id)
             apply("output-default", "--target", node.id);
     }
 
     function setAudioSource(node: var): void {
-        if (node?.id)
+        if (canRoute && node?.id)
             apply("input-default", "--target", node.id);
     }
 
     function setMuted(input: bool, value: bool): void {
-        if (input ? source : sink)
+        if (input ? canSetInput : canSetOutput)
             apply(input ? "input-mute" : "output-mute", "--value", value ? "on" : "off");
     }
 
@@ -77,7 +80,7 @@ Singleton {
     }
 
     Timer {
-        running: true
+        running: ShellState.observeAudio
         repeat: true
         triggeredOnStart: true
         interval: 3000

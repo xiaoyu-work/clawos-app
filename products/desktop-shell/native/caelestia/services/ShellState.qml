@@ -7,7 +7,32 @@ import qs.components
 import qs.services
 
 Singleton {
+    id: root
+
     property ShellRoot shellRoot
+
+    readonly property var ungrantedOptionalNeeds: {
+        const raw = Quickshell.env("COS_APP_OPTIONAL_NEEDS_UNGRANTED_JSON");
+        try {
+            const indexes = JSON.parse(raw);
+            return Array.isArray(indexes) && indexes.every(i => Number.isInteger(i) && i >= 0)
+                ? indexes : null;
+        } catch (_error) {
+            return null;
+        }
+    }
+
+    // These indexes follow desktop.optional_needs in the signed Shell manifest.
+    readonly property bool observeAudio: hasOptionalNeed(0)
+    readonly property bool controlOutput: hasOptionalNeed(1)
+    readonly property bool controlInput: hasOptionalNeed(2)
+    readonly property bool routeAudio: hasOptionalNeed(3)
+    readonly property bool observeBrightness: hasOptionalNeed(4)
+    readonly property bool controlBrightness: hasOptionalNeed(5)
+
+    function hasOptionalNeed(index: int): bool {
+        return root.ungrantedOptionalNeeds !== null && !root.ungrantedOptionalNeeds.includes(index);
+    }
 
     function anySidebarOpen(): bool {
         return states.instances.some(s => s.sidebar);

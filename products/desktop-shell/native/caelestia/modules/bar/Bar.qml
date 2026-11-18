@@ -94,7 +94,7 @@ ColumnLayout {
         } else if (Config.bar.scrollActions.brightness) {
             // Brightness scroll on bottom half
             const monitor = Brightness.getMonitorForScreen(screen);
-            if (!monitor?.available)
+            if (!monitor?.adjustable)
                 return;
             if (angleDelta.y > 0)
                 monitor.setBrightness(monitor.brightness + GlobalConfig.services.brightnessIncrement);
