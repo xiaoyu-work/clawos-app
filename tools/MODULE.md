@@ -84,6 +84,14 @@ See [`../shared/MODULE.md`](../shared/MODULE.md) for ownership and dependencies.
 Native builds remain owned by each product. These scripts must not download
 mutable branches at runtime, change App permissions, or overwrite an existing
 installed App. Test staging through `tests/test_stage.py`.
+`native_build_system: "cmake"` selects the owning product's CMake graph and
+installer for a GUI binary without fabricating a Cargo workspace or MCP.
+Its build tree is out-of-source; `--app-root` and `--install-root` use the same
+ELF/resource/license producer and signer entry inventory as Cargo products.
+These products do not consume the Rust toolkit. Their runtime SDK dependency
+still follows the validated public platform lock. GUI-only native Apps have
+no mandatory Python test module, and a missing CMake test target is an explicit
+error rather than a successful empty test run.
 Calendar, Clipboard and Widget Rail generate localized desktop entries only in
 Cargo's `OUT_DIR`. Their original installers use the shared
 `native_desktop_metadata.py` build helper selected by `native_build.py` to

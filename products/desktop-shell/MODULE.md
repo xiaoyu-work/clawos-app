@@ -7,8 +7,8 @@ source-level CLI and Material shape dependencies. Keep QML layout, visuals,
 native UI extensions, its bundled Quickshell engine and presentation resources
 together. The engine is not an OS shared runtime.
 
-The current source baseline is not a registered or activated App. Existing
-product discovery, release matrices and installed identities are unchanged.
+The product declares the GUI-only `desktop-shell` App and its CMake native
+payload. It is not yet the activated desktop session.
 Do not treat an upstream installer or direct executable launch as completed
 Claw runtime integration.
 
@@ -20,6 +20,7 @@ Claw runtime integration.
 | `PROVENANCE.md` | Origins, revisions and license obligations |
 | `native/caelestia/CMakeLists.txt` | Original shell and native-plugin build |
 | `native/CMakeLists.txt` | Single staged ELF/resource assembly from all three native builds |
+| `package.json`, `apps/desktop-shell/app.json` | GUI-only App, normal capability needs and private native resources |
 | `native/caelestia/services/Hypr.qml` | Upstream compositor-facing presentation model |
 | `native/caelestia/plugin/` | Original native C++ QML extensions |
 | `native/caelestia/plugin/cmake/libcava.cmake` | Build adapter for the pinned waveform DSP core |
@@ -104,6 +105,16 @@ cmake --build build/desktop-shell --parallel 3
 DESTDIR="$PWD/build/desktop-shell-installer" \
   cmake --install build/desktop-shell --prefix /usr
 ```
+
+The standard producer also supports this CMake product:
+
+```sh
+python3 tools/native_build.py desktop-shell build --release \
+  --app-root build/desktop-shell-app
+```
+
+This prepares the ordinary unsigned App payload for the existing signer; it
+does not install the App, grant its needs or activate the desktop session.
 
 Engine dependencies follow the vendored Quickshell CMake files, including Qt
 Wayland/private headers, Wayland protocols 1.41+, CLI11, jemalloc, libunwind

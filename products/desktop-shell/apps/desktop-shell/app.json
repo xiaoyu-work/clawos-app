@@ -1,0 +1,44 @@
+{
+  "id": "desktop-shell",
+  "version": "0.1.0",
+  "schema_version": 2,
+  "name": {"en": "Claw Desktop"},
+  "summary": {"en": "The Claw OS desktop shell, built from Quickshell and Caelestia."},
+  "runtime": "binary",
+  "entry": "bin/claw-desktop-shell",
+  "desktop": {
+    "exec": "--gui",
+    "needs": [
+      {
+        "verb": "ui.panel",
+        "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
+        "why": {"en": "Display the desktop panel, launcher, overview and desktop drawers."}
+      },
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop"}},
+        "why": {"en": "Show your authenticated desktop windows and workspace state."}
+      },
+      {
+        "verb": "desktop.window",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "control"}},
+        "why": {"en": "Apply your window focus, close and workspace actions."}
+      },
+      {
+        "verb": "desktop.launch",
+        "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
+        "why": {"en": "Launch the exact installed application you select in the desktop launcher."}
+      },
+      {
+        "verb": "ipc.subscribe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "notifications.presentation"}},
+        "why": {"en": "Present notifications from the OS Notification Service."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "notifications.presentation"}},
+        "why": {"en": "Apply your notification dismissal and acknowledgement actions."}
+      }
+    ]
+  }
+}

@@ -53,6 +53,8 @@ source group's `MODULE.md` before changing its boundary.
   Apps without the default `test_main.py` must explicitly declare an App-local
   test file (for example KV's `apps/kv/test_server.py`). Do not invent a
   production `main.py` or empty test just to satisfy a filename convention.
+  GUI-only native Apps with no operations or MCP do not need a Python test
+  module; their real native build and managed GUI remain separate requirements.
 - Declare shared Python dependencies by source kind, source name, exported
   library name and consuming App IDs. Tests and staging resolve the same export;
   do not add sibling-source imports or copy another parser into an App.
@@ -68,7 +70,7 @@ source group's `MODULE.md` before changing its boundary.
 
 The replacement desktop UI source baseline starts at
 [`products/desktop-shell/MODULE.md`](products/desktop-shell/MODULE.md).
-It is not yet a registered or activated App. Keep compositor, login/session
+It is a registered GUI-only App, not yet the activated desktop session. Keep compositor, login/session
 and permission authority in `claw-os`; source import does not authorize an
 upstream installer or unmanaged desktop launch.
 
@@ -90,6 +92,7 @@ completion separate from pending backend/state/identity consolidation or new
 UI work. AI Helpers owns only the `summarize` client; other products use SDK AI
 directly. Its tests must use isolated synthetic public AI/policy/memory wire
 fixtures, never paid/live models or another product's consent/budget.
+Desktop Shell adds one new GUI identity and product beyond that retained set.
 
 Independent release work starts at [`packaging/MODULE.md`](packaging/MODULE.md)
 and [`docs/releases.md`](docs/releases.md). `tools/release.py plan --select ...`

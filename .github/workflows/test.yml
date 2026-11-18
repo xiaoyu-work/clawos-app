@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: [mail, calendar, files, browser, terminal, containers, backup-recovery, store, diagnostics, storage, settings, security, maintenance, events-audit, launcher, clipboard, messaging-channels, notification-delivery, home-integration, desktop-widgets, editor, capture, media-player, notifications]
+        product: [mail, calendar, files, browser, terminal, containers, backup-recovery, store, diagnostics, storage, settings, security, maintenance, events-audit, launcher, clipboard, messaging-channels, notification-delivery, home-integration, desktop-widgets, editor, capture, media-player, notifications, desktop-shell]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5

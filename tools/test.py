@@ -1,6 +1,7 @@
 """Run declared App tests with verified platform artifact and local library exports."""
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -16,9 +17,19 @@ def source_tests(source, package):
     automatic = []
     for app in app_entries(source, package).values():
         default = app / "test_main.py"
+        manifest = json.loads((app / "app.json").read_text())
+        native_gui_only = (
+            package.get("native_kind") == "binary"
+            and manifest.get("runtime") == "binary"
+            and isinstance(manifest.get("desktop"), dict)
+            and "mcp" not in manifest
+            and not manifest.get("operations")
+        )
         if default.is_file():
             automatic.append(default)
-        elif not any(path.is_file() and path.resolve().is_relative_to(app.resolve()) for path in declared):
+        elif not native_gui_only and not any(
+            path.is_file() and path.resolve().is_relative_to(app.resolve()) for path in declared
+        ):
             raise ValueError(f"App without test_main.py requires an explicit test file: {app}")
     return list(dict.fromkeys([*automatic, *declared]))
 

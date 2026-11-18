@@ -1,0 +1,12 @@
+{
+  "apps": ["apps/desktop-shell"],
+  "tests": [],
+  "native": {"claw-desktop-shell": "native"},
+  "native_kind": "binary",
+  "native_build_system": "cmake",
+  "native_payload": {
+    "app": "desktop-shell",
+    "program": "claw-desktop-shell",
+    "private_resources": ["usr/share/claw-desktop-shell"]
+  }
+}
