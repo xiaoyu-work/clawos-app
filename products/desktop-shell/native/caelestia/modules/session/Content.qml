@@ -23,7 +23,7 @@ Column {
         id: logout
 
         icon: Config.session.icons.logout
-        command: Config.session.commands.logout
+        closesSession: true
 
         KeyNavigation.down: shutdown
 
@@ -87,11 +87,15 @@ Column {
     component SessionButton: IconButton {
         id: button
 
-        required property list<string> command
+        property list<string> command
+        property bool closesSession: false
 
         function exec(): void {
-            if (!SessionManager.exec(command))
+            if (closesSession) {
+                Qt.quit();
+            } else if (!SessionManager.exec(command)) {
                 Quickshell.execDetached(command);
+            }
         }
 
         implicitWidth: Tokens.sizes.session.button
