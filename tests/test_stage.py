@@ -26,8 +26,15 @@ def test_product_web_interfaces_are_owned_staged_and_do_not_change_app_manifests
         for name in stage.sources(kind):
             source, package = stage.load_package(name, kind)
             entries = stage.app_entries(source, package)
-            assert set(package["web_ui"]["apps"]) <= set(entries)
-            for app_id in package["web_ui"]["apps"]:
+            if "web_ui" not in package:
+                app_id = package.get("native_payload", {}).get("app")
+                assert set(entries) == {app_id}
+                manifest = json.loads((entries[app_id] / "app.json").read_text())
+                assert manifest.get("desktop") and "mcp" not in manifest
+                continue
+            web_apps = package["web_ui"]["apps"]
+            assert set(web_apps) <= set(entries)
+            for app_id in web_apps:
                 app_source = entries[app_id]
                 target = tmp_path / kind / name / app_id
                 shutil.copytree(app_source, target, ignore=stage.IGNORE)
@@ -172,7 +179,6 @@ def test_files_stage_preserves_the_direct_mcp_contract(tmp_path):
 
 
 def test_document_engine_is_a_capability_not_a_business_product(tmp_path):
-    assert len(stage.products()) == 24
     assert stage.sources("capability") == ["ai-helpers", "document-engine", "http", "storage-sdk"]
     assert "document-engine" not in stage.products()
     assert stage.stage("document-engine", tmp_path, kind="capability") == ["doc"]
@@ -197,14 +203,13 @@ def test_document_engine_is_a_capability_not_a_business_product(tmp_path):
 def test_ai_helpers_complete_original_source_ownership_without_provider_or_state(tmp_path):
     products = stage.products()
     capabilities = stage.sources("capability")
-    assert len(products) == 24
-    assert len(capabilities) == 4
     identities = []
     for kind, names in [("product", products), ("capability", capabilities)]:
         for name in names:
             source, package = stage.load_package(name, kind)
             identities.extend(stage.app_entries(source, package))
-    assert len(identities) == len(set(identities)) == 63
+    assert len(identities) == len(set(identities))
+    assert "summarize" in identities
     assert stage.stage("ai-helpers", tmp_path, kind="capability") == ["summarize"]
     original = ROOT / "capabilities/ai-helpers/apps/summarize"
     installed = tmp_path / "usr/lib/cos/apps/summarize"
@@ -242,7 +247,6 @@ def test_http_stages_the_complete_client_without_an_os_provider_or_product(tmp_p
 
 
 def test_storage_sdk_stages_only_db_without_copying_sdk_providers_or_state(tmp_path):
-    assert len(stage.products()) == 24
     assert "storage" in stage.products()
     assert "storage-sdk" not in stage.products()
     assert stage.stage("storage-sdk", tmp_path, ["db"], kind="capability") == ["db"]

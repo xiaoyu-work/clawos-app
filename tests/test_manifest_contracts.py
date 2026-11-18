@@ -1184,15 +1184,11 @@ def test_file_plan_manifest_keeps_exact_authority_and_explicit_confirmation():
     assert content["required"] is True and content["binding"] == "flag"
 
 
-def test_bundled_apps_have_an_explicit_agent_surface() -> None:
+def test_bundled_apps_have_explicit_mcp_or_native_desktop_surfaces() -> None:
     manifests = [
         (path, json.loads(path.read_text(encoding="utf-8")))
         for path in _manifests()
     ]
-    missing_mcp = {
-        manifest["id"] for _path, manifest in manifests if "mcp" not in manifest
-    }
-    assert not missing_mcp
     native_plans = {}
     for name in stage.sources("product"):
         _source, package = stage.load_package(name, "product")
@@ -1209,20 +1205,25 @@ def test_bundled_apps_have_an_explicit_agent_surface() -> None:
 
     for path, manifest in manifests:
         assert manifest["schema_version"] == 2
-        assert manifest["mcp"]["tools"]
-        entry = manifest["mcp"].get("entry")
-        if entry and not Path(entry).is_absolute():
-            source_entry = _source_entry_path(path, entry)
-            if manifest["id"] in native_plans:
-                planned = native_plans[manifest["id"]]
-                assert manifest["runtime"] == "binary"
-                desktop = manifest.get("desktop", {})
-                declared = {entry, manifest["entry"], desktop.get("entry", manifest["entry"])}
-                declared.update(surface["entry"] for surface in desktop.get("entries", {}).values())
-                assert set(planned["entrypoints"]) == declared
-                assert len(planned["entrypoints"]) == len(declared)
-                assert planned["manifest_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
-            else:
+        mcp = manifest.get("mcp")
+        if mcp is not None:
+            assert mcp["tools"]
+        entry = mcp.get("entry") if mcp is not None else None
+        if manifest["id"] in native_plans:
+            planned = native_plans[manifest["id"]]
+            assert manifest["runtime"] == "binary"
+            desktop = manifest["desktop"]
+            declared = {manifest["entry"], desktop.get("entry", manifest["entry"])}
+            declared.update(surface["entry"] for surface in desktop.get("entries", {}).values())
+            if entry:
+                declared.add(entry)
+            assert set(planned["entrypoints"]) == declared
+            assert len(planned["entrypoints"]) == len(declared)
+            assert planned["manifest_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
+        else:
+            assert mcp is not None, f"Missing MCP surface: {path}"
+            if entry and not Path(entry).is_absolute():
+                source_entry = _source_entry_path(path, entry)
                 assert source_entry.is_file(), f"Missing MCP source entry: {source_entry}"
 
 

@@ -36,7 +36,12 @@ def test_standalone_keeps_original_renderer_filechooser_and_lock(tmp_path):
     assert cargo["features"]["default"] == ["dbus-config", "wgpu", "wayland", "password_manager"]
     assert cargo["dependencies"]["cosmic-files"]["git"] == "https://github.com/pop-os/cosmic-files.git"
     assert cargo["dependencies"]["libcosmic"]["git"] == "https://github.com/pop-os/libcosmic.git"
-    assert "patch" not in cargo
+    assert cargo["patch"] == {
+        "https://github.com/jackpot51/trash-rs.git": {
+            "trash": {"git": "https://github.com/Byron/trash-rs.git",
+                      "rev": "a225f753a88e722aeeb27bb2fb00144739911035"},
+        },
+    }
     assert (destination / "Cargo.lock").read_bytes() == (NATIVE / "Cargo.lock").read_bytes()
     assert "Exec=cosmic-term" in (destination / "res/com.clawos.Term.desktop").read_text()
     assert (destination / "i18n/en/cosmic_term.ftl").is_file()

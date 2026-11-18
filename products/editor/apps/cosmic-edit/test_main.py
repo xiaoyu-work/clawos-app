@@ -76,7 +76,12 @@ def test_standalone_build_rewrites_only_shared_runtime_paths(tmp_path):
         )
     assert cargo["dependencies"]["libcosmic"]["git"] == "https://github.com/pop-os/libcosmic.git"
     assert cargo["dependencies"]["cosmic-files"]["default-features"] is False
-    assert "patch" not in cargo
+    assert cargo["patch"] == {
+        "https://github.com/jackpot51/trash-rs.git": {
+            "trash": {"git": "https://github.com/Byron/trash-rs.git",
+                      "rev": "a225f753a88e722aeeb27bb2fb00144739911035"},
+        },
+    }
     assert (destination / "Cargo.lock").read_bytes() == (
         PRODUCT / "native/cosmic-edit/Cargo.lock"
     ).read_bytes()
