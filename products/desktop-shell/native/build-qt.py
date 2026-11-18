@@ -48,15 +48,23 @@ def build(cache, jobs):
     version = lock["version"]
     line = version.rsplit(".", 1)[0]
     release = f"{QT}/{line}"
-    digest = hashlib.sha256(LOCK.read_bytes() + Path(__file__).read_bytes()).hexdigest()[:16]
-    work = cache / f"qt-{version}-{digest}"
-    downloads = cache / "downloads"
-    downloads.mkdir(parents=True, exist_ok=True)
-    prefix = work / "prefix"
     options = [
         "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_INSTALL_LIBDIR=lib",
         "-DQT_BUILD_TESTS=OFF", "-DQT_BUILD_EXAMPLES=OFF",
     ]
+    base_options = [
+        "-release", "-shared", "-opensource", "-confirm-license",
+        "-nomake", "examples", "-nomake", "tests",
+        "-no-xcb", "-no-eglfs", "-no-linuxfb", "-no-feature-vnc",
+        "-opengl", "desktop", "-sql-sqlite", "-system-sqlite",
+    ]
+    media_options = ["-DFEATURE_ffmpeg=OFF", "-DFEATURE_gstreamer=ON"]
+    configuration = json.dumps([base_options, options, media_options]).encode()
+    digest = hashlib.sha256(LOCK.read_bytes() + configuration).hexdigest()[:16]
+    work = (cache / f"qt-{version}-{digest}").resolve()
+    downloads = cache / "downloads"
+    downloads.mkdir(parents=True, exist_ok=True)
+    prefix = work / "prefix"
     for module, expected in lock["modules"].items():
         name = f"{module}-everywhere-src-{version}.tar.xz"
         archive = fetch(downloads, f"{release}/{version}/submodules/{name}", name, expected)
@@ -80,14 +88,11 @@ def build(cache, jobs):
                 Path(incoming).rename(source)
         output.mkdir(parents=True, exist_ok=True)
         if module == "qtbase":
-            run(source / "configure", "-prefix", prefix, "-release", "-shared",
-                "-opensource", "-confirm-license", "-nomake", "examples", "-nomake", "tests",
-                "-no-xcb", "-no-eglfs", "-no-linuxfb", "-no-feature-vnc",
-                "-opengl", "desktop", "-sql-sqlite", "-system-sqlite",
+            run(source / "configure", "-prefix", prefix, *base_options,
                 "--", "-G", "Ninja", *options, cwd=output)
         else:
-            media = ("-DFEATURE_ffmpeg=OFF", "-DFEATURE_gstreamer=ON") if module == "qtmultimedia" else ()
-            run(prefix / "bin/qt-configure-module", source, "-G", "Ninja",
+            media = media_options if module == "qtmultimedia" else ()
+            run(prefix / "bin/qt-configure-module", source, "--", "-G", "Ninja",
                 *options, *media, cwd=output)
         run("cmake", "--build", output, "--parallel", str(jobs))
         run("cmake", "--install", output)
