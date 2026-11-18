@@ -80,6 +80,11 @@ existing OS audio provider. Device routing, volume and microphone mutations
 remain independent optional permissions. The stream list is read-only and
 the shell does not open the owner PipeWire socket for visualizers.
 
+Brightness uses independent optional display observation and control rights.
+The shell displays and changes a backlight only when the OS reports one
+unambiguous output and backlight. It does not open DDC, I²C or backlight
+devices, or guess which device belongs to an external monitor.
+
 Any later launch/payload integration must use the repository's existing
 native App packaging and public SDK/runtime contracts. The original source
 licenses, notices, file modes and resources must remain available.

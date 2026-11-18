@@ -60,6 +60,16 @@
         "verb": "device.media-route",
         "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "pipewire"}},
         "why": {"en": "Choose a different default audio input or output device."}
+      },
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "display"}},
+        "why": {"en": "Read the display brightness shown in the desktop controls."}
+      },
+      {
+        "verb": "device.display",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "manage"}},
+        "why": {"en": "Change display brightness through the OS display service."}
       }
     ]
   }
