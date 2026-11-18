@@ -22,7 +22,8 @@ EXTRA_NATIVE = {
     "settings": ["libpipewire-0.3-dev", "libpulse-dev", "libxkbregistry-dev", "libclang-dev",
                  "gettext", "libglib2.0-dev"],
     "desktop-shell": [
-        "ninja-build", "patchelf", "wayland-protocols", "libpam0g-dev", "libgl-dev", "libgles-dev",
+        "ninja-build", "patchelf", "libpam0g-dev", "libgl-dev", "libgles-dev",
+        "libwayland-dev/trixie-backports", "wayland-protocols/trixie-backports",
         "libharfbuzz-dev", "libicu-dev", "libglib2.0-dev", "libssl-dev", "libzstd-dev",
         "libpng-dev", "libjpeg-dev", "libsqlite3-dev", "libpulse-dev", "libpipewire-0.3-dev",
         "libgstreamer1.0-dev", "libgstreamer-plugins-base1.0-dev",
@@ -41,6 +42,8 @@ def dependencies(plan, mode, architecture):
         result.extend(NATIVE)
         for selection in plan["selections"]:
             result.extend(EXTRA_NATIVE.get(selection, []))
+        if "desktop-shell" in plan["selections"]:
+            result.remove("libwayland-dev")
     return sorted(set(result))
 
 
@@ -62,6 +65,15 @@ def main():
     ] if path.is_file() and path.stat().st_size), None)
     if sources is None:
         raise ValueError("The runner has no declared Debian/Ubuntu distribution sources")
+    if options.mode == "build" and options.architecture != "all" and "desktop-shell" in plan["selections"]:
+        if sources.name != "debian.sources" or "VERSION_CODENAME=trixie" not in Path("/etc/os-release").read_text().splitlines():
+            raise ValueError("The desktop shell's native release build requires Debian 13")
+        selected_sources = scratch / "desktop-shell.sources"
+        selected_sources.write_text(sources.read_text().rstrip() + "\n\n"
+                                    "Types: deb\nURIs: https://deb.debian.org/debian\n"
+                                    "Suites: trixie-backports\nComponents: main\n"
+                                    "Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg\n")
+        sources = selected_sources
     sudo = [] if os.geteuid() == 0 else ["sudo"]
     apt = [*sudo, "apt-get", "-o", f"Dir::Etc::sourcelist={sources}", "-o", "Dir::Etc::sourceparts=-"]
     subprocess.run([*apt, "update", "-qq"], check=True, env=environment)

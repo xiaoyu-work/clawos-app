@@ -15,6 +15,8 @@ authenticated launch are qualified. `native/qt.lock.json` pins Qt 6.12.0 and
 its published corrections. The unified CMake build compiles those sources
 against the build host's ABI and uses them for every native child. Release
 payloads must be built on Debian 13, not the Ubuntu preview environment.
+The pinned Qt runtime is App-owned; Debian backports supply the Wayland
+scanner and protocol XML needed to build Quickshell's background effects.
 Do not treat an upstream installer or direct executable launch as completed
 Claw runtime integration.
 
@@ -154,7 +156,7 @@ This prepares the ordinary unsigned App payload for the existing signer; it
 does not install the App, grant its needs or activate the desktop session.
 
 Engine dependencies follow the vendored Quickshell CMake files, including Qt
-Wayland/private headers, Wayland protocols 1.41+, CLI11, jemalloc, libunwind
+Wayland/private headers, Wayland 1.25+, protocols 1.47+, CLI11, jemalloc, libunwind
 and zstd. The source-pinned crash libraries build inside the engine.
 The installed assembly passes the existing owned-tree/ELF/mode checks and
 loads its real private Caelestia and Material Shapes modules without global

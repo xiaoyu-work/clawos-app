@@ -1,6 +1,6 @@
 find_package(PkgConfig REQUIRED)
 find_package(WaylandScanner REQUIRED)
-pkg_check_modules(wayland REQUIRED IMPORTED_TARGET wayland-client wayland-protocols>=1.41)
+pkg_check_modules(wayland REQUIRED IMPORTED_TARGET wayland-client>=1.25 wayland-protocols>=1.47)
 
 # wayland protocols
 
