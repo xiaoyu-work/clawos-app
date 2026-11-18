@@ -33,6 +33,11 @@
         "verb": "ipc.invoke",
         "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "notifications.presentation"}},
         "why": {"en": "Apply your notification dismissal and acknowledgement actions."}
+      },
+      {
+        "verb": "ipc.invoke",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.session.lock"}},
+        "why": {"en": "Ask Claw OS to lock the current desktop without access to passwords or unlocking."}
       }
     ],
     "optional_needs": [

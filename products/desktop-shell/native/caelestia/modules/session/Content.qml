@@ -24,7 +24,7 @@ Column {
         icon: Config.session.icons.logout
         closesSession: true
 
-        KeyNavigation.down: shutdown.enabled ? shutdown : null
+        KeyNavigation.down: lock
 
         Component.onCompleted: forceActiveFocus()
 
@@ -39,12 +39,22 @@ Column {
     }
 
     SessionButton {
+        id: lock
+
+        icon: "lock"
+        locksSession: true
+
+        KeyNavigation.up: logout
+        KeyNavigation.down: shutdown
+    }
+
+    SessionButton {
         id: shutdown
 
         icon: Config.session.icons.shutdown
         powerAction: "poweroff"
 
-        KeyNavigation.up: logout
+        KeyNavigation.up: lock
         KeyNavigation.down: hibernate
     }
 
@@ -88,12 +98,16 @@ Column {
 
         property string powerAction
         property bool closesSession: false
-        enabled: closesSession || !Power.busy
+        property bool locksSession: false
+        enabled: closesSession || locksSession || !Power.busy
         disabled: !enabled
 
         function exec(): void {
             if (closesSession) {
                 Qt.quit();
+            } else if (locksSession) {
+                root.screenState.session = false;
+                ScreenLock.request();
             } else if (enabled) {
                 Power.request(powerAction);
                 root.screenState.session = false;

@@ -5,14 +5,11 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.UPower
 import Caelestia.Config
-import Caelestia.Services
 import qs.services
-import qs.modules.lock
 
 Scope {
     id: root
 
-    required property Lock lock
     readonly property bool hasPlayer: Players.list.some(p => p.isPlaying)
     readonly property bool isCharging: !UPower.onBattery
     readonly property bool enabled: {
@@ -28,26 +25,7 @@ Scope {
             return;
 
         if (action === "lock")
-            lock.lock.locked = true;
-        else if (action === "unlock")
-            lock.lock.locked = false;
-    }
-
-    Connections {
-        function onAboutToSleep(): void {
-            if (GlobalConfig.general.idle.lockBeforeSleep)
-                root.lock.lock.locked = true;
-        }
-
-        function onLockRequested(): void {
-            root.lock.lock.locked = true;
-        }
-
-        function onUnlockRequested(): void {
-            root.lock.lock.unlock();
-        }
-
-        target: SessionManager
+            ScreenLock.request();
     }
 
     Variants {
