@@ -95,6 +95,9 @@ error rather than a successful empty test run.
 Debian native release jobs provision the Desktop Shell's pinned Qt build
 dependencies and qualify its real ELF and resource stage. They do not call a
 nonexistent native test target for CMake products.
+The native dependency scan creates a temporary release-owned package root
+marker so Debian resolves each ELF's `$ORIGIN` against its staged private
+libraries. The marker is removed before final control metadata is emitted.
 `release: false` leaves development builds available while excluding an
 unqualified product from both explicit publication and aggregate package sets.
 Calendar, Clipboard and Widget Rail generate localized desktop entries only in

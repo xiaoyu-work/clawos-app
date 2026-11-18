@@ -9,6 +9,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 
 from release_common import (
     ROOT, config, control_bytes, license_files, package_record, relative_path, run, version,
@@ -319,25 +320,34 @@ def native_payload(root, entry):
             if native_plan is None or app["id"] != native_plan.app_id:
                 raise ValueError("Native App manifest has no declared package-local payload")
             native_apps.validate_manifest_entries(manifest.parent, app, native_plan.entrypoints)
-    debian = root.parent / f"{entry['package']}-shlibdeps/debian"
-    debian.mkdir(parents=True)
-    (debian / "control").write_text(
-        f"Source: {entry['package']}\n\nPackage: {entry['package']}\nArchitecture: any\n"
+    return scan_native_dependencies(
+        root, entry["package"], binaries, private_library_directories, private_shlibs,
     )
-    (debian / "shlibs.local").write_text("\n".join(sorted(set(private_shlibs))) + "\n")
+
+
+def scan_native_dependencies(root, package, binaries, library_directories, private_shlibs):
+    # dpkg derives each ELF's $ORIGIN from the package root containing DEBIAN.
+    # Only the release controller may create that marker; no App control files are accepted.
+    marker = root / "DEBIAN"
+    marker.mkdir()
     try:
-        result = run([
-            "dpkg-shlibdeps", "-O",
-            f"-x{entry['package']}",
-            *(f"-l{directory}" for directory in sorted(private_library_directories)),
-            *(f"-e{binary}" for binary in binaries),
-        ], cwd=debian.parent)
+        with tempfile.TemporaryDirectory(prefix=f".{package}-shlibdeps-", dir=root.parent) as scratch:
+            debian = Path(scratch) / "debian"
+            debian.mkdir()
+            (debian / "control").write_text(f"Source: {package}\n\nPackage: {package}\nArchitecture: any\n")
+            (debian / "shlibs.local").write_text("\n".join(sorted(set(private_shlibs))) + "\n")
+            result = run([
+                "dpkg-shlibdeps", "-O",
+                f"-x{package}",
+                *(f"-l{directory}" for directory in sorted(library_directories)),
+                *(f"-e{binary}" for binary in binaries),
+            ], cwd=scratch)
         output = result.stdout.decode().strip()
         if not output.startswith("shlibs:Depends="):
             raise ValueError("Native dependency scanner did not report its runtime dependencies")
         return [value.strip() for value in output.removeprefix("shlibs:Depends=").split(",") if value.strip()]
     finally:
-        shutil.rmtree(debian.parent)
+        marker.rmdir()
 
 
 def normalize(root, epoch):
