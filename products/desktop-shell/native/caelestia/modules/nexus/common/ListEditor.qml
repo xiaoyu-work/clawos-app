@@ -236,8 +236,6 @@ ListView {
 
                 anchors.fill: parent
                 radius: itemBg.radius
-                topLeftRadius: itemBg.topLeftRadius
-                topRightRadius: itemBg.topRightRadius
                 level: 3
                 opacity: 0
             }

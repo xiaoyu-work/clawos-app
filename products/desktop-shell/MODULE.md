@@ -68,6 +68,11 @@ remain separate, live capability-gated Wayland protocols. Capture opens the
 existing signed Capture App, and window information uses icons and metadata
 rather than a screen-capture grant.
 
+Audio controls observe and change the default input and output through the
+existing OS audio provider. Device routing, volume and microphone mutations
+remain independent optional permissions. The stream list is read-only and
+the shell does not open the owner PipeWire socket for visualizers.
+
 Any later launch/payload integration must use the repository's existing
 native App packaging and public SDK/runtime contracts. The original source
 licenses, notices, file modes and resources must remain available.

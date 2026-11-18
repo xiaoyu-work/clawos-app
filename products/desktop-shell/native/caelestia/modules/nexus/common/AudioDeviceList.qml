@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Services.Pipewire
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
@@ -17,7 +16,7 @@ ItemList {
     property int currentId: -1
     property string iconName: "speaker"
 
-    signal selected(node: PwNode)
+    signal selected(node: var)
 
     last: true
     showList: true
@@ -29,7 +28,7 @@ ItemList {
     delegate: Item {
         id: device
 
-        required property PwNode modelData
+        required property var modelData
         required property int index
         readonly property bool active: device.modelData?.id === root.currentId
 

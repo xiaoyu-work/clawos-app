@@ -49,12 +49,6 @@ Variants {
 
                 sourceComponent: Wallpaper {}
             }
-
-            Visualiser {
-                anchors.fill: parent
-                screen: win.modelData
-                wallpaper: wallpaper
-            }
         }
 
         Loader {

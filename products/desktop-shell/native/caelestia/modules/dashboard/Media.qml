@@ -4,6 +4,7 @@ import M3Shapes
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
+import qs.components.widgets
 import qs.services
 import qs.modules.dashboard.media
 
@@ -24,9 +25,16 @@ Item {
         anchors.margins: Tokens.padding.large
         spacing: Tokens.spacing.extraLarge
 
-        CoverVisualiser {
+        Item {
             Layout.fillHeight: true
             implicitWidth: Tokens.sizes.dashboard.mediaSectionWidth
+
+            CoverArt {
+                anchors.centerIn: parent
+                shape.shape: MaterialShape.Cookie9Sided
+                implicitWidth: Tokens.sizes.dashboard.mediaCoverArtSize
+                implicitHeight: width
+            }
         }
 
         Item {

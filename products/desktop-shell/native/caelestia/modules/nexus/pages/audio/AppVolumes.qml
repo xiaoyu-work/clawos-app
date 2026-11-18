@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Services.Pipewire
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
@@ -14,7 +13,7 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: Tr.tr("App volumes")
+    title: Tr.tr("Audio streams")
     isSubPage: true
 
     ColumnLayout {
@@ -27,7 +26,7 @@ PageBase {
             Layout.fillWidth: true
             Layout.leftMargin: Tokens.padding.small
             Layout.bottomMargin: Tokens.spacing.medium
-            text: Tr.tr("Adjust the volume of individual apps currently playing audio.")
+            text: Tr.tr("Audio streams reported by the OS.")
             color: Colours.palette.m3outline
             font: Tokens.font.body.small
             wrapMode: Text.WordWrap
@@ -48,23 +47,16 @@ PageBase {
                 values: [...Audio.streams]
             }
 
-            delegate: SliderRow {
+            delegate: StyledText {
                 id: stream
 
-                required property PwNode modelData
-                required property int index
+                required property var modelData
 
                 anchors.left: streamList.list.contentItem.left
                 anchors.right: streamList.list.contentItem.right
-                first: index === 0
-                last: index === streamList.list.count - 1
-
-                icon: Icons.getVolumeIcon(stream.modelData?.audio?.volume ?? 0, stream.modelData?.audio?.muted ?? false)
-                label: Audio.getStreamName(stream.modelData)
-                valueLabel: Strings.percentOne(value)
-                value: stream.modelData?.audio?.volume ?? 0
-                enabled: !stream.modelData?.audio?.muted
-                onMoved: v => Audio.setStreamVolume(stream.modelData, v)
+                padding: Tokens.padding.medium
+                text: Audio.getStreamName(stream.modelData)
+                elide: Text.ElideRight
             }
         }
     }

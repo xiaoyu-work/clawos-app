@@ -33,7 +33,7 @@ PageBase {
         ToggleRow {
             text: Tr.trCtx("Muted", "audio output muted")
             checked: Audio.muted
-            onToggled: Audio.setStreamMuted(Audio.sink, checked)
+            onToggled: Audio.setMuted(false, checked)
         }
 
         AudioDeviceList {
@@ -60,7 +60,7 @@ PageBase {
         ToggleRow {
             text: Tr.trCtx("Muted", "audio input muted")
             checked: Audio.sourceMuted
-            onToggled: Audio.setStreamMuted(Audio.source, checked)
+            onToggled: Audio.setMuted(true, checked)
         }
 
         AudioDeviceList {

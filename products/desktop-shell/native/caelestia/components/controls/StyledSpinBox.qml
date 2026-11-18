@@ -4,33 +4,33 @@ import Caelestia.Config
 import qs.components
 import qs.services
 
-DoubleSpinBox {
+SpinBox {
     id: root
 
     property int repeatRate: 400
     property int repeatDecay: 50
     property int cLayer: 1
+    property real minimum: 0
+    property real maximum: 99
+    property real increment: 1
+    property real decimalValue: 0
+    readonly property int decimals: Math.min(6, String(increment).split(".")[1]?.length ?? 0)
+    readonly property int valueScale: Math.pow(10, decimals)
 
-    function increase(): void {
-        let newValue = Math.min(to, value + stepSize);
-        // Round to avoid floating point precision errors
-        const decimals = stepSize < 1 ? Math.max(1, Math.ceil(-Math.log10(stepSize))) : 0;
-        newValue = Math.round(newValue * Math.pow(10, decimals)) / Math.pow(10, decimals);
-        value = newValue;
-        valueModified();
-    }
-
-    function decrease(): void {
-        let newValue = Math.max(from, value - stepSize);
-        // Round to avoid floating point precision errors
-        const decimals = stepSize < 1 ? Math.max(1, Math.ceil(-Math.log10(stepSize))) : 0;
-        newValue = Math.round(newValue * Math.pow(10, decimals)) / Math.pow(10, decimals);
-        value = newValue;
-        valueModified();
+    from: Math.round(minimum * valueScale)
+    to: Math.round(maximum * valueScale)
+    stepSize: Math.max(1, Math.round(increment * valueScale))
+    value: Math.round(decimalValue * valueScale)
+    textFromValue: (value, locale) => Number(value / root.valueScale).toLocaleString(locale, "f", root.decimals)
+    valueFromText: (text, locale) => Math.round(Number.fromLocaleString(locale, text) * root.valueScale)
+    validator: DoubleValidator {
+        bottom: root.minimum
+        top: root.maximum
+        decimals: root.decimals
+        locale: root.locale.name
     }
 
     editable: true
-    decimals: stepSize < 1 ? Math.max(1, Math.ceil(-Math.log10(stepSize))) : 0
     spacing: Tokens.spacing.small
 
     implicitWidth: contentItem.implicitWidth + leftPadding + rightPadding
@@ -145,6 +145,7 @@ DoubleSpinBox {
                 root.increase();
             else if (downButton.pressed)
                 root.decrease();
+            root.valueModified();
             if (interval > root.repeatDecay)
                 interval -= root.repeatDecay;
         }

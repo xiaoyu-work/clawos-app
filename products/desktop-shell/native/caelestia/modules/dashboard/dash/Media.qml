@@ -4,7 +4,6 @@ import QtQuick
 import Caelestia.Components
 import Caelestia.Config
 import Caelestia.I18n
-import Caelestia.Services
 import qs.components
 import qs.components.controls
 import qs.components.widgets
@@ -37,10 +36,6 @@ Item {
         triggeredOnStart: true
         repeat: true
         onTriggered: Players.active?.positionChanged()
-    }
-
-    ServiceRef {
-        service: Audio.beatTracker
     }
 
     CircularProgress {
@@ -173,7 +168,6 @@ Item {
         anchors.margins: Tokens.padding.extraLargeIncreased
 
         playing: Players.active?.isPlaying ?? false
-        speed: Audio.beatTracker.bpm / Config.general.mediaGifSpeedAdjustment
         source: Paths.absolutePath(Config.paths.mediaGif)
         asynchronous: true
         fillMode: AnimatedImage.PreserveAspectFit

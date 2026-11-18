@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Quickshell.Services.Pipewire
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
@@ -45,7 +44,7 @@ Item {
             StyledRadioButton {
                 id: control
 
-                required property PwNode modelData
+                required property var modelData
 
                 Layout.fillWidth: true
                 ButtonGroup.group: sinks
@@ -65,7 +64,7 @@ Item {
             model: Audio.sources
 
             StyledRadioButton {
-                required property PwNode modelData
+                required property var modelData
 
                 Layout.fillWidth: true
                 ButtonGroup.group: sources

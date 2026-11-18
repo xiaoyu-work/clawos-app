@@ -39,6 +39,28 @@
         "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "notifications.presentation"}},
         "why": {"en": "Apply your notification dismissal and acknowledgement actions."}
       }
+    ],
+    "optional_needs": [
+      {
+        "verb": "sys.observe",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "audio"}},
+        "why": {"en": "Show owner audio devices, streams and volume in the desktop controls."}
+      },
+      {
+        "verb": "device.audio",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "output"}},
+        "why": {"en": "Change the output volume and mute when you use the desktop controls."}
+      },
+      {
+        "verb": "device.microphone",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "input"}},
+        "why": {"en": "Change microphone volume and mute through the OS audio service."}
+      },
+      {
+        "verb": "device.media-route",
+        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "pipewire"}},
+        "why": {"en": "Choose a different default audio input or output device."}
+      }
     ]
   }
 }
