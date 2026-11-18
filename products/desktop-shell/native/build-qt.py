@@ -58,8 +58,11 @@ def build(cache, jobs):
         "-no-xcb", "-no-eglfs", "-no-linuxfb", "-no-feature-vnc",
         "-opengl", "desktop", "-sql-sqlite", "-system-sqlite",
     ]
-    media_options = ["-DFEATURE_ffmpeg=OFF", "-DFEATURE_gstreamer=ON"]
-    configuration = json.dumps([base_options, options, media_options]).encode()
+    module_options = {
+        "qtmultimedia": ["-DFEATURE_ffmpeg=OFF", "-DFEATURE_gstreamer=ON"],
+        "qtimageformats": ["-DFEATURE_system_webp=ON", "-DINPUT_tiff=no"],
+    }
+    configuration = json.dumps([base_options, options, module_options]).encode()
     digest = hashlib.sha256(LOCK.read_bytes() + configuration).hexdigest()[:16]
     work = (cache / f"qt-{version}-{digest}").resolve()
     downloads = cache / "downloads"
@@ -91,9 +94,8 @@ def build(cache, jobs):
             run(source / "configure", "-prefix", prefix, *base_options,
                 "--", "-G", "Ninja", *options, cwd=output)
         else:
-            media = media_options if module == "qtmultimedia" else ()
             run(prefix / "bin/qt-configure-module", source, "--", "-G", "Ninja",
-                *options, *media, cwd=output)
+                *options, *module_options.get(module, ()), cwd=output)
         run("cmake", "--build", output, "--parallel", str(jobs))
         run("cmake", "--install", output)
         complete.touch()
@@ -130,6 +132,7 @@ def stage(prefix, destination):
     for name in ("plugins", "qml"):
         shutil.copytree(prefix / name, qt / name, ignore=ignore_runtime_copy)
     for required in ("lib/libQt6Core.so.6", "plugins/sqldrivers/libqsqlite.so",
+                     "plugins/imageformats/libqwebp.so",
                      "qml/QtQuick/qmldir", "qml/QtQuick/Controls/qmldir"):
         if not (qt / required).is_file():
             raise ValueError(f"Private Qt runtime is incomplete: {required}")

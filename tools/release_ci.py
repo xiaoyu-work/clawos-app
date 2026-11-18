@@ -25,7 +25,7 @@ EXTRA_NATIVE = {
         "ninja-build", "patchelf", "libpam0g-dev", "libgl-dev", "libgles-dev",
         "libwayland-dev/trixie-backports", "wayland-protocols/trixie-backports",
         "libharfbuzz-dev", "libicu-dev", "libglib2.0-dev", "libssl-dev", "libzstd-dev",
-        "libpng-dev", "libjpeg-dev", "libsqlite3-dev", "libpulse-dev", "libpipewire-0.3-dev",
+        "libpng-dev", "libjpeg-dev", "libwebp-dev", "libsqlite3-dev", "libpulse-dev", "libpipewire-0.3-dev",
         "libgstreamer1.0-dev", "libgstreamer-plugins-base1.0-dev",
         "libgstreamer-plugins-bad1.0-dev", "libqalculate-dev",
         "libaubio-dev", "libfftw3-dev", "libsensors-dev", "libcli11-dev", "libjemalloc-dev",

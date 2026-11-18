@@ -6,6 +6,7 @@
     "qtdeclarative": "311f3a2603e1973bb59baef9dfa740a376de713157d4782ee043681e889c9260",
     "qtwayland": "ae14d9bcf1bb3c300a3ab2e6a53f50284e5c6c966a4ac4cc5aedcb1bc74e4d02",
     "qtsvg": "e4ab39534ec97987b1b9b60ef7f4d3253d5912a69f8c713a01753174a4029331",
+    "qtimageformats": "0943132b5db8de6b6a7f1d162682173e8763c7ed94e80fd39113292845f67762",
     "qtmultimedia": "3143f53b64257ba2a0685c940f5dce476c75871ff86b516de45cfd54ea93a62d"
   },
   "qtbase_corrections": {
