@@ -135,8 +135,8 @@ StyledRect {
             id: bodyText
 
             Layout.fillWidth: true
-            textFormat: Text.MarkdownText
-            text: String(root.modelData?.body ?? "").replace(/(.)\n(?!\n)/g, "$1\n\n") || Tr.tr("No body here! :/")
+            textFormat: Text.PlainText
+            text: root.modelData?.body || Tr.tr("No body here! :/")
             color: root.modelData?.urgency === "critical" ? Colours.palette.m3secondary : Colours.palette.m3outline
             wrapMode: Text.WordWrap
 

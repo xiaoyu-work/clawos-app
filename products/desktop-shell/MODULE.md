@@ -54,6 +54,13 @@ catalogue entry or successful client startup supplies no authority. Denied or
 indeterminate requests have no raw-execution fallback or automatic retry.
 Launch frequency changes only after the broker confirms the request.
 
+The notification drawer and popups consume the common Host's leased
+`notifications.presentation` resource through the fixed SDK client. The
+shell does not start a D-Bus notification server or persist `notifs.json`.
+Dismiss and default acknowledgement are separate broker effects; hiding a
+popup does not acknowledge the OS notification. Popup mute is a presentation
+preference separate from the OS delivery policy.
+
 Any later launch/payload integration must use the repository's existing
 native App packaging and public SDK/runtime contracts. The original source
 licenses, notices, file modes and resources must remain available.
