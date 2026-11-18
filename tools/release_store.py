@@ -412,6 +412,12 @@ def prepare_release_snapshots(plan, packages, output, provenance, signing, key):
                 for _, selected in snapshots.manifest_entries(manifest):
                     arguments.extend(("--entrypoint", selected))
                 arguments.extend(("--resource", DESCRIPTOR, "--resource", "web/index.html"))
+                for desktop in sorted((path / "resources/usr/share/applications").glob("*.desktop")):
+                    if desktop.is_symlink() or not desktop.is_file() or not re.fullmatch(
+                        r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,254}", desktop.stem,
+                    ):
+                        raise ValueError(f"Invalid native desktop resource: {desktop.name}")
+                    arguments.extend(("--resource", desktop.relative_to(path).as_posix()))
                 snapshots.run(arguments)
                 snapshots.verified_binding(path, provenance)
             validate_install_tree(root)

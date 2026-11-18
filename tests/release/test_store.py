@@ -165,6 +165,9 @@ def test_publication_signs_exact_debian_app_payload_and_retains_web_assets(
     verifier, _ = runtime
     root = web_app(app())
     app_id = snapshots.read_metadata(root / "app.json")["id"]
+    desktop = root / "resources/usr/share/applications/com.clawos.Fixture.desktop"
+    desktop.parent.mkdir(parents=True)
+    desktop.write_text(f"[Desktop Entry]\nType=Application\nName=Fixture\nExec=cos app {app_id} --gui\n")
     artifact = app_deb(deb, [root])
     plan = {"version": "1.0.0", "source_date_epoch": 1700000000, "packages": [{
         "package": "claw-app-fixture", "architecture": "all",
@@ -180,6 +183,10 @@ def test_publication_signs_exact_debian_app_payload_and_retains_web_assets(
     assert (extracted / "web/app.js").read_bytes() == (root / "web/app.js").read_bytes()
     assert (extracted / "app.json").read_bytes() == (root / "app.json").read_bytes()
     assert (extracted / ".provenance.json").is_file()
+    desktop_path = desktop.relative_to(root)
+    assert (extracted / desktop_path).read_bytes() == desktop.read_bytes()
+    envelope = snapshots.read_metadata(extracted / ".provenance.json")
+    assert desktop_path.as_posix() in envelope["package"]["resources"]
     assert record["provenance"]["publisher_key_id"] == verifier.publisher_key_id
     final = tmp_path / "final"
     run(["dpkg-deb", "--extract", packages[0], final])

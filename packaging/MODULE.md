@@ -44,7 +44,9 @@ construction or a privileged updater.
   pinned public provenance CLI, repacks and validates final Debian bytes, then
   derives snapshots from those identical final payloads. Complete package
   inventories include shared support, libraries and metapackages, retaining
-  immutable prior tuples. Build-input digests remain distinct from authenticated
+  immutable prior tuples. Canonical App-local `.desktop` entries are named
+  signed resources so the system can resolve a menu selection without trusting
+  the exported desktop command. Build-input digests remain distinct from authenticated
   release digests. Product Web assets and `store/index.json` remain authenticated.
   Official Store transactions, review and runtime authority stay in `clawd`;
   this producer supplies no installer, grant or snapshot/source fallback.
