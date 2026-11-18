@@ -6,7 +6,7 @@ import pytest
 import release_publish
 import release_signing
 from release_development import build_archive
-from release_common import ROOT, command_environment, config, digest, run
+from release_common import REPO_SETTINGS_TOKEN, ROOT, command_environment, config, digest, run
 from release_publish import GitHub, existing_release, previous_snapshot, release_tag
 from release_signing import Signing
 
@@ -50,9 +50,11 @@ def test_passphrase_is_only_stdin_never_an_argument_or_inherited_secret(tmp_path
 def test_child_commands_never_inherit_private_signing_material(monkeypatch):
     monkeypatch.setenv("CLAW_APPS_APT_SIGNING_PRIVATE_KEY", "fixture key material")
     monkeypatch.setenv("CLAW_APPS_APT_SIGNING_PASSPHRASE", "fixture passphrase")
+    monkeypatch.setenv(REPO_SETTINGS_TOKEN, "fixture read token")
     environment = command_environment({"CLAW_APPS_APT_SIGNING_PASSPHRASE": "also forbidden"})
     assert "CLAW_APPS_APT_SIGNING_PRIVATE_KEY" not in environment
     assert "CLAW_APPS_APT_SIGNING_PASSPHRASE" not in environment
+    assert REPO_SETTINGS_TOKEN not in environment
 
 
 def test_github_transport_failure_is_not_treated_as_an_absent_repository(monkeypatch):
@@ -66,13 +68,32 @@ def test_github_transport_failure_is_not_treated_as_an_absent_repository(monkeyp
     ))
     with pytest.raises(ValueError, match="403"):
         GitHub().api("git/ref/heads/app-apt", allowed=(200, 404))
+    with pytest.raises(ValueError, match=f"{REPO_SETTINGS_TOKEN}.*Administration: read"):
+        GitHub().api("immutable-releases")
 
 
 def test_github_success_is_parsed_without_weakening_http_error_checks(monkeypatch):
-    monkeypatch.setattr(release_publish, "run", lambda *args, **kwargs: subprocess.CompletedProcess(
-        args, 0, b'HTTP/2.0 200 OK\r\nContent-Type: application/json\r\n\r\n{"enabled":true}', b"",
-    ))
-    assert GitHub().api("immutable-releases") == (200, {"enabled": True})
+    monkeypatch.setenv("GH_TOKEN", "fixture publish token")
+    monkeypatch.setenv(REPO_SETTINGS_TOKEN, "fixture read token")
+    calls = []
+
+    def request(arguments, **kwargs):
+        environment = command_environment(kwargs["env"])
+        endpoint = next(argument for argument in arguments if argument.startswith("repos/"))
+        calls.append((endpoint, environment["GH_TOKEN"]))
+        assert REPO_SETTINGS_TOKEN not in environment
+        return subprocess.CompletedProcess(
+            arguments, 0, b'HTTP/2.0 200 OK\r\nContent-Type: application/json\r\n\r\n{"enabled":true}', b"",
+        )
+
+    monkeypatch.setattr(release_publish, "run", request)
+    github = GitHub()
+    assert github.api("immutable-releases") == (200, {"enabled": True})
+    github.api("releases", method="POST", data={"draft": True})
+    assert calls == [
+        ("repos/xiaoyu-work/clawos-app/immutable-releases", "fixture read token"),
+        ("repos/xiaoyu-work/clawos-app/releases", "fixture publish token"),
+    ]
 
 
 def test_prior_immutable_versions_protect_against_regression_after_an_incomplete_apt_push():

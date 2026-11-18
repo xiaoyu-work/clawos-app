@@ -833,7 +833,12 @@ Before dispatching the first release:
    runtime/service `Provides` in the OS packages.
 3. Enable **immutable releases** in the App repository. The workflow verifies
    GitHub's setting before writing release content and verifies each published
-   release is immutable.
+   release is immutable. In the `app-release` environment, set
+   `CLAW_APPS_REPO_SETTINGS_TOKEN` to a fine-grained token for `clawos-app`
+   with **Administration: read**. GitHub Actions' `GITHUB_TOKEN` cannot read
+   the repository-level setting. The separate token is used only for that
+   read by both release and refresh; release assets and state pushes still use
+   `GITHUB_TOKEN`. Do not grant the settings token write access.
 4. Configure GitHub Pages with **GitHub Actions** as its source. Protect `main`
    and the `app-apt` state branch against force pushes/deletion while allowing
    this workflow's normal state commits.

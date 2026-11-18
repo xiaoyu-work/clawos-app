@@ -28,6 +28,7 @@ jobs:
       - name: Verify retained content and renew its bounded signed metadata
         env:
           GH_TOKEN: ${{ github.token }}
+          CLAW_APPS_REPO_SETTINGS_TOKEN: ${{ secrets.CLAW_APPS_REPO_SETTINGS_TOKEN }}
           CLAW_APPS_APT_SIGNING_PRIVATE_KEY: ${{ secrets.CLAW_APPS_APT_SIGNING_PRIVATE_KEY }}
           CLAW_APPS_APT_SIGNING_PASSPHRASE: ${{ secrets.CLAW_APPS_APT_SIGNING_PASSPHRASE }}
         run: python3 tools/release_publish.py refresh

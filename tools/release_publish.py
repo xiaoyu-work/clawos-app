@@ -13,8 +13,8 @@ import time
 from release import load_plan
 from release_apt import compose, verify_repository
 from release_common import (
-    ROOT, command_environment, compare_versions, config, digest, identity, json_bytes, package_record,
-    relative_path, run, version, work_path, write_json,
+    REPO_SETTINGS_TOKEN, ROOT, command_environment, compare_versions, config, digest, identity, json_bytes,
+    package_record, relative_path, run, version, work_path, write_json,
 )
 from release_signing import Signing
 from release_development import verify_archive
@@ -22,6 +22,7 @@ from release_development import verify_archive
 
 class GitHub:
     def __init__(self):
+        self.settings_token = os.environ.pop(REPO_SETTINGS_TOKEN, None)
         self.settings = config()
         self.repository = self.settings["repository"]
         if os.environ.get("GITHUB_REPOSITORY", self.repository) != self.repository:
@@ -38,13 +39,21 @@ class GitHub:
         if data is not None:
             arguments.extend(["--input", "-"])
             payload = json_bytes(data)
-        response = run(arguments, input=payload, check=False)
+        settings_read = endpoint == "immutable-releases" and method == "GET"
+        token = self.settings_token if settings_read else None
+        response = run(arguments, input=payload, env={"GH_TOKEN": token} if token else None, check=False)
         parts = re.split(rb"\r?\n\r?\n", response.stdout, maxsplit=1)
         status = re.match(rb"HTTP/\S+\s+([0-9]{3})", parts[0])
         if not status or len(parts) != 2:
             raise ValueError("GitHub transport failed; no authenticated HTTP response")
         code = int(status[1])
         if code not in allowed or (response.returncode and code < 400):
+            if settings_read and code in (401, 403):
+                raise ValueError(
+                    f"GitHub could not read immutable-release settings (HTTP {code}). "
+                    f"Configure {REPO_SETTINGS_TOKEN} in the app-release environment with "
+                    f"Administration: read access to {self.repository}."
+                )
             raise ValueError(f"GitHub {method} {endpoint} failed with HTTP {code}")
         return code, json.loads(parts[1]) if parts[1].strip() else None
 

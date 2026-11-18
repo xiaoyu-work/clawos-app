@@ -189,6 +189,7 @@ jobs:
       - name: Publish immutable assets and verify the retained App APT snapshot
         env:
           GH_TOKEN: ${{ github.token }}
+          CLAW_APPS_REPO_SETTINGS_TOKEN: ${{ secrets.CLAW_APPS_REPO_SETTINGS_TOKEN }}
           CLAW_APPS_APT_SIGNING_PRIVATE_KEY: ${{ secrets.CLAW_APPS_APT_SIGNING_PRIVATE_KEY }}
           CLAW_APPS_APT_SIGNING_PASSPHRASE: ${{ secrets.CLAW_APPS_APT_SIGNING_PASSPHRASE }}
           INITIALIZE: ${{ inputs.initialize }}
@@ -198,7 +199,7 @@ jobs:
           PROVENANCE_PUBLISHER: ${{ vars.CLAW_APPS_PROVENANCE_PUBLISHER_JSON }}
           CLAW_APPS_PROVENANCE_SIGNING_PRIVATE_KEY: ${{ secrets.CLAW_APPS_PROVENANCE_SIGNING_PRIVATE_KEY }}
         run: |
-          python3 - <<'PY'
+          env -u CLAW_APPS_REPO_SETTINGS_TOKEN python3 - <<'PY'
           import json, os, re
           from pathlib import Path
           import sys

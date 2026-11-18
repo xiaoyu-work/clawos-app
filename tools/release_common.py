@@ -8,8 +8,10 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
+REPO_SETTINGS_TOKEN = "CLAW_APPS_REPO_SETTINGS_TOKEN"
 SECRET_ENV = {
     "CLAW_APPS_APT_SIGNING_PRIVATE_KEY", "CLAW_APPS_APT_SIGNING_PASSPHRASE",
+    REPO_SETTINGS_TOKEN,
 }
 
 
