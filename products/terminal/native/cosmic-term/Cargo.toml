@@ -74,6 +74,8 @@ password_manager = ["secret-service", "thiserror", "secstr"]
 inherits = "release"
 debug = true
 
+[patch."https://github.com/jackpot51/trash-rs.git"]
+trash = { git = "https://github.com/Byron/trash-rs.git", rev = "a225f753a88e722aeeb27bb2fb00144739911035" }
 
 #[patch.'https://github.com/pop-os/libcosmic']
 #libcosmic = { path = "../libcosmic" }

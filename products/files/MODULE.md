@@ -26,6 +26,9 @@ The source move preserves `fs` and `docs`, their manifests, runtime behavior
 and installed paths. Shared helpers come from App-owned
 [`shared/python`](../../shared/MODULE.md); SDK/runtime remain immutable platform
 dependencies.
+Files, Editor, and Terminal resolve the same pinned `trash` commit
+`a225f753a88e722aeeb27bb2fb00144739911035` from `Byron/trash-rs` after the
+original fork became unavailable. Only the source location changes.
 No App-to-App calls or duplicated OS services are introduced. Native source
 ownership is complete, but the existing UI hot paths, settings and metadata
 remain separate from MCP data. GUI mutations inherit their launch session;

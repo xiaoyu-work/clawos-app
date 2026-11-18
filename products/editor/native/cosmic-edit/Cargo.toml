@@ -75,6 +75,9 @@ debug = true
 [workspace]
 # Opt out of repo-root workspace; this crate has its own dependency graph.
 
+[patch."https://github.com/jackpot51/trash-rs.git"]
+trash = { git = "https://github.com/Byron/trash-rs.git", rev = "a225f753a88e722aeeb27bb2fb00144739911035" }
+
 # [patch.'https://github.com/pop-os/libcosmic']
 # libcosmic = { git = "https://github.com/pop-os/libcosmic//" }
 # cosmic-config = { git = "https://github.com/pop-os/libcosmic//" }
