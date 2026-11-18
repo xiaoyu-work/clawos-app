@@ -69,7 +69,7 @@
       {
         "verb": "desktop.launch",
         "scope": {"kind": "wild"},
-        "why": {"en": "Launch an installed application only when the OS delegated its exact application ID."}
+        "why": {"en": "Ask Claw OS to confirm one launch of the exact signed application you select."}
       },
       {
         "verb": "sys.power",

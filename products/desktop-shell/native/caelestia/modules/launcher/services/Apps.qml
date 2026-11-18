@@ -18,6 +18,8 @@ Searcher {
             return;
         }
         launcher.appId = entry.id;
+        launcher.submitted = false;
+        launcher.failure = "";
         launcher.pending = true;
         launcher.running = true;
     }
@@ -80,36 +82,32 @@ Searcher {
 
         property string appId
         property bool pending: false
+        property bool submitted: false
+        property string failure
 
-        command: ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_control.py"), "launch", "--app-id", appId]
-        stdout: StdioCollector {
-            id: launchOutput
+        command: ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_menu.py"), appId]
+        stdout: SplitParser {
+            onRead: line => {
+                try {
+                    const message = JSON.parse(line);
+                    if (typeof message?.review_id === "string")
+                        Toaster.toast(Tr.tr("Launch review %1").arg(message.review_id), Tr.tr("Approve once in Claw OS reviews."), "hourglass_top");
+                    else if (message?.submitted === true)
+                        launcher.submitted = true;
+                    else if (typeof message?.error === "string")
+                        launcher.failure = message.error.slice(0, 1024);
+                } catch (_error) {
+                    launcher.failure = Tr.tr("The launch service returned an invalid response.");
+                }
+            }
         }
 
         onExited: exitCode => {
             pending = false;
-            let response;
-            try {
-                response = JSON.parse(launchOutput.text);
-            } catch (error) {
-                Toaster.toast(Tr.tr("Could not launch application"), Tr.tr("The launch service returned an invalid response."), "error");
-                return;
-            }
-            if (response === null || typeof response !== "object" || typeof response.ok !== "boolean") {
-                Toaster.toast(Tr.tr("Could not launch application"), Tr.tr("The launch service returned an invalid response."), "error");
-                return;
-            }
-            if (exitCode === 0 && response.ok === true)
-                appDb.incrementFrequency(appId);
+            if (exitCode === 0 && submitted)
+                Toaster.toast(Tr.tr("Application launch requested"), Tr.tr("If the App needs its own permissions, review them in Claw OS."), "open_in_new");
             else
-                Toaster.toast(Tr.tr("Could not launch application"), String(response.error ?? Tr.tr("The launch request was not confirmed.")).slice(0, 1024), "error");
-        }
-
-        onRunningChanged: {
-            if (pending && !running) {
-                pending = false;
-                Toaster.toast(Tr.tr("Could not launch application"), Tr.tr("The launch service could not be started."), "error");
-            }
+                Toaster.toast(Tr.tr("Could not launch application"), failure || Tr.tr("The OS did not confirm the launch request."), "error");
         }
     }
 }

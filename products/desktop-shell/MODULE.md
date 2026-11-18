@@ -8,7 +8,7 @@ native UI extensions, its bundled Quickshell engine and presentation resources
 together. The engine is not an OS shared runtime.
 
 The product declares the GUI-only `desktop-shell` App and its CMake native
-payload. It is not yet the activated desktop session.
+payload. The OS admits it as the shell of an authenticated login.
 The source and native producer are available, but `release: false` excludes
 this App from Debian release plans and package sets until its target ABI and
 authenticated launch are qualified. `native/qt.lock.json` pins Qt 6.12.0 and
@@ -39,6 +39,7 @@ Claw runtime integration.
 | `native/quickshell/` | Complete LGPL engine source, bundled with this App |
 | `native/quickshell/src/main.cpp` | Common-Host GUI selector and read-only resource adapter |
 | `native/caelestia/utils/scripts/desktop_control.py` | Closed desktop state and actions through the published SDK/kernel transport |
+| `native/caelestia/utils/scripts/desktop_menu.py` | One reviewed menu selection through the private GUI broker |
 
 Managed GUI mode accepts only `--gui` and requires the Host's absolute
 `COS_APP_RESOURCE_DIR`. It selects the bundled shell and QML modules there,
@@ -56,15 +57,14 @@ Replacing the visual shell must not replace those services with upstream
 notification history, raw system commands or a second permission mechanism.
 Ordinary Apps do not need to be rewritten in QML.
 
-The launcher reads the public desktop catalogue but never executes its command
-strings or a configured terminal directly. It sends one exact AppID to the OS
-desktop service through the published SDK and the fixed `cos` binary. The
-selected GUI still needs the ordinary exact `desktop.launch` grant. The
-optional declaration borrows only exact AppIDs already delegated by the
-launcher; no delegated AppIDs means the shell still starts and the OS
-denies launches. A click and a catalogue entry are not grants.
-Denied or indeterminate requests have no raw-execution fallback or automatic
-retry. Launch frequency changes only after the broker confirms the request.
+The launcher reads the public desktop catalogue and sends one AppID through
+`utils/scripts/desktop_menu.py` to its private GUI broker via the fixed `cos`
+binary. Each click requests an independent `desktop.launch` decision for
+the signed target in this login. The Shell displays the OS review ID; it
+does not decide, grant, or broaden permissions. The completed one-use
+decision schedules the ordinary target App launch with separate admission
+checks. A submission does not prove a window appeared. Denial or uncertainty
+has no raw-execution fallback or automatic repeat.
 
 The notification drawer and popups consume the common Host's leased
 `notifications.presentation` resource through the fixed SDK client. The
