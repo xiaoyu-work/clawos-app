@@ -100,6 +100,15 @@ The unlocked session's Logout action exits this shell. The authenticated OS
 session subscriber observes that exit and lets PAM retire the exact display
 session. The App does not need authority to terminate a Linux user.
 
+Power actions use the existing OS service through `utils/scripts/power_control.py`.
+The unlocked session drawer requires a separate confirmation and the optional
+`sys.power` grant; it does not report dispatch as completed shutdown or sleep.
+The default login does not delegate `sys.power`, so its power controls stay
+disabled until there is an OS-approved grant.
+Launcher power shortcuts open that confirmation instead of running a command.
+The lock screen offers no power actions, and the battery monitor warns
+without sending automatic hibernation requests.
+
 Any later launch/payload integration must use the repository's existing
 native App packaging and public SDK/runtime contracts. The original source
 licenses, notices, file modes and resources must remain available.
@@ -175,7 +184,9 @@ An earlier Ubuntu preview loaded Caelestia and Material Shapes without global
 resource activation; that preview used the Ubuntu ABI and is not the Debian
 artifact. In a separate Debian 13 KVM guest, a locally signed App rendered
 inside the ordinary GUI Host after actual greetd/PAM login and owner review.
-The icon font was staged after that run. Ordinary App launch, checked Logout,
-and release acceptance are separate gates and remain unverified.
+The guest rendered the bundled icons, ran a separately signed Editor via an
+owner shortcut, and confirmed checked Logout with both Apps open. With no
+power grant, clicking Shutdown sent no request. The default launcher,
+authorized power effects and release acceptance remain unverified.
 Each native component owns a freshly cleared build-staging directory, so an
 incremental build cannot retain deleted presentation resources or helpers.

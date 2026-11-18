@@ -4,7 +4,6 @@ import Quickshell.Services.UPower
 import Caelestia
 import Caelestia.Config
 import Caelestia.I18n
-import Caelestia.Services
 
 Scope {
     id: root
@@ -29,9 +28,9 @@ Scope {
             }
         }
 
-        if (!hibernateTimer.running && p <= GlobalConfig.general.battery.criticalLevel) {
-            Toaster.toast(Tr.tr("Hibernating in 5 seconds"), Tr.tr("Hibernating to prevent data loss"), "battery_android_alert", Toast.Error);
-            hibernateTimer.start();
+        const critical = GlobalConfig.general.battery.criticalLevel;
+        if (root.lastPercentage > critical && p <= critical) {
+            Toaster.toast(Tr.tr("Battery critically low"), Tr.tr("Plug in the charger to prevent data loss."), "battery_android_alert", Toast.Error);
         }
 
         root.lastPercentage = p;
@@ -74,12 +73,5 @@ Scope {
         }
 
         target: UPower.displayDevice
-    }
-
-    Timer {
-        id: hibernateTimer
-
-        interval: 5000
-        onTriggered: SessionManager.hibernate()
     }
 }

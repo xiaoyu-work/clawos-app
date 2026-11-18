@@ -29,6 +29,7 @@ Singleton {
     readonly property bool routeAudio: hasOptionalNeed(3)
     readonly property bool observeBrightness: hasOptionalNeed(4)
     readonly property bool controlBrightness: hasOptionalNeed(5)
+    readonly property bool controlPower: hasOptionalNeed(7)
 
     function hasOptionalNeed(index: int): bool {
         return root.ungrantedOptionalNeeds !== null && !root.ungrantedOptionalNeeds.includes(index);

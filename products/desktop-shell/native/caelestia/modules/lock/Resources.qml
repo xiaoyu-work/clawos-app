@@ -2,13 +2,10 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import M3Shapes
 import Caelestia.Config
-import Caelestia.I18n
 import Caelestia.Services
 import qs.components
-import qs.components.controls
 import qs.components.effects
 import qs.components.widgets
 import qs.services
@@ -17,7 +14,6 @@ import qs.utils
 StyledRect {
     id: root
 
-    readonly property bool sessionControlsShown: GlobalConfig.lock.enableSessionControls && hover.hovered
     readonly property real fontScale: {
         const diff = width / 391 - 1; // 391 is the width at 1080 height screen
         return 1 + Math.pow(Math.abs(diff), 0.8) * Math.sign(diff);
@@ -39,12 +35,6 @@ StyledRect {
         service: Storage
     }
 
-    HoverHandler {
-        id: hover
-
-        enabled: GlobalConfig.lock.enableSessionControls
-    }
-
     Item {
         anchors.fill: parent
         clip: true
@@ -53,39 +43,12 @@ StyledRect {
             anchors.fill: parent
             anchors.margins: Tokens.padding.large
 
-            Translate {
-                id: resourcesTranslate
-
-                y: root.sessionControlsShown ? root.height : 0
-
-                Behavior on y {
-                    Anim {}
-                }
-            }
-
-            Translate {
-                id: buttonsTranslate
-
-                y: root.sessionControlsShown ? 0 : -root.height
-
-                Behavior on y {
-                    Anim {}
-                }
-            }
-
             RowLayout {
                 id: layout
 
                 anchors.left: parent.left
                 anchors.right: parent.right
                 spacing: Tokens.spacing.large
-
-                transform: resourcesTranslate
-                opacity: root.sessionControlsShown ? 0 : 1
-
-                Behavior on opacity {
-                    Anim {}
-                }
 
                 Resource {
                     id: cpu
@@ -146,61 +109,7 @@ StyledRect {
                     shape: MaterialShape.Gem
                 }
             }
-
-            RowLayout {
-                id: buttonsLayout
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.margins: Tokens.padding.large
-                spacing: Tokens.spacing.large
-
-                transform: buttonsTranslate
-                opacity: root.sessionControlsShown ? 1 : 0
-
-                Behavior on opacity {
-                    Anim {}
-                }
-
-                SessionButton {
-                    icon: Config.session.icons.logout
-                    command: Config.session.commands.logout
-                }
-                SessionButton {
-                    icon: Config.session.icons.shutdown
-                    command: Config.session.commands.shutdown
-                }
-                SessionButton {
-                    icon: Config.session.icons.hibernate
-                    command: Config.session.commands.hibernate
-                }
-                SessionButton {
-                    icon: Config.session.icons.reboot
-                    command: Config.session.commands.reboot
-                }
-            }
         }
-    }
-
-    component SessionButton: IconButton {
-        id: button
-
-        required property list<string> command
-
-        function exec(): void {
-            if (!SessionManager.exec(command))
-                Quickshell.execDetached(command);
-        }
-
-        Layout.fillWidth: true
-        Layout.preferredHeight: width
-
-        inactiveColour: activeFocus ? Colours.palette.m3secondaryContainer : Colours.tPalette.m3surfaceContainerHigh
-        inactiveOnColour: activeFocus ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurface
-        radius: pressed ? Tokens.rounding.medium : activeFocus ? Tokens.rounding.extraLarge : Tokens.rounding.largeIncreased
-        font: Tokens.font.icon.builders.large.scale(root.fontScale * 1.3).build()
-        onClicked: exec()
     }
 
     component Resource: Item {

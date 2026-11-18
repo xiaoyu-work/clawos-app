@@ -11,6 +11,13 @@ PersistentProperties {
     property bool dashboard
     property bool utilities
     property bool sidebar
+    property string powerConfirmation
+
+    onSessionChanged: {
+        if (!session)
+            powerConfirmation = "";
+    }
+    onReloaded: powerConfirmation = ""
 
     // Dashboard state
     property int dashboardTab
