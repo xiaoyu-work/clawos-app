@@ -49,6 +49,7 @@ Outside GUI mode, the original CLI remains available for source development.
 
 The OS retains the Agent, authenticated display/session lifetime, compositor
 enforcement, App Host, capability decisions and authoritative system state.
+The bundled Quickshell build does not provide a separate polkit agent.
 Replacing the visual shell must not replace those services with upstream
 notification history, raw system commands or a second permission mechanism.
 Ordinary Apps do not need to be rewritten in QML.

@@ -78,6 +78,7 @@ ExternalProject_Add(desktop-engine
         -DX11=OFF
         -DI3=OFF
         -DHYPRLAND_IPC=OFF
+        -DSERVICE_POLKIT=OFF
         -DBUILD_TESTING=OFF
         -DVENDOR_CPPTRACE=ON
         -DCPPTRACE_USE_EXTERNAL_ZSTD=ON
