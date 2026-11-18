@@ -74,7 +74,7 @@
       {
         "verb": "sys.power",
         "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
-        "why": {"en": "Request shutdown, restart, or sleep through the OS power service after you confirm the action."}
+        "why": {"en": "Ask Claw OS to confirm one exact shutdown, restart, or sleep action."}
       }
     ]
   }

@@ -10,34 +10,46 @@ import Caelestia.I18n
 Singleton {
     id: root
 
-    readonly property bool available: ShellState.controlPower
     readonly property bool busy: effect.running
 
-    function prompt(action: string): string {
-        switch (action) {
-        case "poweroff": return Tr.tr("Shut down this computer?");
-        case "reboot": return Tr.tr("Restart this computer?");
-        case "hibernate": return Tr.tr("Hibernate this computer?");
-        case "suspend": return Tr.tr("Put this computer to sleep?");
-        case "suspend-then-hibernate": return Tr.tr("Put this computer to sleep, then hibernate?");
-        default: return "";
-        }
+    function supports(action: string): bool {
+        return ["poweroff", "reboot", "hibernate", "suspend", "suspend-then-hibernate"].includes(action);
     }
 
     function request(action: string): void {
-        if (!available || busy || prompt(action) === "")
+        if (busy || !supports(action))
             return;
-        effect.command = ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/power_control.py"), action];
+        effect.submitted = false;
+        effect.failure = "";
+        effect.command = ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_review.py"), "power", action];
         effect.running = true;
     }
 
     Process {
         id: effect
 
-        stdout: StdioCollector { id: reply }
+        property bool submitted: false
+        property string failure
+
+        stdout: SplitParser {
+            onRead: line => {
+                try {
+                    const message = JSON.parse(line);
+                    if (typeof message?.review_id === "string")
+                        Toaster.toast(Tr.tr("Power review %1").arg(message.review_id), Tr.tr("Approve once in Claw OS reviews."), "hourglass_top");
+                    else if (message?.submitted === true)
+                        effect.submitted = true;
+                    else if (typeof message?.error === "string")
+                        effect.failure = message.error.slice(0, 1024);
+                } catch (_error) {
+                    effect.failure = Tr.tr("The power service returned an invalid response.");
+                }
+            }
+        }
+
         onExited: exitCode => {
-            if (exitCode !== 0 || reply.text.trim() !== "requested")
-                Toaster.toast(Tr.tr("Power request not confirmed"), Tr.tr("The OS did not confirm the requested power action."), "error");
+            if (exitCode !== 0 || !submitted)
+                Toaster.toast(Tr.tr("Power request not confirmed"), failure || Tr.tr("The OS did not confirm the requested power action."), "error");
         }
     }
 }

@@ -39,7 +39,7 @@ Claw runtime integration.
 | `native/quickshell/` | Complete LGPL engine source, bundled with this App |
 | `native/quickshell/src/main.cpp` | Common-Host GUI selector and read-only resource adapter |
 | `native/caelestia/utils/scripts/desktop_control.py` | Closed desktop state and actions through the published SDK/kernel transport |
-| `native/caelestia/utils/scripts/desktop_menu.py` | One reviewed menu selection through the private GUI broker |
+| `native/caelestia/utils/scripts/desktop_review.py` | One reviewed menu selection or power action through the private GUI broker |
 
 Managed GUI mode accepts only `--gui` and requires the Host's absolute
 `COS_APP_RESOURCE_DIR`. It selects the bundled shell and QML modules there,
@@ -58,7 +58,7 @@ notification history, raw system commands or a second permission mechanism.
 Ordinary Apps do not need to be rewritten in QML.
 
 The launcher reads the public desktop catalogue and sends one AppID through
-`utils/scripts/desktop_menu.py` to its private GUI broker via the fixed `cos`
+`utils/scripts/desktop_review.py` to its private GUI broker via the fixed `cos`
 binary. Each click requests an independent `desktop.launch` decision for
 the signed target in this login. The Shell displays the OS review ID; it
 does not decide, grant, or broaden permissions. The completed one-use
@@ -100,12 +100,12 @@ The unlocked session's Logout action exits this shell. The authenticated OS
 session subscriber observes that exit and lets PAM retire the exact display
 session. The App does not need authority to terminate a Linux user.
 
-Power actions use the existing OS service through `utils/scripts/power_control.py`.
-The unlocked session drawer requires a separate confirmation and the optional
-`sys.power` grant; it does not report dispatch as completed shutdown or sleep.
-The default login does not delegate `sys.power`, so its power controls stay
-disabled until there is an OS-approved grant.
-Launcher power shortcuts open that confirmation instead of running a command.
+Power buttons and launcher power actions ask the existing OS service to
+review the selected action through the private GUI broker. The Shell shows
+the review ID; only the trusted OS review can authorize the effect once. The
+default login does not delegate `sys.power`, and this review does not grant
+it for other actions. The Shell does not report dispatch as completed
+shutdown or sleep.
 The lock screen offers no power actions, and the battery monitor warns
 without sending automatic hibernation requests.
 

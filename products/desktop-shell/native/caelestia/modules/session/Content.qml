@@ -4,7 +4,6 @@ import QtQuick
 import Quickshell
 import Caelestia
 import Caelestia.Config
-import Caelestia.I18n
 import qs.components
 import qs.components.controls
 import qs.services
@@ -14,13 +13,6 @@ Column {
     id: root
 
     required property ScreenState screenState
-
-    readonly property string powerPrompt: Power.prompt(screenState.powerConfirmation)
-
-    function dismissPowerPrompt(): void {
-        screenState.powerConfirmation = "";
-        logout.forceActiveFocus();
-    }
 
     padding: Tokens.padding.large
     rightPadding: CUtils.clamp(padding - Config.border.thickness, 0, padding)
@@ -91,65 +83,20 @@ Column {
         KeyNavigation.up: hibernate
     }
 
-    Column {
-        visible: root.screenState.session && root.powerPrompt !== ""
-        spacing: Tokens.spacing.small
-        onVisibleChanged: {
-            if (visible)
-                cancelPower.forceActiveFocus();
-        }
-
-        StyledText { text: root.powerPrompt }
-
-        Row {
-            spacing: Tokens.spacing.small
-
-            TextButton {
-                id: cancelPower
-
-                text: Tr.tr("Cancel")
-                onClicked: root.dismissPowerPrompt()
-                Keys.onPressed: event => {
-                    if ([Qt.Key_Return, Qt.Key_Enter, Qt.Key_Escape].includes(event.key)) {
-                        root.dismissPowerPrompt();
-                        event.accepted = true;
-                    }
-                }
-                KeyNavigation.right: confirmPower
-                KeyNavigation.tab: confirmPower
-            }
-
-            TextButton {
-                id: confirmPower
-
-                text: Tr.tr("Confirm")
-                enabled: Power.available && !Power.busy
-                onClicked: {
-                    Power.request(root.screenState.powerConfirmation);
-                    root.dismissPowerPrompt();
-                }
-                Keys.onReturnPressed: clicked()
-                Keys.onEnterPressed: clicked()
-                Keys.onEscapePressed: root.dismissPowerPrompt()
-                KeyNavigation.left: cancelPower
-                KeyNavigation.backtab: cancelPower
-            }
-        }
-    }
-
     component SessionButton: IconButton {
         id: button
 
         property string powerAction
         property bool closesSession: false
-        enabled: closesSession || (Power.available && !Power.busy)
+        enabled: closesSession || !Power.busy
         disabled: !enabled
 
         function exec(): void {
             if (closesSession) {
                 Qt.quit();
             } else if (enabled) {
-                root.screenState.powerConfirmation = powerAction;
+                Power.request(powerAction);
+                root.screenState.session = false;
             }
         }
 

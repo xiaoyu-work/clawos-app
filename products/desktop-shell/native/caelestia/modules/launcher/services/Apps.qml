@@ -85,7 +85,7 @@ Searcher {
         property bool submitted: false
         property string failure
 
-        command: ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_menu.py"), appId]
+        command: ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_review.py"), "launch", appId]
         stdout: SplitParser {
             onRead: line => {
                 try {

@@ -33,7 +33,7 @@ Searcher {
     function powerAction(action: string): string {
         if (action === "suspendThenHibernate")
             return "suspend-then-hibernate";
-        return Power.prompt(action) === "" ? "" : action;
+        return Power.supports(action) ? action : "";
     }
 
     function supports(command: list<string>): bool {
@@ -42,7 +42,7 @@ Searcher {
         if (command[0] === "logout")
             return command.length === 1 && Config.session.enabled;
         if (powerAction(command[0]) !== "")
-            return command.length === 1 && Config.session.enabled && Power.available;
+            return command.length === 1 && Config.session.enabled;
         return true;
     }
 
@@ -65,10 +65,12 @@ Searcher {
             } else if (command[0] === "setMode" && command.length > 1) {
                 list.screenState.launcher = false;
                 Colours.setMode(command[1]);
-            } else if (command[0] === "logout" || power !== "") {
+            } else if (command[0] === "logout") {
                 list.screenState.launcher = false;
                 list.screenState.session = true;
-                list.screenState.powerConfirmation = power;
+            } else if (power !== "") {
+                list.screenState.launcher = false;
+                Power.request(power);
             } else {
                 list.screenState.launcher = false;
                 Quickshell.execDetached(command);
