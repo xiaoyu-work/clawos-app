@@ -100,8 +100,10 @@ already been published or that every physical device has been exercised.
 
 App release CI builds selected independently versioned Debian packages. OS
 images and installed systems consume named packages from the separately signed
-App APT channel, not product source copied into an OS package. Existing installed
-App paths, exact identities, grants and vendor provenance checks remain intact.
+App APT channel, not product source copied into an OS package. Desktop Shell
+is a signed build input to `claw-os-desktop`, not a separate Debian package.
+Existing installed App paths, exact identities, grants and publisher
+provenance checks remain intact.
 The OS still owns privileged package transactions and its security-floor gates;
 there is no second privileged updater. Pinned product sources may still serve
 explicit cross-repository fixtures, never installed-system update code.

@@ -9,9 +9,10 @@ together. The engine is not an OS shared runtime.
 
 The product declares the GUI-only `desktop-shell` App and its CMake native
 payload. The OS admits it as the shell of an authenticated login.
-The source and native producer are available, but `release: false` excludes
-this App from Debian release plans and package sets until its target ABI and
-authenticated launch are qualified. `native/qt.lock.json` pins Qt 6.12.0 and
+`release: false` excludes it from independent App Debian and Store releases.
+Once its target ABI and authenticated launch are qualified, the separate
+Desktop Shell build workflow supplies the signed payload embedded in
+`claw-os-desktop`. `native/qt.lock.json` pins Qt 6.12.0 and
 its published corrections. The unified CMake build compiles those sources
 against the build host's ABI and uses them for every native child. Release
 payloads must be built on Debian 13, not the Ubuntu preview environment.

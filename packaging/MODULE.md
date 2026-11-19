@@ -18,6 +18,9 @@ construction or a privileged updater.
 - `../tools/release.py` builds exact kinded App payloads as real Debian packages;
   `release_apt.py` retains and authenticates the complete repository;
   `release_publish.py` handles immutable Releases, state commits and refresh.
+- `../tools/release_desktop_shell.py` builds and signs the Desktop Shell
+  archive consumed by `claw-os-desktop`. It uses the same App publisher and
+  native payload tools but creates no App APT or Store entry.
 - `../tools/native_payload.py` consumes original native installer output,
   prepares complete package-local App executables/resources/licenses and emits
   only common-Host compatibility launchers. Its unsigned preparation is input

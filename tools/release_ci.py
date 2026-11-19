@@ -51,14 +51,19 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=["test", "build"])
     parser.add_argument("--plan", type=Path)
+    parser.add_argument("--desktop-shell", action="store_true", help="Provision the OS Desktop Shell build")
     parser.add_argument("--architecture", choices=["all", "amd64", "arm64"], default="all")
     options = parser.parse_args()
+    if options.desktop_shell and (options.plan or options.mode != "build" or options.architecture == "all"):
+        parser.error("--desktop-shell requires a native build without an App APT plan")
     if os.environ.get("GITHUB_ACTIONS") != "true":
         raise ValueError("CI provisioning is forbidden on a developer's host")
     scratch = ROOT / "build/ci-work"
     scratch.mkdir(parents=True, exist_ok=True)
     environment = {**os.environ, "TMPDIR": str(scratch), "DEBIAN_FRONTEND": "noninteractive"}
-    plan = load_plan(options.plan) if options.plan else {"selections": []}
+    plan = load_plan(options.plan) if options.plan else {
+        "selections": ["desktop-shell"] if options.desktop_shell else [],
+    }
     sources = next((path for path in [
         Path("/etc/apt/sources.list.d/debian.sources"),
         Path("/etc/apt/sources.list.d/ubuntu.sources"),

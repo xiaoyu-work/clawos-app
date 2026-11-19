@@ -1,0 +1,89 @@
+name: Release Desktop Shell build inputs
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Approved Desktop Shell artifact version (MAJOR.MINOR.PATCH)"
+        required: true
+        type: string
+      provenance_cli_url:
+        description: "Owner-approved published amd64 cos provenance CLI URL"
+        required: true
+        type: string
+      provenance_cli_sha256:
+        description: "Exact SHA256 of that public signing tool"
+        required: true
+        type: string
+      publisher_key_id:
+        description: "Trusted App package Ed25519 publisher key ID (sha256:...)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-shell-publication
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ${{ matrix.runner }}
+    container: debian:trixie
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: amd64
+            runner: ubuntu-24.04
+          - architecture: arm64
+            runner: ubuntu-24.04-arm
+    env:
+      ARCHITECTURE: ${{ matrix.architecture }}
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - run: apt-get update -qq && apt-get install --no-install-recommends -y git ca-certificates python3
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: python3 tools/release_ci.py build --desktop-shell --architecture "$ARCHITECTURE"
+      - run: python3 tools/release_desktop_shell.py build --architecture "$ARCHITECTURE" --version "$RELEASE_VERSION"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-shell-input-${{ matrix.architecture }}
+          path: build/desktop-shell-release/unsigned-${{ matrix.architecture }}.tar.gz
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment: app-release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-shell-input-*
+          path: build/desktop-shell-release
+          merge-multiple: true
+      - name: Seal both native builds with the existing App publisher
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLAW_APPS_REPO_SETTINGS_TOKEN: ${{ secrets.CLAW_APPS_REPO_SETTINGS_TOKEN }}
+          CLAW_APPS_PROVENANCE_SIGNING_PRIVATE_KEY: ${{ secrets.CLAW_APPS_PROVENANCE_SIGNING_PRIVATE_KEY }}
+          PROVENANCE_PUBLISHER: ${{ vars.CLAW_APPS_PROVENANCE_PUBLISHER_JSON }}
+          PROVENANCE_URL: ${{ inputs.provenance_cli_url }}
+          PROVENANCE_SHA256: ${{ inputs.provenance_cli_sha256 }}
+          PROVENANCE_KEY_ID: ${{ inputs.publisher_key_id }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          export HOME="$(mktemp -d "$RUNNER_TEMP/desktop-shell-sign.XXXXXX")"
+          python3 tools/release_desktop_shell.py publish --version "$RELEASE_VERSION" \
+            --cos-url "$PROVENANCE_URL" --cos-sha256 "$PROVENANCE_SHA256" \
+            --publisher-key-id "$PROVENANCE_KEY_ID"

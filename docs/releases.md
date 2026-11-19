@@ -413,7 +413,6 @@ package catalog from each explicitly kinded `package.json`:
 | `claw-cap-<group>` | Explicit shared-capability client identities |
 | `claw-app-support` | App-owned `_shared`, `gateway._shared` and `canonical_argv` under `/usr/lib/cos/python` |
 | `claw-apps-agent` | Recommended headless set: 51 identities, their libraries and capability clients |
-| `claw-apps-desktop` | Recommended graphical set, including the headless set and twelve native identities |
 
 Native-only products such as Editor and Capture have only a `-desktop` package;
 installers should use the package catalog rather than assume a headless alias.
@@ -508,15 +507,29 @@ compatibility boundary advances from `1:0.2.0` to `1:0.2.1`. The OS's signed-cha
 bootstrap/cutover guard must prove the App channel and required packages are
 available before removing old bundled payloads.
 
-OS Agent now recommends `claw-apps-agent`; Desktop recommends
-`claw-apps-desktop`. Neither is a circular hard dependency from Agent to its
-App consumers. Bootstrap publishes the approved SDK artifact and independent
-App APT packages first, then the payload-free Agent/OS packages. OS release
+OS Agent recommends `claw-apps-agent`; Desktop depends on the headless set,
+the independent graphical packages and Mail's Thunderbird integration.
+`sets` builds only `claw-apps-agent`. Historical `claw-apps-desktop` tuples
+remain in immutable Releases and the retained App APT/Store inventory, but
+new Desktop packages do not use them. Bootstrap publishes the approved SDK
+artifact and independent App APT packages first, then the OS packages. OS release
 preparation authenticates the App APT indexes and complete selected package
 closure, preserving exact matching native/headless versions. Missing, stale,
 incomplete or altered artifacts block the build; source fixtures are not a
 fallback. Image composition installs the same checked App `.deb` bytes as
 separate dpkg owners in the ordinary transaction.
+
+### Desktop Shell build input
+
+The GUI-only `desktop-shell` is included in `claw-os-desktop`, not published
+as an App `.deb` or offered by the Store. After native and authenticated
+desktop acceptance, dispatch **Release Desktop Shell build inputs** with an
+approved version and the same public provenance CLI/publisher pins used for
+App releases. The workflow builds on Debian 13 for both architectures,
+signs the App, private resources and Debian dependency metadata in the
+protected `app-release` job, and publishes two archives under an immutable
+`desktop-shell-v<version>` tag. It does not update the App APT/Store channel.
+The OS release freezes and verifies that exact build before embedding it.
 
 The OS shell no longer links Calendar/Clipboard/Widget Rail UI or
 Notifications-private config/util. App packages retain the original panel

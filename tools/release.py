@@ -73,9 +73,8 @@ def packages_for(selection):
         return [{"package": "claw-app-support", "variant": "support", "architecture": "all",
                  "selection": selection, "apps": []}]
     if selection == "sets":
-        return [{"package": settings[key], "variant": variant, "architecture": "all",
-                 "selection": selection, "apps": []}
-                for key, variant in (("headless_set", "agent"), ("desktop_set", "desktop"))]
+        return [{"package": settings["headless_set"], "variant": "agent", "architecture": "all",
+                 "selection": selection, "apps": []}]
     kind, name = source_selection(selection)
     source, package = stage.load_package(name, kind)
     if package.get("release") is False:
@@ -142,11 +141,9 @@ def dependencies(entry, release_version):
         other = [
             item["package"]
             for selected in selections("all") if selected not in ("support", "sets")
-            for item in packages_for(selected) if item["variant"] == variant
+            for item in packages_for(selected) if item["variant"] == "agent"
         ]
-        return sorted(set(["claw-app-support", *other] + (
-            [settings["headless_set"]] if variant == "desktop" else []
-        )))
+        return sorted(set(["claw-app-support", *other]))
     result = [settings["runtime_dependency"], "python3 (>= 3.11)"]
     if selection == "support":
         return [*result, "python3-idna (>= 3.3)", "python3-idna (<< 4)"]
@@ -288,41 +285,47 @@ def native_payload(root, entry):
     ], check=True, cwd=ROOT)
     native_plan = native_apps.plan(name) if "native_payload" in package else None
     binary_root = root / native_plan.installed_app / "bin" if native_plan else root / "usr/bin"
-    binaries = []
-    for path in sorted(binary_root.rglob("*")):
-        if not path.is_file() or path.is_symlink():
-            continue
-        native_apps.validate_elf(path, host)
-        run(["strip", "--strip-unneeded", path])
-        binaries.append(path)
-    if not binaries:
-        raise ValueError("Native installer produced no real executable")
-    private_library_directories = set()
-    private_shlibs = []
-    if native_plan:
-        for relative in native_plan.private_resources:
-            resources = root / native_plan.installed_app / "resources" / relative
-            for path in sorted(resources.rglob("*")):
-                if not path.is_file() or path.is_symlink():
-                    continue
-                with path.open("rb") as stream:
-                    is_elf = stream.read(4) == b"\x7fELF"
-                if is_elf:
-                    run(["strip", "--strip-unneeded", path])
-                    binaries.append(path)
-                    private_library_directories.add(path.parent)
-                    for line in run(["objdump", "-p", path]).stdout.decode().splitlines():
-                        soname = re.fullmatch(r"\s+SONAME\s+([a-zA-Z0-9_+-]+)\.so\.(\d+(?:\.\d+)*)", line)
-                        if soname and path.name == soname[1] + ".so." + soname[2]:
-                            private_shlibs.append(f"{soname[1]} {soname[2]} {entry['package']}")
+    resource_roots = (
+        [root / native_plan.installed_app / "resources" / path for path in native_plan.private_resources]
+        if native_plan else []
+    )
     for manifest in (root / "usr/lib/cos/apps").rglob("app.json"):
         app = json.loads(manifest.read_text())
         if app["runtime"] == "binary":
             if native_plan is None or app["id"] != native_plan.app_id:
                 raise ValueError("Native App manifest has no declared package-local payload")
             native_apps.validate_manifest_entries(manifest.parent, app, native_plan.entrypoints)
+    return scan_native_payload(root, entry["package"], host, binary_root, resource_roots)
+
+
+def scan_native_payload(root, package, architecture, binary_root, resource_roots):
+    binaries = []
+    for path in sorted(binary_root.rglob("*")):
+        if not path.is_file() or path.is_symlink():
+            continue
+        native_apps.validate_elf(path, architecture)
+        run(["strip", "--strip-unneeded", path])
+        binaries.append(path)
+    if not binaries:
+        raise ValueError("Native installer produced no real executable")
+    private_library_directories = set()
+    private_shlibs = []
+    for resources in resource_roots:
+        for path in sorted(resources.rglob("*")):
+            if not path.is_file() or path.is_symlink():
+                continue
+            with path.open("rb") as stream:
+                is_elf = stream.read(4) == b"\x7fELF"
+            if is_elf:
+                run(["strip", "--strip-unneeded", path])
+                binaries.append(path)
+                private_library_directories.add(path.parent)
+                for line in run(["objdump", "-p", path]).stdout.decode().splitlines():
+                    soname = re.fullmatch(r"\s+SONAME\s+([a-zA-Z0-9_+-]+)\.so\.(\d+(?:\.\d+)*)", line)
+                    if soname and path.name == soname[1] + ".so." + soname[2]:
+                        private_shlibs.append(f"{soname[1]} {soname[2]} {package}")
     return scan_native_dependencies(
-        root, entry["package"], binaries, private_library_directories, private_shlibs,
+        root, package, binaries, private_library_directories, private_shlibs,
     )
 
 
