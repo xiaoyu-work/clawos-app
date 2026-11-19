@@ -1,0 +1,3476 @@
+{
+  "apps": [
+    {
+      "app_id": "accessibility-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-ab918f32454a98755ded1a7c381e99b6be38d03672f211156e97c1ae719d19fd.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "ab918f32454a98755ded1a7c381e99b6be38d03672f211156e97c1ae719d19fd",
+        "size": 23751
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e"
+      },
+      "display": {
+        "description": "Control COSMIC magnifier, screen filters, inversion, and AT-SPI screen-reader state",
+        "name": "Accessibility Manager",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "2a84401afb9133cec07fa88b509a0a29f20dcf6ba909d22459ddf858efb9e9f9",
+        "size": 5117
+      },
+      "provenance": {
+        "content_digest": "sha256:472dca9c12e49b756b8884e3fc69f4f168dba5988ac052cdd53e40fa114bdaf5",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "af4f912cce45fcb68fa6e0551f437aad322578f8280baa8f1dbc8f839aa1d7de"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "587e8ff82ba23ce0df2b0b2a89b335582b1e2c119b4f3c6100945a0cba716d5c"
+      }
+    },
+    {
+      "app_id": "audio-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-fc957810c7a551187cc4b21a3a38a7006feb35355c068438fabe296c396e8c26.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "fc957810c7a551187cc4b21a3a38a7006feb35355c068438fabe296c396e8c26",
+        "size": 24386
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e"
+      },
+      "display": {
+        "description": "Control PipeWire and WirePlumber volume, mute, defaults, routes, and profiles",
+        "name": "Audio Manager",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "10a88787487c5476bab54fb04b87fdedc25adda599ae2404d58ab07aad1bedad",
+        "size": 9402
+      },
+      "provenance": {
+        "content_digest": "sha256:750319d0ab30b56982d9301e5d034e45ad08a2ef7a5cba05ae0b56fb97bf7986",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "3e999fb3639f860227d225e0bd2198cabf8629c5b51a98125cb95d61305b57fc"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "0b56cde15c3e22c2a068b0bb972d3aa69f9ddce952af48569f318c4fc105bdea"
+      }
+    },
+    {
+      "app_id": "backup-center",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-ad687a1b64215d80165ee8c7154a66471066c694afe1238120ad1bec0482779a.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "ad687a1b64215d80165ee8c7154a66471066c694afe1238120ad1bec0482779a",
+        "size": 14622
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "3f46c7383a51cdf1438ae0db2a4c596426fa17716797e679a80e18c95431eb75"
+      },
+      "display": {
+        "description": "Create, retain, inspect, forget, and restore local Restic user-data backups",
+        "name": "Backup Center",
+        "source_kind": "product",
+        "source_name": "backup-recovery"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "888af91684a88088fbeb39059db038def6cecaa3e4513382da4eab293f05a8ef",
+        "size": 10668
+      },
+      "provenance": {
+        "content_digest": "sha256:9759893eb71d234d3fea0d62b4f9656683dc598849233c2536cb62aa4c1b87e1",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "708a1bb936b20922d4578d5e969419c3a359e0481a106eb47fafe33559a1a4a3"
+      },
+      "release_tag": "app-backup-recovery-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "af91c02d5c150870f17c7e605c4f495e0adec759786b456faf4d1dc1ba71ce7a"
+      }
+    },
+    {
+      "app_id": "bluetooth-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-42337064ed9e5b70afb38e039b76e732d1b4e80f9b9c1d336c3d920112792c81.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "42337064ed9e5b70afb38e039b76e732d1b4e80f9b9c1d336c3d920112792c81",
+        "size": 25013
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e"
+      },
+      "display": {
+        "description": "Discover, pair, connect, trust, forget, and power BlueZ devices",
+        "name": "Bluetooth Manager",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "7036f4cc0523df80539c74a5229305cee141e275d480eec6e0b10eb48a439655",
+        "size": 12141
+      },
+      "provenance": {
+        "content_digest": "sha256:32908c9263621fdedb916f134fa62ec66bc4511ec72876ce4b63b59019db31d5",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "34f856ed4b89cde0073727ff044024369331a6086c9f03fc4e81cd0d28168920"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "985034a9c6df47adc35f80b642fee3b5faeba8299730bd7f115d2ff128c6a368"
+      }
+    },
+    {
+      "app_id": "browser-attached",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-8fc3aa7a6ba9539c2f8b02cb591c63a0b258e83fae1f022e2c54329a4317cf90.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "8fc3aa7a6ba9539c2f8b02cb591c63a0b258e83fae1f022e2c54329a4317cf90",
+        "size": 17136
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "817005f4436cb9c46eacba1162fa8561d0fc73b39e4fc72c2133bbe4c75e022f"
+      },
+      "display": {
+        "description": "Drive the user's logged-in Chromium tabs through a daemon-authorized Native Messaging bridge",
+        "name": "Browser (attached)",
+        "source_kind": "product",
+        "source_name": "browser"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "236c4d7abb0d04a0456f4aad52b7cf72db9fbd7fd688b510d8f5103cc898c8f3",
+        "size": 13480
+      },
+      "provenance": {
+        "content_digest": "sha256:8f29928fa58c6d35c9d6500657083a0a4a15c3cb4f16f590a62205ac661ed3e0",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "2849be2b2f41fc4ea005e94bf685ca2b29df428f0d8cded421382f82ad7b99c8"
+      },
+      "release_tag": "app-browser-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "312acfd01c78895cc1d0442a7fba6874660f69833ecf96d8c6712012ba4b7c47"
+      }
+    },
+    {
+      "app_id": "calendar",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-89d08b4dee36fa8afdc3cda4008398ca00c03d48f935297aa7010ca7808f7fce.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "89d08b4dee36fa8afdc3cda4008398ca00c03d48f935297aa7010ca7808f7fce",
+        "size": 21642
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "f0f442599acb193a980d75e156d9a5b5efa9aa852922adb58692cdee8d362521"
+      },
+      "display": {
+        "description": "Calendar — local events with optional Google/Outlook sync",
+        "name": "Calendar",
+        "source_kind": "product",
+        "source_name": "calendar"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "bd7287a91d242957c69ff1821c90aa554b2ee2a76040b55bfe407568465b8f29",
+        "size": 64418
+      },
+      "provenance": {
+        "content_digest": "sha256:8e0aa8e734dca5fb0541cb7e4dfdef3ee61d94d4d4354bef4ac5f0f42e52896e",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "5b1c11ae47fe1b4d60195c7501b93e9c77d4d300d7ae55f0b9d4e5c771eecd98"
+      },
+      "release_tag": "app-calendar-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "c110023b970a6dba4e6c43d32959fcdf22a821138235cab297198ecb357dbab4"
+      }
+    },
+    {
+      "app_id": "camera-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-152ac54661607db68f5ab69f8a89e0d46eaafc09f33bfde6b6b8d0a49ac3efb2.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "152ac54661607db68f5ab69f8a89e0d46eaafc09f33bfde6b6b8d0a49ac3efb2",
+        "size": 24066
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e"
+      },
+      "display": {
+        "description": "Discover PipeWire cameras and capture bounded PNG/JPEG still images",
+        "name": "Camera Manager",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "5702b259a7c8761a5635f8e0b80ad84ba044dd858c87d298457bb62ced57be21",
+        "size": 3206
+      },
+      "provenance": {
+        "content_digest": "sha256:15eaadcac2534d91339f29cdcb0e5382f10bd2db929cd68a61ea667b57ef4b7e",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "ccd76da5e62465926a9180fd6cdbad5273545aec7358b22efba15e64d2bd34ab"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "21a709751f205fae0bcebc04ff363b01bce273012fccb881cce419861e68475b"
+      }
+    },
+    {
+      "app_id": "clipboard-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-2505ac3c9e71767068f8d134c21b5e3a867df9a79f93786d997421eb7f4fb2ff.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "2505ac3c9e71767068f8d134c21b5e3a867df9a79f93786d997421eb7f4fb2ff",
+        "size": 14166
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "f23756def367a695182f72328aa79abc94c0eb2f593df5c34b4e111ef5b3f27b"
+      },
+      "display": {
+        "description": "Read, inspect, write, or clear Wayland clipboard selections",
+        "name": "Clipboard Manager",
+        "source_kind": "product",
+        "source_name": "clipboard"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "6f0ea4ee754f133f05ec063368cae92005ddc5d71d89b844c49e0fc808142662",
+        "size": 5902
+      },
+      "provenance": {
+        "content_digest": "sha256:a9bf45e11930a5d076359b544effbdcdc374a8cf83d75879af6eb3813117ed66",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "780a270c242683f7f82940a8d8af44bbd40ebdb013f71aa258e244e5e832dec4"
+      },
+      "release_tag": "app-clipboard-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "5ae858c2d5a6d578ceac7868a555cebc8062b14ecddc93cb7d55bfa6818067f4"
+      }
+    },
+    {
+      "app_id": "config-editor",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-abc99ec8058d061fd0dec6fdc0708897a618e762b81af7c93e213e01fd09362d.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "abc99ec8058d061fd0dec6fdc0708897a618e762b81af7c93e213e01fd09362d",
+        "size": 12335
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "238730d1280d238668dea6597f055f00c93513e106803c5fcdf3af8f91353499"
+      },
+      "display": {
+        "description": "Validate, atomically replace, and restore supported system configuration files",
+        "name": "Safe Config Editor",
+        "source_kind": "product",
+        "source_name": "maintenance"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "5bff2b44fc1989794f8e52d14c928af3b37fd4bce4d6b19d4e97b5752d319132",
+        "size": 4980
+      },
+      "provenance": {
+        "content_digest": "sha256:0a5d4d0f30f4d1f2e626bcc9756a5b182efefa001ab57c5e590d735817b8b64b",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "74e59c0cea1b1e32fd6bc9f5be5e0ec7d122ad02596f1ba9eade924551b12c44"
+      },
+      "release_tag": "app-maintenance-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "30f24d21c99d00888bbe75c20a917c228929c37dc370d9775db09d61d7271905"
+      }
+    },
+    {
+      "app_id": "container-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-8d611672c053ec83ae23c736431543f9dfb7182238a587bfbba2d24668199694.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "8d611672c053ec83ae23c736431543f9dfb7182238a587bfbba2d24668199694",
+        "size": 13707
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "5c9dadacc318ed6f0e2e3185b43ba5c101c4a34ec71fe582ef5e51a6f9268971"
+      },
+      "display": {
+        "description": "Inspect and control Docker, rootless/root Podman, and containerd workloads",
+        "name": "Container Manager",
+        "source_kind": "product",
+        "source_name": "containers"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "c1237bff31d6107714481680a39b42d856b808f64b20f08ddb49413254ccd352",
+        "size": 20015
+      },
+      "provenance": {
+        "content_digest": "sha256:2bde9ff56324f4e859cb129d5f98680ae673956eb4dcc0dd886b048e7bfe348a",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "2d22c4b3ba6c6c95ab4549aaec99f3593c588df6c02273a518708af725dff7b3"
+      },
+      "release_tag": "app-containers-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "ca345a0f97144e496f41665a304c9d3247307bf60bf15c074fa7f30d94b47c68"
+      }
+    },
+    {
+      "app_id": "cosmic-edit",
+      "app_version": "0.1.0",
+      "architecture": "amd64",
+      "artifact": {
+        "file": "claw-app-snapshot-65575b114f8a69beac55dceb9c99d42ed57950cb9f24a3cefed9ba9ac6d64c53.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "65575b114f8a69beac55dceb9c99d42ed57950cb9f24a3cefed9ba9ac6d64c53",
+        "size": 18056813
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "58e0ee49bdb056c73d703f4c666960ef0ca374f37512c27207599b0c30740f46"
+      },
+      "display": {
+        "description": "Read, edit, open, summarize, explain, and rewrite text files.",
+        "name": "Text Editor",
+        "source_kind": "product",
+        "source_name": "editor"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "62c02c7a546529361d3a073419ed29b4fa0a417cbb349f9c7004d4e3b5b1f2b6",
+        "size": 10415
+      },
+      "provenance": {
+        "content_digest": "sha256:e18898a2b47a0c7f3a7c1adeb1a39cedfa54823366af909d813385b036e86e0e",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "09d80a8dc1932159d5857d96190eb38dc2af751fedf413019e8a8c03111dbdf3"
+      },
+      "release_tag": "app-editor-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "00164b8246a6509f8ff08dde428ce0cb58e067b8f36d423fcf89df10739e3758"
+      }
+    },
+    {
+      "app_id": "cosmic-edit",
+      "app_version": "0.1.0",
+      "architecture": "arm64",
+      "artifact": {
+        "file": "claw-app-snapshot-56ff7fbbe743935e69a7769eb64633d05d4ea9eb2518d0af0d2c6cbc8661d344.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "56ff7fbbe743935e69a7769eb64633d05d4ea9eb2518d0af0d2c6cbc8661d344",
+        "size": 16949074
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "99cb626bc5835e5d5fc38bda5b4af86448c8c3705acf0b3d061d683ddcc42799"
+      },
+      "display": {
+        "description": "Read, edit, open, summarize, explain, and rewrite text files.",
+        "name": "Text Editor",
+        "source_kind": "product",
+        "source_name": "editor"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "62c02c7a546529361d3a073419ed29b4fa0a417cbb349f9c7004d4e3b5b1f2b6",
+        "size": 10415
+      },
+      "provenance": {
+        "content_digest": "sha256:3bb8a572a247f9c9a5c65e1cf6cf11d62aa4c19a5f15e38fbc876aadde29a097",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "705df1f953dd134f6698f141e6a7753f144cb57f5030354631130b0f9ddcb3d2"
+      },
+      "release_tag": "app-editor-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "00164b8246a6509f8ff08dde428ce0cb58e067b8f36d423fcf89df10739e3758"
+      }
+    },
+    {
+      "app_id": "cosmic-files",
+      "app_version": "0.1.0",
+      "architecture": "amd64",
+      "artifact": {
+        "file": "claw-app-snapshot-dfbd58d462be8acf45492b5a72a790af7c89f019a69c4830448b93b5c84f4a7a.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "dfbd58d462be8acf45492b5a72a790af7c89f019a69c4830448b93b5c84f4a7a",
+        "size": 32280212
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "7919fb0117465ca2ba290e383598aabb9c4fa334a7eaa22aac387a1d41b6150b"
+      },
+      "display": {
+        "description": "Inspect, search, reveal, and understand files through the native file manager.",
+        "name": "Files",
+        "source_kind": "product",
+        "source_name": "files"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "f534262d94d9b18f8b30a1dcf703e312da648defb025907c4a07eb04685a82df",
+        "size": 13472
+      },
+      "provenance": {
+        "content_digest": "sha256:0dd0aad2dafef921b572072712272fcc5ed668a676c6dbf79739d50db208ae3d",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "933cb1543b6778a118b4171b5c69167a5fd670c3ed9453801ac29d501752934b"
+      },
+      "release_tag": "app-files-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "f5fdbe53e882c8e3bb27a06da592de56757b1407c009d43657355c345890cb64"
+      }
+    },
+    {
+      "app_id": "cosmic-files",
+      "app_version": "0.1.0",
+      "architecture": "arm64",
+      "artifact": {
+        "file": "claw-app-snapshot-dd978b086a5a80926ea63398c01798bf33146b262282a157a8c69f7e3a3f8e79.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "dd978b086a5a80926ea63398c01798bf33146b262282a157a8c69f7e3a3f8e79",
+        "size": 30177169
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "9ae2cc81bd687088491a4da6de4473ac346e65b0184304e315e6dcb086eb51c7"
+      },
+      "display": {
+        "description": "Inspect, search, reveal, and understand files through the native file manager.",
+        "name": "Files",
+        "source_kind": "product",
+        "source_name": "files"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "f534262d94d9b18f8b30a1dcf703e312da648defb025907c4a07eb04685a82df",
+        "size": 13472
+      },
+      "provenance": {
+        "content_digest": "sha256:a454f73bdb605f1bc70c5fc4b4086c757220f3ebda221cd3889c6ad094461c23",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "d1c0189f8f504cba1aaae3181f34ab11556228b595fb3a6833477276e9b9769c"
+      },
+      "release_tag": "app-files-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "f5fdbe53e882c8e3bb27a06da592de56757b1407c009d43657355c345890cb64"
+      }
+    },
+    {
+      "app_id": "cosmic-launcher",
+      "app_version": "0.1.0",
+      "architecture": "amd64",
+      "artifact": {
+        "file": "claw-app-snapshot-eb47d06403f181e131a134e86b04ec1add4ed008c01f70397d739ba156d79cb7.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "eb47d06403f181e131a134e86b04ec1add4ed008c01f70397d739ba156d79cb7",
+        "size": 10572858
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "44450ca8fb5e05cae126b9ac6b8b103b4fa55052003c63eb8a03dc854e6235ec"
+      },
+      "display": {
+        "description": "Search and launch installed desktop applications through the native launcher.",
+        "name": "Launcher",
+        "source_kind": "product",
+        "source_name": "launcher"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "92ba33b2533dc31b498194ddbfc189c1896f880c58b6f2388b4e8a9cb84187bf",
+        "size": 7711
+      },
+      "provenance": {
+        "content_digest": "sha256:c8d0d3cf9d30eaa234e7de53c36e570eb9e0e9bc1dad7ce591127841b3d61c5e",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "078b606f960834b291b7841d06d6e739f81096c93148dfb9d2e7524b3867f32c"
+      },
+      "release_tag": "app-launcher-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "6c3a9b356e2113448132267f394cd60fc87ce524fc55f7f78ca876f6a40f8423"
+      }
+    },
+    {
+      "app_id": "cosmic-launcher",
+      "app_version": "0.1.0",
+      "architecture": "arm64",
+      "artifact": {
+        "file": "claw-app-snapshot-9bf39a96f0d429c6a6cd6d56971bacd5ddfba4f44c0ad231b5b83cdb2abd9f8d.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "9bf39a96f0d429c6a6cd6d56971bacd5ddfba4f44c0ad231b5b83cdb2abd9f8d",
+        "size": 9933502
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "2cbc0becb5805c5fd9c69ad249226637e62956927269e06f102a368ceeed8002"
+      },
+      "display": {
+        "description": "Search and launch installed desktop applications through the native launcher.",
+        "name": "Launcher",
+        "source_kind": "product",
+        "source_name": "launcher"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "92ba33b2533dc31b498194ddbfc189c1896f880c58b6f2388b4e8a9cb84187bf",
+        "size": 7711
+      },
+      "provenance": {
+        "content_digest": "sha256:7896e4417f1ba65ceb3b15135e9712d00c0cd59a5dd3a0345993faaa57e613c2",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "c0c145445b73cdcd955e75f19f253f97d7378c59df6b2ae1698d5c0c08e432d2"
+      },
+      "release_tag": "app-launcher-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "6c3a9b356e2113448132267f394cd60fc87ce524fc55f7f78ca876f6a40f8423"
+      }
+    },
+    {
+      "app_id": "cosmic-notifications",
+      "app_version": "0.2.0",
+      "architecture": "amd64",
+      "artifact": {
+        "file": "claw-app-snapshot-3095c6a09cea4b507b9d55b0b89adc5685574867ef9d18acec5cb03c253f8e04.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "3095c6a09cea4b507b9d55b0b89adc5685574867ef9d18acec5cb03c253f8e04",
+        "size": 8905443
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "0a1709cb333e6a684d2d5045bbd089b66b2363a67f74fdd68c29c7437cbb35ca"
+      },
+      "display": {
+        "description": "Post durable owner-scoped notifications and dismiss this App's own records through the OS Notification Service.",
+        "name": "Notifications",
+        "source_kind": "product",
+        "source_name": "notifications"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "5e9445cabfe615b43a7313cc1ccc04e15add1ab3c8ee781fba303b3f5de3137b",
+        "size": 5199
+      },
+      "provenance": {
+        "content_digest": "sha256:7e3b2320983ba5e0dc5dc3b12899af4df1dc5d9e26339ae9e8d41d041d70821e",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "7f4afb9c9c88d16e1e1b5b8bf8876c0952aa25d66a4e7318dc22dee30c75cbc1"
+      },
+      "release_tag": "app-notifications-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "d85852353eda224601894aa4ea582cc560c8224d5fdb61a0f7e79b53af682e30"
+      }
+    },
+    {
+      "app_id": "cosmic-notifications",
+      "app_version": "0.2.0",
+      "architecture": "arm64",
+      "artifact": {
+        "file": "claw-app-snapshot-67a7d2c6a6c3c6304d3db7744f61d7a736c8c39425edc8d9cd8bffc39f43ba70.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "67a7d2c6a6c3c6304d3db7744f61d7a736c8c39425edc8d9cd8bffc39f43ba70",
+        "size": 8406713
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "2ba0f1e71c76bc62988f7103106091311fbc1806e9ecd1c6268dc9c515710e5c"
+      },
+      "display": {
+        "description": "Post durable owner-scoped notifications and dismiss this App's own records through the OS Notification Service.",
+        "name": "Notifications",
+        "source_kind": "product",
+        "source_name": "notifications"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "5e9445cabfe615b43a7313cc1ccc04e15add1ab3c8ee781fba303b3f5de3137b",
+        "size": 5199
+      },
+      "provenance": {
+        "content_digest": "sha256:660f2d24dafe840068b15435c59754e711c4c784c9d407501e2de77d5b7d816d",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "057a60a75200f8a6628134486c872a196057ae9cf346e150dd19eda681a6c584"
+      },
+      "release_tag": "app-notifications-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "d85852353eda224601894aa4ea582cc560c8224d5fdb61a0f7e79b53af682e30"
+      }
+    },
+    {
+      "app_id": "cosmic-player",
+      "app_version": "0.1.0",
+      "architecture": "amd64",
+      "artifact": {
+        "file": "claw-app-snapshot-956f0a5a52696c2773a86f7febb8742b35c7710d23b6e49b6048b0bf6b69cc11.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "956f0a5a52696c2773a86f7febb8742b35c7710d23b6e49b6048b0bf6b69cc11",
+        "size": 15083386
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "dfd59a5f1ded7d1615ed76ec747246947c44c1aace0282dfb93cda3b31cd5cfd"
+      },
+      "display": {
+        "description": "Read and control this owner's running Media Player through the OS playback service.",
+        "name": "Media Player",
+        "source_kind": "product",
+        "source_name": "media-player"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "cc4365a4b70c4c9575d258b4aa842944f4f3c4a0ca2d2e576e0e690ddd2b8280",
+        "size": 7116
+      },
+      "provenance": {
+        "content_digest": "sha256:92d8d06a5043cdaf41631d57b3c3157d7a8f497a9dcb904f6c55aa9d1b153355",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "05a4a9bfdba6ecec5362a78f8f4a0ec43aa7d3d1d6432b1726ff5c4177158021"
+      },
+      "release_tag": "app-media-player-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "742ed7ce85ba52e0fb8b39bce7dd3ef9d13ca5df5e066162485217420853eccb"
+      }
+    },
+    {
+      "app_id": "cosmic-player",
+      "app_version": "0.1.0",
+      "architecture": "arm64",
+      "artifact": {
+        "file": "claw-app-snapshot-3f71883dd17cc8c9ca170a85f85bd0bf88043a4b7f0c2fb9fe575cc39257dec2.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "3f71883dd17cc8c9ca170a85f85bd0bf88043a4b7f0c2fb9fe575cc39257dec2",
+        "size": 14178378
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "63e77b70acd28395a0d310d1894b2630ed244f617b6b34e216a6d818ce9815a9"
+      },
+      "display": {
+        "description": "Read and control this owner's running Media Player through the OS playback service.",
+        "name": "Media Player",
+        "source_kind": "product",
+        "source_name": "media-player"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "cc4365a4b70c4c9575d258b4aa842944f4f3c4a0ca2d2e576e0e690ddd2b8280",
+        "size": 7116
+      },
+      "provenance": {
+        "content_digest": "sha256:197116a795c32bbfd70f69ece0553e3dd9e95239a030e284799fe5813de2ad7f",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "a82d5e3074b164d645b56f93a9a6b2db7ebb07df880a6b114e8ead9071242022"
+      },
+      "release_tag": "app-media-player-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "742ed7ce85ba52e0fb8b39bce7dd3ef9d13ca5df5e066162485217420853eccb"
+      }
+    },
+    {
+      "app_id": "cosmic-screenshot",
+      "app_version": "0.1.0",
+      "architecture": "amd64",
+      "artifact": {
+        "file": "claw-app-snapshot-a732ff4bf34bce186934fef92b52825c1a232fef3f0f6b70dc0e04c54bca10fa.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "a732ff4bf34bce186934fef92b52825c1a232fef3f0f6b70dc0e04c54bca10fa",
+        "size": 1504516
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "86a29840d59697e2f32268badd214c7ea7feeae5c7669e3d6b8a381300bb4915"
+      },
+      "display": {
+        "description": "Capture the screen through xdg-desktop-portal and save a PNG.",
+        "name": "Screenshot",
+        "source_kind": "product",
+        "source_name": "capture"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "e2cd35b2bf3b57c001cd559a207ca8dcd745838254680bd2d724b93b5fda9129",
+        "size": 3915
+      },
+      "provenance": {
+        "content_digest": "sha256:26926ff98ae5286324e7bfcb50eb4e4dae8465a8de012d9968e88f47cc3c339c",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "3a287eec8a5fcdfee4c448fc24b1fff0156463b87f9d4f2ed3f384187d076b8c"
+      },
+      "release_tag": "app-capture-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "be29ca50706df21bd0bdbe9dcfa8272d862ad667041fc4ad67d343a253b735c2"
+      }
+    },
+    {
+      "app_id": "cosmic-screenshot",
+      "app_version": "0.1.0",
+      "architecture": "arm64",
+      "artifact": {
+        "file": "claw-app-snapshot-07cde0fbeafa1cc71799b6f7d49257e33470034ce28bdc9775fcd3e3fec340ef.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "07cde0fbeafa1cc71799b6f7d49257e33470034ce28bdc9775fcd3e3fec340ef",
+        "size": 1400237
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "69eef5aaa05b43826dff238afdc744d6ce4b4b51be868ef6b2270499b0c6d2fa"
+      },
+      "display": {
+        "description": "Capture the screen through xdg-desktop-portal and save a PNG.",
+        "name": "Screenshot",
+        "source_kind": "product",
+        "source_name": "capture"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "e2cd35b2bf3b57c001cd559a207ca8dcd745838254680bd2d724b93b5fda9129",
+        "size": 3915
+      },
+      "provenance": {
+        "content_digest": "sha256:cc892dd699b6b2f33e8b2e33b4ec6aa02b719b9add177d9d9dd93c9dd81faeb3",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "81c5d0f35fc7acab25d3341e308be0e9585fbae6683aa2b544ee8692337c2585"
+      },
+      "release_tag": "app-capture-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "be29ca50706df21bd0bdbe9dcfa8272d862ad667041fc4ad67d343a253b735c2"
+      }
+    },
+    {
+      "app_id": "cosmic-settings",
+      "app_version": "0.1.0",
+      "architecture": "amd64",
+      "artifact": {
+        "file": "claw-app-snapshot-c73cf7451f9b20ce39919d11ab880ce638e06566cc9bbc4511205ca675789193.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "c73cf7451f9b20ce39919d11ab880ce638e06566cc9bbc4511205ca675789193",
+        "size": 20010213
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "24b30db0870a9d5a6c823e8fec8941d8f786bdb0301a00261ee028c2e982d1f5"
+      },
+      "display": {
+        "description": "Discover and open Settings pages and manage owner-scoped App permission requests and revocations through the OS.",
+        "name": "Settings",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "8e19e2aa7507deb814ae43138f39ef5bcd40d3b4dcbc130ad14b244c7611b9e1",
+        "size": 24203
+      },
+      "provenance": {
+        "content_digest": "sha256:71a86275d663245a87c5027092cb7a41cd1d27840e9d6d7b75322806f5a07aaa",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "657c7e852405be0f1d0142c47ff3e1d7720a03e0768a3baaa0248a9877192b20"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "9361c07f89b08f53c290e24eab0d549531086c144dd33bce96e2c8155cc3634c"
+      }
+    },
+    {
+      "app_id": "cosmic-settings",
+      "app_version": "0.1.0",
+      "architecture": "arm64",
+      "artifact": {
+        "file": "claw-app-snapshot-5ac543aa26b108093e19413d78114bb8037a43dd10fcebb1624276a25f035ffd.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "5ac543aa26b108093e19413d78114bb8037a43dd10fcebb1624276a25f035ffd",
+        "size": 18853381
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "de96c9697d85d35d7a1c51be25817d2c3e5d65968878ebcd12bebff3f5bfa9e8"
+      },
+      "display": {
+        "description": "Discover and open Settings pages and manage owner-scoped App permission requests and revocations through the OS.",
+        "name": "Settings",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "8e19e2aa7507deb814ae43138f39ef5bcd40d3b4dcbc130ad14b244c7611b9e1",
+        "size": 24203
+      },
+      "provenance": {
+        "content_digest": "sha256:4d93331cf6002f4fdb1c3073e5ccd3650dde3816566e961943261d5066ec7cc3",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "1c7e21ae701f42595ff012a9d58f5f810473af5b636465e6f6063e7899702bee"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "9361c07f89b08f53c290e24eab0d549531086c144dd33bce96e2c8155cc3634c"
+      }
+    },
+    {
+      "app_id": "cosmic-store",
+      "app_version": "0.1.0",
+      "architecture": "amd64",
+      "artifact": {
+        "file": "claw-app-snapshot-6ce1a3978c03104afad3d3b2d8c73c6a47eaa8cfcffb38348722af977f44402b.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "6ce1a3978c03104afad3d3b2d8c73c6a47eaa8cfcffb38348722af977f44402b",
+        "size": 17727380
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "174d0bbf643f74d9d08a083ff71d538c8ea1ccec7666902be4ae89b0fb670a1b"
+      },
+      "display": {
+        "description": "Search installed and available packages and open the native App Store.",
+        "name": "App Store",
+        "source_kind": "product",
+        "source_name": "store"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "79b9e7eb74756f024c791a94eae2e8f2d16855930f0bfa3aaed86636507fc1ff",
+        "size": 4837
+      },
+      "provenance": {
+        "content_digest": "sha256:c4052c0fc3e437c15f2bc4c811e9c1a9ce1ba4631dec996f0280dd2a619dfba7",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "00053839e9f8feeb1c3b82f5007727915b67363e6f25386a80ec59b310d9ed4f"
+      },
+      "release_tag": "app-store-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "937c4d816395de21613e4007cea17fc6ab4b31c7f3496b2847dc445a19f9428f"
+      }
+    },
+    {
+      "app_id": "cosmic-store",
+      "app_version": "0.1.0",
+      "architecture": "arm64",
+      "artifact": {
+        "file": "claw-app-snapshot-bdfc5f92277c5039ba7b52623412a4b594ffa34bf990270117f1f273d37f5071.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "bdfc5f92277c5039ba7b52623412a4b594ffa34bf990270117f1f273d37f5071",
+        "size": 16708143
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "6ef2993318f20c8b149fe02bb59c2c349bcd670c5aa3c574a314bc343067fc91"
+      },
+      "display": {
+        "description": "Search installed and available packages and open the native App Store.",
+        "name": "App Store",
+        "source_kind": "product",
+        "source_name": "store"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "79b9e7eb74756f024c791a94eae2e8f2d16855930f0bfa3aaed86636507fc1ff",
+        "size": 4837
+      },
+      "provenance": {
+        "content_digest": "sha256:31590b4c6f050aeb199291184292420fbdb5387a7ae4f9f18f0f48e0a474d883",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "d0b63d1f87d3a15e7764b634ec3a6cc00293494b1dbd0274ccb6374b2c1bd529"
+      },
+      "release_tag": "app-store-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "937c4d816395de21613e4007cea17fc6ab4b31c7f3496b2847dc445a19f9428f"
+      }
+    },
+    {
+      "app_id": "cosmic-term",
+      "app_version": "0.1.0",
+      "architecture": "amd64",
+      "artifact": {
+        "file": "claw-app-snapshot-9a42fa8a2849b33494eea72c3cf537ebc00e3a256bccccdbe8b5e6696e5ea9bd.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "9a42fa8a2849b33494eea72c3cf537ebc00e3a256bccccdbe8b5e6696e5ea9bd",
+        "size": 16841909
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "adf82c1734648d49af69762659e22819d1b2745e0ce9a1ecc1d22b3ffc93c931"
+      },
+      "display": {
+        "description": "Run audited commands, resolve programs, and open the native terminal.",
+        "name": "Terminal",
+        "source_kind": "product",
+        "source_name": "terminal"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "21ec662fa1b60ba1a84a28fb4c38c64059c1245c176458cd1ce83697291224e0",
+        "size": 3910
+      },
+      "provenance": {
+        "content_digest": "sha256:3de3c6987b61ea0d320d4c0c2824cba2d9c54851c892183dc487b373e20b3d8f",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "acc1a68292de255efa3c0e81c975704862479db2d639a21cec93d8974bc5f3de"
+      },
+      "release_tag": "app-terminal-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "0f3c7584cf98ddfb57c176329465b1ebe5335b1735afc862e4d9230aaa02f34c"
+      }
+    },
+    {
+      "app_id": "cosmic-term",
+      "app_version": "0.1.0",
+      "architecture": "arm64",
+      "artifact": {
+        "file": "claw-app-snapshot-3f55d271478b24892d287b1ee1b1f343ecb28cfb5db5d6e769aaa91e141e977b.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "3f55d271478b24892d287b1ee1b1f343ecb28cfb5db5d6e769aaa91e141e977b",
+        "size": 15685536
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "9f313f303794bd95df41204ee7cd0720d70e434d2a956a144a0723861f626a81"
+      },
+      "display": {
+        "description": "Run audited commands, resolve programs, and open the native terminal.",
+        "name": "Terminal",
+        "source_kind": "product",
+        "source_name": "terminal"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "21ec662fa1b60ba1a84a28fb4c38c64059c1245c176458cd1ce83697291224e0",
+        "size": 3910
+      },
+      "provenance": {
+        "content_digest": "sha256:c248cf82ea21aed3d12e4e17d7ba5cf3067da4ca3cfe0fa806abe28231c18ff3",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "2ae811d7fdc3ccaf1709760a83b33355e2bbc27b28846dc23affcdd65287239a"
+      },
+      "release_tag": "app-terminal-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "0f3c7584cf98ddfb57c176329465b1ebe5335b1735afc862e4d9230aaa02f34c"
+      }
+    },
+    {
+      "app_id": "crash-doctor",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-30ae5af2d56f0257e3463c4472d0c8e92537fd5a060c6823842cbdf5b938a9d9.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "30ae5af2d56f0257e3463c4472d0c8e92537fd5a060c6823842cbdf5b938a9d9",
+        "size": 12412
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "0704e32a50264ccdd9c12a1a0c56eea26dc7aba38b8004ca63650e5b0fb6e674"
+      },
+      "display": {
+        "description": "Correlate coredumps, OOM kills, segmentation faults, journals, and backtraces",
+        "name": "Crash Doctor",
+        "source_kind": "product",
+        "source_name": "diagnostics"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "98d0a1abfc8bf10a65c79c34ccd4b422afc836cef7128c0e7684dd123078936d",
+        "size": 3594
+      },
+      "provenance": {
+        "content_digest": "sha256:83b47bf8d9e66f8e9c8282c156e10ad39c4631c35213f910d2782052bf1566af",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "32fd9d25c14af74f9184791f6c548fa8144fddabe512ebb17b95495b1fbfc995"
+      },
+      "release_tag": "app-diagnostics-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "a5141461c6d5aab0bcec1bc0da4dc751e1c296641af1cb1f8090e12ed89a1823"
+      }
+    },
+    {
+      "app_id": "db",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-3add3fbe4e269bb59eb6a6af6c326cc4c26ad20d31c09f7fa4013de9adfde084.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "3add3fbe4e269bb59eb6a6af6c326cc4c26ad20d31c09f7fa4013de9adfde084",
+        "size": 12721
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "50a9bd66b7b1450aca0deea895ecf81c0b7dc130d6ff008cd5ed870da47045ec"
+      },
+      "display": {
+        "description": "SQLite database — create, query, and manage databases",
+        "name": "Database",
+        "source_kind": "capability",
+        "source_name": "storage-sdk"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "754801980a5bbcf9768690036eee6887bd5151a6393dca666c63c56b7cb364d9",
+        "size": 4874
+      },
+      "provenance": {
+        "content_digest": "sha256:a4d56dc7538cd509f0819b389e75ffa8b2919e919d332da668c3caecc3d98b69",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "c473121b519f0d724fe34bd81b6f6a0e031e0837c27590915caefcbd390300db"
+      },
+      "release_tag": "cap-storage-sdk-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "4e667349ff398945682b782db2b4e1415dee643141ff638a73772ce02a0c054c"
+      }
+    },
+    {
+      "app_id": "desktop-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-682671ea894bf291536ffaf5c1af2f2541b69bbae49ccec517bf9727e13035d9.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "682671ea894bf291536ffaf5c1af2f2541b69bbae49ccec517bf9727e13035d9",
+        "size": 23911
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e"
+      },
+      "display": {
+        "description": "Discover, focus, close, and restart COSMIC Wayland windows",
+        "name": "Desktop Manager",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "b3ca4d776531825ec4052af75fcb89627e839ba6a547e3a17297a85ceff11e1d",
+        "size": 4176
+      },
+      "provenance": {
+        "content_digest": "sha256:eb99c0c0947d92138cc64e7b8adccef47cf12dadfed1aeac9b1e0548b682f046",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "bb86c3ffdf7e9aaf02dfb3afe8ce55c601d8ee8cdc9d79165ca5626baa23f86a"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "14e12a9dfb61de04ca5a19e3dc90ccb35fe76231cae629c0f5f973cbbc5f3932"
+      }
+    },
+    {
+      "app_id": "display-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-e6f71722b39b31cc1c1fa4c7a6abd93e0780bd274e3b76b815577761dd64400d.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "e6f71722b39b31cc1c1fa4c7a6abd93e0780bd274e3b76b815577761dd64400d",
+        "size": 25865
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e"
+      },
+      "display": {
+        "description": "Control COSMIC output layout, modes, scale, mirroring, rotation, and backlight",
+        "name": "Display Manager",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "0628ccc78a9323418aad851400efb76787872e386e21a181b7eecf54c923a89b",
+        "size": 11830
+      },
+      "provenance": {
+        "content_digest": "sha256:bed504a14d747f892a83942f52a88f2f3541379d00768940b8c024e0ab503835",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "c54abbc2ef9edf8bdf0b47680340f91a87a228a89fd4ca8888f92a739e3516d1"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "4d12efbf43ff97a74ca6874aa2576f1937a79b878e6aff89910661d563885e1c"
+      }
+    },
+    {
+      "app_id": "doc",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-4aad7add24734df39676d58ab7631f1a1f3650102bfa649650ccda6ab93f239e.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "4aad7add24734df39676d58ab7631f1a1f3650102bfa649650ccda6ab93f239e",
+        "size": 12119
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "27544a458368b7f39c07fd23f225d37cf3f9d16bf5916efa2e17c7126bc4a1a3"
+      },
+      "display": {
+        "description": "Universal document reader — any format in, structured text out",
+        "name": "Documents",
+        "source_kind": "capability",
+        "source_name": "document-engine"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "1acccb0e2a67185229770e39f78898c50e8bb3a0f9e71ee9df7e41f848b2c114",
+        "size": 15130
+      },
+      "provenance": {
+        "content_digest": "sha256:62003a0bf7ac0626fddabf28a8920543df734533c6e44a477088674e8ce80711",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "30b9a60393bd1da0d43d8e38ef56d423c47a1f2842305860efe7b2e6ca443055"
+      },
+      "release_tag": "cap-document-engine-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "be691852af70ac394b6d4b88665f8e44fe53c431f92636e137795277715edf17"
+      }
+    },
+    {
+      "app_id": "docs",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-5639625f115c0dac95779abb4a98a62ed75fb9bb78bbd9762eb11db87cc1f3b5.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "5639625f115c0dac95779abb4a98a62ed75fb9bb78bbd9762eb11db87cc1f3b5",
+        "size": 14713
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "40720a42bac03ccb439e1ac430ecf8c46e7a44941eeffc2cae06a7d4c23fadcb"
+      },
+      "display": {
+        "description": "Local document full-text search across your files (PDF, Office, mail, source code, ...) using Recoll / Xapian.",
+        "name": "Documents",
+        "source_kind": "product",
+        "source_name": "files"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "ea00dc3b796e72731403d2bb0b3ccdec7f5d558c398e5c5e5879405154d1ce00",
+        "size": 6196
+      },
+      "provenance": {
+        "content_digest": "sha256:416f7f5989bb2bb66af6090b07046cb50296f84d89e4ad5b389edbd6ee185631",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "375d06571e9e510808c4bc5a982bbc27344a74229b61fca15163027f54f99d7d"
+      },
+      "release_tag": "app-files-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "ae5cdaf5ad7b4967a2527f9c69f7ead69763bdf8d8c0eab1dd577d52527913ff"
+      }
+    },
+    {
+      "app_id": "email",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-cf43fe2d92f2fbec16df27ab8e5fd396fb027832b60d28af2e441a5f69d9d4a1.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "cf43fe2d92f2fbec16df27ab8e5fd396fb027832b60d28af2e441a5f69d9d4a1",
+        "size": 21534
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "cb7c76fae05be8a3f779e2eb2e8c3ba578b0781f81e20146c7267bf70bd8d114"
+      },
+      "display": {
+        "description": "Email over the owner's existing Thunderbird accounts, shared with its GUI.",
+        "name": "Email",
+        "source_kind": "product",
+        "source_name": "mail"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "cade5d7a0a82b4b59f216656cd0a5613be02019818fc5f061fb371cffa5e96df",
+        "size": 58960
+      },
+      "provenance": {
+        "content_digest": "sha256:0d0ef0fc53427cdbd812cc2947173c35fd9fdda10e93554b97aee52b2a7d29c1",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "5152144e736e2e65607e2766c5e521834764a1f14054f9a439c695b1d1b61bbb"
+      },
+      "release_tag": "app-mail-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "cac00dbaffd74c4e68e38dda23405ff9559fd30b765387970f59f78d0e6396d1"
+      }
+    },
+    {
+      "app_id": "event-center",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-fda781827aebe584c18468e8e150a6383c06826727e0a38309cad36172e1ced0.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "fda781827aebe584c18468e8e150a6383c06826727e0a38309cad36172e1ced0",
+        "size": 12292
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "3f9c6ac9783ba8dbcc21963d66195557ff81a27a2e4d6cacbe98aed5edca92b4"
+      },
+      "display": {
+        "description": "Query persistent udev, systemd, journal, storage, security, and process-exit events",
+        "name": "Event Center",
+        "source_kind": "product",
+        "source_name": "events-audit"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "c9e62862008328b5fe9a9cc2da45fde5e9dd1e57554ebcf8bec454b6467a1a8f",
+        "size": 3159
+      },
+      "provenance": {
+        "content_digest": "sha256:28632b747caf0b672667ce3c792b02c86edb2884b9f03fafe84e1a1fa4d6be07",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "50bd460ae0182a03d204b39b6e55c453012d33ce8f4d54c4db7ca9ac68f48f3f"
+      },
+      "release_tag": "app-events-audit-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "c04ce1ce5bfef49d3e01b8c0e1165a89dcdbd6100858a8f3e405160e80d3c1a4"
+      }
+    },
+    {
+      "app_id": "exec",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-69bc1ef4e48318ac0e4110cdb55ad9213c56498ae3d7946accc3f3058b900126.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "69bc1ef4e48318ac0e4110cdb55ad9213c56498ae3d7946accc3f3058b900126",
+        "size": 17834
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "15abcc00ea625aa4e893ca188786c9b669cbe138ac9f580242da706273ae4407"
+      },
+      "display": {
+        "description": "Command execution and process management",
+        "name": "Shell",
+        "source_kind": "product",
+        "source_name": "terminal"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "dc419fd798fd3b7da1c39f3f37ac772af2c39e4205652ca0ed297181e8b0ccbc",
+        "size": 11451
+      },
+      "provenance": {
+        "content_digest": "sha256:913902842cce27f133052da0b8d7508db2922d9ecd1163c8155bad68df0ee315",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "a5d6a4ae32ac85debe8eb2c8ab64c611c78ee302b352fcf023bfee3684fa1723"
+      },
+      "release_tag": "app-terminal-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "d654b959094796793775985504b4c67e8ca8fc728fcaa0b418264b31f27fc325"
+      }
+    },
+    {
+      "app_id": "firewall-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-d2b914851e48d8f86ba5e5384bd652ef93c67e7569d46e97f2801142af7d9de6.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "d2b914851e48d8f86ba5e5384bd652ef93c67e7569d46e97f2801142af7d9de6",
+        "size": 13971
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "46042254a1f0929b1526a64d39f7342ac51cec0cc85915d80bc96990c925b070"
+      },
+      "display": {
+        "description": "Manage scoped nftables allow/drop rules with durable rollback",
+        "name": "Firewall Manager",
+        "source_kind": "product",
+        "source_name": "security"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "226b4d694d8b9dcf0245816b1abaf351bd13c2babae77318fc113b795730dccd",
+        "size": 5752
+      },
+      "provenance": {
+        "content_digest": "sha256:29698f1d80b117a78452a1dab92229c0b91160424ead2f0f77ba6d06e9584f27",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "37df48eb872ffc3cf53225a583d855de4452584c0c3591707d39ec4e25f2c73d"
+      },
+      "release_tag": "app-security-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "4f98ae19d22cc448774607553a301641fa136e17d1236941ce68e53dc90d45c1"
+      }
+    },
+    {
+      "app_id": "fs",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-16c3ed5ac2df76b009105fbed42a296591e6c59121ee0e5b3dde1c3e3a382c23.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "16c3ed5ac2df76b009105fbed42a296591e6c59121ee0e5b3dde1c3e3a382c23",
+        "size": 24302
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "40720a42bac03ccb439e1ac430ecf8c46e7a44941eeffc2cae06a7d4c23fadcb"
+      },
+      "display": {
+        "description": "Agent-native file system with metadata and search.",
+        "name": "Files",
+        "source_kind": "product",
+        "source_name": "files"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "6298ea6cea9aa4d400aa4bcab7adfca2c905bf8b24a0e64c5aae02d9a67599c6",
+        "size": 28924
+      },
+      "provenance": {
+        "content_digest": "sha256:d5745b25398ac14da02fbbce7f7cb2bfbb902e50220077739fb8a705e1679c1a",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "7058ef4da4f0531091677d9d5e6e97f1e5be49bd1ee74c697ae0c4d6d08bc74d"
+      },
+      "release_tag": "app-files-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "34baa567289c25f7ddd4907bf15978a1eb5e4ffbad1df9b1a607d43627a2044b"
+      }
+    },
+    {
+      "app_id": "gateway-discord",
+      "app_version": "0.3.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-6fc9a24e168fed1f785c78b04684234596b0351c51289eda0cd73649793b2834.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "6fc9a24e168fed1f785c78b04684234596b0351c51289eda0cd73649793b2834",
+        "size": 16358
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "ed43f3cbdfbb80ecdf3aba3f079fbc5f1612a05d2b5ac18fdece0523bd65d5bd"
+      },
+      "display": {
+        "description": "Discord outbound client and authenticated owner-bound Activity channel through the OS service.",
+        "name": "Discord Gateway",
+        "source_kind": "product",
+        "source_name": "messaging-channels"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "9dd67503876ad7d4bcd9495a074f4b67b597fbe7bb94981fe9d57823d075e232",
+        "size": 12489
+      },
+      "provenance": {
+        "content_digest": "sha256:25c53bf47848bf6d6c499b29dea00ce4bdda27f9b57c559519ead8ae6954b2f0",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "00c27be2fe35fb39f518626a151a4b831fe1081ddb235553e8b714764af0257e"
+      },
+      "release_tag": "app-messaging-channels-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "808727327fe05218135da38fe772c401144643f8cdcf5ebbbd2aa155aca31296"
+      }
+    },
+    {
+      "app_id": "gateway-homeassistant",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-9ba56d5df3e2d42220b7587a7435d542460701a973ce4674d87d014dcb5e693f.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "9ba56d5df3e2d42220b7587a7435d542460701a973ce4674d87d014dcb5e693f",
+        "size": 13337
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "8a241713e38389962f2ba64cf0f3e5cd2c414619c34aca3b0f34a2382ae4be88"
+      },
+      "display": {
+        "description": "Home Assistant gateway. Calls REST service endpoints using a long-lived access token.",
+        "name": "Home Assistant Gateway",
+        "source_kind": "product",
+        "source_name": "home-integration"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "dc0ca4992b809db133e15463404fae22ac28b95981f0001c2ef1c5940da81d92",
+        "size": 10608
+      },
+      "provenance": {
+        "content_digest": "sha256:2302b7b6230b73c61d81839f9d7ca15ae1fc08178e8c7ed261324bb7010ece22",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "8b47a93094ebc6a4c48b09d475542533f8130a7ba6458107b3f6ecad9a85de81"
+      },
+      "release_tag": "app-home-integration-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "992cf169a2ae59dd39e9e7a114245d8123b23d31920765b56c6af112ef93248b"
+      }
+    },
+    {
+      "app_id": "gateway-ntfy",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-3cf3e5b5a8b6311559df0a6ce2e8229768fa83de71bcd2268c6e6086898fe45c.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "3cf3e5b5a8b6311559df0a6ce2e8229768fa83de71bcd2268c6e6086898fe45c",
+        "size": 15453
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "971e6dac19508522235aa8b7e2dc27022b5d93dbd90a564f67986e988c0560eb"
+      },
+      "display": {
+        "description": "ntfy.sh push-notification gateway. POSTs plain-text bodies to a configured server and topic with optional authentication and ntfy headers.",
+        "name": "ntfy Gateway",
+        "source_kind": "product",
+        "source_name": "notification-delivery"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "64f46e3475febb67f68b34e19bfb48bc34db33bfadeb9910367d271ebebf0542",
+        "size": 11156
+      },
+      "provenance": {
+        "content_digest": "sha256:206d711515966b4ce3f33f3d60f8d5c9812b434f16b426c4460e21b248036130",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "35c603b3fe77a4f06269778c1c05fcff57a00139d48138d4a67e6955d0a4ff04"
+      },
+      "release_tag": "app-notification-delivery-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "1306cd4a13fbb0488fdd9f28ffab0199536adb3b17d18e93bedb6201fa5e8619"
+      }
+    },
+    {
+      "app_id": "gateway-pushover",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-19c1667f976c4486f420e463ddcaac252e5c78a8d3b3ebdfb4d49d5b8a78d1e1.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "19c1667f976c4486f420e463ddcaac252e5c78a8d3b3ebdfb4d49d5b8a78d1e1",
+        "size": 15419
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "971e6dac19508522235aa8b7e2dc27022b5d93dbd90a564f67986e988c0560eb"
+      },
+      "display": {
+        "description": "Outbound-only Pushover push-notification gateway. send POSTs notifications to a user or group through the Pushover API.",
+        "name": "Pushover Gateway",
+        "source_kind": "product",
+        "source_name": "notification-delivery"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "7286455549fccc29e6ba37d536e913500f5eb2be742950a5b82dd8c73dd81559",
+        "size": 9818
+      },
+      "provenance": {
+        "content_digest": "sha256:9865f1192f82628d48070379720bc167860225fcb86ee443627f8b3ebbd68d65",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "e60eb488a5d858cf0e1cd5f9a94d6fd67771981527e8b2a0ffbbc8eb503456e6"
+      },
+      "release_tag": "app-notification-delivery-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "1034dded63d23148b160a31b127124cadf0eadec9a9fcfed57830d0f8afa8386"
+      }
+    },
+    {
+      "app_id": "gateway-slack",
+      "app_version": "0.2.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-dd07aec958e253781bd28bc9e85c3fa033be977e4496b70d32bd8195fb182f65.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "dd07aec958e253781bd28bc9e85c3fa033be977e4496b70d32bd8195fb182f65",
+        "size": 14411
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "ed43f3cbdfbb80ecdf3aba3f079fbc5f1612a05d2b5ac18fdece0523bd65d5bd"
+      },
+      "display": {
+        "description": "Slack outbound client and authenticated owner-bound Activity channel through the OS service.",
+        "name": "Slack Gateway",
+        "source_kind": "product",
+        "source_name": "messaging-channels"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "18cfe4ef50882cfafdac5c2a88e9a0281b30f3d4c573f11085553fa06e46896b",
+        "size": 11419
+      },
+      "provenance": {
+        "content_digest": "sha256:f41591b8fc4ce2e2e3ab8af7eee4db3c43ec8ca48f8d7a36141543c15810ec0a",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "2962cf6cc744cf89457cbfe257c2eb55927ef0c81152429ee3de9a386e817bac"
+      },
+      "release_tag": "app-messaging-channels-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "59ff43763e0198ffb131f2ccd6c9b8ffb24dc00d20809f0ee8d47b0c450b817a"
+      }
+    },
+    {
+      "app_id": "gateway-telegram",
+      "app_version": "0.2.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-da5bfe1f4cfc0780fe91c0355fa578978f7d9f216c56db82bd7161d79c35364f.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "da5bfe1f4cfc0780fe91c0355fa578978f7d9f216c56db82bd7161d79c35364f",
+        "size": 13930
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "ed43f3cbdfbb80ecdf3aba3f079fbc5f1612a05d2b5ac18fdece0523bd65d5bd"
+      },
+      "display": {
+        "description": "Telegram outbound client and authenticated owner-bound Activity channel through the OS service.",
+        "name": "Telegram Gateway",
+        "source_kind": "product",
+        "source_name": "messaging-channels"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "54277effb131d1bf4002d4ff9f098db73b7b920ca191cccc00371bd1df6cd2aa",
+        "size": 11585
+      },
+      "provenance": {
+        "content_digest": "sha256:1c644bede845c385d42332692c260a20cdc7a652150acd5a298408ce52ead45a",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "1ead6b4d2da0f7d4f5dac086d3b6720dfb83616a77a0a51647ce28a531db72e4"
+      },
+      "release_tag": "app-messaging-channels-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "dc663f391bf74ac0fb85b7dae6552d44133daea67876bbf097be8a89aa92a67f"
+      }
+    },
+    {
+      "app_id": "gateway-webhook",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-7ff6198ddc7623764f09fb9160e62ca9e2beeea6b8ba363a21b74ca808327920.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "7ff6198ddc7623764f09fb9160e62ca9e2beeea6b8ba363a21b74ca808327920",
+        "size": 15542
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "971e6dac19508522235aa8b7e2dc27022b5d93dbd90a564f67986e988c0560eb"
+      },
+      "display": {
+        "description": "Generic outbound webhook gateway. POSTs JSON or text to any configured URL with optional bearer, basic, API-key, or HMAC-SHA256 authentication.",
+        "name": "Generic Webhook Gateway",
+        "source_kind": "product",
+        "source_name": "notification-delivery"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "9bb60bc73b3ae283bd26369277f5d9bd2f209791cb690b4aa361adcf6e64b15e",
+        "size": 8423
+      },
+      "provenance": {
+        "content_digest": "sha256:55e87e106dca68ab9ae964e31a0b5a07f6a4eb753abd4a2eb644a9b9ed441bdb",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "6f5161be5188df711d2a1b34360072cdebe26eb4870f75ea6ea9fdb51067f7fc"
+      },
+      "release_tag": "app-notification-delivery-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "6d1e778cc2a32cfaed549e8a37083fe3de83003c27a5094e8ab37bf3fd8a7279"
+      }
+    },
+    {
+      "app_id": "gateway-whatsapp",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-ea28f123b4a06ee4cef22310cb163adb4f2f1f2061693121b238880c7b9a3efd.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "ea28f123b4a06ee4cef22310cb163adb4f2f1f2061693121b238880c7b9a3efd",
+        "size": 14802
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "ed43f3cbdfbb80ecdf3aba3f079fbc5f1612a05d2b5ac18fdece0523bd65d5bd"
+      },
+      "display": {
+        "description": "Whatsapp outbound client and authenticated owner-bound Activity channel through the OS service.",
+        "name": "WhatsApp Gateway",
+        "source_kind": "product",
+        "source_name": "messaging-channels"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "f79506b68be6ac84fcc47a0471335ad6c4515db673e0f22dc7ed9f446a4b6b9b",
+        "size": 12339
+      },
+      "provenance": {
+        "content_digest": "sha256:27eb82d005d2b35b5d8c33bfc0e8512afe84b46c932536a780c8d15e8f7c557b",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "de3b4d0c018972cad16e44fde7a09098e5e57ebe55d6aa41cf75b4229ff9477b"
+      },
+      "release_tag": "app-messaging-channels-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "d95e0396edaab83b1e6a3e3e43a6fe37919f397ef45fdf5bf91beec9f926353e"
+      }
+    },
+    {
+      "app_id": "hardware-center",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-4d7c1ef59ffae37ec1248914ad4d2a58dd56e7f334c21b5ac380fa31d87a66df.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "4d7c1ef59ffae37ec1248914ad4d2a58dd56e7f334c21b5ac380fa31d87a66df",
+        "size": 12259
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "0704e32a50264ccdd9c12a1a0c56eea26dc7aba38b8004ca63650e5b0fb6e674"
+      },
+      "display": {
+        "description": "Inventory CPU, GPU, PCI, USB, memory, storage, drivers, firmware, and thermals",
+        "name": "Hardware Center",
+        "source_kind": "product",
+        "source_name": "diagnostics"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "50b7f25169dbb906d521bd94d2139cfa88533f451199c4f9bfc15c6ffbd1911f",
+        "size": 6988
+      },
+      "provenance": {
+        "content_digest": "sha256:86fb23186ba6bf3e55b0d60c8555627b63be22f32a2b73fad907da2d73314281",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "6a48aa94be4c97550a0a6f6f80a5c25fd379478c632f98b835fec233a8e52a7c"
+      },
+      "release_tag": "app-diagnostics-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "729cbc15bf6cb3306398651e7a10041b10f4fe56e11abdb2ef543f01cd73aec9"
+      }
+    },
+    {
+      "app_id": "kv",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-106e3739baa21e1253c61151a104156c013e651876a001054fada55918f75db7.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "106e3739baa21e1253c61151a104156c013e651876a001054fada55918f75db7",
+        "size": 11427
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "50a9bd66b7b1450aca0deea895ecf81c0b7dc130d6ff008cd5ed870da47045ec"
+      },
+      "display": {
+        "description": "Persistent string key-value storage",
+        "name": "Key-Value Store",
+        "source_kind": "capability",
+        "source_name": "storage-sdk"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "9f518940618a065181dfdab64b7323b93819b821787a4367afe5088dea20db4d",
+        "size": 4881
+      },
+      "provenance": {
+        "content_digest": "sha256:317f2f488d2f09757047992369e4b7f8a42e6401e4024cb76fbe22ae83df11f9",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "989e8472bc82577008baa3c0c290c89ba035ae42369cf265d7452d95916df837"
+      },
+      "release_tag": "cap-storage-sdk-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "5e59d27711d5403de4b7c10157a345fe2f08f6a79f618bd06dca75ec1f8c7bf4"
+      }
+    },
+    {
+      "app_id": "launcher",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-64d165aa2798ed7c162f78025b6aa18aaa8dd3bc1f72fb927d12ea47407abaca.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "64d165aa2798ed7c162f78025b6aa18aaa8dd3bc1f72fb927d12ea47407abaca",
+        "size": 17595
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "3d580a697eab35cb6bfcb85ef2f2c0f81f21bca34967ac767f10da5e36b1f4b2"
+      },
+      "display": {
+        "description": "Find and launch installed desktop (GUI) applications by name or AppID.",
+        "name": "Launcher",
+        "source_kind": "product",
+        "source_name": "launcher"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "580d378f8192d830fd4bf8f7dbe8fde8d1c0c8175cabe72cce3e307b5f1f85a7",
+        "size": 10676
+      },
+      "provenance": {
+        "content_digest": "sha256:fbe9915d05b77f23dcee7b329750d84ee0ec622e24ed64404692bedd802cf404",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "d393b1a968e3f2f01150309837e84a6112598598e253d62b290e7c5143bc13f0"
+      },
+      "release_tag": "app-launcher-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "2ea0862ae66db84dca0ff665e7d9557bbdc23936222c97991250dbf76b4a0c7e"
+      }
+    },
+    {
+      "app_id": "location-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-bbb46ab50902567cd31887a1e48c0856bb857bc3510ac70f131f04a7ce06716b.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "bbb46ab50902567cd31887a1e48c0856bb857bc3510ac70f131f04a7ce06716b",
+        "size": 23435
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e"
+      },
+      "display": {
+        "description": "Request GeoClue location fixes and offline timezone suggestions",
+        "name": "Location Manager",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "ac990c94004c24ea0a839e4a1e7bf8ee574efa73357fe3f7f5b937defb23fa87",
+        "size": 2337
+      },
+      "provenance": {
+        "content_digest": "sha256:60bd0355ad191e845efd748c4d2dc5f65fb1162df0c923871862eca94c6ca988",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "d060747dd0c44e2f31e8b42b9d551689a5bfcee3057a2ad8d9b61b3fc7cd7097"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "563e36074438f8de6bb969b8c1bca13feade89272182e769f46661ba4a3d4999"
+      }
+    },
+    {
+      "app_id": "log",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-b6bd967c9dc8ee752bd6fac3d5297727e1b0fa1c18b916174b193d0cb2c422c2.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "b6bd967c9dc8ee752bd6fac3d5297727e1b0fa1c18b916174b193d0cb2c422c2",
+        "size": 12809
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "3f9c6ac9783ba8dbcc21963d66195557ff81a27a2e4d6cacbe98aed5edca92b4"
+      },
+      "display": {
+        "description": "System audit log — every command is recorded automatically",
+        "name": "Activity Log",
+        "source_kind": "product",
+        "source_name": "events-audit"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "c060b84d18cb92979e245db1d7c417a63cf6e70b23987f6882a0c52474a5e273",
+        "size": 4584
+      },
+      "provenance": {
+        "content_digest": "sha256:d977e4f9ccf2cffbbca1a7d110c6a55ce5b1ebdd7e128c58855ada9f4ca32c1c",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "4d9702ed7c537ae9536228dc1ef90b366d8a5e66f626d5a16ba0d2af168f61ae"
+      },
+      "release_tag": "app-events-audit-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "5533b5c8d006d5102f026dc546d90280f2e5baa54eda1b1ac43fc89dfe46fd7d"
+      }
+    },
+    {
+      "app_id": "mail-ai",
+      "app_version": "0.2.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-ca550417f5af4fa1e7119ab38b4df8a1c074e77f9c565d4e0f03f9bfc30f05d2.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "ca550417f5af4fa1e7119ab38b4df8a1c074e77f9c565d4e0f03f9bfc30f05d2",
+        "size": 25703
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "cb7c76fae05be8a3f779e2eb2e8c3ba578b0781f81e20146c7267bf70bd8d114"
+      },
+      "display": {
+        "description": "AI helpers (summarize, smart-reply, smart-compose, translate, triage, chat) for the Thunderbird MailExtension `claw-mail-ai`.",
+        "name": "Mail AI",
+        "source_kind": "product",
+        "source_name": "mail"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "b97be734e5e5a464a2e13c9465b3617876194da527f8d317652649c39ee8d88c",
+        "size": 12023
+      },
+      "provenance": {
+        "content_digest": "sha256:2afe78894b4d862a7220696672c6e5f669258f39b1362cb9b1c5c995c18cbfa7",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "62b49bfa010dd474b8d85bb071322db65967d7b0b481597b21f8d3408a4e398a"
+      },
+      "release_tag": "app-mail-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "1b870b6497b2c43567a9ec7a3fc7c517b95eeb9b184ccbdd2a8b59635fd3f171"
+      }
+    },
+    {
+      "app_id": "net",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-bd068addac0ed8b7a9e2dea26612628c89e0898864aa3e63ed614e80a17dff38.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "bd068addac0ed8b7a9e2dea26612628c89e0898864aa3e63ed614e80a17dff38",
+        "size": 11699
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "8f56c7fe35a86cf73e3407868fff0deb7959238f9b913d65557a89feffe05ca1"
+      },
+      "display": {
+        "description": "HTTP client for API calls",
+        "name": "Network",
+        "source_kind": "capability",
+        "source_name": "http"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "ba40772a3663cafa927540e6e72b50055a4522174e7f9311ec19b7e21775089b",
+        "size": 3610
+      },
+      "provenance": {
+        "content_digest": "sha256:b9b95782dc1300780e8dcfa9dfb82f2bd161fcce8709492edbfb6fedfa019385",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "dfc694b7339b4b51e9bd37cc455e381440a86499686aa19525be5a97c23cbf45"
+      },
+      "release_tag": "cap-http-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "bd007a9e6ecda4072241fa8153e6eb384259b2b0ba2971d65aa548961eb96945"
+      }
+    },
+    {
+      "app_id": "netdiag",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-e037baea3b7e5fa893ac947b0965dae78205eab628720fd621a1091fc99a4ee4.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "e037baea3b7e5fa893ac947b0965dae78205eab628720fd621a1091fc99a4ee4",
+        "size": 12902
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "0704e32a50264ccdd9c12a1a0c56eea26dc7aba38b8004ca63650e5b0fb6e674"
+      },
+      "display": {
+        "description": "Diagnose host interfaces, routes, DNS, TCP reachability, and latency",
+        "name": "Network Doctor",
+        "source_kind": "product",
+        "source_name": "diagnostics"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "4e54b929868a3f08acb55b1c34c4bd65df9003dfaf48221f46d21aba62162ef6",
+        "size": 5774
+      },
+      "provenance": {
+        "content_digest": "sha256:909bfcb4dbed0da95389d223dab6b56343d2d9501d0198eba56ffeedfe60a3a4",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "b7a2af17fb9c771ba80b21c35aa1f04dc0c3c173e319ab1ef1c33c789865bd37"
+      },
+      "release_tag": "app-diagnostics-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "7ff8e1032e6c09518b0cb3b3a771119003ffb2eeee5409d915edbabf3d1db588"
+      }
+    },
+    {
+      "app_id": "network-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-e6b2ee73d7ca5b466b9c487cca4908259218e9ec58b44b16d6a13246d0362475.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "e6b2ee73d7ca5b466b9c487cca4908259218e9ec58b44b16d6a13246d0362475",
+        "size": 24517
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e"
+      },
+      "display": {
+        "description": "Control Wi-Fi, VPN profiles, and network radio state through NetworkManager",
+        "name": "Network Manager",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "4b47bbff5386247e17130f0bea225de37584aa3b835061c96478e48a3da635ac",
+        "size": 9802
+      },
+      "provenance": {
+        "content_digest": "sha256:9d94da0ba2a5fd72f442fe10cde4ea764ff7a89de1017f69f37ede59cb91c147",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "c6b80553168a095ce046181041bc1483453859771765b1b38aad49b573c0c6fd"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "53f323cb2fe83203a92bfca44b98538e76a749fb92022dfcb749a741013a85a9"
+      }
+    },
+    {
+      "app_id": "notify",
+      "app_version": "0.2.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-3ce15d675cf31cffc6a9e82852aba7f797f847e2f36b6b7b1940f45b38e435a2.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "3ce15d675cf31cffc6a9e82852aba7f797f847e2f36b6b7b1940f45b38e435a2",
+        "size": 13727
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "3f2006d894da3aa68769cfaf9fab83359f9be7e3d25b6cfafbd81b1de52fc3b1"
+      },
+      "display": {
+        "description": "Send and list your new OS notifications; historical JSON is preserved but not imported",
+        "name": "Notifications",
+        "source_kind": "product",
+        "source_name": "notifications"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "fbcdb9eb279ed8f4c7adacad02cbae57825b56d633de8e6c1b194631d8ae2f2f",
+        "size": 3171
+      },
+      "provenance": {
+        "content_digest": "sha256:abacbfbe6c2283bebb0ce869d3b4d1d2ee6a37a6748e663e7624b1ca8d60a994",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "3d07eb0f2a5a6050ebc88cfac3c1f94905bb87e9100e1eb4f5b2d1fe8bb2fcb9"
+      },
+      "release_tag": "app-notifications-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "9932b033b05eb1e7815f0959e1b8407b00f12b6adcccf7158623966ad3d9c533"
+      }
+    },
+    {
+      "app_id": "panel-calendar",
+      "app_version": "0.1.0",
+      "architecture": "amd64",
+      "artifact": {
+        "file": "claw-app-snapshot-2182c649759e1b8ae500bb1493735964689e88baf0b3a7e5bf8e930bc24f4bb5.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "2182c649759e1b8ae500bb1493735964689e88baf0b3a7e5bf8e930bc24f4bb5",
+        "size": 9650525
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "c5c8eb795af8c7b3d9757960fbce96a1d07525c705f2725b03435c42e4faafef"
+      },
+      "display": {
+        "description": "Native calendar and local agenda panel applet.",
+        "name": "Calendar",
+        "source_kind": "product",
+        "source_name": "calendar"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "a9124b326af6ed1bc72eea21f79f6eca971c2a68479c9869a33a119fdf8b2499",
+        "size": 2780
+      },
+      "provenance": {
+        "content_digest": "sha256:8b43bd419a91cb98fcfda092578166dd9623ace4d784135f08ba6af64d6cb348",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "060c8ac9a220e8563a350321a278c1486861f6f679db8b57db58221a0f6add43"
+      },
+      "release_tag": "app-calendar-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "f1c610eebbd15d915bdfa576b9a4f5d9c1dfb804fd4ecaf5f67128f4748d199b"
+      }
+    },
+    {
+      "app_id": "panel-calendar",
+      "app_version": "0.1.0",
+      "architecture": "arm64",
+      "artifact": {
+        "file": "claw-app-snapshot-d7ef8954bdbe8a30b183b5f13b7e4863d85b1c379ea0f3cfd9026741442d73be.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "d7ef8954bdbe8a30b183b5f13b7e4863d85b1c379ea0f3cfd9026741442d73be",
+        "size": 8744765
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "f2a5aa384c380f2f885f5cd490490eac05b99bdf4f0b74f044103549671cb598"
+      },
+      "display": {
+        "description": "Native calendar and local agenda panel applet.",
+        "name": "Calendar",
+        "source_kind": "product",
+        "source_name": "calendar"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "a9124b326af6ed1bc72eea21f79f6eca971c2a68479c9869a33a119fdf8b2499",
+        "size": 2780
+      },
+      "provenance": {
+        "content_digest": "sha256:d89712e79bc744ded66ba40c84c3823e360e6e72473af0ae97647d6709e2f796",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "f7dcb817b90be74fae2faa44fa4ec59c57fd5ff02b376c4f33dec73c30c78926"
+      },
+      "release_tag": "app-calendar-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "f1c610eebbd15d915bdfa576b9a4f5d9c1dfb804fd4ecaf5f67128f4748d199b"
+      }
+    },
+    {
+      "app_id": "panel-clipboard",
+      "app_version": "0.1.0",
+      "architecture": "amd64",
+      "artifact": {
+        "file": "claw-app-snapshot-7e6c749b48c732185a2d7d9f8af42b886e67c58a074921de9bdee2968174dcad.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "7e6c749b48c732185a2d7d9f8af42b886e67c58a074921de9bdee2968174dcad",
+        "size": 9484869
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "9a639db7dd7bf0eb4f5c4429f473b54fe2611aaaa7b69b6e10e784495828e345"
+      },
+      "display": {
+        "description": "Read and manage existing CopyQ history through the owner-bound OS clipboard service.",
+        "name": "Clipboard History",
+        "source_kind": "product",
+        "source_name": "clipboard"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "98d2c512ebbf875f80b1dbcfd6298d5320e96f8693458ba5a2ac132f189d6172",
+        "size": 5741
+      },
+      "provenance": {
+        "content_digest": "sha256:f983c080a37399ad96a1c08f5d71a3fa1cca7597a6c67cca4eb8f997b12653bf",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "ec1d5a3b74b739a0e18cd550cd65c5c136e29e6630af3e697a84db853ff160d7"
+      },
+      "release_tag": "app-clipboard-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "1ab64f55cd627463405cc7c31c8bd115a9bf08c0d1e1238d8f848117cb6386af"
+      }
+    },
+    {
+      "app_id": "panel-clipboard",
+      "app_version": "0.1.0",
+      "architecture": "arm64",
+      "artifact": {
+        "file": "claw-app-snapshot-5a1c48bf169103cf66f845ccaf99bacb21483d439e101c526f2d6b7bd9c84908.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "5a1c48bf169103cf66f845ccaf99bacb21483d439e101c526f2d6b7bd9c84908",
+        "size": 8593697
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4c061079b63ebdbf60e54949988bfa3f42d969adfe39837eaf8eefd3e4d9bea6"
+      },
+      "display": {
+        "description": "Read and manage existing CopyQ history through the owner-bound OS clipboard service.",
+        "name": "Clipboard History",
+        "source_kind": "product",
+        "source_name": "clipboard"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "98d2c512ebbf875f80b1dbcfd6298d5320e96f8693458ba5a2ac132f189d6172",
+        "size": 5741
+      },
+      "provenance": {
+        "content_digest": "sha256:f9e2819ec57032d9a5f20a8694cad388cc0aab4b97949f5b1521c1fc501968d3",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "5ac4204ba52c21cdceed4e631bd0b5b79310b687280b8f6ebde372603d10b32c"
+      },
+      "release_tag": "app-clipboard-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "1ab64f55cd627463405cc7c31c8bd115a9bf08c0d1e1238d8f848117cb6386af"
+      }
+    },
+    {
+      "app_id": "pkg",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-5ec28948cea58223f47f1e1fe4ab588b5828752a6501a080d78b749b8186a69d.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "5ec28948cea58223f47f1e1fe4ab588b5828752a6501a080d78b749b8186a69d",
+        "size": 16813
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4f735aca3e9c75f09abd2570bc42011ba90c76eb7a5de1c66bc7c0f8ac3247b8"
+      },
+      "display": {
+        "description": "Declarative capability management — say what you need, not how to install it",
+        "name": "Packages",
+        "source_kind": "product",
+        "source_name": "store"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "8662d7c8e33fd9c91b08ae59039fc2adfdeae10db1c4bad9e3a02e268956f69f",
+        "size": 19641
+      },
+      "provenance": {
+        "content_digest": "sha256:bcd20501282abe5f6750bf88134194dec2e81a849158bf5a9cb10320ea794394",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "e31e6bd51d7b6f992ead17201806dbd3068bccac39677fcb885ea07659b2e06f"
+      },
+      "release_tag": "app-store-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "e67a090d6603bcdc85288bae27b529d2716f3c1d07635a982f7bffb7156c43cc"
+      }
+    },
+    {
+      "app_id": "power-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-0f99ad56617fe973a1297cd3984188effbafe33a47975af3b09e10acbb31bce9.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "0f99ad56617fe973a1297cd3984188effbafe33a47975af3b09e10acbb31bce9",
+        "size": 23770
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e"
+      },
+      "display": {
+        "description": "Inspect UPower state and request logind sleep, hibernate, reboot, or shutdown",
+        "name": "Power Manager",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "3431e0ea302d16c19f86a78800b6bfe2eb0af8aa03421a3790328b37ba115b6b",
+        "size": 6129
+      },
+      "provenance": {
+        "content_digest": "sha256:9788c8d8aba098ed6767571b778c206fd00bc12506bcf7ac5bc3e1945638c41c",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "656585dcc5c3fb377ed2ab50e257cab6469be1382e7f1b067c869d349c962b2c"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "0100d4ab8c119960659ade20e6a364308e77a6b3c8db60a80cf64301cdf01745"
+      }
+    },
+    {
+      "app_id": "printer-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-400e5b3fd8bacedfd1188e6ce1e640e50bbebb9c2d97db7cedaba84e41dc260a.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "400e5b3fd8bacedfd1188e6ce1e640e50bbebb9c2d97db7cedaba84e41dc260a",
+        "size": 24718
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e"
+      },
+      "display": {
+        "description": "Discover CUPS printers, inspect capabilities/queues, print files, and cancel owned jobs",
+        "name": "Printer Manager",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "42fa3e8908956895c6b68586aa2666d3f5b319a960f08b513e1a35dbd0db5cee",
+        "size": 6024
+      },
+      "provenance": {
+        "content_digest": "sha256:67052df70c4e811fb74743a9555b0f80f99ab8b3d46009a8f09488ef0ed8a4c8",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "bc3384927ad037a7defa90e2805fb21281bb84408cc9506f215ecde3882cf562"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "c875045ae6677d2f8a30877641c0607711a013a91c2a0b76ec69c8635553c833"
+      }
+    },
+    {
+      "app_id": "search",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-b077db5a7341a1c653e07fa6f57c2d5f4c418aa82d209397739fa5317ad11228.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "b077db5a7341a1c653e07fa6f57c2d5f4c418aa82d209397739fa5317ad11228",
+        "size": 15875
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "817005f4436cb9c46eacba1162fa8561d0fc73b39e4fc72c2133bbe4c75e022f"
+      },
+      "display": {
+        "description": "Web and image search through an explicitly selected Google or Brave provider",
+        "name": "Web Search",
+        "source_kind": "product",
+        "source_name": "browser"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "53400e0d7ea3a8b73de94292a6f4961d92296f47a558ce2235b84aad037987f2",
+        "size": 7375
+      },
+      "provenance": {
+        "content_digest": "sha256:fd74349a43500fd060c4e530cf35cb0c3d1d088258dc9f4177b17f330c0772a3",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "2b7b3f2fe84ac4db5e7dfc052aa9aa8dec6c4330d05bbfdd3fc3c75b8a19d23b"
+      },
+      "release_tag": "app-browser-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "48c402758324a89c04d500e3a2f2731e29f2cec1b7adcfbc71c92e6c31357423"
+      }
+    },
+    {
+      "app_id": "security-center",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-59bffc9254eaa1108a56f7d5c56243984b6a50ce6f66cc6624a215ffe5c335b5.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "59bffc9254eaa1108a56f7d5c56243984b6a50ce6f66cc6624a215ffe5c335b5",
+        "size": 12982
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "46042254a1f0929b1526a64d39f7342ac51cec0cc85915d80bc96990c925b070"
+      },
+      "display": {
+        "description": "Analyze authentication, sudo, SSH, MAC policy, listening ports, and security events",
+        "name": "Security Center",
+        "source_kind": "product",
+        "source_name": "security"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "3ca32bb30a9662ffce07484f473b271716bda278d1c4aa92f633c6512f37e65d",
+        "size": 5591
+      },
+      "provenance": {
+        "content_digest": "sha256:a030143d39ea699cfafe34696255c7a98a1a9def245b16ef76153fe34f020acc",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "c7f9939ed04628ef00fe99279ac111a2443eb38a7b816bb827f4374e85c05d63"
+      },
+      "release_tag": "app-security-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "79498894df4b980601c6fa3150e8d5f0a3d396224f0b5977aa8c73165da11071"
+      }
+    },
+    {
+      "app_id": "storage-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-eb78a3da6ab81aa1bfdcbd3b434efe0292261907d816a88b479b3138c6188ad1.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "eb78a3da6ab81aa1bfdcbd3b434efe0292261907d816a88b479b3138c6188ad1",
+        "size": 11884
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "ab1afbe975f3182dbf57948f6b1a42a659156b75d76e9ff2a8068e2987f22de8"
+      },
+      "display": {
+        "description": "Inspect disks, diagnose SMART/filesystem health, and control removable media through UDisks2",
+        "name": "Storage Manager",
+        "source_kind": "product",
+        "source_name": "storage"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "abad2cb3e59cff904e54df7e5d4ed9df0a4fd71e0199bb58cfff0d808071620e",
+        "size": 5523
+      },
+      "provenance": {
+        "content_digest": "sha256:16c57ccc9d5043ecea9cc995df33e30da5599fb705f6b393a47fe6b23ccf6485",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "2d52729e21f652623b408eb7b6434765dc0b04b8c66429ad3ca17735529812cb"
+      },
+      "release_tag": "app-storage-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "f337ea4238ee96814006776b666cd8a7500c039a3fb74f2e6cca899b02c77390"
+      }
+    },
+    {
+      "app_id": "summarize",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-05ca23b3643789aae1c82222b6c46f464925079a5243c4bb28414bcfb9fad29c.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "05ca23b3643789aae1c82222b6c46f464925079a5243c4bb28414bcfb9fad29c",
+        "size": 9251
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "cc88138c041362a27c64a01039f84e78e9080d27602fb8df75d44dd489562638"
+      },
+      "display": {
+        "description": "Summarize a block of text using a language model.",
+        "name": "Summarize",
+        "source_kind": "capability",
+        "source_name": "ai-helpers"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "c379f9ca291d3a5b636c51fd763cb41d853d9f42e03e3203889c0814e43a7d5b",
+        "size": 1996
+      },
+      "provenance": {
+        "content_digest": "sha256:be6cd7549e36f21d351b293c8fd4cb8ae5fb6518d316e900d1d9f6bfd0b763bd",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "d779f1524f076117e9948740848fb3b863950e7b961639b3589d4c8d22365e94"
+      },
+      "release_tag": "cap-ai-helpers-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "4f4c051faab531be4a1077e40de461fa84ec3e63b01605f7686a0764a9634938"
+      }
+    },
+    {
+      "app_id": "system-snapshot",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-8619ed0a9382de8776e08666e5064c20256d31b21dfa9f762265eb525948083a.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "8619ed0a9382de8776e08666e5064c20256d31b21dfa9f762265eb525948083a",
+        "size": 13312
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "3f46c7383a51cdf1438ae0db2a4c596426fa17716797e679a80e18c95431eb75"
+      },
+      "display": {
+        "description": "Create and restore full-system recovery points using Snapper, Btrfs, or LVM",
+        "name": "System Recovery",
+        "source_kind": "product",
+        "source_name": "backup-recovery"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "87fc5985ae0a291e76bde7943c9885646b058b17d0759de6a854cd6f2dbc6091",
+        "size": 4382
+      },
+      "provenance": {
+        "content_digest": "sha256:b40a596115cf9d6c41358faec2d52ce1bf02afc72bd1e564f29ced6a63140687",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "abf8f7ddd73b73ce224fa124e328450a127cdde73f42461bf7ac000a4d24a0dd"
+      },
+      "release_tag": "app-backup-recovery-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "4df195995f03c4197ba70f9cd90f058db78877f45f434da9ca6f82d4700b1de0"
+      }
+    },
+    {
+      "app_id": "systemd",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-54f399daa79b5f3a9bda46a92e1fa354b6fc78ae2eeaa8d0b96345a428ec907f.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "54f399daa79b5f3a9bda46a92e1fa354b6fc78ae2eeaa8d0b96345a428ec907f",
+        "size": 11890
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "238730d1280d238668dea6597f055f00c93513e106803c5fcdf3af8f91353499"
+      },
+      "display": {
+        "description": "Inspect and control native systemd units through the privileged Claw OS broker",
+        "name": "System Services",
+        "source_kind": "product",
+        "source_name": "maintenance"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "5983632bdff61ecad849e8f01a201f1e6c488c4fa9c53a1d752adce66a5bd8b7",
+        "size": 6160
+      },
+      "provenance": {
+        "content_digest": "sha256:aac76ae862ca02231f70bd0038de74d35ea493631d4d160b327c4811823ac0bf",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "4049525f557e3e1beaa7f6a516aad5272afb1b1a7783489246d316ca6acf9400"
+      },
+      "release_tag": "app-maintenance-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "eba5dc1b11c622564753f9c68f4094a17dc59de66b04adb1010585a7a5e7d859"
+      }
+    },
+    {
+      "app_id": "usb-guard",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-e35da9f12347e34084ac5982812ecdeba9cbcc7cbd20dada5daf65b02dca65b6.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "e35da9f12347e34084ac5982812ecdeba9cbcc7cbd20dada5daf65b02dca65b6",
+        "size": 13841
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "46042254a1f0929b1526a64d39f7342ac51cec0cc85915d80bc96990c925b070"
+      },
+      "display": {
+        "description": "Inventory, authorize, persistently block, unblock, and safely eject USB devices",
+        "name": "USB Guard",
+        "source_kind": "product",
+        "source_name": "security"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "7c0ee5c9f5832061ed05e6c91f63741f57459b656de38fba12ebfb97fe975826",
+        "size": 7072
+      },
+      "provenance": {
+        "content_digest": "sha256:ca383f296c4addab2365f165871b5440cad26c52be69483a14d5e9648b1d39d0",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "cbd1691638c8039cec51f0d45d062ff66d682e6211a865838f479afe76590f22"
+      },
+      "release_tag": "app-security-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "354bc14b8b83ec5fe4c2a794c88dbd8571a36858b2aff003fc54ce52d8d24250"
+      }
+    },
+    {
+      "app_id": "user-manager",
+      "app_version": "0.1.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-c9922195c4487099b1ad66aaf09fea65aca0d4f40c78d7298706422f7f9071db.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "c9922195c4487099b1ad66aaf09fea65aca0d4f40c78d7298706422f7f9071db",
+        "size": 25627
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e"
+      },
+      "display": {
+        "description": "Manage regular local users, groups, passwords, shells, and memberships with rollback",
+        "name": "User Manager",
+        "source_kind": "product",
+        "source_name": "settings"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "482ee82e0b105efa7b1b72229ba6a4097ddfadf0923a6a8967a617268defd834",
+        "size": 12587
+      },
+      "provenance": {
+        "content_digest": "sha256:0067600e48979ea9e600f2ee8111c4a7dc6b215875a95da81720d45fd0cb4ae9",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "72a51b4437aaca91779f36996a783ce4f6028f9051711afdffc37e22665ee449"
+      },
+      "release_tag": "app-settings-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "9a7aabe8447d34182b0e1111bfe282117ad33d1fefa17757fdfeeb665f6a27ca"
+      }
+    },
+    {
+      "app_id": "web",
+      "app_version": "0.2.0",
+      "architecture": "all",
+      "artifact": {
+        "file": "claw-app-snapshot-6f106338599779719bfe315b81356dd878f5f2dc10e2930d88965ae180e18f85.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "6f106338599779719bfe315b81356dd878f5f2dc10e2930d88965ae180e18f85",
+        "size": 20223
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "817005f4436cb9c46eacba1162fa8561d0fc73b39e4fc72c2133bbe4c75e022f"
+      },
+      "display": {
+        "description": "Browser via cos-browser (vendored Obscura) — text/links/JSON output, JS rendering, optional CDP",
+        "name": "Browser",
+        "source_kind": "product",
+        "source_name": "browser"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "ecba94f97546b0b9dd07a5498836c6514b70ea13cd149a268b3a0175a5f06a00",
+        "size": 17294
+      },
+      "provenance": {
+        "content_digest": "sha256:86d6d4d807818754997dd0f6639babd1b5656f45afeca64d6844819b1671753e",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "9b108efd9ef003a92bcca36c8b8b83f806d664ef35f29e91bd3222d5dc0d2d89"
+      },
+      "release_tag": "app-browser-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "00bd9d520f98a803cb248f62e7ce902a1450a8d5b38ac9011db0586b6f42c452"
+      }
+    },
+    {
+      "app_id": "widget-rail",
+      "app_version": "0.1.0",
+      "architecture": "amd64",
+      "artifact": {
+        "file": "claw-app-snapshot-ddea45dc27d68d5ad5180d3b950abe905ddeeef0cd36aa5de8ed86d3716bc56a.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "ddea45dc27d68d5ad5180d3b950abe905ddeeef0cd36aa5de8ed86d3716bc56a",
+        "size": 9489236
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "c9c65d4bc6a2d2607df4b373e77ba067beaec6845138b3a4d4a0124a1866cc92"
+      },
+      "display": {
+        "description": "Calendar, AI tasks, system health, and smart suggestions.",
+        "name": "Desktop Widgets",
+        "source_kind": "product",
+        "source_name": "desktop-widgets"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "13f2510ca96739cd0568d16784af1ae0844a4258b0778edfec2bbd55f83c0882",
+        "size": 5125
+      },
+      "provenance": {
+        "content_digest": "sha256:37cf8afe34530120650d087e0a98c619fb709898e40d6247c8b9f041a9c1940d",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "1c19086d47a8b564a825fda2ba1755f28505611a0f1863072e060b57d44c373d"
+      },
+      "release_tag": "app-desktop-widgets-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "0e7d0a3e00e99bdc7e8e24ad326fda539753de7e9b9080272b3f1022379a58e7"
+      }
+    },
+    {
+      "app_id": "widget-rail",
+      "app_version": "0.1.0",
+      "architecture": "arm64",
+      "artifact": {
+        "file": "claw-app-snapshot-d064115c5dc2281a4331e0ecb8ba2e24d25bc7163b029e8bf228a87afdf2665d.tar.gz",
+        "media_type": "application/gzip",
+        "sha256": "d064115c5dc2281a4331e0ecb8ba2e24d25bc7163b029e8bf228a87afdf2665d",
+        "size": 8607346
+      },
+      "delivery": {
+        "kind": "apt",
+        "package_sha256": "ed227a067102b969eea1d47cc56516d3b7e04cabe4d3e794347a9bab23bf9755"
+      },
+      "display": {
+        "description": "Calendar, AI tasks, system health, and smart suggestions.",
+        "name": "Desktop Widgets",
+        "source_kind": "product",
+        "source_name": "desktop-widgets"
+      },
+      "manifest": {
+        "path": "app.json",
+        "sha256": "13f2510ca96739cd0568d16784af1ae0844a4258b0778edfec2bbd55f83c0882",
+        "size": 5125
+      },
+      "provenance": {
+        "content_digest": "sha256:ca318c8ba9f5f63b77f5149dc2d64869a3675b2675c766a371f1ccc7d17e9f83",
+        "path": ".provenance.json",
+        "publisher_key_id": "sha256:9a41c8abdd30942c7917211cf90c3230ed48734f6329eb7ee98e57fcd6545555",
+        "sha256": "186bc0947e6c797b8b9aa36ef898af24596d98d924f34cd97dd30c7f6f7f5e56"
+      },
+      "release_tag": "app-desktop-widgets-v0.2.1",
+      "release_version": "0.2.1",
+      "web_ui": {
+        "entry": "web/index.html",
+        "path": "web-ui.json",
+        "sha256": "0e7d0a3e00e99bdc7e8e24ad326fda539753de7e9b9080272b3f1022379a58e7"
+      }
+    }
+  ],
+  "expires_at": "2026-12-03T02:49:20Z",
+  "generation": "1795056560",
+  "issued_at": "2026-11-19T02:49:20Z",
+  "packages": [
+    {
+      "apps": [
+        "backup-center",
+        "system-snapshot"
+      ],
+      "architecture": "all",
+      "package": "claw-app-backup-recovery",
+      "sha256": "3f46c7383a51cdf1438ae0db2a4c596426fa17716797e679a80e18c95431eb75",
+      "size": 19784,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "browser-attached",
+        "search",
+        "web"
+      ],
+      "architecture": "all",
+      "package": "claw-app-browser",
+      "sha256": "817005f4436cb9c46eacba1162fa8561d0fc73b39e4fc72c2133bbe4c75e022f",
+      "size": 40360,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "calendar"
+      ],
+      "architecture": "all",
+      "package": "claw-app-calendar",
+      "sha256": "f0f442599acb193a980d75e156d9a5b5efa9aa852922adb58692cdee8d362521",
+      "size": 24200,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "panel-calendar"
+      ],
+      "architecture": "amd64",
+      "package": "claw-app-calendar-desktop",
+      "sha256": "c5c8eb795af8c7b3d9757960fbce96a1d07525c705f2725b03435c42e4faafef",
+      "size": 6340148,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "panel-calendar"
+      ],
+      "architecture": "arm64",
+      "package": "claw-app-calendar-desktop",
+      "sha256": "f2a5aa384c380f2f885f5cd490490eac05b99bdf4f0b74f044103549671cb598",
+      "size": 5415728,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-screenshot"
+      ],
+      "architecture": "amd64",
+      "package": "claw-app-capture-desktop",
+      "sha256": "86a29840d59697e2f32268badd214c7ea7feeae5c7669e3d6b8a381300bb4915",
+      "size": 1114508,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-screenshot"
+      ],
+      "architecture": "arm64",
+      "package": "claw-app-capture-desktop",
+      "sha256": "69eef5aaa05b43826dff238afdc744d6ce4b4b51be868ef6b2270499b0c6d2fa",
+      "size": 967576,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "clipboard-manager"
+      ],
+      "architecture": "all",
+      "package": "claw-app-clipboard",
+      "sha256": "f23756def367a695182f72328aa79abc94c0eb2f593df5c34b4e111ef5b3f27b",
+      "size": 17920,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "panel-clipboard"
+      ],
+      "architecture": "amd64",
+      "package": "claw-app-clipboard-desktop",
+      "sha256": "9a639db7dd7bf0eb4f5c4429f473b54fe2611aaaa7b69b6e10e784495828e345",
+      "size": 6210244,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "panel-clipboard"
+      ],
+      "architecture": "arm64",
+      "package": "claw-app-clipboard-desktop",
+      "sha256": "4c061079b63ebdbf60e54949988bfa3f42d969adfe39837eaf8eefd3e4d9bea6",
+      "size": 5310224,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "container-manager"
+      ],
+      "architecture": "all",
+      "package": "claw-app-containers",
+      "sha256": "5c9dadacc318ed6f0e2e3185b43ba5c101c4a34ec71fe582ef5e51a6f9268971",
+      "size": 17376,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "widget-rail"
+      ],
+      "architecture": "amd64",
+      "package": "claw-app-desktop-widgets-desktop",
+      "sha256": "c9c65d4bc6a2d2607df4b373e77ba067beaec6845138b3a4d4a0124a1866cc92",
+      "size": 6230380,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "widget-rail"
+      ],
+      "architecture": "arm64",
+      "package": "claw-app-desktop-widgets-desktop",
+      "sha256": "ed227a067102b969eea1d47cc56516d3b7e04cabe4d3e794347a9bab23bf9755",
+      "size": 5325488,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "crash-doctor",
+        "hardware-center",
+        "netdiag"
+      ],
+      "architecture": "all",
+      "package": "claw-app-diagnostics",
+      "sha256": "0704e32a50264ccdd9c12a1a0c56eea26dc7aba38b8004ca63650e5b0fb6e674",
+      "size": 20100,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-edit"
+      ],
+      "architecture": "amd64",
+      "package": "claw-app-editor-desktop",
+      "sha256": "58e0ee49bdb056c73d703f4c666960ef0ca374f37512c27207599b0c30740f46",
+      "size": 11809040,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-edit"
+      ],
+      "architecture": "arm64",
+      "package": "claw-app-editor-desktop",
+      "sha256": "99cb626bc5835e5d5fc38bda5b4af86448c8c3705acf0b3d061d683ddcc42799",
+      "size": 10585972,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "event-center",
+        "log"
+      ],
+      "architecture": "all",
+      "package": "claw-app-events-audit",
+      "sha256": "3f9c6ac9783ba8dbcc21963d66195557ff81a27a2e4d6cacbe98aed5edca92b4",
+      "size": 18512,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "docs",
+        "fs"
+      ],
+      "architecture": "all",
+      "package": "claw-app-files",
+      "sha256": "40720a42bac03ccb439e1ac430ecf8c46e7a44941eeffc2cae06a7d4c23fadcb",
+      "size": 407840,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-files"
+      ],
+      "architecture": "amd64",
+      "package": "claw-app-files-desktop",
+      "sha256": "7919fb0117465ca2ba290e383598aabb9c4fa334a7eaa22aac387a1d41b6150b",
+      "size": 14662040,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-files"
+      ],
+      "architecture": "arm64",
+      "package": "claw-app-files-desktop",
+      "sha256": "9ae2cc81bd687088491a4da6de4473ac346e65b0184304e315e6dcb086eb51c7",
+      "size": 13103916,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "gateway-homeassistant"
+      ],
+      "architecture": "all",
+      "package": "claw-app-home-integration",
+      "sha256": "8a241713e38389962f2ba64cf0f3e5cd2c414619c34aca3b0f34a2382ae4be88",
+      "size": 17216,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "launcher"
+      ],
+      "architecture": "all",
+      "package": "claw-app-launcher",
+      "sha256": "3d580a697eab35cb6bfcb85ef2f2c0f81f21bca34967ac767f10da5e36b1f4b2",
+      "size": 21000,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-launcher"
+      ],
+      "architecture": "amd64",
+      "package": "claw-app-launcher-desktop",
+      "sha256": "44450ca8fb5e05cae126b9ac6b8b103b4fa55052003c63eb8a03dc854e6235ec",
+      "size": 6576368,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-launcher"
+      ],
+      "architecture": "arm64",
+      "package": "claw-app-launcher-desktop",
+      "sha256": "2cbc0becb5805c5fd9c69ad249226637e62956927269e06f102a368ceeed8002",
+      "size": 5846968,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "email",
+        "mail-ai"
+      ],
+      "architecture": "all",
+      "package": "claw-app-mail",
+      "sha256": "cb7c76fae05be8a3f779e2eb2e8c3ba578b0781f81e20146c7267bf70bd8d114",
+      "size": 114928,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [],
+      "architecture": "all",
+      "package": "claw-app-mail-desktop",
+      "sha256": "4b64035ca76fa00d40712e405414505c5eea16b5b0712d1fef9eeec3f954eaab",
+      "size": 122368,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "config-editor",
+        "systemd"
+      ],
+      "architecture": "all",
+      "package": "claw-app-maintenance",
+      "sha256": "238730d1280d238668dea6597f055f00c93513e106803c5fcdf3af8f91353499",
+      "size": 17628,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-player"
+      ],
+      "architecture": "amd64",
+      "package": "claw-app-media-player-desktop",
+      "sha256": "dfd59a5f1ded7d1615ed76ec747246947c44c1aace0282dfb93cda3b31cd5cfd",
+      "size": 9607648,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-player"
+      ],
+      "architecture": "arm64",
+      "package": "claw-app-media-player-desktop",
+      "sha256": "63e77b70acd28395a0d310d1894b2630ed244f617b6b34e216a6d818ce9815a9",
+      "size": 8590796,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "gateway-discord",
+        "gateway-slack",
+        "gateway-telegram",
+        "gateway-whatsapp"
+      ],
+      "architecture": "all",
+      "package": "claw-app-messaging-channels",
+      "sha256": "ed43f3cbdfbb80ecdf3aba3f079fbc5f1612a05d2b5ac18fdece0523bd65d5bd",
+      "size": 24476,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "gateway-ntfy",
+        "gateway-pushover",
+        "gateway-webhook"
+      ],
+      "architecture": "all",
+      "package": "claw-app-notification-delivery",
+      "sha256": "971e6dac19508522235aa8b7e2dc27022b5d93dbd90a564f67986e988c0560eb",
+      "size": 24444,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "notify"
+      ],
+      "architecture": "all",
+      "package": "claw-app-notifications",
+      "sha256": "3f2006d894da3aa68769cfaf9fab83359f9be7e3d25b6cfafbd81b1de52fc3b1",
+      "size": 17572,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-notifications"
+      ],
+      "architecture": "amd64",
+      "package": "claw-app-notifications-desktop",
+      "sha256": "0a1709cb333e6a684d2d5045bbd089b66b2363a67f74fdd68c29c7437cbb35ca",
+      "size": 5783132,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-notifications"
+      ],
+      "architecture": "arm64",
+      "package": "claw-app-notifications-desktop",
+      "sha256": "2ba0f1e71c76bc62988f7103106091311fbc1806e9ecd1c6268dc9c515710e5c",
+      "size": 5116196,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "firewall-manager",
+        "security-center",
+        "usb-guard"
+      ],
+      "architecture": "all",
+      "package": "claw-app-security",
+      "sha256": "46042254a1f0929b1526a64d39f7342ac51cec0cc85915d80bc96990c925b070",
+      "size": 20840,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "accessibility-manager",
+        "audio-manager",
+        "bluetooth-manager",
+        "camera-manager",
+        "desktop-manager",
+        "display-manager",
+        "location-manager",
+        "network-manager",
+        "power-manager",
+        "printer-manager",
+        "user-manager"
+      ],
+      "architecture": "all",
+      "package": "claw-app-settings",
+      "sha256": "4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e",
+      "size": 43864,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-settings"
+      ],
+      "architecture": "amd64",
+      "package": "claw-app-settings-desktop",
+      "sha256": "24b30db0870a9d5a6c823e8fec8941d8f786bdb0301a00261ee028c2e982d1f5",
+      "size": 12420108,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-settings"
+      ],
+      "architecture": "arm64",
+      "package": "claw-app-settings-desktop",
+      "sha256": "de96c9697d85d35d7a1c51be25817d2c3e5d65968878ebcd12bebff3f5bfa9e8",
+      "size": 11143596,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "storage-manager"
+      ],
+      "architecture": "all",
+      "package": "claw-app-storage",
+      "sha256": "ab1afbe975f3182dbf57948f6b1a42a659156b75d76e9ff2a8068e2987f22de8",
+      "size": 15828,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "pkg"
+      ],
+      "architecture": "all",
+      "package": "claw-app-store",
+      "sha256": "4f735aca3e9c75f09abd2570bc42011ba90c76eb7a5de1c66bc7c0f8ac3247b8",
+      "size": 20300,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-store"
+      ],
+      "architecture": "amd64",
+      "package": "claw-app-store-desktop",
+      "sha256": "174d0bbf643f74d9d08a083ff71d538c8ea1ccec7666902be4ae89b0fb670a1b",
+      "size": 11463432,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-store"
+      ],
+      "architecture": "arm64",
+      "package": "claw-app-store-desktop",
+      "sha256": "6ef2993318f20c8b149fe02bb59c2c349bcd670c5aa3c574a314bc343067fc91",
+      "size": 10248812,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [],
+      "architecture": "all",
+      "package": "claw-app-support",
+      "sha256": "bdade2c5f0e39e1500b7f179481621a9eb4767f03b68a5dbc891237db95ffbc7",
+      "size": 28508,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "exec"
+      ],
+      "architecture": "all",
+      "package": "claw-app-terminal",
+      "sha256": "15abcc00ea625aa4e893ca188786c9b669cbe138ac9f580242da706273ae4407",
+      "size": 21268,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-term"
+      ],
+      "architecture": "amd64",
+      "package": "claw-app-terminal-desktop",
+      "sha256": "adf82c1734648d49af69762659e22819d1b2745e0ce9a1ecc1d22b3ffc93c931",
+      "size": 10747792,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "cosmic-term"
+      ],
+      "architecture": "arm64",
+      "package": "claw-app-terminal-desktop",
+      "sha256": "9f313f303794bd95df41204ee7cd0720d70e434d2a956a144a0723861f626a81",
+      "size": 9508936,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [],
+      "architecture": "all",
+      "package": "claw-apps-agent",
+      "sha256": "2dbfce77389c672c04fdaa49f874ecba10105473adabf80a4c0ef2df8998fa09",
+      "size": 5204,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [],
+      "architecture": "all",
+      "package": "claw-apps-desktop",
+      "sha256": "e2d9bbdc758eaa5666545057b24ed65f9548705861a2441306e06ce3fab6570c",
+      "size": 5120,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "summarize"
+      ],
+      "architecture": "all",
+      "package": "claw-cap-ai-helpers",
+      "sha256": "cc88138c041362a27c64a01039f84e78e9080d27602fb8df75d44dd489562638",
+      "size": 13516,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "doc"
+      ],
+      "architecture": "all",
+      "package": "claw-cap-document-engine",
+      "sha256": "27544a458368b7f39c07fd23f225d37cf3f9d16bf5916efa2e17c7126bc4a1a3",
+      "size": 16060,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "net"
+      ],
+      "architecture": "all",
+      "package": "claw-cap-http",
+      "sha256": "8f56c7fe35a86cf73e3407868fff0deb7959238f9b913d65557a89feffe05ca1",
+      "size": 15720,
+      "version": "0.2.1"
+    },
+    {
+      "apps": [
+        "db",
+        "kv"
+      ],
+      "architecture": "all",
+      "package": "claw-cap-storage-sdk",
+      "sha256": "50a9bd66b7b1450aca0deea895ecf81c0b7dc130d6ff008cd5ed870da47045ec",
+      "size": 18816,
+      "version": "0.2.1"
+    }
+  ],
+  "repository": "xiaoyu-work/clawos-app",
+  "runtime_abi": 1,
+  "schema": "claw.app-store/v2"
+}

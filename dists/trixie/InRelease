@@ -1,0 +1,36 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: Claw OS Applications
+Label: Claw OS Applications
+Suite: trixie
+Codename: trixie
+Date: Thu, 19 Nov 2026 02:50:15 GMT
+Valid-Until: Thu, 03 Dec 2026 02:50:15 GMT
+Architectures: amd64 arm64
+Components: main
+Acquire-By-Hash: yes
+Description: Independently released Claw OS applications
+SHA256:
+ 4d7c212c59d79273f19ead670361aac545f124b5897bdad9cd08dbe1f0ece16c 85747 catalog.json
+ bf3125ad3a8716939dc204a1b414a2a4c651160790d923059b9956b9a3e95e3b 45216 main/binary-amd64/Packages
+ 5721ac13bd0c04c30e0a8e6e3cd3701586c5d942974dd834b7cbd7078acb9fa3 8001 main/binary-amd64/Packages.gz
+ c75b5a1d0d7f560f66197ce2c9a00b71bbd6b25e99e7ca61b377065a737c7f29 7288 main/binary-amd64/Packages.xz
+ 16cc5ff954f306880edc28abed2967790d41c810543df4e54e202b2ca4714086 45214 main/binary-arm64/Packages
+ f641018d152d83f24fbb1ab3cb63e1615840fc5ae1b6f344e092a5940ff4d7ad 8003 main/binary-arm64/Packages.gz
+ 04fafa977e8f430f9a2822e1ab2ad6526a97480f6d0d0f7c091e1274b40204ff 7288 main/binary-arm64/Packages.xz
+SHA512:
+ 78117d281624fda9ffe1d743b668ebd844816be7b18399691963e17d79d012eb6847312963fab0ed61a4e3dbdb42530110770c69377b802f0fd7573c87221953 85747 catalog.json
+ 81cac3ec501bfffaf1909b825393f7ed05e2ebb16e9141b4bf9bda7857f21dee8624b88ac4980919d28622ef7c3ecb723605b9fc615ba1c370e31b3c64bbdb4e 45216 main/binary-amd64/Packages
+ bdb2649e7ef9c36d74fe79307969ab29234e9b093d6c6f159f9fb6f8a7d6190b28925ca16647707cf531766db0ec03f360614935b611fc56bef8c54be91b60ca 8001 main/binary-amd64/Packages.gz
+ cc6a33c4e7fd5d7a99209b32dd9936aa1dc135b4ded1d76f3d520775ad92eb6c3f68ada9836b0f84bf20b48067079f61b1b93e0a33aae825b49182b7d506d07b 7288 main/binary-amd64/Packages.xz
+ ce36e82931c388c37de5a805cac9e9dbaf048cba3e743721d68cc0c1022910596a0b1a062ad8fcf3e0a0af096179e7098aaff4b434c5cd200aff2d19880713aa 45214 main/binary-arm64/Packages
+ df4e372152052051e29c7620d92bb1dbbf0e0548646a02953cbc60d99016740341cc7b18e0e0d6e5b462c37d2d21496cf99002fe1a695222d4a374b6dd061878 8003 main/binary-arm64/Packages.gz
+ 660eb96e5949e8882106924658bd2341651222752628837538fa1eb5594b98a0b10d38be1d205fb0b907d3e85268986c94076626c93c5e68bde8a62c67c07dc8 7288 main/binary-arm64/Packages.xz
+-----BEGIN PGP SIGNATURE-----
+
+iHQEARYKAB0WIQStuhlX5xK2yAtMyHNsBE1vQRQWrwUCav5j9gAKCRBsBE1vQRQW
+ryLFAQCVOly2oIIy1wDFklyS4ctae1Oyq6x1HmwRXxj2G5z+mQD3bmdf7bQrxe9k
+PwWxIfsLNKpzuwh1/wcxuGiW1lCHAA==
+=8Lpk
+-----END PGP SIGNATURE-----

@@ -1,0 +1,954 @@
+Package: claw-app-backup-recovery
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - backup-recovery (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: backup-center, system-snapshot
+X-Claw-Product: backup-recovery
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-backup-recovery/claw-app-backup-recovery_0.2.1_all.deb
+Size: 19784
+SHA256: 3f46c7383a51cdf1438ae0db2a4c596426fa17716797e679a80e18c95431eb75
+SHA512: 7d7f1205cd0fc851da35942db9f1014841118700a8f32d2eedce90a7bf9f60c0060eeb57751f74b9a068cb03e332888c565704219dd6c4555a8c75ab9f3833be
+
+Package: claw-app-browser
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), claw-os-browser-bridge-v1 (= 1), python3 (>= 3.11)
+Description: Claw OS Applications - browser (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: search, web, browser-attached
+X-Claw-Product: browser
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-browser/claw-app-browser_0.2.1_all.deb
+Size: 40360
+SHA256: 817005f4436cb9c46eacba1162fa8561d0fc73b39e4fc72c2133bbe4c75e022f
+SHA512: 12cf4b81c795b0fd6908d54011e937415593968573219138f4d6b95f03a2219ea47a56e16cbb89c26892a934dfb68f260a27fd06355efa295586257192571811
+
+Package: claw-app-calendar
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - calendar (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: calendar
+X-Claw-Product: calendar
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-calendar/claw-app-calendar_0.2.1_all.deb
+Size: 24200
+SHA256: f0f442599acb193a980d75e156d9a5b5efa9aa852922adb58692cdee8d362521
+SHA512: 4ef010e80f2b7a1d06dc386059e1f86e151d1376e86df2c725788fc20048c7ada56f881a810f1d0aa0dcc44f05e7c8a734b5c92027d6fc5afa6ae20c6dd4d464
+
+Package: claw-app-calendar-desktop
+Version: 0.2.1
+Architecture: arm64
+Breaks: claw-os-desktop (<< 1:0.2.1)
+Depends: claw-app-calendar (= 0.2.1), claw-app-support-v1, claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), claw-os-calendar-read-v1 (= 1), libc6 (>= 2.39), libgcc-s1 (>= 4.2), libxkbcommon0 (>= 0.5.0), python3 (>= 3.11)
+Description: Claw OS Applications - calendar (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-desktop (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: panel-calendar
+X-Claw-Product: calendar
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-calendar-desktop/claw-app-calendar-desktop_0.2.1_arm64.deb
+Size: 5415728
+SHA256: f2a5aa384c380f2f885f5cd490490eac05b99bdf4f0b74f044103549671cb598
+SHA512: bfb50903a2265bd5190bcc91421f01f29d8c2b294212194c37d8aae3eabc13b88a3af1b35b667f69268fd37b0f97b5ac1e6602fbf31e1d68da5bbdfc76c92978
+
+Package: claw-app-capture-desktop
+Version: 0.2.1
+Architecture: arm64
+Breaks: claw-os-desktop (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), claw-os-capture-v1, libc6 (>= 2.39), libgcc-s1 (>= 4.2), python3 (>= 3.11), xdg-desktop-portal
+Description: Claw OS Applications - capture (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-desktop (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: cosmic-screenshot
+X-Claw-Product: capture
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-capture-desktop/claw-app-capture-desktop_0.2.1_arm64.deb
+Size: 967576
+SHA256: 69eef5aaa05b43826dff238afdc744d6ce4b4b51be868ef6b2270499b0c6d2fa
+SHA512: e1b07e74c1035711a0d5eaf40c2cf16bbfee494b545e1152568ee8bd8e86e1c94b97aee08031537fd222aa940c7bd712d49f99eb1edc21d87aba1e34e513068c
+
+Package: claw-app-clipboard
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - clipboard (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: clipboard-manager
+X-Claw-Product: clipboard
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-clipboard/claw-app-clipboard_0.2.1_all.deb
+Size: 17920
+SHA256: f23756def367a695182f72328aa79abc94c0eb2f593df5c34b4e111ef5b3f27b
+SHA512: df2c2e6fcb72636cf349394aade395af4f7358bbdec48fa5cfedb8559e25d458bf75f7515b26a64498b5063a457abf3475d60bc0e28add8a78c46c6fbd94177c
+
+Package: claw-app-clipboard-desktop
+Version: 0.2.1
+Architecture: arm64
+Breaks: claw-os-desktop (<< 1:0.2.1)
+Depends: claw-app-clipboard (= 0.2.1), claw-app-support-v1, claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), claw-os-clipboard-history-v1 (= 1), copyq, libc6 (>= 2.39), libgcc-s1 (>= 4.2), libxkbcommon0 (>= 0.5.0), python3 (>= 3.11)
+Description: Claw OS Applications - clipboard (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-desktop (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: panel-clipboard
+X-Claw-Product: clipboard
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-clipboard-desktop/claw-app-clipboard-desktop_0.2.1_arm64.deb
+Size: 5310224
+SHA256: 4c061079b63ebdbf60e54949988bfa3f42d969adfe39837eaf8eefd3e4d9bea6
+SHA512: 9fcb7dd1f288751807bc711fbbfd696f8d2c44981bda0143f4faec3b66c51a66d10490952c4e4267d2f31248dffeae222bfa3a1ed7ebd41e284a5d59eeafc339
+
+Package: claw-app-containers
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - containers (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: container-manager
+X-Claw-Product: containers
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-containers/claw-app-containers_0.2.1_all.deb
+Size: 17376
+SHA256: 5c9dadacc318ed6f0e2e3185b43ba5c101c4a34ec71fe582ef5e51a6f9268971
+SHA512: a07d2077eddf681e169ba45400e97edaa9e11fd60782fa14f1200761c6fe112936de9d43cc7cda17ef7169c86a76896f8bf0cbd81bf17e3c0637d23773ca789e
+
+Package: claw-app-desktop-widgets-desktop
+Version: 0.2.1
+Architecture: arm64
+Breaks: claw-os-desktop (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), claw-os-calendar-read-v1 (= 1), claw-os-observation-v1 (= 1), libc6 (>= 2.39), libgcc-s1 (>= 4.2), libxkbcommon0 (>= 0.5.0), python3 (>= 3.11)
+Description: Claw OS Applications - desktop-widgets (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-desktop (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: widget-rail
+X-Claw-Product: desktop-widgets
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-desktop-widgets-desktop/claw-app-desktop-widgets-desktop_0.2.1_arm64.deb
+Size: 5325488
+SHA256: ed227a067102b969eea1d47cc56516d3b7e04cabe4d3e794347a9bab23bf9755
+SHA512: dd72c3d44b63dd26222cb36adafe89646aea0ae26bc90db8e2733e9d3a00eb009adc12dbc1305a80bf40eb3aa5d1709479cc58d2934e9104ed52c88144c8575e
+
+Package: claw-app-diagnostics
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - diagnostics (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: hardware-center, crash-doctor, netdiag
+X-Claw-Product: diagnostics
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-diagnostics/claw-app-diagnostics_0.2.1_all.deb
+Size: 20100
+SHA256: 0704e32a50264ccdd9c12a1a0c56eea26dc7aba38b8004ca63650e5b0fb6e674
+SHA512: c39fb6c0d49125bc25e84e323b814e8cf94492df8eac612e7574f1892275b21fdaf48fad06b6090e442f2985c1eacadd7239429fc5bda612998cb84c7e0c2abf
+
+Package: claw-app-editor-desktop
+Version: 0.2.1
+Architecture: arm64
+Breaks: claw-os-desktop (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), libc6 (>= 2.39), libgcc-s1 (>= 4.2), libglib2.0-0t64 (>= 2.36.0), libxkbcommon0 (>= 0.5.0), python3 (>= 3.11)
+Description: Claw OS Applications - editor (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-desktop (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: cosmic-edit
+X-Claw-Product: editor
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-editor-desktop/claw-app-editor-desktop_0.2.1_arm64.deb
+Size: 10585972
+SHA256: 99cb626bc5835e5d5fc38bda5b4af86448c8c3705acf0b3d061d683ddcc42799
+SHA512: 4b8ef47eba2c3d713cb0af807eca09262b9a5a4fad7ccfe408d819dbe4e0d11d6058462fa0810a6fe8f35d1bbef5adfe9eb4976f30ff45f65c674b7179471d0d
+
+Package: claw-app-events-audit
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - events-audit (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: event-center, log
+X-Claw-Product: events-audit
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-events-audit/claw-app-events-audit_0.2.1_all.deb
+Size: 18512
+SHA256: 3f9c6ac9783ba8dbcc21963d66195557ff81a27a2e4d6cacbe98aed5edca92b4
+SHA512: 235568d701446bffdbb6cd6b94e90d41a771f4877120b132a595c4c6be45ee24873b540bf7f90adfbd326afa811de8db7b21bd7239957ea6938a62ba7b9226aa
+
+Package: claw-app-files
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), coreutils, python3 (>= 3.11), python3-docx, python3-fitz, python3-lxml, python3-openpyxl, python3-pil, python3-typing-extensions (>= 4.9), python3-xlsxwriter, recollcmd, ripgrep
+Description: Claw OS Applications - files (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Provides: claw-app-python-claw-files-v1
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: fs, docs
+X-Claw-Product: files
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-files/claw-app-files_0.2.1_all.deb
+Size: 407840
+SHA256: 40720a42bac03ccb439e1ac430ecf8c46e7a44941eeffc2cae06a7d4c23fadcb
+SHA512: 0d18b46086983152f7ace9973a5c2a5ec6f585ffc389ea776771645735b85ff7fd6fa04e89b8119452aad6591f093944878a326371ca4ef07c401acf2ad4c8cd
+
+Package: claw-app-files-desktop
+Version: 0.2.1
+Architecture: arm64
+Breaks: claw-os-desktop (<< 1:0.2.1)
+Depends: claw-app-files (= 0.2.1), claw-app-support-v1, claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), libc6 (>= 2.39), libgcc-s1 (>= 4.2), libglib2.0-0t64 (>= 2.36.0), libxkbcommon0 (>= 0.5.0), python3 (>= 3.11)
+Description: Claw OS Applications - files (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-desktop (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: cosmic-files
+X-Claw-Product: files
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-files-desktop/claw-app-files-desktop_0.2.1_arm64.deb
+Size: 13103916
+SHA256: 9ae2cc81bd687088491a4da6de4473ac346e65b0184304e315e6dcb086eb51c7
+SHA512: 2e472ca8856616e2332e6b2a84990c5b2902db37982c59615cd6c9f5516d9277c7fbb14a4f07e34b5a4515f067a25640699be3c1f9f3c232ff083e0238be537a
+
+Package: claw-app-home-integration
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - home-integration (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: gateway-homeassistant
+X-Claw-Product: home-integration
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-home-integration/claw-app-home-integration_0.2.1_all.deb
+Size: 17216
+SHA256: 8a241713e38389962f2ba64cf0f3e5cd2c414619c34aca3b0f34a2382ae4be88
+SHA512: 57d40931af3cea900ec187031efcc3c601e81b0a1b3320864dcfc88ce878c99377b550a07c7c2f812421df79551c7263f5b8794a8f0c7be8660f1acde0e7b96c
+
+Package: claw-app-launcher
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - launcher (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: launcher
+X-Claw-Product: launcher
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-launcher/claw-app-launcher_0.2.1_all.deb
+Size: 21000
+SHA256: 3d580a697eab35cb6bfcb85ef2f2c0f81f21bca34967ac767f10da5e36b1f4b2
+SHA512: 8bf7d570564c3dcde4b7db83a3b7b123f8e81d4996310dfc0a5f72331dc26256cb39ccb169aebc6ff6c762701844d3ea2ec826b29419ab2ab0a18949864b292c
+
+Package: claw-app-launcher-desktop
+Version: 0.2.1
+Architecture: arm64
+Breaks: claw-os-desktop (<< 1:0.2.1)
+Depends: claw-app-launcher (= 0.2.1), claw-app-support-v1, claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), claw-os-launcher-backend-v1 (= 1), libc6 (>= 2.39), libgcc-s1 (>= 4.2), libxkbcommon0 (>= 0.5.0), python3 (>= 3.11)
+Description: Claw OS Applications - launcher (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-desktop (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: cosmic-launcher
+X-Claw-Product: launcher
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-launcher-desktop/claw-app-launcher-desktop_0.2.1_arm64.deb
+Size: 5846968
+SHA256: 2cbc0becb5805c5fd9c69ad249226637e62956927269e06f102a368ceeed8002
+SHA512: 240b54437866eda5a21e31d298f64cfb1e51ac87267f871ed83010542d68a93783e87b88f5cc8a2d703380dca23dec470ec9ba52ffdfb4c57ad10305f2fcebc3
+
+Package: claw-app-mail
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - mail (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: mail-ai, email
+X-Claw-Product: mail
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-mail/claw-app-mail_0.2.1_all.deb
+Size: 114928
+SHA256: cb7c76fae05be8a3f779e2eb2e8c3ba578b0781f81e20146c7267bf70bd8d114
+SHA512: bfe8bddab3de0630ee34f4cd1518a49214cc0b2a30403abacd75576b270a0226d1f383b53db65126dd3e8fba06e1b403f3d1940956eb71c5296da8167ae7d531
+
+Package: claw-app-mail-desktop
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-mail (= 0.2.1), claw-app-support-v1, claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11), thunderbird
+Description: Claw OS Applications - mail (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-Product: mail
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-mail-desktop/claw-app-mail-desktop_0.2.1_all.deb
+Size: 122368
+SHA256: 4b64035ca76fa00d40712e405414505c5eea16b5b0712d1fef9eeec3f954eaab
+SHA512: bf15bdd83a6026e8474450431377c47c91d8a7a6e0093d0c5fb31945c1baea8b2d07176019c9bb950583ed8726e1183d8fcede91e501215c8c90a8e097e39e60
+
+Package: claw-app-maintenance
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - maintenance (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: config-editor, systemd
+X-Claw-Product: maintenance
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-maintenance/claw-app-maintenance_0.2.1_all.deb
+Size: 17628
+SHA256: 238730d1280d238668dea6597f055f00c93513e106803c5fcdf3af8f91353499
+SHA512: 29c5d864f1d13cd696419ad7dd17f9ee448bf761c63a6548ae096b33eb22b902cacfecac0268a3d862866e434aef7a8121c6eb484871d069d6506c6252e69c08
+
+Package: claw-app-media-player-desktop
+Version: 0.2.1
+Architecture: arm64
+Breaks: claw-os-desktop (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), claw-os-media-player-v1, gstreamer1.0-libav, gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, libc6 (>= 2.39), libgcc-s1 (>= 4.2), libglib2.0-0t64 (>= 2.32.0), libgstreamer-plugins-base1.0-0 (>= 1.10.0), libgstreamer1.0-0 (>= 1.6.0), libvulkan1, libxkbcommon0 (>= 0.5.0), mesa-vulkan-drivers, pipewire-bin, python3 (>= 3.11)
+Description: Claw OS Applications - media-player (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-desktop (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: cosmic-player
+X-Claw-Product: media-player
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-media-player-desktop/claw-app-media-player-desktop_0.2.1_arm64.deb
+Size: 8590796
+SHA256: 63e77b70acd28395a0d310d1894b2630ed244f617b6b34e216a6d818ce9815a9
+SHA512: 0d502c5aafd97d8a18d1104c1c68a6583dfaf0e953dbca4fc9f139ac959a194e27ee5bbcd46edfde70463e33e35778ec020463d6b6052eaeba9ec577465d16ef
+
+Package: claw-app-messaging-channels
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - messaging-channels (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: gateway-discord, gateway-slack, gateway-telegram, gateway-whatsapp
+X-Claw-Product: messaging-channels
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-messaging-channels/claw-app-messaging-channels_0.2.1_all.deb
+Size: 24476
+SHA256: ed43f3cbdfbb80ecdf3aba3f079fbc5f1612a05d2b5ac18fdece0523bd65d5bd
+SHA512: d6d30f20d41b4b8067541ba539b55577d99ab9d1d1628382ed197e278e88b59e836c9d9dfe486ea2285012b7f9c1d35c169229abeb52902ae61d592b448c45bc
+
+Package: claw-app-notification-delivery
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - notification-delivery (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: gateway-ntfy, gateway-pushover, gateway-webhook
+X-Claw-Product: notification-delivery
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-notification-delivery/claw-app-notification-delivery_0.2.1_all.deb
+Size: 24444
+SHA256: 971e6dac19508522235aa8b7e2dc27022b5d93dbd90a564f67986e988c0560eb
+SHA512: 0776147e5eb3f2354a1ea0c23373fa37641a37a53de9b9c7dbe6096d784990e529fefe549d73389041a0612c99006ef148e8d93e231dd3c55fb8fcfbd3d7701a
+
+Package: claw-app-notifications
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), claw-os-notifications-v1, python3 (>= 3.11)
+Description: Claw OS Applications - notifications (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: notify
+X-Claw-Product: notifications
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-notifications/claw-app-notifications_0.2.1_all.deb
+Size: 17572
+SHA256: 3f2006d894da3aa68769cfaf9fab83359f9be7e3d25b6cfafbd81b1de52fc3b1
+SHA512: b37494a9daa9cdf2b08e7d2bb63cbb55d199d40269c8d6830ad1dda38c90159cd39bd49ce28e4ac8f7371696bcaef941949498fe7e8a0d5cf0a12a93e76df445
+
+Package: claw-app-notifications-desktop
+Version: 0.2.1
+Architecture: arm64
+Breaks: claw-os-desktop (<< 1:0.2.1)
+Depends: claw-app-notifications (= 0.2.1), claw-app-support-v1, claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), claw-os-notifications-v1, libc6 (>= 2.39), libgcc-s1 (>= 4.2), libxkbcommon0 (>= 0.5.0), python3 (>= 3.11)
+Description: Claw OS Applications - notifications (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-desktop (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: cosmic-notifications
+X-Claw-Product: notifications
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-notifications-desktop/claw-app-notifications-desktop_0.2.1_arm64.deb
+Size: 5116196
+SHA256: 2ba0f1e71c76bc62988f7103106091311fbc1806e9ecd1c6268dc9c515710e5c
+SHA512: 7dd9d1a8ad1c11cd4497735d880749c7c664c9102a1860758001161d6add78a8f42744eb48c9828ed02b0733863e377c06776c2e9ddb21028f11082180071e01
+
+Package: claw-app-security
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - security (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: security-center, firewall-manager, usb-guard
+X-Claw-Product: security
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-security/claw-app-security_0.2.1_all.deb
+Size: 20840
+SHA256: 46042254a1f0929b1526a64d39f7342ac51cec0cc85915d80bc96990c925b070
+SHA512: 0261bd53732220346ba36e8239db58aa2ea6c1a5daeec6b4752bec47450a8eada76fe2fd12fba0e7a9f1fd5369aad96247c2f1822712ff50260a03ebaa08c678
+
+Package: claw-app-settings
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - settings (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: accessibility-manager, audio-manager, bluetooth-manager, camera-manager, display-manager, desktop-manager, location-manager, network-manager, power-manager, printer-manager, user-manager
+X-Claw-Product: settings
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-settings/claw-app-settings_0.2.1_all.deb
+Size: 43864
+SHA256: 4dcd45a1cc595f513c749f708320b6a53a088f9b0307474d28b76c227f90f83e
+SHA512: 2a3e20634360081ded0b04be3db2ed0f1df499c8611118ecb1b787ae85af068efce5d86fa8aa6d2522279b1a8868ad2d38b2546ca55a0d5ed96adf2d8ebe6813
+
+Package: claw-app-settings-desktop
+Version: 0.2.1
+Architecture: arm64
+Breaks: claw-os-desktop (<< 1:0.2.1)
+Depends: claw-app-settings (= 0.2.1), claw-app-support-v1, claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), libc6 (>= 2.39), libgcc-s1 (>= 4.2), libudev1 (>= 183), libxkbcommon0 (>= 1.0.0), python3 (>= 3.11), xkb-data
+Description: Claw OS Applications - settings (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-desktop (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: cosmic-settings
+X-Claw-Product: settings
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-settings-desktop/claw-app-settings-desktop_0.2.1_arm64.deb
+Size: 11143596
+SHA256: de96c9697d85d35d7a1c51be25817d2c3e5d65968878ebcd12bebff3f5bfa9e8
+SHA512: 14a0159dfc239dee357e3b5f9820f54e380693341b43da535c819965e50c509eba1b9f7ca191973e210761c8e9c72fd9924ca960eb453096d9c5033051664a27
+
+Package: claw-app-storage
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - storage (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: storage-manager
+X-Claw-Product: storage
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-storage/claw-app-storage_0.2.1_all.deb
+Size: 15828
+SHA256: ab1afbe975f3182dbf57948f6b1a42a659156b75d76e9ff2a8068e2987f22de8
+SHA512: 187ac50765791acd809d35558223c977d269e45a4dc2d1db459466cc6442f147c229558ef572c26b849eb25646a7afc93e15263dfc498f91cecd36ca67946bd6
+
+Package: claw-app-store
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - store (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: pkg
+X-Claw-Product: store
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-store/claw-app-store_0.2.1_all.deb
+Size: 20300
+SHA256: 4f735aca3e9c75f09abd2570bc42011ba90c76eb7a5de1c66bc7c0f8ac3247b8
+SHA512: b3e855ce6dcb666e80176cda24627edfda403309d3549023b4efb0210fe5bce7b17c85251a67f32facd475c87962ee4e26fbd2c9b80c5021a33c2538160a12a0
+
+Package: claw-app-store-desktop
+Version: 0.2.1
+Architecture: arm64
+Breaks: claw-os-desktop (<< 1:0.2.1)
+Depends: claw-app-store (= 0.2.1), claw-app-support-v1, claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), flatpak, libc6 (>= 2.39), libflatpak0 (>= 1.2), libgcc-s1 (>= 4.2), libglib2.0-0t64 (>= 2.22.0), libxkbcommon0 (>= 0.5.0), packagekit, python3 (>= 3.11)
+Description: Claw OS Applications - store (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-desktop (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: cosmic-store
+X-Claw-Product: store
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-store-desktop/claw-app-store-desktop_0.2.1_arm64.deb
+Size: 10248812
+SHA256: 6ef2993318f20c8b149fe02bb59c2c349bcd670c5aa3c574a314bc343067fc91
+SHA512: 856b956c8a7b322328c6efbf91be4149275618611e61bb257cee0a4740c4289e596c5e43c89b3026b3a014e2523f6eaab17629d990f0ad07c293ec3bd66c5a25
+
+Package: claw-app-support
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11), python3-idna (<< 4), python3-idna (>= 3.3)
+Description: Claw OS Applications - support (support)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Provides: claw-app-support-v1
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-Product: support
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: support
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: support
+Filename: pool/main/claw-app-support/claw-app-support_0.2.1_all.deb
+Size: 28508
+SHA256: bdade2c5f0e39e1500b7f179481621a9eb4767f03b68a5dbc891237db95ffbc7
+SHA512: 4abe5a06fa7b9297018bd5222e91ba14f94deea96514432840d55fa6466a86530a917800d1a7a4edc2112b68d27f448341cba76e1835294cd0e84d3cbb77ec84
+
+Package: claw-app-terminal
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: bash, claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - terminal (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: exec
+X-Claw-Product: terminal
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-app-terminal/claw-app-terminal_0.2.1_all.deb
+Size: 21268
+SHA256: 15abcc00ea625aa4e893ca188786c9b669cbe138ac9f580242da706273ae4407
+SHA512: b266e9bd4beebe418ef64bb903cc11b9ad334773e2d7958f4b971f8c578082b1c2d07aa91af950af5c38d254c7ec6ed8892f684f462567e6bac219c0171ae0e3
+
+Package: claw-app-terminal-desktop
+Version: 0.2.1
+Architecture: arm64
+Breaks: claw-os-desktop (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-app-terminal (= 0.2.1), claw-os-app-permissions-v1, claw-os-app-runtime-v1 (>= 0.2.1), libc6 (>= 2.39), libgcc-s1 (>= 4.2), libxkbcommon0 (>= 0.5.0), python3 (>= 3.11)
+Description: Claw OS Applications - terminal (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-desktop (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: cosmic-term
+X-Claw-Product: terminal
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: product
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-app-terminal-desktop/claw-app-terminal-desktop_0.2.1_arm64.deb
+Size: 9508936
+SHA256: 9f313f303794bd95df41204ee7cd0720d70e434d2a956a144a0723861f626a81
+SHA512: be785b4462c359782902276bfffb9762bfb04b2616993d1f8163c71461211d5f9a81df8a3b533ed3b1a5cb4aa0a17fbefc424f14d34530256bc4061abc375d1f
+
+Package: claw-apps-agent
+Version: 0.2.1
+Architecture: all
+Depends: claw-app-backup-recovery, claw-app-browser, claw-app-calendar, claw-app-clipboard, claw-app-containers, claw-app-diagnostics, claw-app-events-audit, claw-app-files, claw-app-home-integration, claw-app-launcher, claw-app-mail, claw-app-maintenance, claw-app-messaging-channels, claw-app-notification-delivery, claw-app-notifications, claw-app-security, claw-app-settings, claw-app-storage, claw-app-store, claw-app-support, claw-app-terminal, claw-cap-ai-helpers, claw-cap-document-engine, claw-cap-http, claw-cap-storage-sdk
+Description: Claw OS Applications - sets (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Section: misc
+X-Claw-Product: sets
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: sets
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-apps-agent/claw-apps-agent_0.2.1_all.deb
+Size: 5204
+SHA256: 2dbfce77389c672c04fdaa49f874ecba10105473adabf80a4c0ef2df8998fa09
+SHA512: 2b5d29fbdcd033b7a551f1bffe3cf1b27ec0bf4479df5dcdfb9f016862986bdf57c437fc488b1636af4b86e956da9a5e3214eef4a1a13520315d3e2d53ef4c7f
+
+Package: claw-apps-desktop
+Version: 0.2.1
+Architecture: all
+Depends: claw-app-calendar-desktop, claw-app-capture-desktop, claw-app-clipboard-desktop, claw-app-desktop-widgets-desktop, claw-app-editor-desktop, claw-app-files-desktop, claw-app-launcher-desktop, claw-app-mail-desktop, claw-app-media-player-desktop, claw-app-notifications-desktop, claw-app-settings-desktop, claw-app-store-desktop, claw-app-support, claw-app-terminal-desktop, claw-apps-agent
+Description: Claw OS Applications - sets (desktop)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Section: misc
+X-Claw-Product: sets
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: sets
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: desktop
+Filename: pool/main/claw-apps-desktop/claw-apps-desktop_0.2.1_all.deb
+Size: 5120
+SHA256: e2d9bbdc758eaa5666545057b24ed65f9548705861a2441306e06ce3fab6570c
+SHA512: ee6ce13f8683fb12c734f70a69be8df7cc513c8b80ab15e3fc4568a8863267feb6c806c2bd4ad5c3f479bb54f91b1a301b69eb9adf1c609e17d65474b3046079
+
+Package: claw-cap-ai-helpers
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - ai-helpers (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: summarize
+X-Claw-Product: ai-helpers
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: capability
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-cap-ai-helpers/claw-cap-ai-helpers_0.2.1_all.deb
+Size: 13516
+SHA256: cc88138c041362a27c64a01039f84e78e9080d27602fb8df75d44dd489562638
+SHA512: 8e50fc5fbd57b44651aa34917ec4e24f7f6762b9d2e77e5ab1bbb15e617f2d01fbe2af839a758b4665586261c2a0172da0e61bce8045d296bac61e8f4542260f
+
+Package: claw-cap-document-engine
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-files, claw-app-python-claw-files-v1, claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - document-engine (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: doc
+X-Claw-Product: document-engine
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: capability
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-cap-document-engine/claw-cap-document-engine_0.2.1_all.deb
+Size: 16060
+SHA256: 27544a458368b7f39c07fd23f225d37cf3f9d16bf5916efa2e17c7126bc4a1a3
+SHA512: 5432a3895e68fca320ddf151a7919c4781e7fe2ea69c35a67df7eb17e30f9b363f46d1dc19e332d9caa8cce3d0687bbfc843f3c68ebc6d89ba3d3a191b61e03e
+
+Package: claw-cap-http
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: ca-certificates, claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), curl, python3 (>= 3.11)
+Description: Claw OS Applications - http (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: net
+X-Claw-Product: http
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: capability
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-cap-http/claw-cap-http_0.2.1_all.deb
+Size: 15720
+SHA256: 8f56c7fe35a86cf73e3407868fff0deb7959238f9b913d65557a89feffe05ca1
+SHA512: 358707b2671118b714739e077943dd298a049dce609578cd00f928ddfc999814c02affdad72624e6d94a5e6955080787e64ab588e0c73d13016191ce1f47603c
+
+Package: claw-cap-storage-sdk
+Version: 0.2.1
+Architecture: all
+Breaks: claw-os-agent (<< 1:0.2.1)
+Depends: claw-app-support-v1, claw-os-app-runtime-v1 (>= 0.2.1), python3 (>= 3.11)
+Description: Claw OS Applications - storage-sdk (agent)
+ Independently updated application payload; authority remains in Claw OS.
+ Installed App identities, grants and user data remain separate.
+Homepage: https://github.com/xiaoyu-work/clawos-app
+Maintainer: Claw OS Applications <noreply@github.com>
+Priority: optional
+Replaces: claw-os-agent (<< 1:0.2.1)
+Section: misc
+X-Claw-App-Ids: db, kv
+X-Claw-Product: storage-sdk
+X-Claw-Runtime-ABI: 1
+X-Claw-Source-Kind: capability
+X-Claw-Source-Revision: d627fd80bd1c042fe00f7847ccaf3d91fbee2183
+X-Claw-Variant: agent
+Filename: pool/main/claw-cap-storage-sdk/claw-cap-storage-sdk_0.2.1_all.deb
+Size: 18816
+SHA256: 50a9bd66b7b1450aca0deea895ecf81c0b7dc130d6ff008cd5ed870da47045ec
+SHA512: 0ef9c1eb6b94843e912adb8c8ff3f5b83c2f10f07cb1cb7044ead616fd4aba9e5e0a13220b95e1c8e006d4c888d70844dd34ad1df1cf773eaefc7f51bd4bdfd7
+
