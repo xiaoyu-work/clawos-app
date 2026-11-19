@@ -52,7 +52,10 @@ def read_metadata_snapshot(path):
         data = stream.read(MAX_METADATA + 1)
     if len(data) > MAX_METADATA:
         raise ValueError(f"Expected bounded regular metadata: {path.name}")
-    value = json.loads(data, object_pairs_hook=unique_object, parse_constant=invalid_constant)
+    try:
+        value = json.loads(data, object_pairs_hook=unique_object, parse_constant=invalid_constant)
+    except ValueError as error:
+        raise ValueError(f"{path}: {error}") from error
     if not isinstance(value, dict):
         raise ValueError(f"Expected a JSON object: {path.name}")
     return data, value

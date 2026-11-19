@@ -747,8 +747,7 @@
             "kind": "text",
             "repeatable": true,
             "required": true,
-            "binding": "positional",
-            "repeatable": true
+            "binding": "positional"
           }
         ],
         "needs": [

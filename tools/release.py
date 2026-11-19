@@ -20,6 +20,7 @@ import platform_dependency
 import native_payload as native_apps
 from release_payload import validate_install_tree
 from release_development import build_archive, source_closure
+from release_snapshots import read_metadata
 from release_wheels import stage_wheels
 
 
@@ -82,7 +83,7 @@ def packages_for(selection):
     if "native_payload" in package:
         native_apps.plan(name)
     manifests = {
-        app_id: json.loads((path / "app.json").read_text())
+        app_id: read_metadata(path / "app.json")
         for app_id, path in stage.app_entries(source, package).items()
     }
     if any(manifest["runtime"] not in ("python", "binary", "shell") for manifest in manifests.values()):
