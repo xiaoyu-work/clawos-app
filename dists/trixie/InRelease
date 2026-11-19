@@ -5,8 +5,8 @@ Origin: Claw OS Applications
 Label: Claw OS Applications
 Suite: trixie
 Codename: trixie
-Date: Thu, 19 Nov 2026 02:50:15 GMT
-Valid-Until: Thu, 03 Dec 2026 02:50:15 GMT
+Date: Thu, 19 Nov 2026 15:52:31 GMT
+Valid-Until: Thu, 03 Dec 2026 15:52:31 GMT
 Architectures: amd64 arm64
 Components: main
 Acquire-By-Hash: yes
@@ -29,8 +29,8 @@ SHA512:
  660eb96e5949e8882106924658bd2341651222752628837538fa1eb5594b98a0b10d38be1d205fb0b907d3e85268986c94076626c93c5e68bde8a62c67c07dc8 7288 main/binary-arm64/Packages.xz
 -----BEGIN PGP SIGNATURE-----
 
-iHQEARYKAB0WIQStuhlX5xK2yAtMyHNsBE1vQRQWrwUCav5j9gAKCRBsBE1vQRQW
-ryLFAQCVOly2oIIy1wDFklyS4ctae1Oyq6x1HmwRXxj2G5z+mQD3bmdf7bQrxe9k
-PwWxIfsLNKpzuwh1/wcxuGiW1lCHAA==
-=8Lpk
+iHUEARYKAB0WIQStuhlX5xK2yAtMyHNsBE1vQRQWrwUCav8bZAAKCRBsBE1vQRQW
+ryP5AQC8Q86W1YZlWcnNIbeGnL5m27Jl2sVjI1xIVfoX21QORAD/dET9ubKIRTF2
+lbVNBhhZEd3gALZH/oxjjyKOe6fZNQk=
+=mg8H
 -----END PGP SIGNATURE-----
