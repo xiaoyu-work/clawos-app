@@ -12,9 +12,17 @@ Singleton {
     readonly property string agent: "com.clawos.Agent"
 
     function launch(desktopId: string): void {
+        submit("launch", desktopId);
+    }
+
+    function activate(desktopId: string): void {
+        submit("activate", desktopId);
+    }
+
+    function submit(action: string, desktopId: string): void {
         if (effect.running)
             return;
-        effect.command = ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_review.py"), "launch", desktopId];
+        effect.command = ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_review.py"), action, desktopId];
         effect.running = true;
     }
 

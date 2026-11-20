@@ -10,6 +10,36 @@ use cos_runtime::ask_claw;
 use serde::Serialize;
 use serde_json::json;
 
+pub(crate) fn desktop_events() -> impl cosmic::iced::futures::Stream<Item = crate::app::Message> {
+    use cosmic::iced::futures::SinkExt;
+    use crate::app::Message;
+    use std::process::Stdio;
+    use tokio::io::{AsyncBufReadExt, BufReader};
+
+    cosmic::iced::stream::channel(2, |mut out: cosmic::iced::futures::channel::mpsc::Sender<Message>| async move {
+        let mut command = tokio::process::Command::new("/usr/local/bin/cos");
+        command.arg("__desktop-events").kill_on_drop(true).stdout(Stdio::piped());
+        if let Ok(mut child) = command.spawn()
+            && let Some(stdout) = child.stdout.take()
+        {
+            let mut lines = BufReader::new(stdout).lines();
+            while let Ok(Some(line)) = lines.next_line().await {
+                let Ok(value) = serde_json::from_str::<serde_json::Value>(&line) else { break; };
+                let message = match value["event"].as_str() {
+                    Some("ready") => Message::DesktopConnection(true),
+                    Some("reopen") => Message::DesktopReopen,
+                    _ => break,
+                };
+                if out.send(message).await.is_err() {
+                    return;
+                }
+            }
+        }
+        let _ = out.send(Message::DesktopConnection(false)).await;
+        std::future::pending::<()>().await;
+    })
+}
+
 fn path_str(path: &Path) -> io::Result<&str> {
     path.to_str().ok_or_else(|| {
         io::Error::new(io::ErrorKind::InvalidInput, "file path must be UTF-8")

@@ -196,6 +196,7 @@ pub enum Action {
     ToggleShowPathBar,
     ToggleShowStatusBar,
     ToggleSort(HeadingOptions),
+    Quit,
     WindowClose,
     WindowNew,
     ZoomDefault,
@@ -283,6 +284,7 @@ impl Action {
                 Message::TabMessage(entity_opt, tab::Message::ToggleSort(*sort))
             }
             Self::WindowClose => Message::WindowClose,
+            Self::Quit => Message::Quit,
             Self::WindowNew => Message::WindowNew,
             Self::ZoomDefault => Message::ZoomDefault(entity_opt),
             Self::ZoomIn => Message::ZoomIn(entity_opt),
@@ -497,6 +499,9 @@ pub enum Message {
     Undo(usize),
     UndoTrash(widget::ToastId, Arc<[PathBuf]>),
     UndoTrashStart(Vec<TrashItem>),
+    DesktopConnection(bool),
+    DesktopReopen,
+    Quit,
     WindowClose,
     WindowCloseRequested(window::Id),
     WindowMaximize(window::Id, bool),
@@ -863,6 +868,8 @@ pub struct App {
     config: Config,
     state: State,
     mode: Mode,
+    desktop_resident: bool,
+    quitting: bool,
     app_themes: Vec<String>,
     compio_tx: mpsc::Sender<Pin<Box<dyn Future<Output = ()> + Send>>>,
     context_page: ContextPage,
@@ -3330,6 +3337,8 @@ impl Application for App {
             config: flags.config,
             state: flags.state,
             mode: flags.mode,
+            desktop_resident: false,
+            quitting: false,
             app_themes,
             compio_tx,
             context_page: ContextPage::Preview(None, PreviewKind::Selected),
@@ -4562,7 +4571,9 @@ impl Application for App {
                 }
             }
             Message::MaybeExit => {
-                if self.core.main_window_id().is_none() && self.pending_operations.is_empty() {
+                if !self.desktop_resident && self.core.main_window_id().is_none()
+                    && self.pending_operations.is_empty()
+                {
                     // Exit if window is closed and there are no pending operations
                     process::exit(0);
                 }
@@ -6016,6 +6027,41 @@ impl Application for App {
             Message::UndoTrashStart(items) => {
                 return self.operation(Operation::Restore { items });
             }
+            Message::DesktopConnection(connected) => {
+                self.desktop_resident = connected && !self.quitting;
+                if !connected {
+                    return self.update(Message::MaybeExit);
+                }
+            }
+            Message::DesktopReopen if self.quitting => {}
+            Message::DesktopReopen => {
+                if let Some(id) = self.core.main_window_id() {
+                    return window::gain_focus(id);
+                }
+                let mut settings = window::Settings {
+                    size: self.size.unwrap_or(Size::new(1024.0, 768.0)),
+                    min_size: Some(Size::new(360.0, 180.0)),
+                    transparent: true,
+                    blur: true,
+                    exit_on_close_request: false,
+                    ..Default::default()
+                };
+                #[cfg(target_os = "linux")]
+                {
+                    settings.platform_specific.application_id = Self::APP_ID.to_owned();
+                }
+                let (id, open) = window::open(settings);
+                self.core.set_main_window_id(Some(id));
+                return Task::batch([
+                    open.discard(),
+                    self.update(Message::TabMessage(None, tab::Message::Reload)),
+                ]);
+            }
+            Message::Quit => {
+                self.quitting = true;
+                self.desktop_resident = false;
+                return self.update(Message::WindowClose);
+            }
             Message::WindowClose => {
                 if let Some(window_id) = self.core.main_window_id() {
                     self.core.set_main_window_id(None);
@@ -6024,8 +6070,12 @@ impl Application for App {
                         Task::future(async move { cosmic::action::app(Message::MaybeExit) }),
                     ]);
                 }
+                return self.update(Message::MaybeExit);
             }
             Message::WindowCloseRequested(id) => {
+                if self.core.main_window_id() == Some(id) {
+                    return self.update(Message::WindowClose);
+                }
                 self.remove_window(&id);
             }
             Message::WindowMaximize(id, maximized) => {
@@ -8003,7 +8053,7 @@ impl Application for App {
                 Event::Window(WindowEvent::Focused) => Some(Message::Focused(window_id)),
                 #[cfg(not(all(feature = "wayland", feature = "desktop-applet")))]
                 Event::Window(WindowEvent::Focused) => Some(Message::CheckClipboard),
-                Event::Window(WindowEvent::CloseRequested) => Some(Message::WindowClose),
+                Event::Window(WindowEvent::CloseRequested) => Some(Message::WindowCloseRequested(window_id)),
                 Event::Window(WindowEvent::Opened { position: _, size }) => {
                     Some(Message::Size(window_id, size))
                 }
@@ -8388,6 +8438,18 @@ impl Application for App {
             )
         }));
 
+        if matches!(self.mode, Mode::App)
+            && claw_os_sdk::gui::is_gui_launch()
+            && std::env::var("COS_ARGS_JSON").as_deref() == Ok("[]")
+        {
+            let desktop = Subscription::run(crate::claw_glue::desktop_events);
+            if self.desktop_resident && self.core.main_window_id().is_none()
+                && self.windows.is_empty() && self.pending_operations.is_empty()
+            {
+                return desktop;
+            }
+            subscriptions.push(desktop);
+        }
         Subscription::batch(subscriptions)
     }
 }

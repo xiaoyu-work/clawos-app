@@ -25,7 +25,7 @@ def main(args: list[str]) -> int:
         emit(error="Expected one desktop action.")
         return 2
     kind, selection = args
-    if kind == "launch" and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,254}", selection):
+    if kind in ("launch", "activate") and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,254}", selection):
         command = "__desktop-menu"
     elif kind == "power" and selection in ("poweroff", "reboot", "suspend", "hibernate", "suspend-then-hibernate"):
         command = "__desktop-power"
@@ -33,7 +33,7 @@ def main(args: list[str]) -> int:
         emit(error="Invalid desktop action.")
         return 2
     try:
-        if call(command, "run", selection).get("status") == "submitted":
+        if call(command, "activate" if kind == "activate" else "run", selection).get("status") == "submitted":
             emit(submitted=True)
             return 0
         emit(error="The OS did not confirm the requested action.")

@@ -40,9 +40,10 @@ Singleton {
             if (id && (!windows.has(id) || window.active))
                 windows.set(id, window);
         }
-        return [...new Set([...pins, ...windows.keys()])].map(id => ({
+        const running = new Set(Hypr.desktop.runningApps);
+        return [...new Set([...pins, ...running, ...windows.keys()])].map(id => ({
             id, window: windows.get(id) ?? null,
-            running: windows.has(id) || (id === DesktopMenu.launcher && Hypr.desktop.launcherRunning === true)
+            running: running.has(id) || windows.has(id)
         })).filter(row => row.window || row.id === DesktopMenu.files
             || row.id === DesktopMenu.launcher || DesktopEntries.byId(row.id));
     }
@@ -66,8 +67,8 @@ Singleton {
     function activate(row: var): void {
         if (row.window)
             Hypr.act("focus", row.window.identifier, "");
-        else if (!row.running)
-            DesktopMenu.launch(row.id);
+        else if (!row.running || row.id !== DesktopMenu.launcher)
+            DesktopMenu.activate(row.id);
     }
 
     function togglePin(id: string): void {

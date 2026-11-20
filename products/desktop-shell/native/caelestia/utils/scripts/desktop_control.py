@@ -18,7 +18,6 @@ APP_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,254}")
 WINDOW_RE = re.compile(r"[0-9a-f]{32}:[1-9][0-9]{0,19}")
 WORKSPACE_RE = re.compile(r"[1-9][0-9]{0,9}|r[-+]1|(?:special|name):[A-Za-z0-9_-]{1,70}")
 ACTIONS = {
-    "list": (),
     "launch": (("--app-id", APP_ID_RE),),
     "focus-workspace": (("--workspace", WORKSPACE_RE),),
     "toggle-special": (("--workspace", WORKSPACE_RE),),

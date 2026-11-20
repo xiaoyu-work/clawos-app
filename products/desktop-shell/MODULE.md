@@ -61,9 +61,15 @@ notification history, raw system commands or a second permission mechanism.
 Ordinary Apps do not need to be rewritten in QML.
 
 The top Dock reads public desktop entries for labels and original SVG
-artwork, matches open windows from the Root window service, and focuses the
-exact epoch-bound window. Right-clicking an open App pins it in the Shell's
-private data. The permanent Launcher entry opens the independent
+artwork. It starts one `cos __desktop-events` connection per Shell, with an
+initial snapshot and subsequent updates only on relevant changes. The Root
+GUI Host reports managed Apps independently of window count. The Dock focuses
+an existing epoch-bound window, otherwise it asks Root to reopen the
+running App or start it if absent. Apps without reopen support do not get a
+second copy when they are already running. A visible unmanaged window can
+still be focused, but it does not establish a managed App lifetime.
+Right-clicking an App pins it in the Shell's private data.
+The permanent Launcher entry opens the independent
 `claw-launcher` GUI; the Shell contains no launcher search.
 `services/DesktopMenu.qml` sends one desktop entry ID through the existing
 `desktop_review.py` and private GUI broker, never an Exec string. The Claw

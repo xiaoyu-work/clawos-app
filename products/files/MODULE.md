@@ -111,6 +111,14 @@ SDK's GUI-launch signal to remove only the leading Host `--gui`, after the
 existing MCP dispatch. Direct `--gui` remains a path; `--` is not a delimiter.
 Managed GUI launches suppress upstream daemonization so the common Host retains
 their actual process lifetime; unmanaged launch flags remain unchanged.
+
+The managed default GUI with no file arguments can listen for its own
+`reopen` event on the private OS desktop connection. While subscribed it
+retains its tabs when the last window closes, but suspends ordinary UI
+watchers when idle and windowless. Clicking Files in the Dock reopens a
+window in the same process. File → Quit and Ctrl+Q still exit once pending
+operations are finished. Argument-bound launches and standalone use keep
+their previous close behavior.
 Native flags, config-gated Recents, file-URL canonicalization and the separate
 ordered location/URI vectors are unchanged. Non-UTF-8 native path bytes are
 preserved. The `cli::tests::` Rust filter exercises the actual parser with

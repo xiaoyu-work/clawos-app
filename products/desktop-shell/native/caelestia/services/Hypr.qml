@@ -10,7 +10,7 @@ import Caelestia.I18n
 Singleton {
     id: root
 
-    property var desktop: ({ windows: [], workspaces: [], outputs: [], keyboard: null })
+    property var desktop: ({ windows: [], workspaces: [], outputs: [], keyboard: null, runningApps: [] })
     readonly property var toplevels: ({ values: desktop.windows })
     readonly property var workspaces: ({ values: desktop.workspaces })
     readonly property var monitors: ({ values: desktop.outputs })
@@ -65,7 +65,7 @@ Singleton {
         });
         workspaces.sort((a, b) => a.id - b.id);
         desktop = { windows, workspaces, outputs, keyboard: state.keyboard,
-            launcherRunning: state.launcher_running === true };
+            runningApps: state.running_apps };
     }
 
     function focusWorkspace(workspace: var): void {
@@ -111,28 +111,15 @@ Singleton {
             || (toplevel.lastIpcObject.tags ?? []).some(tag => ignoredTags.includes(tag.replace(/\*$/, "")));
     }
 
-    Timer {
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        interval: 800
-        onTriggered: stateRead.running = true
-    }
-
     Process {
-        id: stateRead
-
-        property string previous
-        command: ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_control.py"), "list"]
-        stdout: StdioCollector { id: listing }
-        onExited: exitCode => {
-            if (exitCode !== 0 || previous === listing.text)
-                return;
-            const response = JSON.parse(listing.text);
-            if (response.ok) {
-                root.installState(response.result);
-                previous = listing.text;
-            }
+        running: true
+        command: ["/usr/local/bin/cos", "__desktop-events"]
+        stdout: SplitParser {
+            onRead: line => root.installState(JSON.parse(line))
+        }
+        onExited: {
+            root.desktop = { windows: [], workspaces: [], outputs: [], keyboard: null, runningApps: [] };
+            console.warn("Desktop state connection closed");
         }
     }
 
@@ -143,9 +130,7 @@ Singleton {
         stdout: StdioCollector { id: outcome }
         onExited: exitCode => {
             pending = false;
-            if (exitCode === 0 && JSON.parse(outcome.text).result?.action_applied === true)
-                stateRead.running = true;
-            else
+            if (exitCode !== 0 || JSON.parse(outcome.text).result?.action_applied !== true)
                 Toaster.toast(Tr.tr("Desktop action failed"), Tr.tr("The OS did not confirm the requested action."), "error");
         }
         onRunningChanged: {
