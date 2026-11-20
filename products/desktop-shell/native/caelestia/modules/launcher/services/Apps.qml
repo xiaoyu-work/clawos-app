@@ -90,9 +90,7 @@ Searcher {
             onRead: line => {
                 try {
                     const message = JSON.parse(line);
-                    if (typeof message?.review_id === "string")
-                        Toaster.toast(Tr.tr("Launch review %1").arg(message.review_id), Tr.tr("Approve once in Claw OS reviews."), "hourglass_top");
-                    else if (message?.submitted === true)
+                    if (message?.submitted === true)
                         launcher.submitted = true;
                     else if (typeof message?.error === "string")
                         launcher.failure = message.error.slice(0, 1024);
@@ -104,9 +102,7 @@ Searcher {
 
         onExited: exitCode => {
             pending = false;
-            if (exitCode === 0 && submitted)
-                Toaster.toast(Tr.tr("Application launch requested"), Tr.tr("If the App needs its own permissions, review them in Claw OS."), "open_in_new");
-            else
+            if (exitCode !== 0 || !submitted)
                 Toaster.toast(Tr.tr("Could not launch application"), failure || Tr.tr("The OS did not confirm the launch request."), "error");
         }
     }

@@ -107,12 +107,11 @@ PAM conversation or unlock command. The OS owns the native lock for this
 display and records acknowledgement after it has taken control. The OS
 confirms that lock before dispatching sleep requested from the desktop menu.
 
-Power buttons and launcher power actions ask the existing OS service to
-review the selected action through the private GUI broker. The Shell shows
-the review ID; only the trusted OS review can authorize the effect once. The
-default login does not delegate `sys.power`, and this review does not grant
-it for other actions. The Shell does not report dispatch as completed
-shutdown or sleep.
+The OS-started system menu sends the selected launch or power action to the
+private GUI broker without a second confirmation. The broker binds each
+request to the authenticated display and installed target. This does not
+give the Shell a reusable `sys.power` or App-invocation grant. The Shell
+reports failure, not completed shutdown or sleep.
 The lock screen offers no power actions, and the battery monitor warns
 without sending automatic hibernation requests.
 

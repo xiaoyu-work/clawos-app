@@ -35,9 +35,7 @@ Singleton {
             onRead: line => {
                 try {
                     const message = JSON.parse(line);
-                    if (typeof message?.review_id === "string")
-                        Toaster.toast(Tr.tr("Power review %1").arg(message.review_id), Tr.tr("Approve once in Claw OS reviews."), "hourglass_top");
-                    else if (message?.submitted === true)
+                    if (message?.submitted === true)
                         effect.submitted = true;
                     else if (typeof message?.error === "string")
                         effect.failure = message.error.slice(0, 1024);
