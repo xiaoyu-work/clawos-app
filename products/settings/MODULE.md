@@ -99,7 +99,7 @@ Exact secret and icon-file authority remain separate requirements.
 | `package.json` | Product-owned staging and test inputs |
 | `native/cosmic-settings/` | Entire independent GPL workspace, lock, all page/subscription crates and resource/config/translation inputs |
 | `native/cosmic-settings/cosmic-settings/src/mcp.rs` | Static page catalog/search and fixed OS Settings activation |
-| `native/cosmic-settings/cosmic-settings/src/permissions.rs`, `src/pages/applications/permissions.rs` | Shared OS query/request/revoke client and cancellable Applications UI; human confirmation belongs to OS review |
+| `native/cosmic-settings/cosmic-settings/src/permissions.rs`, `src/pages/applications/permissions.rs` | OS permission client and Applications UI for lasting owner choices |
 | `native/cosmic-settings/cosmic-settings/src/regional_settings.rs`, `src/pages/time/region.rs`, `src/pages/system/about.rs` | Public SDK regional client and pending/error/partial-result UI; locale, owner language and static hostname setters remain OS-owned |
 | `native/cosmic-settings/cosmic-settings/src/user_settings.rs`, `src/pages/system/users/mod.rs` | Fixed-binary public SDK User client; protected local account/UID targets, credential references, exact icon-source paths and explicit partial outcomes |
 | `native/cosmic-settings/subscriptions/network-manager/`, `cosmic-settings/src/pages/networking/` | Typed metadata/profile clients, original wired/Wi-Fi/VPN presentations, independent credential-reference use/export and no native bus/secret-agent/management executable |
@@ -193,37 +193,28 @@ acknowledgement rather than waiting for the GUI to exit. Daemon and worker
 Four new manifest-authoritative tools are `settings.permissions_list`,
 `settings.permissions_show`, `settings.permissions_request` and
 `settings.permissions_revoke`. They require only `sys.permissions:manage`.
-The Applications UI and MCP use the same typed OS route; identity comes from
-the authenticated broker session, never MCP metadata or user-provided owner
-fields. Neither GUI nor MCP approves requests, invokes a privileged approval
-helper, offers grant durations or imports the OS review presenter/DTO.
+The Applications UI and MCP use the same OS service; identity comes from the
+authenticated broker session, never MCP metadata or user-provided owner
+fields. Neither client invokes the privileged approval helper, offers grant
+durations, or imports the OS review presenter.
 Permission and fixed-launch clients explicitly select `/usr/local/bin/cos`
 through the SDK's shared wire/error transport. A sanitized desktop PATH and absent `CLAW_COS_BIN` are
 supported without process-wide environment mutation or another subprocess
 implementation.
 
-The page distinguishes verified declarations, owner/App enablement and current
-daemon grants, and shows quarantine/service errors plus pending/recent changes.
-Existing declarations default to enabled, not automatically granted. Revocation
-disables one brokered permission and invalidates that owner's target App grants;
-restart/retry the App afterward. Requesting restoration returns pending until
-a human reviews it in the OS approval gate or with `cos review`. Settings shows
-the pending request and read-only recent decisions; Refresh queries the selected
-App again. Only that OS query's policy state can show restoration as enabled,
-never a request acknowledgement or an approved decision alone. Cancelling OS
-authentication leaves the request pending; transport errors do not enable it.
-The OS stores durable exact owner/App/capability-generation-bound policy
-receipts, separate from ordinary expiring execution grants. Existing approved
-Settings receipts retain this meaning across upgrades and restarts; a newer
-App, owner or approval-session revocation still invalidates them. Restoration
-has no execution expiry/use budget and cannot be redeemed as execution authority.
-This removes a deny gate, never expands signed manifest/trust/caller ceilings.
-The OS owns this non-execution policy consent; Settings does not choose or
-mint a duration, receipt or execution grant.
-Filesystem mounts, direct egress/native authority and argument-bound scopes
-remain visible but explicitly cannot be changed in this first version.
-Cancellation discards stale results; an in-flight mutation may still complete,
-so refresh before retrying. No rollback of already-authorized effects is claimed.
+The OS-started Settings window can save **Always allow** or **Don't allow** for
+supported GUI permissions, with no separate review dialog. It sends the shown
+revision to the OS, which stores the choice for this owner and checks retirement
+of the affected App. The page then reloads the actual state. The saved choice
+is used on a later direct launch, not as a reusable execution grant or a way to
+expand the verified manifest. Launch with the new setting by reopening the App.
+Argument-bound access and sensitive or unsupported scopes are not offered as
+lasting choices. Cancellation discards stale results; an in-flight change
+may still complete, so refresh before retrying.
+
+MCP cannot submit those direct Settings choices. The existing MCP restoration
+request remains pending until it is reviewed through the OS. Its policy
+receipt only removes a deny gate; it cannot be redeemed as execution authority.
 
 Installed Desktop requires the OS `claw-os-app-permissions-v1` service provided
 by Agent. Source development against an older service fails visibly, without
