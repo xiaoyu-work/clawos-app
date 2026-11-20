@@ -2,6 +2,7 @@ pragma Singleton
 
 import Quickshell
 import Quickshell.Io
+import Caelestia
 import Caelestia.I18n
 
 Singleton {

@@ -2,9 +2,7 @@ import QtQuick
 import Quickshell
 import Caelestia.Config
 import qs.components
-import qs.modules.bar as Bar
 import qs.modules.dashboard as Dashboard
-import qs.modules.launcher as Launcher
 import qs.modules.notifications as Notifications
 import qs.modules.osd as Osd
 import qs.modules.session as Session
@@ -18,15 +16,14 @@ Item {
 
     required property ShellScreen screen
     required property ScreenState screenState
-    required property Bar.BarWrapper bar
     required property real borderThickness
+    required property real topInset
 
     readonly property alias osd: osd
     readonly property alias osdWrapper: osdWrapper
     readonly property alias notifications: notifications
     readonly property alias session: session
     readonly property alias sessionWrapper: sessionWrapper
-    readonly property alias launcher: launcher
     readonly property alias dashboard: dashboard
     readonly property alias popouts: popoutsWrapper.content
     readonly property alias popoutsWrapper: popoutsWrapper
@@ -36,7 +33,7 @@ Item {
 
     anchors.fill: parent
     anchors.margins: borderThickness
-    anchors.leftMargin: bar.implicitWidth
+    anchors.topMargin: topInset + borderThickness
 
     Item {
         id: osdWrapper
@@ -94,17 +91,6 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
         }
-    }
-
-    Launcher.Wrapper {
-        id: launcher
-
-        screen: root.screen
-        screenState: root.screenState
-        panels: root
-
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
     }
 
     Dashboard.Wrapper {

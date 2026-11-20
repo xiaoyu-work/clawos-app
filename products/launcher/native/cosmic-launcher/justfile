@@ -1,4 +1,4 @@
-export NAME := 'cosmic-launcher'
+export NAME := 'claw-launcher'
 export APPID := 'com.clawos.Launcher'
 
 rootdir := ''

@@ -32,6 +32,8 @@ Claw runtime integration.
 | `native/build-qt.py`, `native/qt.lock.json` | Verified Qt source build and App-private runtime staging |
 | `package.json`, `apps/desktop-shell/app.json` | GUI-only App, normal capability needs and private native resources |
 | `native/caelestia/services/Hypr.qml` | Broker-backed window, workspace and output presentation |
+| `native/caelestia/services/Quiet.qml` | Shared light/dark palette, Dock window projection and private presentation preferences |
+| `native/caelestia/modules/drawers/{TopBar,QuietMenu}.qml` | Per-output reserved top edge, Dock and locally anchored Quiet panels |
 | `native/caelestia/plugin/` | Original native C++ QML extensions |
 | `native/caelestia/plugin/cmake/libcava.cmake` | Build adapter for the pinned waveform DSP core |
 | `native/caelestia/plugin/3rdparty/libcava/` | Complete MIT libcava 1.0.0 source and notices |
@@ -58,14 +60,17 @@ Replacing the visual shell must not replace those services with upstream
 notification history, raw system commands or a second permission mechanism.
 Ordinary Apps do not need to be rewritten in QML.
 
-The launcher reads the public desktop catalogue and sends one AppID through
-`utils/scripts/desktop_review.py` to its private GUI broker via the fixed `cos`
-binary. Each click requests an independent `desktop.launch` decision for
-the signed target in this login. The Shell displays the OS review ID; it
-does not decide, grant, or broaden permissions. The completed one-use
-decision schedules the ordinary target App launch with separate admission
-checks. A submission does not prove a window appeared. Denial or uncertainty
-has no raw-execution fallback or automatic repeat.
+The top Dock reads public desktop entries for labels and original SVG
+artwork, matches open windows from the Root window service, and focuses the
+exact epoch-bound window. Right-clicking an open App pins it in the Shell's
+private data. The permanent Launcher entry opens the independent
+`claw-launcher` GUI; the Shell contains no launcher search.
+`services/DesktopMenu.qml` sends one desktop entry ID through the existing
+`desktop_review.py` and private GUI broker, never an Exec string. The Claw
+mark sends the reserved Agent UI entry to the same broker, which handles it
+only for the OS-started desktop Shell. This does not start recording or send a
+model request. A submission does not prove a window appeared. Denial or
+uncertainty has no raw-execution fallback or automatic repeat.
 
 The notification drawer and popups consume the common Host's leased
 `notifications.presentation` resource through the fixed SDK client. The

@@ -34,6 +34,10 @@ def app_id(value):
     return isinstance(value, str) and re.fullmatch(r"[a-z][a-z0-9_-]*", value) is not None
 
 
+def replaces_launcher(package):
+    return package["package"] == "claw-app-launcher-desktop" and package["apps"] == ["claw-launcher"]
+
+
 def validate_packages(packages):
     if not isinstance(packages, list) or not packages or len(packages) > 10_000:
         raise ValueError("App Store requires its complete Debian package inventory")
@@ -73,6 +77,10 @@ def validate_packages(packages):
     for value, architecture in owners:
         if architecture != "all" and (value, "all") in owners:
             raise ValueError("Conflicting all/native App package assignments")
+    for package in latest.values():
+        old = "cosmic-launcher", package["architecture"]
+        if replaces_launcher(package) and owners.get(old) == package["package"]:
+            del owners[old]
     return checksums, owners, latest
 
 
@@ -292,6 +300,15 @@ def compose(directories, output, provenance, signing, *, packages, previous=None
                    for item in retained.values()):
                 raise ValueError("App Store cannot downgrade Debian packages")
             retained[key] = candidate
+            old_key = "cosmic-launcher", candidate["architecture"]
+            former = records.get(old_key)
+            if replaces_launcher(candidate) and former and any(
+                item["package"] == candidate["package"]
+                and item["sha256"] == former["delivery"]["package_sha256"]
+                and compare_versions(item["version"], "lt", candidate["version"])
+                for item in retained.values()
+            ):
+                del records[old_key]
             for value, app_root in apps.items():
                 app_key = value, record["architecture"]
                 selected = additions.get(app_key)

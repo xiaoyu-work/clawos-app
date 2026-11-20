@@ -1,4 +1,4 @@
-app-name = Launcher
+app-name = Claw Launcher
 type-to-search = Search apps, files, commands, or ask with “?”…
 
 category-all = All
@@ -16,6 +16,7 @@ state-loading-recent = Loading recent items…
 state-no-suggestions = No suggestions yet
 state-no-recent = No recent items
 state-no-results = No results in this category
+desktop-action-unsupported = This shortcut is not available here. Open the application from its main result.
 
 ask-claw-ai = Ask Claw AI: { $query }
 ask-claw-ai-hint = Forward to the AI agent

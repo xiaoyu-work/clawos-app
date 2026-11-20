@@ -8,7 +8,7 @@ AppID and local-file grants stay exact; the App does not execute desktop
 `Exec=` commands directly. This source move copies no installed catalog,
 runtime history or desktop session state.
 
-Native `cosmic-launcher` UI/build/resources, its old App forwarding and shared
+Native `claw-launcher` UI/build/resources, its old App forwarding and shared
 catalog/history integration are still pending. The Python source move alone
 does not complete the native Launcher product.
 

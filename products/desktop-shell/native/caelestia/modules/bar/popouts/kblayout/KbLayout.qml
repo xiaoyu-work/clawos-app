@@ -5,7 +5,6 @@ import Quickshell
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
-import qs.modules.launcher.services
 import qs.services
 
 ColumnLayout {
@@ -23,6 +22,6 @@ ColumnLayout {
 
         text: Tr.tr("Open Settings")
         enabled: !!settings
-        onClicked: Apps.launch(settings)
+        onClicked: DesktopMenu.launch(settings.id)
     }
 }

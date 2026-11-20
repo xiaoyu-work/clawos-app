@@ -64,7 +64,8 @@ Singleton {
                 output.lastIpcObject.specialWorkspace = special;
         });
         workspaces.sort((a, b) => a.id - b.id);
-        desktop = { windows, workspaces, outputs, keyboard: state.keyboard };
+        desktop = { windows, workspaces, outputs, keyboard: state.keyboard,
+            launcherRunning: state.launcher_running === true };
     }
 
     function focusWorkspace(workspace: var): void {

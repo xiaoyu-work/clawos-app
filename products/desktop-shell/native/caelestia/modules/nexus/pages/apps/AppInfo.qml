@@ -13,16 +13,6 @@ PageBase {
     id: root
 
     readonly property DesktopEntry app: nState.selectedApp
-    readonly property bool favouriteByRegex: app && matchedByRegex(GlobalConfig.launcher.favouriteApps, app.id)
-    readonly property bool hiddenByRegex: app && matchedByRegex(GlobalConfig.launcher.hiddenApps, app.id)
-
-    function isRegexEntry(s: string): bool {
-        return /^\^.*\$$/.test(s);
-    }
-
-    function matchedByRegex(filterList: list<string>, id: string): bool {
-        return filterList.some(f => isRegexEntry(f) && new RegExp(f).test(id));
-    }
 
     onAppChanged: {
         // Auto close when app lost
@@ -74,34 +64,19 @@ PageBase {
             }
         }
 
-        // Launcher
         SectionHeader {
             first: true
-            text: Tr.tr("Launcher")
+            text: Tr.tr("Top bar")
         }
 
         ToggleRow {
             first: true
-            text: Tr.tr("Favourite")
-            subtext: root.favouriteByRegex ? Tr.tr("Matched by a regex in favouriteApps — edit the config file to change") : Tr.tr("Pin to the top of the launcher")
-            enabled: !root.favouriteByRegex
-            checked: root.app && Strings.testRegexList(GlobalConfig.launcher.favouriteApps, root.app.id)
-            onToggled: {
-                const apps = GlobalConfig.launcher.favouriteApps;
-                GlobalConfig.launcher.favouriteApps = checked ? [...apps, root.app.id] : apps.filter(a => a !== root.app.id);
-            }
-        }
-
-        ToggleRow {
             last: true
-            text: Tr.tr("Hidden")
-            subtext: root.hiddenByRegex ? Tr.tr("Matched by a regex in hiddenApps — edit the config file to change") : Tr.tr("Hide from the launcher")
-            enabled: !root.hiddenByRegex
-            checked: root.app && Strings.testRegexList(GlobalConfig.launcher.hiddenApps, root.app.id)
-            onToggled: {
-                const apps = GlobalConfig.launcher.hiddenApps;
-                GlobalConfig.launcher.hiddenApps = checked ? [...apps, root.app.id] : apps.filter(a => a !== root.app.id);
-            }
+            text: Tr.tr("Pin to top bar")
+            enabled: !!root.app && root.app.id !== DesktopMenu.launcher
+                && (checked || Quiet.pins.length < 24)
+            checked: !!root.app && Quiet.pins.includes(root.app.id)
+            onToggled: Quiet.togglePin(root.app.id)
         }
 
         // Details

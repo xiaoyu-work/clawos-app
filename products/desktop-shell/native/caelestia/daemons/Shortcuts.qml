@@ -25,12 +25,13 @@ Scope {
     CustomShortcut {
         // qmllint enable unresolved-type
         name: "showall"
-        description: "Toggle launcher, dashboard and osd"
+        description: "Toggle dashboard and OSD"
         onPressed: {
             if (root.hasFullscreen)
                 return;
             const v = ShellState.forActive();
-            v.launcher = v.dashboard = v.osd = v.utilities = !(v.launcher || v.dashboard || v.osd || v.utilities);
+            if (v)
+                v.dashboard = v.osd = v.utilities = !(v.dashboard || v.osd || v.utilities);
         }
     }
 
@@ -64,13 +65,11 @@ Scope {
     CustomShortcut {
         // qmllint enable unresolved-type
         name: "launcher"
-        description: "Toggle launcher"
+        description: "Open Claw Launcher"
         onPressed: root.launcherInterrupted = false
         onReleased: {
-            if (!root.launcherInterrupted && !root.hasFullscreen) {
-                const screenState = ShellState.forActive();
-                screenState.launcher = !screenState.launcher;
-            }
+            if (!root.launcherInterrupted && !root.hasFullscreen)
+                DesktopMenu.launch(DesktopMenu.launcher);
             root.launcherInterrupted = false;
         }
     }
@@ -111,8 +110,13 @@ Scope {
 
     IpcHandler {
         function toggle(drawer: string): void {
+            if (drawer === "launcher") {
+                if (!root.hasFullscreen)
+                    DesktopMenu.launch(DesktopMenu.launcher);
+                return;
+            }
             if (list().split("\n").includes(drawer)) {
-                if (root.hasFullscreen && ["launcher", "session", "dashboard"].includes(drawer))
+                if (root.hasFullscreen && ["session", "dashboard"].includes(drawer))
                     return;
                 const screenState = ShellState.forActive();
                 screenState[drawer] = !screenState[drawer];

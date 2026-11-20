@@ -3,7 +3,7 @@ ClawApp.ready.then((app) => {
   const ui = ClawUi;
   const $ = (selector) => document.querySelector(selector);
   const has = (command) => Boolean(ClawApp.tool(app, command));
-  const native = app.id === "cosmic-launcher";
+  const native = app.id === "claw-launcher";
   let busy = false;
   let selected = null;
   let generation = 0;

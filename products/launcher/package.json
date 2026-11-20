@@ -1,11 +1,11 @@
 {
-  "web_ui": {"source": "web", "apps": ["launcher", "cosmic-launcher"]},
-  "apps": ["apps/launcher", "apps/cosmic-launcher"],
+  "web_ui": {"source": "web", "apps": ["launcher", "claw-launcher"]},
+  "apps": ["apps/launcher", "apps/claw-launcher"],
   "tests": [],
-  "native": {"cosmic-launcher": "native/cosmic-launcher"},
+  "native": {"claw-launcher": "native/cosmic-launcher"},
   "native_kind": "binary",
-  "native_payload": {"app": "cosmic-launcher", "program": "cosmic-launcher"},
+  "native_payload": {"app": "claw-launcher", "program": "claw-launcher"},
   "native_assets": {
-    "cosmic-launcher": {"mcp_backend.py": "apps/launcher/main.py"}
+    "claw-launcher": {"mcp_backend.py": "apps/launcher/main.py"}
   }
 }

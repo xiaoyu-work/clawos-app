@@ -45,6 +45,10 @@ licenses. Distribution must preserve notices and provide corresponding source
 and other required materials; importing the source does not grant trademark
 rights or permission to publish a release.
 
+Claw modified the Shell presentation on 2026-11-19: the Quiet design replaces
+the upstream left bar and integrated launcher. The retained Caelestia code
+and its adaptations are distributed under the original GPL-3.0 terms.
+
 The Claw CMake adapter builds only libcava's original `cavacore.c` into the
 native UI plugin, with FFTW. It does not build the terminal program or its raw
 audio-input backends, download a library during configure, or substitute a

@@ -12,15 +12,32 @@ Variants {
 
         required property ShellScreen modelData
 
-        Exclusions {
+        TopBar {
+            id: top
+
             screen: scope.modelData
-            bar: content.bar
+            onMenuRequested: name => menu.toggle(name)
+            onPinMenuRequested: (id, x) => {
+                menu.pinId = id;
+                menu.pinX = x;
+                menu.page = "pin";
+            }
+            onLaunched: menu.page = ""
+        }
+
+        QuietMenu {
+            id: menu
+
+            screen: scope.modelData
+            bar: top
         }
 
         ContentWindow {
             id: content
 
             screen: scope.modelData
+            topInset: top.implicitHeight
+            topBar: top
         }
     }
 }

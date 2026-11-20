@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=Launcher
-Name[zh_CN]=启动器
+Name=Claw Launcher
+Name[zh_CN]=Claw 启动器
 Name[ar]=المُشَغِّل
 Name[cs]=Spouštěč
 Name[hu]=Indító
@@ -22,7 +22,7 @@ Comment[sk]=Spúšťač aplikácií pre prostredie ClawOS
 Comment[sv]=ClawOS Programstartare
 Comment[it]=Launcher ClawOS
 Type=Application
-Exec=cosmic-launcher
+Exec=claw-launcher
 Terminal=false
 Categories=ClawOS;
 # Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!

@@ -337,6 +337,7 @@ pub struct CosmicLauncher {
     ai_token: u64,
     selected_filter: ResultFilter,
     is_loading: bool,
+    launch_error: Option<String>,
     width: f32,
 }
 
@@ -391,6 +392,7 @@ pub enum Message {
     Layer(LayerEvent),
     KeyboardNav(keyboard_nav::Action),
     ActivationToken(Option<String>, String, String, GpuPreference, bool),
+    LaunchSubmitted(Result<(), String>),
     AltTab,
     ShiftAltTab,
     Opened(Size, window::Id),
@@ -480,6 +482,7 @@ impl CosmicLauncher {
         self.alt_tab = false;
         self.selected_filter = ResultFilter::All;
         self.is_loading = false;
+        self.launch_error = None;
         self.queue.clear();
         self.hand_over.clear();
 
@@ -962,6 +965,9 @@ impl CosmicLauncher {
             .spacing(8)
             .align_y(Alignment::Center);
         let mut content = column![search, chips].width(Length::Fill).spacing(12);
+        if let Some(error) = &self.launch_error {
+            content = content.push(text::body(error.clone()));
+        }
 
         if let Some(card) = self.ai_inline_card() {
             content = content.push(card);
@@ -1161,6 +1167,7 @@ impl cosmic::Application for CosmicLauncher {
             ai_token: 0,
             selected_filter: ResultFilter::All,
             is_loading: false,
+            launch_error: None,
             width: PALETTE_WIDTH,
         };
         let task = if claw_os_sdk::gui::is_gui_launch() {
@@ -1200,6 +1207,7 @@ impl cosmic::Application for CosmicLauncher {
     fn update(&mut self, message: Message) -> Task<Self::Message> {
         match message {
             Message::InputChanged(value) => {
+                self.launch_error = None;
                 self.input_value.clone_from(&value);
                 if let Some(prompt) = ai_prompt(&value) {
                     // AI mode: blow away regular launcher results so the
@@ -1283,6 +1291,7 @@ impl cosmic::Application for CosmicLauncher {
                 }
             }
             Message::Activate(i) => {
+                self.launch_error = None;
                 let visible_index = i.unwrap_or(self.focused);
                 if let Some(item) = self
                     .source_index_for_visible(visible_index)
@@ -1399,6 +1408,16 @@ impl cosmic::Application for CosmicLauncher {
                         action_name,
                     } => {
                         if let Some(entry) = cosmic::desktop::load_desktop_file(&[], path) {
+                            if claw_os_sdk::gui::is_gui_launch() {
+                                if action_name.is_some() {
+                                    self.launch_error = Some(fl!("desktop-action-unsupported"));
+                                    return Task::none();
+                                }
+                                return Task::perform(
+                                    async move { crate::claw_glue::open_desktop_entry(&entry.id).await },
+                                    |result| cosmic::action::app(Message::LaunchSubmitted(result)),
+                                );
+                            }
                             let exec = if let Some(action_name) = action_name {
                                 entry
                                     .desktop_actions
@@ -1600,6 +1619,11 @@ impl cosmic::Application for CosmicLauncher {
                 return Task::perform(launch(token, app_id, exec, dgpu, terminal), |()| {
                     cosmic::action::app(Message::Hide)
                 });
+            }
+            Message::LaunchSubmitted(Ok(())) => return self.hide(),
+            Message::LaunchSubmitted(Err(error)) => {
+                tracing::warn!(%error, "Claw OS did not open the selected application");
+                self.launch_error = Some(error);
             }
             Message::AltTab => {
                 self.focus_next();

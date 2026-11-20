@@ -62,16 +62,10 @@ PageBase {
                 width: parent.width - Tokens.padding.largeIncreased * 2
                 spacing: Tokens.spacing.small
 
-                AnimatedLogo {
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: implicitWidth
-                    Layout.preferredHeight: implicitHeight
-                }
-
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.topMargin: Tokens.spacing.small
-                    text: "Caelestia"
+                    text: "Claw Desktop"
                     font: Tokens.font.headline.builders.large.width(110).build()
                 }
 
@@ -142,6 +136,22 @@ PageBase {
             last: true
             label: "Qt"
             value: CUtils.qtVersion || "…"
+        }
+
+        SectionHeader {
+            text: Tr.tr("Open-source licenses")
+        }
+
+        InfoRow {
+            first: true
+            label: "Caelestia"
+            value: "GPL-3.0"
+        }
+
+        InfoRow {
+            last: true
+            label: "Quickshell"
+            value: "LGPL-3.0"
         }
 
         // Plugins

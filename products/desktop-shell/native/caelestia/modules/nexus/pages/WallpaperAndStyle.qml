@@ -133,8 +133,8 @@ PageBase {
 
             last: true
             text: Tr.tr("Dark theme")
-            checked: !Colours.light
-            onToggled: Colours.setMode(checked ? "dark" : "light")
+            checked: !Quiet.light
+            onToggled: Quiet.setAppearance(!checked)
         }
     }
 }

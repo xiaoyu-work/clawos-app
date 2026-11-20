@@ -37,9 +37,9 @@ def call(service, tool, arguments):
 
 def test_native_manifest_and_install_identity(service):
     manifest = json.loads(MANIFEST.read_text())
-    assert manifest["id"] == "cosmic-launcher"
+    assert manifest["id"] == "claw-launcher"
     assert manifest["runtime"] == "binary"
-    assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/cosmic-launcher"
+    assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/claw-launcher"
     assert manifest["desktop"]["exec"] == "--gui"
     assert {need["verb"] for need in manifest["desktop"]["needs"]} == {"ui.panel"}
     assert all(need["verb"] != "ui.panel" for tool in manifest["mcp"]["tools"] for need in tool["needs"])
@@ -137,8 +137,8 @@ def test_launch_denied_and_broker_errors_do_not_record_history(service):
 def test_staged_native_embeds_canonical_product_source(tmp_path):
     stage = load_local_module(PRODUCT.parents[1] / "tools/stage_native.py",
                               "launcher_stage_native")
-    assert stage.stage("launcher", tmp_path) == ["cosmic-launcher"]
-    staged = tmp_path / "cosmic-launcher"
+    assert stage.stage("launcher", tmp_path) == ["claw-launcher"]
+    staged = tmp_path / "claw-launcher"
     assert (staged / "mcp_backend.py").read_bytes() == (
         PRODUCT / "apps/launcher/main.py"
     ).read_bytes()

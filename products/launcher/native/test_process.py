@@ -25,7 +25,7 @@ def main():
     try:
         libraries = prepare_exports(download=False)
         installed = fixture / "installed"
-        stage("launcher", installed, ["cosmic-launcher"])
+        stage("launcher", installed, ["claw-launcher"])
         python = stage_shared(installed)
         shutil.copytree(libraries["python-sdk"] / "claw_os_sdk", python / "claw_os_sdk", ignore=IGNORE)
         shutil.copytree(libraries["python-runtime"] / "cos_runtime", python / "cos_runtime", ignore=IGNORE)
@@ -69,13 +69,13 @@ def main():
             "--ro-bind", str(installed / "usr/lib/cos"), "/usr/lib/cos",
             "--ro-bind", str(broker), "/usr/local/bin/cos",
             "--setenv", "COS_MCP_SERVER", "1",
-            "--setenv", "COS_APP_MANIFEST", "/usr/lib/cos/apps/cosmic-launcher/app.json",
+            "--setenv", "COS_APP_MANIFEST", "/usr/lib/cos/apps/claw-launcher/app.json",
             "--setenv", "COS_DATA_DIR", "/fixture/data",
             "--setenv", "XDG_DATA_HOME", "/fixture",
             "--setenv", "XDG_DATA_DIRS", "/fixture",
             "--setenv", "CLAW_COS_BIN", "/untrusted/must-not-execute",
             "--setenv", "COS_BIN", "/untrusted/must-not-execute",
-            "--", str(ROOT / "build/native-target/debug/cosmic-launcher"),
+            "--", str(ROOT / "build/native-target/debug/claw-launcher"),
         ]
         # Existing host directories are never changed. Scratch mountpoints
         # live only on the namespace's fresh /run and /usr/lib filesystems.

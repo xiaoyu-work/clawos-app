@@ -42,7 +42,7 @@ Singleton {
             contentItem.Config.screen: screen.name
             contentItem.Tokens.screen: screen.name
 
-            title: Tr.tr("Nexus — %1").arg(PageRegistry.pages[nexus.nState.currentPageIdx].label)
+            title: Tr.tr("Shell Settings — %1").arg(PageRegistry.pages[nexus.nState.currentPageIdx].label)
 
             Nexus {
                 id: nexus

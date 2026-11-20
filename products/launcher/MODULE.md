@@ -1,7 +1,7 @@
 # Launcher Product
 
 Own the Python `launcher` App's five MCP tools and the complete native
-`cosmic-launcher` executable, UI, four-tool MCP surface and build/resources.
+`claw-launcher` executable, UI, four-tool MCP surface and build/resources.
 
 | Path | Responsibility |
 | --- | --- |
@@ -9,7 +9,7 @@ Own the Python `launcher` App's five MCP tools and the complete native
 | `apps/launcher/main.py` | XDG desktop catalog, localized search, typed launch requests and recent-file handling |
 | `apps/launcher/server.py` | Direct SDK list/find/open/recent/is-running handlers |
 | `apps/launcher/test_main.py` | Desktop parsing, scopes, URI/path safety, broker errors, recent state and SDK dispatch |
-| `apps/cosmic-launcher/` | Unchanged native identity/permissions and authenticated adapter contracts |
+| `apps/claw-launcher/` | Signed native identity, permissions and authenticated adapter contracts |
 | `native/cosmic-launcher/` | Complete GPL UI, compiled-in MCP adapter, upstream packaging/resources and Rust tests |
 | `native/cosmic-launcher/src/argparse.rs`, `native/cosmic-launcher/test/unit/argparse.rs` | Native subcommands, bounded Host GUI selector adaptation and parser regressions |
 | `native/PROVENANCE.md` | Source origin, license and shared OS backend ownership |
@@ -40,9 +40,12 @@ merging grants or data partitions. Native extras preserve order, accepting
 bounded absolute non-file URIs and canonical existing files with exact read
 authority, never unchecked Exec arguments.
 
-The on-screen UI continues to use the OS-owned launcher backend service and
-shared restyled toolkit. That service's catalog/history is not unified with
-the product MCP backend; no shell history or user state is migrated.
+The on-screen UI uses the OS-owned launcher backend service and shared
+restyled toolkit. The managed default UI sends each selected desktop entry
+ID to the OS desktop menu gate, not to the entry's raw `Exec` command. The
+OS checks the signed target and the origin of this Launcher window. The
+backend's catalog/history is not unified with the product MCP backend;
+no shell history or user state is migrated.
 The coordinated 0.2.1 GUI declaration separately requests the high-risk
 `ui.panel` capability for its Layer-shell overlay. It needs protected owner
 approval and is never inherited by MCP tools. It grants no catalog/history,
@@ -76,11 +79,16 @@ The last command needs Linux bubblewrap and exercises the actual executable
 with installed-layout SDK imports, an authenticated fixture transport and fake
 policy/launch services. It never uses live desktop entries or user history.
 
-`native_payload` prepares the real `bin/cosmic-launcher` as the shared signed
+`native_payload` prepares the real `bin/claw-launcher` as the shared signed
 GUI/MCP entry, without moving the OS launcher backend or common Python support.
-The compatibility command enters `cos app cosmic-launcher --gui`; this does not
+The installed `claw-launcher` command enters `cos app claw-launcher --gui`; this does not
 grant desktop transport, catalog/history access or activate resources. See
 [native payloads](../../docs/native-payloads.md).
+
+The same `claw-app-launcher-desktop` package replaces the former native
+identity and command. `com.clawos.Launcher` and the separate `launcher` App
+stay unchanged. The new signed identity does not inherit grants or private
+App data from `cosmic-launcher`.
 
 After the existing MCP dispatch, the native parser uses the App-owned
 `claw-app-gui-argv` library to remove one exact `--gui` at argv[1] only when the

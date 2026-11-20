@@ -4,7 +4,8 @@
   <id>com.clawos.Launcher</id>
   <metadata_license>CC0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
-  <name>Launcher</name>
+  <name>Claw Launcher</name>
+  <name xml:lang="zh-CN">Claw 启动器</name>
   <name xml:lang="ar">مُشَغِّلُ ClawOS</name>
   <name xml:lang="cs">Spouštěč ClawOS</name>
   <name xml:lang="hu">ClawOS Indító</name>

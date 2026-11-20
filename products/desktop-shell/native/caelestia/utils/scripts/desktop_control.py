@@ -1,10 +1,10 @@
 """Send closed desktop requests through the authenticated OS service."""
 
-import json
 import re
 import sys
 import time
 
+from claw_os_sdk.generated import encode_wire_json
 from claw_os_sdk.kernel import (
     KernelDenied,
     KernelUnavailable,
@@ -50,9 +50,9 @@ def main(arguments: list[str]) -> int:
     try:
         result = request(arguments)
     except (ValueError, KernelDenied, KernelUnavailable) as error:
-        print(json.dumps({"ok": False, "error": str(error)}))
+        print(encode_wire_json({"ok": False, "error": str(error)}))
         return 1
-    print(json.dumps({"ok": True, "result": result}))
+    print(encode_wire_json({"ok": True, "result": result}))
     return 0
 
 

@@ -15,7 +15,6 @@ import qs.modules.nexus.pages.network
 import qs.modules.nexus.pages.panels
 import qs.modules.nexus.pages.services
 import qs.modules.nexus.pages.wallandstyle
-import qs.modules.nexus.pages.panels.taskbar
 
 QtObject {
     id: root
@@ -112,33 +111,10 @@ QtObject {
                     DashboardPanel {}
                 }
                 Component {
-                    TaskbarPanel {}
-                }
-                Component {
-                    LauncherPanel {}
-                }
-                Component {
                     SidebarPanel {}
                 }
                 Component {
                     UtilitiesPanel {}
-                }
-
-                // Taskbar component sub-pages
-                Component {
-                    BarWorkspaces {}
-                }
-                Component {
-                    BarActiveWindow {}
-                }
-                Component {
-                    BarTray {}
-                }
-                Component {
-                    BarStatusIcons {}
-                }
-                Component {
-                    BarClock {}
                 }
             }
         },

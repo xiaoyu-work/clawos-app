@@ -28,14 +28,6 @@ Column {
 
         Component.onCompleted: forceActiveFocus()
 
-        Connections {
-            function onLauncherChanged(): void {
-                if (!root.screenState.launcher)
-                    logout.forceActiveFocus();
-            }
-
-            target: root.screenState
-        }
     }
 
     SessionButton {

@@ -61,13 +61,13 @@ QtObject {
         {
             label: Tr.tr("Panels"),
             icon: "dock_to_bottom",
-            description: Tr.tr("Dashboard, taskbar, launcher, sidebar"),
+            description: Tr.tr("Dashboard, sidebar, utilities"),
             category: "shell"
         },
         {
             label: Tr.tr("Apps"),
             icon: "apps",
-            description: Tr.tr("Default apps, favourites, hidden apps"),
+            description: Tr.tr("Default apps and top bar pins"),
             category: "shell"
         },
         {

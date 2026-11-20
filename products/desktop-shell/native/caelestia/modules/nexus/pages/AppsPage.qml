@@ -70,7 +70,7 @@ PageBase {
             last: true
             icon: "apps"
             text: Tr.tr("All apps")
-            subtext: Tr.tr("Browse installed apps, set favourites and hidden")
+            subtext: Tr.tr("Browse installed apps and pin them to the top bar")
             onClicked: root.nState.openSubPage(1)
         }
     }
@@ -105,8 +105,8 @@ PageBase {
 
                 model: {
                     const apps = [...DesktopEntries.applications.values];
-                    const favourited = new Set(apps.filter(a => Strings.testRegexList(GlobalConfig.launcher.favouriteApps, a.id)));
-                    return apps.sort((a, b) => (favourited.has(b) - favourited.has(a)) || a.name.localeCompare(b.name));
+                    const pinned = new Set(Quiet.pins);
+                    return apps.sort((a, b) => (pinned.has(b.id) - pinned.has(a.id)) || a.name.localeCompare(b.name));
                 }
 
                 delegate: StateLayer {

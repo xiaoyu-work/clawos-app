@@ -5,7 +5,7 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 #[derive(Parser, Debug, Serialize, Deserialize, Clone)]
-#[command(author, version, about, long_about = None)]
+#[command(name = "claw-launcher", author, version, about, long_about = None)]
 #[command(propagate_version = true)]
 pub struct Args {
     #[clap(subcommand)]
