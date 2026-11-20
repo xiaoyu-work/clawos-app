@@ -18,6 +18,19 @@ StyledWindow {
     signal pinMenuRequested(string desktopId, real position)
     signal launched()
 
+    property Item hoveredApp
+    readonly property string dockTooltip: hoveredApp && !hoverDelay.running && !dock.moving
+        ? hoveredApp.Accessible.name : ""
+    readonly property real dockTooltipX: hoveredApp
+        ? leading.x + dock.x + hoveredApp.x - dock.contentX + hoveredApp.width / 2 : 0
+
+    onHoveredAppChanged: hoveredApp ? hoverDelay.restart() : hoverDelay.stop()
+
+    Timer {
+        id: hoverDelay
+        interval: 450
+    }
+
     name: "claw-top-bar"
     anchors {
         top: true
@@ -122,10 +135,21 @@ StyledWindow {
                 height: 36
                 padding: 3
                 Accessible.name: Quiet.title(modelData.id)
-                ToolTip.visible: hovered
-                ToolTip.delay: 450
-                ToolTip.text: Accessible.name
+                onHoveredChanged: {
+                    if (hovered)
+                        root.hoveredApp = app;
+                    else
+                        clearHover();
+                }
+                ListView.onPooled: clearHover()
+
+                function clearHover(): void {
+                    if (root.hoveredApp === app)
+                        root.hoveredApp = null;
+                }
+
                 onClicked: {
+                    clearHover();
                     root.launched();
                     Quiet.activate(modelData);
                 }
@@ -156,6 +180,7 @@ StyledWindow {
                 TapHandler {
                     acceptedButtons: Qt.RightButton
                     onTapped: {
+                        app.clearHover();
                         if (app.modelData.id !== DesktopMenu.launcher)
                             root.pinMenuRequested(app.modelData.id, app.mapToItem(leading, 0, 0).x + leading.x);
                     }

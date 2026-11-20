@@ -65,6 +65,36 @@ StyledWindow {
         Surface { panel: panels.popoutsWrapper; visible: panels.popouts.visible }
     }
 
+    Rectangle {
+        id: dockLabel
+
+        // Keep the label out of the input mask so it cannot intercept clicks.
+        visible: root.topBar.dockTooltip !== ""
+        x: Math.max(6, Math.min(parent.width - width - 6, Math.round(root.topBar.dockTooltipX - width / 2)))
+        y: root.topInset + 6
+        width: Math.min(label.implicitWidth + 16, 176, Math.max(0, parent.width - 12))
+        height: label.implicitHeight + 8
+        radius: 5
+        color: Quiet.panel
+        border.color: Quiet.line
+
+        Text {
+            id: label
+
+            anchors.fill: parent
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
+            text: root.topBar.dockTooltip
+            textFormat: Text.PlainText
+            color: Quiet.ink
+            font.pixelSize: 12
+            maximumLineCount: 1
+            elide: Text.ElideRight
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+    }
+
     ShellState.ComponentRef {
         screen: root.screen
         slot: "rootWindow"

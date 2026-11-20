@@ -61,7 +61,8 @@ notification history, raw system commands or a second permission mechanism.
 Ordinary Apps do not need to be rewritten in QML.
 
 The top Dock reads public desktop entries for labels and original SVG
-artwork. It starts one `cos __desktop-events` connection per Shell, with an
+artwork. Hover labels are single-line, click-through and sit below the bar.
+It starts one `cos __desktop-events` connection per Shell, with an
 initial snapshot and subsequent updates only on relevant changes. The Root
 GUI Host reports managed Apps independently of window count. The Dock focuses
 an existing epoch-bound window, otherwise it asks Root to reopen the
