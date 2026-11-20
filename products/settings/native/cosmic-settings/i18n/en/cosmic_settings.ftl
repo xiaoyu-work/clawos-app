@@ -1002,7 +1002,7 @@ app-permissions-review-in-os = These requests remain pending until reviewed in t
 app-permissions-recent = Recent decisions
 app-permissions-yes = Yes
 app-permissions-no = No
-app-permissions-unknown = Unknown / argument-bound
+app-permissions-unknown = No choice saved
 
 ## Applications: Default applications
 
