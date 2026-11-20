@@ -41,30 +41,17 @@ struct App {
 #[derive(Debug, Deserialize)]
 struct Details {
     app_id: String,
-    trust: String,
+    revision: String,
     permissions: Vec<Permission>,
-    pending: Vec<Pending>,
-    recent: Vec<Value>,
-    semantics: String,
 }
 
 #[derive(Debug, Deserialize)]
 struct Permission {
     permission_id: String,
-    declared: Value,
-    capability: Option<Value>,
-    manageable: bool,
+    label: String,
+    description: String,
+    target: String,
     enabled: Option<bool>,
-    live_granted: Option<bool>,
-    limitation: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct Pending {
-    id: String,
-    verb: String,
-    scope: Value,
-    reason: String,
 }
 
 impl State {
@@ -98,7 +85,7 @@ impl State {
             .and_then(|index| self.apps.get(index))
             .cloned()
         {
-            Some(app) => self.start("show", json!({"action":"show", "app_id":app})),
+            Some(app) => self.start("show_choices", json!({"action":"show_choices", "app_id":app})),
             None => Task::none(),
         }
     }
@@ -120,13 +107,15 @@ impl State {
                     if !details
                         .permissions
                         .iter()
-                        .any(|permission| permission.permission_id == key && permission.manageable)
+                        .any(|permission| permission.permission_id == key)
                     {
                         self.error = Some(crate::fl!("app-permissions-unsupported"));
                         return Task::none();
                     }
-                    let action = if enable { "request" } else { "revoke" };
-                    let request = crate::permissions::request(action, &details.app_id, &key);
+                    let action = if enable { "allow" } else { "deny" };
+                    let request = crate::permissions::choice(
+                        enable, &details.app_id, &key, &details.revision,
+                    );
                     return self.start(action, request);
                 }
             }
@@ -157,7 +146,7 @@ impl State {
                             self.error = Some(format!("Invalid permission catalog: {error}"))
                         }
                     },
-                    Ok(value) if action == "show" => {
+                    Ok(value) if action == "show_choices" => {
                         match serde_json::from_value::<Details>(value) {
                             Ok(details)
                                 if self.selected.and_then(|index| self.apps.get(index))
@@ -175,12 +164,8 @@ impl State {
                             }
                         }
                     }
-                    Ok(_) if action == "request" || action == "revoke" => {
-                        self.notice = Some(if action == "request" {
-                            crate::fl!("app-permissions-pending")
-                        } else {
-                            crate::fl!("app-permissions-refresh-after-change")
-                        });
+                    Ok(_) if action == "allow" || action == "deny" => {
+                        self.notice = Some(crate::fl!("app-permissions-refresh-after-change"));
                         return self.reload_selected();
                     }
                     Ok(_) => {
@@ -233,67 +218,35 @@ impl State {
             )));
         }
         if let Some(details) = &self.details {
-            content = content
-                .push(text::body(format!(
-                    "{} ({})",
-                    details.app_id, details.trust
-                )))
-                .push(text::body(&details.semantics));
+            if details.permissions.is_empty() {
+                content = content.push(text::body(crate::fl!("app-permissions-no-choices")));
+            }
             for permission in &details.permissions {
-                let title = permission
-                    .capability
-                    .as_ref()
-                    .unwrap_or(&permission.declared)
-                    .to_string();
-                let enabled = state_label(permission.enabled);
-                let live = state_label(permission.live_granted);
+                let selection = match permission.enabled {
+                    Some(true) => crate::fl!("app-permissions-request"),
+                    Some(false) => crate::fl!("app-permissions-revoke"),
+                    None => crate::fl!("app-permissions-unknown"),
+                };
                 content = content
-                    .push(text::body(title))
-                    .push(text::body(format!(
-                        "{}: {enabled}; {}: {live}",
-                        crate::fl!("app-permissions-enabled"),
-                        crate::fl!("app-permissions-live")
-                    )))
-                    .push(text::body(permission.declared.to_string()));
-                if permission.manageable && !self.busy {
-                    if let Some(enabled) = permission.enabled {
-                        content = content.push(
-                            button::standard(if enabled {
-                                crate::fl!("app-permissions-revoke")
-                            } else {
-                                crate::fl!("app-permissions-request")
-                            })
-                            .on_press(Message::Change(permission.permission_id.clone(), !enabled)),
-                        );
+                    .push(text::title4(&permission.label))
+                    .push(text::body(&permission.description))
+                    .push(text::body(&permission.target))
+                    .push(text::body(selection));
+                if !self.busy {
+                    let mut buttons = row::with_capacity(2).spacing(8);
+                    if permission.enabled != Some(true) {
+                        buttons = buttons.push(button::standard(crate::fl!("app-permissions-request"))
+                            .on_press(Message::Change(permission.permission_id.clone(), true)));
                     }
-                } else if let Some(limitation) = &permission.limitation {
-                    content = content.push(text::body(limitation));
+                    if permission.enabled != Some(false) {
+                        buttons = buttons.push(button::standard(crate::fl!("app-permissions-revoke"))
+                            .on_press(Message::Change(permission.permission_id.clone(), false)));
+                    }
+                    content = content.push(buttons);
                 }
-            }
-            content = content.push(text::title4(crate::fl!("app-permissions-pending-title")));
-            if !details.pending.is_empty() {
-                content = content.push(text::body(crate::fl!("app-permissions-review-in-os")));
-            }
-            for request in &details.pending {
-                content = content.push(text::body(format!(
-                    "{}: {} {} — {}",
-                    request.id, request.verb, request.scope, request.reason
-                )));
-            }
-            content = content.push(text::title4(crate::fl!("app-permissions-recent")));
-            for recent in &details.recent {
-                content = content.push(text::body(recent.to_string()));
             }
         }
         content.into()
-    }
-}
-
-fn state_label(value: Option<bool>) -> String {
-    match value {
-        Some(true) => crate::fl!("app-permissions-yes"),
-        Some(false) => crate::fl!("app-permissions-no"),
-        None => crate::fl!("app-permissions-unknown"),
     }
 }
 

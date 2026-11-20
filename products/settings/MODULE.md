@@ -54,13 +54,11 @@ ordinary GUI admission path. A chooser result never expands those scopes;
 unrelated files remain denied. These source and unit/process regressions are
 not substitutes for the disposable signed-GUI acceptance lane.
 
-The coordinated 0.2.1 native GUI requests Users observation/account management
-and Applications permission management as `desktop.optional_needs`. Missing,
-denied or unapproved rights cannot prevent the Settings window from opening;
-the affected page/action remains unauthorized. These are this App's declared
-requests, not grants borrowed from the eleven management identities. Exact
-secret/icon-file authority, other page/resource integration and protected OS
-approval remain separate requirements.
+The OS-started system Settings window changes lasting App choices through the
+private GUI broker. The Applications page shows only choices the OS supports,
+binds changes to the displayed App revision, and reloads the actual state
+after a change. The shared MCP client cannot submit these owner decisions.
+Exact secret and icon-file authority remain separate requirements.
 
 | Path | Responsibility |
 | --- | --- |

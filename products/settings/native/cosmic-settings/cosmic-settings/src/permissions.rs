@@ -18,9 +18,11 @@ pub async fn call(request: Value) -> Result<Value, String> {
     .map_err(|error| error.to_string())?
 }
 
-pub fn request(action: &str, app: &str, permission: &str) -> Value {
-    json!({"action":action, "app_id":app, "permission_id":permission,
-        "reason":"Restore this declared App permission, subject to the existing OS launch and capability ceilings."})
+pub fn choice(allow: bool, app: &str, permission: &str, revision: &str) -> Value {
+    json!({
+        "action": if allow { "allow" } else { "deny" },
+        "app_id": app, "permission_id": permission, "revision": revision,
+    })
 }
 
 #[cfg(test)]

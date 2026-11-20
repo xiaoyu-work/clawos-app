@@ -16,15 +16,15 @@ async fn installed_permission_client_uses_closed_environment() {
 
 #[test]
 fn requests_cannot_describe_an_owner_or_approval() {
-    for action in ["request", "revoke"] {
-        let value = request(action, "audio-manager", "exact-manifest-key");
+    for (allow, action) in [(true, "allow"), (false, "deny")] {
+        let value = choice(allow, "audio-manager", "exact-manifest-key", "displayed-revision");
         assert_eq!(
             value,
             json!({
                 "action": action,
                 "app_id": "audio-manager",
                 "permission_id": "exact-manifest-key",
-                "reason": "Restore this declared App permission, subject to the existing OS launch and capability ceilings.",
+                "revision": "displayed-revision",
             })
         );
     }
