@@ -15,10 +15,13 @@ def test_extension_identity_permissions_and_resources_are_preserved():
     app = json.loads((ROOT.parent / "apps/browser-attached/app.json").read_text())
     assert manifest["manifest_version"] == 3
     assert manifest["version"] == app["version"]
-    assert manifest["permissions"] == ["tabs", "scripting", "activeTab", "nativeMessaging"]
+    assert manifest["permissions"] == [
+        "tabs", "scripting", "activeTab", "nativeMessaging", "sidePanel", "storage",
+    ]
     assert manifest["host_permissions"] == ["<all_urls>"]
     assert (ROOT / manifest["background"]["service_worker"]).is_file()
-    assert (ROOT / manifest["action"]["default_popup"]).is_file()
+    assert "default_popup" not in manifest["action"]
+    assert (ROOT / manifest["side_panel"]["default_path"]).is_file()
     for script in manifest["content_scripts"]:
         assert script["all_frames"] is False
         for resource in script["js"]:

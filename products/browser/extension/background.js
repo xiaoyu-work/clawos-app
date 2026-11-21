@@ -26,9 +26,20 @@ let port = null;
 let reconnectIdx = 0;
 let stableTimer = null;
 let seenRoundTrip = false;
-let state = "idle"; // idle | acting | waiting-approval | error
-let acting_tab_id = null;
+let paused = true;
 let browserStateGeneration = 0;
+const iconOffscreen = new OffscreenCanvas(32, 32);
+const iconContext = iconOffscreen.getContext("2d");
+iconContext.fillStyle = "#216249";
+iconContext.beginPath();
+iconContext.roundRect(0, 0, 32, 32, 9);
+iconContext.fill();
+iconContext.strokeStyle = "white";
+iconContext.lineWidth = 3;
+iconContext.lineCap = "round";
+iconContext.beginPath();
+iconContext.arc(16, 16, 7, Math.PI / 4, 7 * Math.PI / 4);
+iconContext.stroke();
 
 chrome.tabs.onActivated.addListener(() => {
   browserStateGeneration++;
@@ -45,14 +56,12 @@ chrome.tabs.onReplaced.addListener(() => {
   browserStateGeneration++;
 });
 
-function setState(s, tabId = null) {
-  state = s;
-  acting_tab_id = tabId;
-  const badge = { idle: "", acting: "•", "waiting-approval": "?", error: "!" }[s] ?? "";
+function setState(s) {
+  const badge = { idle: "", acting: "•", paused: "-", error: "!" }[s] ?? "";
   const colour = {
     idle: "#666",
     acting: "#10b981",
-    "waiting-approval": "#f59e0b",
+    paused: "#666",
     error: "#ef4444",
   }[s] ?? "#666";
   try {
@@ -62,8 +71,11 @@ function setState(s, tabId = null) {
 }
 
 function connect() {
+  if (paused || port) return;
+  let connection;
   try {
-    port = chrome.runtime.connectNative(HOST_NAME);
+    connection = chrome.runtime.connectNative(HOST_NAME);
+    port = connection;
   } catch (e) {
     console.warn("[claw-agent] connectNative threw:", e);
     scheduleReconnect();
@@ -78,9 +90,10 @@ function connect() {
     if (port) reconnectIdx = 0;
     stableTimer = null;
   }, STABLE_MS);
-  port.onMessage.addListener(onHostMessage);
-  port.onDisconnect.addListener(() => {
+  connection.onMessage.addListener((message) => onHostMessage(connection, message));
+  connection.onDisconnect.addListener(() => {
     const err = chrome.runtime.lastError;
+    if (port !== connection) return;
     console.warn("[claw-agent] host disconnected:", err && err.message);
     port = null;
     if (stableTimer) { clearTimeout(stableTimer); stableTimer = null; }
@@ -98,41 +111,42 @@ function scheduleReconnect() {
   setTimeout(connect, delay);
 }
 
-async function onHostMessage(msg) {
+async function onHostMessage(connection, msg) {
+  if (port !== connection) return;
   const id = msg && msg.id;
   const verb = msg && msg.verb;
   const args = (msg && msg.args) || {};
   if (!id || !verb) {
-    reply(id || "no-id", false, null, "request missing id or verb");
+    reply(connection, id || "no-id", false, null, "request missing id or verb");
     return;
   }
-  setState("acting", typeof args.id === "number" ? args.id : null);
+  setState("acting");
   try {
     const handler = HANDLERS[verb];
     if (!handler) throw new Error(`unknown verb: ${verb}`);
     const result = await handler(args);
-    reply(id, true, result, null);
+    reply(connection, id, true, result, null);
   } catch (e) {
-    reply(id, false, null, e && e.message ? e.message : String(e));
+    reply(connection, id, false, null, e && e.message ? e.message : String(e));
   } finally {
-    setState("idle");
+    if (port === connection) setState("idle");
     // First successful (or even handled-with-error) round-trip from the
     // host means the channel is functioning. Reset reconnect backoff so
     // the *next* disconnect starts from the shortest delay again.
-    if (!seenRoundTrip) {
+    if (port === connection && !seenRoundTrip) {
       seenRoundTrip = true;
       reconnectIdx = 0;
     }
   }
 }
 
-function reply(id, ok, result, error) {
-  if (!port) return;
+function reply(connection, id, ok, result, error) {
+  if (port !== connection) return;
   const msg = { id, ok };
   if (ok) msg.result = result;
   else msg.error = error || "unknown error";
   try {
-    port.postMessage(msg);
+    connection.postMessage(msg);
   } catch (e) {
     console.warn("[claw-agent] postMessage failed:", e);
   }
@@ -356,37 +370,66 @@ function sleep(ms) {
 }
 
 // ---------------------------------------------------------------------------
-// Popup messaging
+// Side panel controls
 // ---------------------------------------------------------------------------
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (!msg || !msg.claw_agent_popup) return false;
-  if (msg.claw_agent_popup === "status") {
-    sendResponse({ state, tab: acting_tab_id });
-    return false;
-  }
-  if (msg.claw_agent_popup === "stop") {
-    // Disconnect the port; on reconnect, the SW will be back in `idle`.
-    try { if (port) port.disconnect(); } catch (_) {}
-    port = null;
-    setState("idle");
-    sendResponse({ ok: true });
-    return false;
-  }
-  return false;
-});
-
-// ---------------------------------------------------------------------------
-// Wake-up triggers
-// ---------------------------------------------------------------------------
-
-chrome.runtime.onStartup.addListener(() => {
-  if (!port) connect();
-});
 chrome.runtime.onInstalled.addListener(() => {
-  if (!port) connect();
+  void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((error) => {
+    console.warn("[claw-agent] cannot configure the side panel:", error);
+  });
+  void chrome.action.setIcon({
+    imageData: iconContext.getImageData(0, 0, 32, 32),
+  }).catch(() => {});
 });
 
-// Service workers may be torn down and reawoken on events.  Connect eagerly
-// at script evaluation so we re-open the port after a wake-up too.
-connect();
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (sender.url !== chrome.runtime.getURL("popup.html")) return false;
+  if (msg?.browserAccess !== "pause" && msg?.browserAccess !== "resume") {
+    return false;
+  }
+  accessReady.then(async () => {
+    await chrome.storage.session.set({ browserAccessPaused: msg.browserAccess === "pause" });
+    sendResponse({ paused: msg.browserAccess === "pause" });
+  }).catch(() => sendResponse({ paused, error: true }));
+  return true;
+});
+
+function setBrowserAccess(value) {
+  paused = value;
+  if (paused) {
+    const connection = port;
+    port = null;
+    connection?.disconnect();
+    clearTimeout(stableTimer);
+    stableTimer = null;
+    setState("paused");
+  } else {
+    reconnectIdx = 0;
+    connect();
+  }
+}
+
+const accessReady = chrome.storage.session.get("browserAccessPaused").then((stored) => {
+  setBrowserAccess(Boolean(stored.browserAccessPaused));
+});
+
+function wakeBridge() {
+  void accessReady.then(connect, () => {});
+}
+
+chrome.runtime.onStartup.addListener(wakeBridge);
+chrome.runtime.onInstalled.addListener(wakeBridge);
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "session" && changes.browserAccessPaused) {
+    setBrowserAccess(Boolean(changes.browserAccessPaused.newValue));
+  }
+});
+chrome.windows.onRemoved.addListener((id) => {
+  chrome.storage.session.remove(`browserChat:${id}`).catch(() => {});
+});
+
+void accessReady.catch((error) => {
+  setState("error");
+  console.warn("[claw-agent] could not read browser access state:", error);
+});

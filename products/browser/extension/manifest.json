@@ -1,16 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Claw Agent",
-  "short_name": "claw-agent",
+  "short_name": "Claw Agent",
   "version": "0.1.0",
-  "description": "Lets the Claw OS agent operate this browser through a permission-gated Native Messaging bridge.",
+  "description": "Chat with Claw Agent and let it read or act on authorized browser tabs.",
+  "incognito": "not_allowed",
   "_trust_model_comment": "host_permissions:<all_urls> is intentional for the local-trust agent: the extension can read/write any tab the user has open. Access is gated by clawd, which derives an exact per-host capability and injects the expected page origin; the Native Messaging host accepts only clawd. Operators who want to narrow the trust surface SHOULD edit host_permissions to an explicit allowlist of origins before deploying.",
   "minimum_chrome_version": "120",
   "permissions": [
     "tabs",
     "scripting",
     "activeTab",
-    "nativeMessaging"
+    "nativeMessaging",
+    "sidePanel",
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -27,8 +30,10 @@
       "js": ["content.js"]
     }
   ],
+  "side_panel": {
+    "default_path": "popup.html"
+  },
   "action": {
-    "default_title": "Claw Agent",
-    "default_popup": "popup.html"
+    "default_title": "Claw Agent"
   }
 }
