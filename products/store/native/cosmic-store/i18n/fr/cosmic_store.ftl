@@ -1,4 +1,4 @@
-app-name = Store ClawOS
+app-name = Store Yu OS
 back = Retour
 cancel = Annuler
 check-for-updates = Rechercher des mises à jour
@@ -35,7 +35,7 @@ updates = Mises à jour
 # Explore Pages
 editors-choice = Choix de l'éditeur
 popular-apps = Applis populaires
-made-for-cosmic = Applis faites pour ClawOS
+made-for-cosmic = Applis faites pour Yu OS
 new-apps = Nouvelles applis
 recently-updated = Récemment mis à jour
 development-tools = Outils de développement
@@ -123,7 +123,7 @@ repository-remove-body =
 dock = Dock
 version = Version { $version }
 removing = Suppression...
-enable-flathub-cosmic = Activez les dépôts Flathub et les Flatpak ClawOS pour voir les applets disponibles.
+enable-flathub-cosmic = Activez les dépôts Flathub et les Flatpak Yu OS pour voir les applets disponibles.
 manage-repositories = Gérer les dépôts
 view-more = Voir plus
 import-flatpakrepo = Importer un fichier .flatpakrepo pour ajouter une source personnalisée
@@ -144,5 +144,5 @@ system-packages-summary =
     }
 system-packages = Paquets système
 flatpak-runtimes = Runtimes Flatpak
-comment = Store d'applications pour le bureau ClawOS
+comment = Store d'applications pour le bureau Yu OS
 keywords = Appli;Logiciel;Store;Magasin;

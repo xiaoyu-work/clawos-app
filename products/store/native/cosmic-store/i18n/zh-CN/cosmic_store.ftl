@@ -1,4 +1,4 @@
-app-name = 软件商店
+app-name = Yu OS 软件商店
 back = 返回
 cancel = 取消
 check-for-updates = 检查更新
@@ -71,13 +71,13 @@ updates = 更新
 
 ## Applets page
 
-enable-flathub-cosmic = 请启用 Flathub 和 ClawOS Flatpak 远程仓库即可查看可用小部件。
+enable-flathub-cosmic = 请启用 Flathub 和 Yu OS Flatpak 远程仓库即可查看可用小部件。
 manage-repositories = 管理远程仓库
 ask-claw = 问 Claw…
 # Explore Pages
 editors-choice = 编辑推荐
 popular-apps = 热门应用
-made-for-cosmic = 为 ClawOS 设计
+made-for-cosmic = 为 Yu OS 设计
 new-apps = 新应用程序
 recently-updated = 最近更新
 development-tools = 开发工具
@@ -157,5 +157,5 @@ system-packages-summary =
     }
 system-packages = 系统软件包
 flatpak-runtimes = Flatpak 运行时
-comment = ClawOS 桌面的软件商店
+comment = Yu OS 桌面的软件商店
 keywords = 应用;应用程序;软件;商店;

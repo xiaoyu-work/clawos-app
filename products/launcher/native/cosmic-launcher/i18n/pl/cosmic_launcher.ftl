@@ -1,2 +1,2 @@
-app-name = Program Startowy ClawOS
+app-name = Program Startowy Yu OS
 type-to-search = Zacznij pisać by wyszukać aplikację lub wciśnij “?” by zobaczyć więcej opcji...

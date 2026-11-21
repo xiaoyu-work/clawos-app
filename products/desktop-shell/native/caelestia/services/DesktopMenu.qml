@@ -35,7 +35,7 @@ Singleton {
 
         onExited: exitCode => {
             if (exitCode !== 0) {
-                let message = Tr.tr("Claw OS did not confirm opening the application.");
+                let message = Tr.tr("Yu OS did not confirm opening the application.");
                 if (result.text.trim()) {
                     try {
                         message = JSON.parse(result.text).error || message;

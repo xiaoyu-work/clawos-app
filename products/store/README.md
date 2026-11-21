@@ -1,7 +1,7 @@
-# Store
+# Yu OS Store
 
 The `pkg` App searches and inspects the local apt catalog, reports installed
-packages and submits package changes to the Claw OS broker. Its thirteen
+packages and submits package changes to the Yu OS broker. Its thirteen
 existing CLI operations and MCP tools keep their identities, arguments and
 permissions.
 
@@ -17,7 +17,7 @@ the same product catalog functions as `pkg`, without calling that App or
 borrowing transaction authority. Human UI file handling uses OS policy and
 snapshots; window activation uses the fixed OS Store target.
 
-The desktop **Claw Apps** tab shows signed releases from this repository.
+The desktop **Yu Apps** tab shows signed releases from this repository.
 **Linux Apps** browses the configured APT and signed Flatpak catalogs, and
 **Updates** shows available releases separately. **Check for updates** refreshes
 software indexes without installing anything. Installs and updates use the

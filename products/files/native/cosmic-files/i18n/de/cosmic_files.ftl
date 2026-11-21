@@ -386,7 +386,7 @@ show-hidden-files = Versteckte Dateien anzeigen
 list-directories-first = Verzeichnisse zuerst auflisten
 gallery-preview = Galerie-Vorschau
 menu-settings = Einstellungen...
-menu-about = Über ClawOS Dateien...
+menu-about = Über Yu OS Dateien...
 
 ## Sortieren
 
@@ -421,7 +421,7 @@ pasted-video = Eingefügtes Video
 copy-to = Kopieren nach...
 show-recents = Ordner zuletzt verwendeter Elemente in der Seitenleiste
 clear-recents-history = Verlauf zuletzt verwendeter Elemente leeren
-comment = Dateimanager für den ClawOS Desktop
+comment = Dateimanager für den Yu OS Desktop
 keywords = Ordner;Manager;
 move-to-button-label = Verschieben
 move-to-title = Verschiebeziel auswählen

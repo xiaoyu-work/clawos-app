@@ -9,4 +9,4 @@ independent mailbox.
 `background.js` forwards native requests, `lib/native.js` correlates frames,
 `lib/ui.js` supplies UI helpers, and `test_contract.py` executes request builders
 with Node fixtures. Run `python3 tools/test.py mail` from the repository root.
-Native authority and installed package ownership are tested in Claw OS.
+Native authority and installed package ownership are tested in Yu OS.

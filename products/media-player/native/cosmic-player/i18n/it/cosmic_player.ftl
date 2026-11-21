@@ -40,5 +40,5 @@ off = Off
 # XDG Metadata
 
 xdg-name = Media Player
-xdg-comment = Lettore multimediale di ClawOS
+xdg-comment = Lettore multimediale di Yu OS
 xdg-keywords = Audio;Video;Musica;Film;Suoni;Riproduzione;

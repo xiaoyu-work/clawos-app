@@ -50,5 +50,5 @@ ab-repeat-clear = 清除 A-B 重复
 # XDG Metadata
 
 xdg-name = 媒体播放器
-xdg-comment = ClawOS 桌面的媒体播放器
+xdg-comment = Yu OS 桌面的媒体播放器
 xdg-keywords = 音频;影片;电影;音乐;声音;视频;

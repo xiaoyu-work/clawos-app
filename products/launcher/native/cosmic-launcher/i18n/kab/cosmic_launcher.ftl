@@ -1,2 +1,2 @@
-app-name = Amsekkar ClawOS
+app-name = Amsekkar Yu OS
 type-to-search = Aru iwakken ad tnadiḍ isnasen neɣ aru “?” i wugar n iɣewwaṛen…

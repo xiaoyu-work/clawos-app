@@ -415,7 +415,7 @@ show-hidden-files = 显示隐藏文件
 list-directories-first = 优先列出目录
 gallery-preview = 图库预览
 menu-settings = 设置…
-menu-about = 关于 ClawOS 文件…
+menu-about = 关于 Yu OS 文件…
 
 ## Sort
 
@@ -440,7 +440,7 @@ move-to-title = 选择移动目的地
 move-to-button-label = 移动
 copy-to = 复制至…
 move-to = 移动至…
-comment = ClawOS 桌面的文件管理器
+comment = Yu OS 桌面的文件管理器
 keywords = 文件夹;管理器;
 clear-recents-history = 清除最近访问历史
 copy-path = 复制文件路径

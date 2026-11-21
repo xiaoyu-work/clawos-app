@@ -102,7 +102,7 @@ view = 보기
 grid-view = 그리드 보기
 list-view = 목록 보기
 menu-settings = 설정...
-menu-about = ClawOS 파일 정보...
+menu-about = Yu OS 파일 정보...
 connect = 연결
 read-execute = 읽기 및 실행
 item-modified = 마지막 수정 일자: { $modified }
@@ -271,7 +271,7 @@ network-drive-schemes =
     SSH 파일 전송 프로토콜 (SFTP),sftp:// 또는 ssh://
     WebDAV,dav:// 또는 davs://
 type-to-search-select = 일치하는 첫 번째 파일 또는 폴더를 선택합니다
-comment = ClawOS 데스크톱용 위한 파일 관리자
+comment = Yu OS 데스크톱용 위한 파일 관리자
 keywords = 폴더;관리자;
 copy-to-button-label = 복사
 move-to-button-label = 이동

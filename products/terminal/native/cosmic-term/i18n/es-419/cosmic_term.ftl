@@ -1,4 +1,4 @@
-cosmic-terminal = Terminal de ClawOS
+cosmic-terminal = Terminal de Yu OS
 new-terminal = Nueva terminal
 
 # Context Pages
@@ -109,7 +109,7 @@ split-vertical = Dividir vertical
 pane-toggle-maximize = Alternar maximizar
 menu-color-schemes = Esquemas de color...
 menu-settings = Configuración...
-menu-about = Acerca de la terminal de ClawOS...
+menu-about = Acerca de la terminal de Yu OS...
 repository = Repositorio
 support = Apoyo
 clear-scrollback = Limpiar historial de desplazamiento

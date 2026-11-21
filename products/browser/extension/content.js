@@ -1,4 +1,4 @@
-// Claw Agent — content script.
+// Yu OS Agent — content script.
 //
 // Injected into every frame of every page (per manifest).  Owns a per-page
 // element table so background.js can refer to specific elements by handle

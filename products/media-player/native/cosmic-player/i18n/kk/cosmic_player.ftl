@@ -32,5 +32,5 @@ ab-repeat-set-a = Қайталау А-Ә (А бапт.)
 ab-repeat-set-b = Қайталау А-Ә (В бапт.)
 ab-repeat-clear = Қайталау А-Ә (Тазарту)
 xdg-name = медиаплеері
-xdg-comment = ClawOS жұмыс үстелі үшін медиаплеері
+xdg-comment = Yu OS жұмыс үстелі үшін медиаплеері
 xdg-keywords = Audio;Film;Movie;Music;Sound;Video;Аудио;Фильм;Кино;Музыка;Дыбыс;Видео;

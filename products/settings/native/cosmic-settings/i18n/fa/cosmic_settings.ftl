@@ -1,4 +1,4 @@
-app = تنظیمات ClawOS
+app = تنظیمات Yu OS
 unknown = نامشخص
 number = { $number }
 
@@ -9,7 +9,7 @@ desktop = میزکار
 ## Desktop: Appearance
 
 appearance = ظاهر
-    .desc = رنگ‌های تاکیدی و تم ClawOS.
+    .desc = رنگ‌های تاکیدی و تم Yu OS.
 
 ## Desktop: Notifications
 

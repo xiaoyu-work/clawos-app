@@ -1,4 +1,4 @@
-app-name = ร้านค้า ClawOS
+app-name = ร้านค้า Yu OS
 back = กลับ
 cancel = ยกเลิก
 check-for-updates = ตรวจสอบอัปเดต
@@ -40,7 +40,7 @@ updates = การอัปเดต
 # Explore Pages
 editors-choice = ถูกใจบรรณาธิการ
 popular-apps = แอพยอดนิยม
-made-for-cosmic = สำหรับ ClawOS โดยเฉพาะ
+made-for-cosmic = สำหรับ Yu OS โดยเฉพาะ
 new-apps = แอพใหม่
 recently-updated = เพิ่งอัปเดต
 development-tools = เครื่องมือการพัฒนา

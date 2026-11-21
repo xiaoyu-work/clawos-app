@@ -1,5 +1,5 @@
 cosmic-terminal = Терминал
-comment = Эмулятор терминала для рабочей среды ClawOS
+comment = Эмулятор терминала для рабочей среды Yu OS
 keywords = Команда;Оболочка;Терминал;Консоль;
 new-terminal = Новый терминал
 
@@ -109,7 +109,7 @@ split-vertical = Разделение по вертикали
 pane-toggle-maximize = Переключить на весь экран
 menu-color-schemes = Цветовые схемы...
 menu-settings = Параметры...
-menu-about = О Терминале ClawOS...
+menu-about = О Терминале Yu OS...
 support = Поддержка
 repository = Репозиторий
 clear-scrollback = Очистить вывод команд

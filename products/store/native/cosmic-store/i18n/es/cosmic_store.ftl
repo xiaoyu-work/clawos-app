@@ -1,5 +1,5 @@
-app-name = Tienda ClawOS
-comment = Tienda de aplicaciones para el escritorio ClawOS
+app-name = Tienda Yu OS
+comment = Tienda de aplicaciones para el escritorio Yu OS
 keywords = Aplicaciones;Software;Tienda;Store;
 back = Atrás
 cancel = Cancelar
@@ -69,12 +69,12 @@ updates = Actualizaciones
 
 ## Applets page
 
-enable-flathub-cosmic = Por favor, habilite Flathub y ClawOS Flatpak para ver los subprogramas disponibles.
+enable-flathub-cosmic = Por favor, habilite Flathub y Yu OS Flatpak para ver los subprogramas disponibles.
 manage-repositories = Gestionar repositorios
 # Explore Pages
 editors-choice = Selección del editor
 popular-apps = Aplicaciones populares
-made-for-cosmic = Hechas para ClawOS
+made-for-cosmic = Hechas para Yu OS
 new-apps = Aplicaciones recientes
 recently-updated = Recién actualizadas
 development-tools = Herramientas de desarrollo

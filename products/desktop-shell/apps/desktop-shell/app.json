@@ -2,8 +2,8 @@
   "id": "desktop-shell",
   "version": "0.1.0",
   "schema_version": 2,
-  "name": {"en": "Claw Desktop"},
-  "summary": {"en": "The Claw OS desktop shell, built from Quickshell and Caelestia."},
+  "name": {"en": "Yu Desktop"},
+  "summary": {"en": "The Yu OS desktop shell, built from Quickshell and Caelestia."},
   "runtime": "binary",
   "entry": "bin/claw-desktop-shell",
   "desktop": {
@@ -37,7 +37,7 @@
       {
         "verb": "ipc.invoke",
         "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "desktop.session.lock"}},
-        "why": {"en": "Ask Claw OS to lock the current desktop without access to passwords or unlocking."}
+        "why": {"en": "Ask Yu OS to lock the current desktop without access to passwords or unlocking."}
       }
     ],
     "optional_needs": [
@@ -74,12 +74,12 @@
       {
         "verb": "desktop.launch",
         "scope": {"kind": "wild"},
-        "why": {"en": "Ask Claw OS to confirm one launch of the exact signed application you select."}
+        "why": {"en": "Ask Yu OS to confirm one launch of the exact signed application you select."}
       },
       {
         "verb": "sys.power",
         "scope": {"kind": "fixed", "scope": {"kind": "wild"}},
-        "why": {"en": "Ask Claw OS to confirm one exact shutdown, restart, or sleep action."}
+        "why": {"en": "Ask Yu OS to confirm one exact shutdown, restart, or sleep action."}
       }
     ]
   }

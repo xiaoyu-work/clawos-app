@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=App Store
-Comment=Application store for the ClawOS desktop
+Name=Yu OS Store
+Comment=Application store for the Yu OS desktop
 Exec=cosmic-store %u
 Terminal=false
 Type=Application

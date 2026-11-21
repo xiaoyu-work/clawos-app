@@ -1,5 +1,5 @@
 cosmic-files = Files
-comment = File manager for the ClawOS desktop
+comment = File manager for the Yu OS desktop
 keywords = Folder;Manager;
 empty-folder = Empty folder
 empty-folder-hidden = Empty folder (has hidden items)
@@ -338,7 +338,7 @@ status-bar-items = {$count} items
 status-bar-selected = {$count} selected
 status-bar-available = {$size} available
 finder-toolbar-search = Search
-ask-claw = Ask Claw…
+ask-claw = Ask Yu…
 
 ## Settings
 settings = Settings
@@ -414,7 +414,7 @@ show-hidden-files = Show hidden files
 list-directories-first = List directories first
 gallery-preview = Gallery preview
 menu-settings = Settings...
-menu-about = About ClawOS Files...
+menu-about = About Yu OS Files...
 
 ## Sort
 sort = Sort

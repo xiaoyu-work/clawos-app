@@ -17,7 +17,7 @@ Singleton {
         command: ["/usr/bin/python3", Quickshell.shellPath("utils/scripts/desktop_lock.py")]
         onExited: exitCode => {
             if (exitCode !== 0)
-                Toaster.toast(Tr.tr("Lock not confirmed"), Tr.tr("Claw OS did not confirm the screen lock."), "lock");
+                Toaster.toast(Tr.tr("Lock not confirmed"), Tr.tr("Yu OS did not confirm the screen lock."), "lock");
         }
     }
 }

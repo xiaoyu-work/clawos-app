@@ -1,3 +1,3 @@
-cosmic-screenshot = Знімок екрана ClawOS
+cosmic-screenshot = Знімок екрана Yu OS
 screenshot-saved-to-clipboard = Знімок екрана збережено до буфера обміну
 screenshot-saved-to = Знімок збережено у:

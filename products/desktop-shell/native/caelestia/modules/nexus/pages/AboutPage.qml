@@ -65,7 +65,7 @@ PageBase {
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.topMargin: Tokens.spacing.small
-                    text: "Claw Desktop"
+                    text: "Yu Desktop"
                     font: Tokens.font.headline.builders.large.width(110).build()
                 }
 

@@ -1,4 +1,4 @@
-cosmic-terminal = Teirminéal ClawOS
+cosmic-terminal = Teirminéal Yu OS
 new-terminal = Teirminéal nua
 
 # Context Pages
@@ -108,7 +108,7 @@ split-vertical = Scoilt ingearach
 pane-toggle-maximize = Scoránaigh uasmhéadú
 menu-color-schemes = Scéimeanna dathanna...
 menu-settings = Socruithe...
-menu-about = Maidir le ClawOS Teirminéal...
+menu-about = Maidir le Yu OS Teirminéal...
 repository = Stór
 support = Tacaíocht
 open-link = Oscail an Nasc
@@ -144,6 +144,6 @@ shortcut-replace-title = Aicearra a athsholáthar?
 tab-activate = Gníomhachtaigh an cluaisín { $number }
 toggle-fullscreen = Scoraigh lánscáileán
 type-to-search = Clóscríobh le cuardach a dhéanamh...
-comment = Aithriseoir teirminéal don deasc ClawOS
+comment = Aithriseoir teirminéal don deasc Yu OS
 keywords = Ordú;Blaosc;Teirminéal;CLI;
 copy-link = Cóipeáil Nasc

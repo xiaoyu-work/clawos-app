@@ -137,7 +137,7 @@ function openStream(request) {
       switch (event) {
         case "task":
           if (turn.taskId && turn.taskId !== data.task_id) {
-            interrupted("Claw Agent returned a different task.");
+            interrupted("Yu OS Agent returned a different task.");
             return;
           }
           turn.taskId = data.task_id;
@@ -151,7 +151,7 @@ function openStream(request) {
           status({
             pending: "Queued...",
             running: "Working...",
-            waiting_approval: "Waiting for approval in Claw OS.",
+            waiting_approval: "Waiting for approval in Yu OS.",
           }[data.status] || "Working...");
           break;
         case "tool_start":
@@ -185,15 +185,15 @@ function openStream(request) {
       if (stream !== connection || !turn) return;
       stream = undefined;
       const message = error
-        ? "Browser chat is unavailable. Check the Claw Agent bridge and extension registration."
+        ? "Browser chat is unavailable. Check the Yu OS Agent bridge and extension registration."
         : "The Agent connection closed before returning a result.";
       interrupted(message);
     });
     connection.postMessage(request);
-    status(turn.stopping ? "Stopping..." : "Connecting to Claw Agent...");
+    status(turn.stopping ? "Stopping..." : "Connecting to Yu OS Agent...");
     updateControls();
   } catch (_) {
-    interrupted("Browser chat could not connect to Claw OS.");
+    interrupted("Browser chat could not connect to Yu OS.");
   }
 }
 
@@ -230,7 +230,7 @@ function requestCancel() {
         return;
       }
       if (!data.cancelled && !data.cancel_requested && !["ok", "error", "cancelled"].includes(data.status)) {
-        cancelFailed("Claw Agent did not confirm cancellation.");
+        cancelFailed("Yu OS Agent did not confirm cancellation.");
         return;
       }
       streamTask();
@@ -245,7 +245,7 @@ function requestCancel() {
   } catch (_) {
     cancelPort?.disconnect();
     cancelPort = undefined;
-    cancelFailed("Could not reach Claw Agent to stop the task.");
+    cancelFailed("Could not reach Yu OS Agent to stop the task.");
   }
 }
 
@@ -348,7 +348,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 async function initialize() {
   const window = await chrome.windows.getCurrent();
   if (window.incognito) {
-    status("Claw Agent chat is unavailable in private windows.", true);
+    status("Yu OS Agent chat is unavailable in private windows.", true);
     return;
   }
   windowId = window.id;
@@ -368,8 +368,8 @@ async function initialize() {
   if (turn?.taskId) {
     streamTask();
   } else if (turn) {
-    finish("No task confirmation was received. Check Claw Agent before trying again.", true);
+    finish("No task confirmation was received. Check Yu OS Agent before trying again.", true);
   }
 }
 
-initialize().catch(() => status("Claw Agent could not open this side panel.", true));
+initialize().catch(() => status("Yu OS Agent could not open this side panel.", true));

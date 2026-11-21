@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "schema_version": 2,
   "name": {
-    "en": "Claw Launcher",
-    "zh_CN": "Claw 启动器"
+    "en": "Yu Launcher",
+    "zh_CN": "Yu 启动器"
   },
   "summary": {
     "en": "Search and launch installed desktop applications through the native launcher."
@@ -24,7 +24,7 @@
       {
         "verb": "desktop.launch",
         "scope": {"kind": "wild"},
-        "why": {"en": "Open the exact signed desktop application selected in Claw Launcher."}
+        "why": {"en": "Open the exact signed desktop application selected in Yu Launcher."}
       }
     ]
   },

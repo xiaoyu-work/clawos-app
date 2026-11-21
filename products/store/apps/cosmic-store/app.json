@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "schema_version": 2,
   "name": {
-    "en": "App Store"
+    "en": "Yu OS Store"
   },
   "summary": {
-    "en": "Search installed and available packages and open the native App Store."
+    "en": "Search installed and available packages and open the native Yu OS Store."
   },
   "runtime": "binary",
   "entry": "bin/cosmic-store",
@@ -149,7 +149,7 @@
       {
         "name": "store.open",
         "summary": {
-          "en": "Open the App Store, optionally focused on one package."
+          "en": "Open the Yu OS Store, optionally focused on one package."
         },
         "args": [
           {
@@ -172,7 +172,7 @@
               }
             },
             "why": {
-              "en": "Open the native App Store for the user."
+              "en": "Open the native Yu OS Store for the user."
             }
           }
         ],
@@ -180,7 +180,7 @@
           {
             "kind": "execute",
             "label": {
-              "en": "Open the App Store, optionally focused on one package."
+              "en": "Open the Yu OS Store, optionally focused on one package."
             },
             "recovery": "unknown",
             "target_arg": "name"

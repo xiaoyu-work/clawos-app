@@ -1,5 +1,5 @@
 cosmic-files = Fájlok
-comment = Fájlkezelő a ClawOS asztali környezethez
+comment = Fájlkezelő a Yu OS asztali környezethez
 keywords = mappa;fájl;kezelő;
 empty-folder = Üres mappa
 empty-folder-hidden = Üres mappa (Rejtett elemeket tartalmaz)
@@ -408,7 +408,7 @@ show-hidden-files = Rejtett fájlok megjelenítése
 list-directories-first = Könyvtárak listázása először
 gallery-preview = Galéria előnézet
 menu-settings = Beállítások…
-menu-about = A ClawOS Fájlok névjegye…
+menu-about = A Yu OS Fájlok névjegye…
 
 ## Sort
 

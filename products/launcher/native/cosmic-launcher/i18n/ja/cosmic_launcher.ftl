@@ -1,2 +1,2 @@
-app-name = ClawOSランチャー
+app-name = Yu OSランチャー
 type-to-search = アプリを検索するには入力、「?」で詳細なオプションを表示…

@@ -1,5 +1,5 @@
 cosmic-text-editor = Text Editor
-comment = Text editor for the ClawOS desktop
+comment = Text editor for the Yu OS desktop
 new-document = New document
 open-project = Open project
 todo = TODO
@@ -122,25 +122,25 @@ highlight-current-line = Highlight current line
 syntax-highlighting = Syntax highlighting...
 menu-settings = Settings...
 menu-keyboard-shortcuts = Keyboard shortcuts...
-menu-about = About ClawOS Text Editor...
+menu-about = About Yu OS Text Editor...
 
 ## AI integration
 ai = AI
 ai-summarize = Summarize
 ai-explain = Explain
 ai-rewrite = Rewrite
-ai-ask-claw = Ask Claw…
+ai-ask-claw = Ask Yu…
 ai-custom = Custom command…
-ai-custom-placeholder = Tell Claw what to do…
+ai-custom-placeholder = Tell Yu what to do…
 ai-custom-hint = Runs on the selection (or whole buffer)
 ai-custom-empty = Type a custom instruction first.
-ai-panel-title = Claw AI
+ai-panel-title = Yu AI
 ai-mode-summarize = Summary
 ai-mode-explain = Explanation
 ai-mode-rewrite = Rewrite
 ai-mode-custom = Custom
 ai-mode-idle = AI
-ai-idle-hint = Pick an action from the AI menu — or type a custom instruction above — to run the selection (or whole buffer) through Claw AI.
+ai-idle-hint = Pick an action from the AI menu — or type a custom instruction above — to run the selection (or whole buffer) through Yu AI.
 ai-loading = Asking the AI…
 ai-error = The AI request failed.
 ai-empty-buffer = The current buffer is empty — nothing to send to the AI.

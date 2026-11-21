@@ -1,5 +1,5 @@
 cosmic-files = Files
-comment = File manager di ClawOS
+comment = File manager di Yu OS
 keywords = File;Archivi;Cartelle;Explorer;
 empty-folder = Cartella vuota
 empty-folder-hidden = Cartella vuota (con elementi nascosti)
@@ -388,7 +388,7 @@ show-hidden-files = Mostra file nascosti
 list-directories-first = Mostra prima le cartelle
 gallery-preview = Anteprima immagine
 menu-settings = Impostazioni...
-menu-about = Informazioni su ClawOS Files...
+menu-about = Informazioni su Yu OS Files...
 
 ## Sort
 

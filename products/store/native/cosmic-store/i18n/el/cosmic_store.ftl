@@ -52,7 +52,7 @@ develop = Ανάπτυξη
 settings = Ρυθμίσεις
 pending = Σε εκκρεμότητα
 development-tools = Εργαλεία ανάπτυξης
-app-name = Κατάστημα ClawOS
+app-name = Κατάστημα Yu OS
 donation = Δωρεά
 install = Εγκατάσταση
 add = Προσθήκη
@@ -109,9 +109,9 @@ codec-error = Προέκυψαν σφάλματα κατά την εγκατάσ
 repository-add-error-title = «Αποτυχία προσθήκης αποθετηρίου»
 place-applet-desc = Επιλέξτε πού θα προστεθεί η μικροεφαρμογή πριν ολοκληρώσετε την τοποθέτησή της.
 complete = Ολοκληρωμένες
-made-for-cosmic = Φτιαγμένα για το ClawOS
+made-for-cosmic = Φτιαγμένα για το Yu OS
 no-custom-flatpak-sources = Δεν υπάρχουν προσαρμοσμένες πηγές Flatpak
-enable-flathub-cosmic = Ενεργοποιήστε το Flathub και το ClawOS Flatpak για να δείτε τις διαθέσιμες μικροεφαρμογές.
+enable-flathub-cosmic = Ενεργοποιήστε το Flathub και το Yu OS Flatpak για να δείτε τις διαθέσιμες μικροεφαρμογές.
 no-flatpak = Δεν διατίθεται υποστήριξη Flatpak
 failed = Αποτυχημένες
 system-package-updates = Ενημερώσεις πακέτων
@@ -121,5 +121,5 @@ system-packages-summary =
        *[other] { $count } πακέτα
     }
 flatpak-runtimes = Flatpak Runtime
-comment = Κατάστημα εφαρμογών για το περιβάλλον επιφάνειας εργασίας ClawOS
+comment = Κατάστημα εφαρμογών για το περιβάλλον επιφάνειας εργασίας Yu OS
 keywords = Κατάστημα;Μαγαζί;Εφαρμογή;Λογισμικό;App;Software;Store;Shop;

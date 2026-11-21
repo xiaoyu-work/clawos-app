@@ -170,7 +170,7 @@ ClawApp.ready.then((app) => {
         validateText($("#summary").value, "Headline", 240, false, false);
         validateText($("#body").value, "Body", 4000, true, true);
         if ($("#body").value && !$("#body").value.trim()) throw new Error("A supplied body must contain non-whitespace text.");
-        const sender = $("#sender").value || "Claw OS Agent";
+        const sender = $("#sender").value || "Yu OS Agent";
         validateText(sender, "Display sender", 128, false, false);
         const expiry = Number($("#expiry").value);
         if ($("#expiry").value === "" || !Number.isInteger(expiry) || expiry < -1 || expiry > 2147483647) {

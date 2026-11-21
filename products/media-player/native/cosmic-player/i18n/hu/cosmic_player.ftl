@@ -50,5 +50,5 @@ ab-repeat-clear = A–B ismétlés törlése
 # XDG Metadata
 
 xdg-name = Médialejátszó
-xdg-comment = Médialejátszó a ClawOS asztali környezethez
+xdg-comment = Médialejátszó a Yu OS asztali környezethez
 xdg-keywords = hang;film;zene;videó;média;lejátszó;

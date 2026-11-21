@@ -1,4 +1,4 @@
-cosmic-terminal = Термінал ClawOS
+cosmic-terminal = Термінал Yu OS
 new-terminal = Новий термінал
 
 # Context Pages
@@ -107,7 +107,7 @@ split-vertical = Розділити вертикально
 pane-toggle-maximize = Перемкнути розгортання
 menu-color-schemes = Кольорові схеми...
 menu-settings = Налаштування...
-menu-about = Про Термінал ClawOS...
+menu-about = Про Термінал Yu OS...
 repository = Сховище
 support = Підтримка
 clear-scrollback = Очистити прокрутку
@@ -144,7 +144,7 @@ focus-pane-down = Фокус на нижню панель
 focus-pane-left = Фокус на ліву панель
 focus-pane-right = Фокус на праву панель
 focus-pane-up = Фокус на верхню панель
-comment = Емулятор терміналу для середовища ClawOS
+comment = Емулятор терміналу для середовища Yu OS
 keywords = Команда;Оболонка;Термінал;Інтерфейс;CLI;
 copy-link = Копіювати ланку
 tab-new-inherit-working-directory = У нових вкладках використовується поточний каталог

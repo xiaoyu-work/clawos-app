@@ -1,4 +1,4 @@
-app-name = Magazin ClawOS
+app-name = Magazin Yu OS
 back = Înapoi
 cancel = Anulează
 check-for-updates = Verifică actualizările
@@ -40,7 +40,7 @@ updates = Actualizări
 # Explore Pages
 editors-choice = Alegerea editorilor
 popular-apps = Aplicații populare
-made-for-cosmic = Create pentru ClawOS
+made-for-cosmic = Create pentru Yu OS
 new-apps = Aplicații noi
 recently-updated = Actualizate recent
 development-tools = Unelte pentru dezvoltare

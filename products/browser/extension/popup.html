@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Claw Agent</title>
+  <title>Yu OS Agent</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -78,7 +78,7 @@
       background: var(--bubble);
     }
     .message.assistant::before {
-      content: "Claw Agent";
+      content: "Yu OS Agent";
       display: block;
       margin-bottom: 4px;
       color: var(--accent);
@@ -137,13 +137,13 @@
 <body>
   <header>
     <span class="mark" aria-hidden="true">C</span>
-    <div><h1>Claw Agent</h1><small>In this browser</small></div>
+    <div><h1>Yu OS Agent</h1><small>In this browser</small></div>
     <button id="new-chat" type="button" disabled>New chat</button>
   </header>
   <main id="transcript" aria-label="Conversation">
     <section id="empty" class="empty">
       <h2>What can I help with?</h2>
-      <p>Chat with Claw Agent, or choose your current tab and ask it to read or act on the page.</p>
+      <p>Chat with Yu OS Agent, or choose your current tab and ask it to read or act on the page.</p>
       <button id="summarize" class="example" type="button" disabled>Summarize this page</button>
     </section>
     <div id="messages" role="log" aria-label="Chat messages" aria-live="off"></div>
@@ -155,7 +155,7 @@
       <span id="site"></span>
     </div>
     <form id="composer">
-      <textarea id="prompt" rows="2" maxlength="32768" aria-label="Message Claw Agent" placeholder="Message Claw Agent"></textarea>
+      <textarea id="prompt" rows="2" maxlength="32768" aria-label="Message Yu OS Agent" placeholder="Message Yu OS Agent"></textarea>
       <div class="actions">
         <button id="send" type="submit" disabled>Send</button>
         <button id="reconnect" type="button" hidden>Reconnect</button>
@@ -163,7 +163,7 @@
       </div>
     </form>
     <div class="secondary">
-      <small class="hint">Tab actions use Claw OS permissions.</small>
+      <small class="hint">Tab actions use Yu OS permissions.</small>
       <button id="access" type="button" disabled>Pause tab access</button>
     </div>
   </footer>

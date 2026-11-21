@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Media Player
-Comment=Media player for the ClawOS desktop
+Comment=Media player for the Yu OS desktop
 Exec=cosmic-player %U
 Terminal=false
 Type=Application

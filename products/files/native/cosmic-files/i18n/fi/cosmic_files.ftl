@@ -1,4 +1,4 @@
-cosmic-files = ClawOSin tiedostot
+cosmic-files = Yu OSin tiedostot
 empty-folder = Tyhjä kansio
 empty-folder-hidden = Tyhjä kansio (sisältää piilotettuja kohteita)
 no-results = Ei tuloksia
@@ -283,7 +283,7 @@ show-hidden-files = Näytä piilotetut tiedostot
 list-directories-first = Näytä kansiot ensin
 gallery-preview = Gallerian esikatselu
 menu-settings = Asetukset…
-menu-about = Tietoa ClawOSin tiedostonhallinnasta…
+menu-about = Tietoa Yu OSin tiedostonhallinnasta…
 
 ## Sort
 
@@ -311,7 +311,7 @@ item-created = Luotu: { $created }
 item-modified = Muokattu: { $modified }
 delete-permanently = Poista pysyvästi
 reload-folder = Lataa kansio uudelleen
-comment = Tiedostonhallinta ClawOS-työpöydälle
+comment = Tiedostonhallinta Yu OS-työpöydälle
 keywords = Folder;Manager;Kansio;Hakemisto;Hallinta;Hallinnointi;Hallitse;Hallinnoi;
 copy-to-button-label = Kopioi
 move-to-button-label = Siirrä

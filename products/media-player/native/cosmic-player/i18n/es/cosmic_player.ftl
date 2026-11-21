@@ -39,6 +39,6 @@ off = Apagado
 
 # XDG Metadata
 
-xdg-name = Reproductor de medios ClawOS
-xdg-comment = Reproductor de medios para el escritorio ClawOS
+xdg-name = Reproductor de medios Yu OS
+xdg-comment = Reproductor de medios para el escritorio Yu OS
 xdg-keywords = Audio;Película;Música;Vídeo;Sonido;Reproductor;

@@ -1,2 +1,2 @@
 type-to-search = Rakenduste otsimiseks kirjuta midagi või lisavalikute nägemiseks sisesta „?“...
-app-name = ClawOSu käivitaja
+app-name = Yu OSu käivitaja

@@ -5,7 +5,7 @@
     "en": "System Services"
   },
   "summary": {
-    "en": "Inspect and control native systemd units through the privileged Claw OS broker"
+    "en": "Inspect and control native systemd units through the privileged Yu OS broker"
   },
   "icon": "🛠",
   "runtime": "python",

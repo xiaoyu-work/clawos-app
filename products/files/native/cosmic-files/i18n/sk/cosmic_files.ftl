@@ -1,5 +1,5 @@
-cosmic-files = Súbory ClawOS
-comment = Správca súborov pre prostredie ClawOS
+cosmic-files = Súbory Yu OS
+comment = Správca súborov pre prostredie Yu OS
 keywords = Priečinok;Správca;Súbory;Manažér;Prehliadač;
 empty-folder = Priečinok je prázdny
 empty-folder-hidden = Priečinok je prázdny (obsahuje skryté položky)
@@ -444,7 +444,7 @@ show-hidden-files = Zobraziť skryté súbory
 list-directories-first = Najskôr priečinky
 gallery-preview = Náhľad galérie
 menu-settings = Nastavenia...
-menu-about = O aplikácii Súbory ClawOS...
+menu-about = O aplikácii Súbory Yu OS...
 
 ## Sort
 

@@ -1,1 +1,1 @@
-app-name = لانچر ClawOS
+app-name = لانچر Yu OS

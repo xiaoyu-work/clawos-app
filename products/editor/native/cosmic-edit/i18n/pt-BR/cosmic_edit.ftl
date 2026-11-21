@@ -1,5 +1,5 @@
 cosmic-text-editor = Editor de Texto
-comment = Editor de texto do ambiente ClawOS
+comment = Editor de texto do ambiente Yu OS
 new-document = Novo documento
 open-project = Abrir projeto
 todo = TODO

@@ -1,5 +1,5 @@
-cosmic-terminal = Terminal ClawOS
-comment = Emulador de terminal do desktop ClawOS
+cosmic-terminal = Terminal Yu OS
+comment = Emulador de terminal do desktop Yu OS
 keywords = Comando;Shell;Terminal;Console;
 new-terminal = Novo terminal
 
@@ -109,7 +109,7 @@ split-vertical = Dividir verticalmente
 pane-toggle-maximize = Alternar maximização
 menu-color-schemes = Esquemas de cores...
 menu-settings = Definições...
-menu-about = Acerca do Terminal ClawOS...
+menu-about = Acerca do Terminal Yu OS...
 repository = Repositório
 support = Suporte
 clear-scrollback = Limpar scrollback

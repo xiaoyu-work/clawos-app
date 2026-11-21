@@ -1,4 +1,4 @@
-app-name = Stóras ClawOS
+app-name = Stóras Yu OS
 back = Ar ais
 cancel = Cealaigh
 check-for-updates = Seiceáil do nuashonruithe
@@ -36,7 +36,7 @@ updates = Nuashonruithe
 # Explore Pages
 editors-choice = Rogha an eagarthóra
 popular-apps = Aipeanna coitianta
-made-for-cosmic = Déanta do ClawOS
+made-for-cosmic = Déanta do Yu OS
 new-apps = Aipeanna nua
 recently-updated = Nuashonraithe le déanaí
 development-tools = Uirlisí forbartha
@@ -122,7 +122,7 @@ adding = Ag cur leis...
 remove = Bain
 removing = Ag baint...
 applets = Feidhmchláiríní
-enable-flathub-cosmic = Cumasaigh Flathub agus ClawOS Flatpak le go bhfeicfidh tú na feidhmchláiríní atá ar fáil.
+enable-flathub-cosmic = Cumasaigh Flathub agus Yu OS Flatpak le go bhfeicfidh tú na feidhmchláiríní atá ar fáil.
 manage-repositories = Bainistigh stórtha
 recommended-flatpak-sources = Foinsí Flatpak molta
 custom-flatpak-sources = Foinsí Flatpak saincheaptha
@@ -144,5 +144,5 @@ system-packages-summary =
         [one] { $count } pacáiste
        *[other] { $count } pacáistí
     }
-comment = Siopa feidhmchlár don deasc ClawOS
+comment = Siopa feidhmchlár don deasc Yu OS
 keywords = Aip;Bogearraí;Siopa;

@@ -50,5 +50,5 @@ ab-repeat-clear = Rensa A-B-upprepning
 # XDG Metadata
 
 xdg-name = Mediaspelare
-xdg-comment = Mediaspelare för skrivbordsmiljön ClawOS
+xdg-comment = Mediaspelare för skrivbordsmiljön Yu OS
 xdg-keywords = Ljud;Film;Musik;Video;Media;

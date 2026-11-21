@@ -1,2 +1,2 @@
-app-name = Spúšťač ClawOS
+app-name = Spúšťač Yu OS
 type-to-search = Píšte pre vyhľadávanie aplikácií alebo zadajte „?“ pre viac možností...

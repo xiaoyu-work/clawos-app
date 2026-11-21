@@ -1,2 +1,2 @@
-app-name = Launcher ClawOS
+app-name = Launcher Yu OS
 type-to-search = Digita per cercare le applicazioni oppure digita "?" per più opzioni...

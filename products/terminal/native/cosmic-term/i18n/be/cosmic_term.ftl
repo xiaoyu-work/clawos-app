@@ -1,4 +1,4 @@
-cosmic-terminal = Тэрмінал ClawOS
+cosmic-terminal = Тэрмінал Yu OS
 new-terminal = Новы тэрмінал
 
 # Context Pages
@@ -107,7 +107,7 @@ split-vertical = Падзяліць па вертыкалі
 pane-toggle-maximize = Пераключыць разгорнутасць
 menu-color-schemes = Колеравыя схемы...
 menu-settings = Налады...
-menu-about = Пра Тэрмінал ClawOS...
+menu-about = Пра Тэрмінал Yu OS...
 repository = Рэпазіторый
 support = Падтрымка
 cancel = Скасаваць

@@ -1,4 +1,4 @@
-cosmic-terminal = ClawOSin pääte
+cosmic-terminal = Yu OSin pääte
 new-terminal = Uusi pääte
 
 # Context Pages
@@ -110,8 +110,8 @@ split-vertical = Halkaise näkymä pystysuunnassa
 pane-toggle-maximize = Suurennus päällä tai pois
 menu-color-schemes = Väriteemat…
 menu-settings = Asetukset…
-menu-about = Tietoa ClawOSin päätteestä…
-comment = Pääte-emulaattori ClawOS-työpöydälle
+menu-about = Tietoa Yu OSin päätteestä…
+comment = Pääte-emulaattori Yu OS-työpöydälle
 keywords = Command;Shell;Terminal;CLI;Komento;Komentotulkki;Pääte;Terminaali;Komentorivi;
 replace = Korvaa
 disable = Poista käytöstä

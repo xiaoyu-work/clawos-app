@@ -1,5 +1,5 @@
-cosmic-text-editor = Editor de texto ClawOS
-comment = Editor de texto de escritorio ClawOS
+cosmic-text-editor = Editor de texto Yu OS
+comment = Editor de texto de escritorio Yu OS
 new-document = Nuevo documento
 open-project = Abrir proyecto
 todo = TODO
@@ -126,7 +126,7 @@ highlight-current-line = Resaltar línea actual
 syntax-highlighting = Resaltado de sintaxis...
 menu-settings = Configuración...
 menu-keyboard-shortcuts = Atajos de teclado...
-menu-about = Sobre el ClawOS Text Editor...
+menu-about = Sobre el Yu OS Text Editor...
 open-recent-file = Abrir archivo reciente
 select-all = Seleccionar todo
 repository = Repositorio

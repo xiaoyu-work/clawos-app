@@ -240,7 +240,7 @@ list-view = 列表檢視
 show-hidden-files = 顯示隱藏檔案
 list-directories-first = 目錄優先列出
 menu-settings = 設定...
-menu-about = 關於 ClawOS 檔案...
+menu-about = 關於 Yu OS 檔案...
 
 ## Sort
 
@@ -349,7 +349,7 @@ favorite-path-error-description =
     「{ $path }」可能不存在，或您可能沒有權限開啟它。
 
     您是否要將它從側邊欄移除？
-comment = ClawOS 桌面檔案管理器
+comment = Yu OS 桌面檔案管理器
 pasted-image = 已經貼上的圖片
 pasted-text = 已經貼上的文字
 pasted-video = 已經貼上的影片

@@ -1,2 +1,2 @@
-app-name = Lanzador de ClawOS
+app-name = Lanzador de Yu OS
 type-to-search = Escribe para buscar aplicaciones o escribe "?" para más opciones...

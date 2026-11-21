@@ -20,130 +20,130 @@ number = { $number }
 ## Freedesktop desktop entries
 
 app = Settings
-xdg-entry-comment = Settings application for the ClawOS desktop
-xdg-entry-keywords = ClawOS;Settings;
+xdg-entry-comment = Settings application for the Yu OS desktop
+xdg-entry-keywords = Yu OS;Settings;
 
 xdg-entry-about = About
 xdg-entry-about-comment = Device name, hardware information, operating system defaults
-xdg-entry-about-keywords = ClawOS;About
+xdg-entry-about-keywords = Yu OS;About
 
 xdg-entry-a11y = Accessibility
 xdg-entry-a11y-comment = Screen reader, magnifier, high contrast, and color filters
-xdg-entry-a11y-keywords = ClawOS;Accessibility;A11y;Screen;Reader;Magnifier;Contrast;Color;
+xdg-entry-a11y-keywords = Yu OS;Accessibility;A11y;Screen;Reader;Magnifier;Contrast;Color;
 
 xdg-entry-appearance = Appearance
 xdg-entry-appearance-comment = Accent colors and theming
-xdg-entry-appearance-keywords = ClawOS;Accent;Color;Icon;Font;Theme
+xdg-entry-appearance-keywords = Yu OS;Accent;Color;Icon;Font;Theme
 
 xdg-entry-applications = Applications
 xdg-entry-applications-comment = Default applications, startup applications, and X11 application compatibility settings
-xdg-entry-applications-keywords = ClawOS;Default;Application;Startup;X11;Compatibility
+xdg-entry-applications-keywords = Yu OS;Default;Application;Startup;X11;Compatibility
 
 xdg-entry-bluetooth-comment = Manage Bluetooth devices
-xdg-entry-bluetooth-keywords = ClawOS;Bluetooth;
+xdg-entry-bluetooth-keywords = Yu OS;Bluetooth;
 
 xdg-entry-date-time = Date & Time
 xdg-entry-date-time-comment = Time zone, automatic clock settings, and time formatting
-xdg-entry-date-time-keywords = ClawOS;Time;Zone;
+xdg-entry-date-time-keywords = Yu OS;Time;Zone;
 
 xdg-entry-default-apps = Default Applications
 xdg-entry-default-apps-comment = Default web browser, mail client, file browser, and other applications
-xdg-entry-default-apps-keywords = ClawOS;Default;Application
+xdg-entry-default-apps-keywords = Yu OS;Default;Application
 
 xdg-entry-desktop = Desktop
 xdg-entry-desktop-comment = Wallpaper, appearance, panel, dock, window management and workspace settings
-xdg-entry-desktop-keywords = ClawOS;Desktop;
+xdg-entry-desktop-keywords = Yu OS;Desktop;
 
 xdg-entry-displays = Displays
 xdg-entry-displays-comment = Manage display configuration settings
-xdg-entry-displays-keywords = ClawOS;Display;
+xdg-entry-displays-keywords = Yu OS;Display;
 
 xdg-entry-dock = Dock
 xdg-entry-dock-comment = An optional bar for apps and applets
-xdg-entry-dock-keywords = ClawOS;Dock;Panel;Applet
+xdg-entry-dock-keywords = Yu OS;Dock;Panel;Applet
 
 xdg-entry-input = Input Devices
 xdg-entry-input-comment = Keyboard and mouse settings
-xdg-entry-input-keywords = ClawOS;Input;Keyboard;Mouse;Mice;
+xdg-entry-input-keywords = Yu OS;Input;Keyboard;Mouse;Mice;
 
 xdg-entry-keyboard = Keyboard
 xdg-entry-keyboard-comment = Input sources, switching, special character entry, shortcuts
-xdg-entry-keyboard-keywords = ClawOS;Keyboard;Input;Source;Shortcuts;
+xdg-entry-keyboard-keywords = Yu OS;Keyboard;Input;Source;Shortcuts;
 
 xdg-entry-mouse = Mouse
 xdg-entry-mouse-comment = Mouse speed, acceleration, and natural scrolling
-xdg-entry-mouse-keywords = ClawOS;Mouse;Acceleration;Scrolling;
+xdg-entry-mouse-keywords = Yu OS;Mouse;Acceleration;Scrolling;
 
 xdg-entry-network = Network & Wireless
 xdg-entry-network-comment = Manage network connections
-xdg-entry-network-keywords = ClawOS;Network;Wireless;WiFi;VPN;
+xdg-entry-network-keywords = Yu OS;Network;Wireless;WiFi;VPN;
 
 xdg-entry-notifications = Notifications
 xdg-entry-notifications-comment = Do Not Disturb, lockscreen notifications, and per-application settings
-xdg-entry-notifications-keywords = ClawOS;Notification;Lock;
+xdg-entry-notifications-keywords = Yu OS;Notification;Lock;
 
 xdg-entry-panel = Panel
 xdg-entry-panel-comment = Primary system bar for menus and applets
-xdg-entry-panel-keywords = ClawOS;Panel;Applet
+xdg-entry-panel-keywords = Yu OS;Panel;Applet
 
 xdg-entry-power = Power & Battery
 xdg-entry-power-comment = Power modes and power saving options
-xdg-entry-power-keywords = ClawOS;Power;Battery
+xdg-entry-power-keywords = Yu OS;Power;Battery
 
 xdg-entry-region-language = Region & Language
 xdg-entry-region-language-comment = Format dates, times, and numbers based on your region
-xdg-entry-region-language-keywords = ClawOS;Region;Language;Date;Format;Time;Locale;Localization;
+xdg-entry-region-language-keywords = Yu OS;Region;Language;Date;Format;Time;Locale;Localization;
 
 xdg-entry-sound = Sound
 xdg-entry-sound-comment = Audio settings for devices, alerts, and applications
-xdg-entry-sound-keywords = ClawOS;Sound;Audio;Alert;Pipewire;
+xdg-entry-sound-keywords = Yu OS;Sound;Audio;Alert;Pipewire;
 
 xdg-entry-startup-apps = Startup Applications
 xdg-entry-startup-apps-comment = Configure applications which run on login
-xdg-entry-startup-apps-keywords = ClawOS;Startup;Application;
+xdg-entry-startup-apps-keywords = Yu OS;Startup;Application;
 
 xdg-entry-system = System & Accounts
 xdg-entry-system-comment = System information, accounts, and firmware updates
-xdg-entry-system-keywords = ClawOS;System;Info;Accounts;Firmware;
+xdg-entry-system-keywords = Yu OS;System;Info;Accounts;Firmware;
 
 xdg-entry-time-language = Time & Language
 xdg-entry-time-language-comment = Manage system date, time, region, and language
-xdg-entry-time-language-keywords = ClawOS;System;Time;Date;Region;Language;
+xdg-entry-time-language-keywords = Yu OS;System;Time;Date;Region;Language;
 
 xdg-entry-touchpad = Touchpad
 xdg-entry-touchpad-comment = Touchpad speed, click options, and gestures
-xdg-entry-touchpad-keywords = ClawOS;Touchpad;Gesture;
+xdg-entry-touchpad-keywords = Yu OS;Touchpad;Gesture;
 
 xdg-entry-users = Users
 xdg-entry-users-comment = Authentication and user accounts
-xdg-entry-users-keywords = ClawOS;User;Account;
+xdg-entry-users-keywords = Yu OS;User;Account;
 
 xdg-entry-vpn-comment = VPN connections and connection profiles
-xdg-entry-vpn-keywords = ClawOS;VPN;Network;Connection;OpenVPN;OpenConnect;
+xdg-entry-vpn-keywords = Yu OS;VPN;Network;Connection;OpenVPN;OpenConnect;
 
 xdg-entry-wallpaper = Wallpaper
 xdg-entry-wallpaper-comment = Wallpaper images, colors, and slideshow options
-xdg-entry-wallpaper-keywords = ClawOS;Wallpaper;Background;Slideshow;
+xdg-entry-wallpaper-keywords = Yu OS;Wallpaper;Background;Slideshow;
 
 xdg-entry-window-management = Window Management
 xdg-entry-window-management-comment = Super key action, window control options, and additional window tiling options
-xdg-entry-window-management-keywords = ClawOS;Window;Management;Tiling;Super;Key;
+xdg-entry-window-management-keywords = Yu OS;Window;Management;Tiling;Super;Key;
 
 xdg-entry-wired = Wired
 xdg-entry-wired-comment = Wired connections and connection profiles
-xdg-entry-wired-keywords = ClawOS;Wired;LAN;Network;Connection;
+xdg-entry-wired-keywords = Yu OS;Wired;LAN;Network;Connection;
 
 xdg-entry-wireless = Wi-Fi
 xdg-entry-wireless-comment = Wi-Fi connections and connection profiles
-xdg-entry-wireless-keywords = ClawOS;WiFi;Wi-Fi;Network;Connection;
+xdg-entry-wireless-keywords = Yu OS;WiFi;Wi-Fi;Network;Connection;
 
 xdg-entry-workspaces = Workspaces
 xdg-entry-workspaces-comment = Workspace orientation, overview, and multi-monitor behavior
-xdg-entry-workspaces-keywords = ClawOS;Workspace;Orientation;Overview;Monitor;
+xdg-entry-workspaces-keywords = Yu OS;Workspace;Orientation;Overview;Monitor;
 
 xdg-entry-x11-applications = X11 Applications Compatibility
 xdg-entry-x11-applications-comment = X11 window system application scaling, primary display, and global shortcuts
-xdg-entry-x11-applications-keywords = ClawOS;X11;Application;Game;Compatibility;
+xdg-entry-x11-applications-keywords = Yu OS;X11;Application;Game;Compatibility;
 
 ## Network & Wireless
 
@@ -169,8 +169,8 @@ remove = Remove
 scan-to-connect-description = Scan the QR code to connect to this network.
 settings = Settings
 ai-search-no-results = No settings page matches “{ $query }”.
-ai-search-ask-claw = Ask Claw to find this setting
-ai-search-ask-claw-hint = Press to open the Claw AI overlay and let it search for you.
+ai-search-ask-claw = Ask Yu to find this setting
+ai-search-ask-claw-hint = Press to open the Yu AI overlay and let it search for you.
 share = Share network
 username = Username
 visible-networks = Visible networks
@@ -397,7 +397,7 @@ frosted = Frosted glass effect on system interface
     .desc = Applies background blur to panel, dock, applets, launcher, and application library
 
 enable-export = Apply current theme to GNOME apps
-    .desc = Not all toolkits support auto-switching. Non-ClawOS apps may need to be restarted after a theme change.
+    .desc = Not all toolkits support auto-switching. Non-Yu OS apps may need to be restarted after a theme change.
 
 icon-theme = Icon theme
     .desc = Applies a different set of icons to applications
@@ -937,7 +937,7 @@ time-format = Date & time format
 
 time-region = Region & language
 
-users-password-admin-hint = Enter the account’s password here. Claw OS asks for administrator authentication separately.
+users-password-admin-hint = Enter the account’s password here. Yu OS asks for administrator authentication separately.
 users-icon-requirement = Choose a local image of at most 1 MiB. The OS requires exact read permission on this file; Settings does not copy it to a differently authorized path.
 users-refresh-error = Current account state could not be refreshed. Any previous operation outcome above is unchanged. { $detail }
 
@@ -1061,7 +1061,7 @@ claw-login-off = A password is required at startup.
 claw-login-enable = Sign in as me automatically
 claw-login-disable = Require sign-in at startup
 claw-system-updates = System Updates
-claw-update-description = Check and install signed updates for Claw OS and its desktop.
+claw-update-description = Check and install signed updates for Yu OS and its desktop.
 claw-update-check = Check for updates
 claw-update-download = Download and prepare
 claw-update-cancel = Cancel scheduled install
@@ -1075,11 +1075,11 @@ claw-update-auto-restart-help = Restart to install only when no one is signed in
 claw-setting-turn-on = Turn on
 claw-setting-turn-off = Turn off
 claw-settings-refresh = Refresh
-claw-settings-working = Waiting for Claw OS…
+claw-settings-working = Waiting for Yu OS…
 claw-update-unchecked = No update check has completed.
-claw-update-checking = Checking the signed Claw OS channel…
-claw-update-available = Claw OS updates are available.
-claw-update-current = Your installed Claw OS packages are up to date.
+claw-update-checking = Checking the signed Yu OS channel…
+claw-update-available = Yu OS updates are available.
+claw-update-current = Your installed Yu OS packages are up to date.
 claw-update-downloading = Downloading updates…
 claw-update-ready = Updates will install before sign-in at the next restart.
 claw-update-save-work = Save your work before restarting. Your apps will close during the update.

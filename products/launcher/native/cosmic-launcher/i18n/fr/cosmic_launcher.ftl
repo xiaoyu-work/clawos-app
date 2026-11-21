@@ -1,2 +1,2 @@
-app-name = Lanceur ClawOS
+app-name = Lanceur Yu OS
 type-to-search = Tapez pour chercher des applis ou tapez « ? » pour plus d'options...

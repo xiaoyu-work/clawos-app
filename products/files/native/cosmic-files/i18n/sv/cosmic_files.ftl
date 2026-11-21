@@ -1,5 +1,5 @@
 cosmic-files = Filer
-comment = Filhanterare för skrivbordsmiljön ClawOS
+comment = Filhanterare för skrivbordsmiljön Yu OS
 keywords = Folder;Katalog;Mapp;Manager;
 empty-folder = Mappen är tom
 empty-folder-hidden = Mappen är tom (har dolda objekt)
@@ -320,7 +320,7 @@ show-hidden-files = Visa dolda filer
 list-directories-first = Lista mappar först
 gallery-preview = Galleri förhandsvisning
 menu-settings = Inställningar…
-menu-about = Om ClawOS Filer...
+menu-about = Om Yu OS Filer...
 
 ## Sortera
 

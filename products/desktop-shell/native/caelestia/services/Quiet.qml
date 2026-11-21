@@ -53,7 +53,7 @@ Singleton {
         if (entry)
             return entry.name;
         if (desktopId === DesktopMenu.launcher)
-            return Tr.tr("Claw Launcher");
+            return Tr.tr("Yu Launcher");
         if (desktopId === DesktopMenu.files)
             return Tr.tr("Files");
         return desktopId;

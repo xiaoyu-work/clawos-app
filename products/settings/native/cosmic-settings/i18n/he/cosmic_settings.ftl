@@ -1,3 +1,3 @@
 connect = התחברות
-app = הגדרות ClawOS
+app = הגדרות Yu OS
 number = { $number }

@@ -1,7 +1,7 @@
-# Claw Agent — WebExtension
+# Yu OS Agent — WebExtension
 
 The user-facing half of `browser-attached`. It lets the user talk to the
-system Claw Agent in Helium and gives that Agent permission-gated tools for
+system Yu OS Agent in Helium and gives that Agent permission-gated tools for
 the user's logged-in browser tabs.
 
 ## Layout
@@ -15,7 +15,7 @@ the user's logged-in browser tabs.
 
 Click the toolbar button to open the side panel alongside the current page.
 The panel talks to the separate `com.clawos.browser_chat` host installed by
-Claw OS Desktop. It uses the existing system Agent and Job state; stopping
+Yu OS Desktop. It uses the existing system Agent and Job state; stopping
 a reply cancels its Job. Closing the panel does not cancel the Job; reopening
 it in the same window reconnects. **Pause tab access** separately disconnects
 the browser action bridge until resumed. It does not undo a dispatched action.
@@ -71,7 +71,7 @@ Note the resulting extension ID and put it into
 `allowed_origins` array so Helium will start the native host. This is the
 upstream-compatible Linux path the Helium binary resolves.
 Run the installer with `CLAW_EXT_ID` to register both hosts; for chat,
-install the matching Claw OS Desktop package and keep the existing local
+install the matching Yu OS Desktop package and keep the existing local
 Agent bridge available. The chat panel shows an error if it cannot reach it.
 
 ## Wire protocol

@@ -1,5 +1,5 @@
-cosmic-files = ملفات ClawOS
-comment = مدير ملفات لسطح مكتب ClawOS
+cosmic-files = ملفات Yu OS
+comment = مدير ملفات لسطح مكتب Yu OS
 keywords = مجلد;ملف;مدير;
 empty-folder = مجلد فارغ
 empty-folder-hidden = مجلد فارغ (يحتوي على عناصر مخفية)
@@ -131,7 +131,7 @@ list-view = عرض اللائحة
 show-hidden-files = أظهر الملفات المخفية
 list-directories-first = اسرد المجلدات اولاً
 menu-settings = الإعدادات...
-menu-about = عن مدير ملفات ClawOS...
+menu-about = عن مدير ملفات Yu OS...
 dismiss = أهمِل الرسالة
 no-results = لم يُعثر على نتائج
 networks = الشبكات

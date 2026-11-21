@@ -63,9 +63,9 @@
             "name": "app_name",
             "kind": "text",
             "required": false,
-            "default": "Claw OS Agent",
+            "default": "Yu OS Agent",
             "label": {
-              "en": "Sender name shown in the popup; empty or omitted uses Claw OS Agent."
+              "en": "Sender name shown in the popup; empty or omitted uses Yu OS Agent."
             }
           },
           {

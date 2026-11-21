@@ -1,5 +1,5 @@
-cosmic-terminal = Terminál ClawOS
-comment = Emulátor terminálu pre pracovné prostredie ClawOS
+cosmic-terminal = Terminál Yu OS
+comment = Emulátor terminálu pre pracovné prostredie Yu OS
 keywords = Príkaz;Shell;Terminál;Konzola;
 new-terminal = Nový terminál
 
@@ -110,6 +110,6 @@ split-vertical = Rozdeliť vertikálne
 pane-toggle-maximize = Prepnúť maximalizáciu
 menu-color-schemes = Farebné schémy...
 menu-settings = Nastavenia...
-menu-about = O Termináli ClawOS...
+menu-about = O Termináli Yu OS...
 repository = Repozitár
 support = Podpora

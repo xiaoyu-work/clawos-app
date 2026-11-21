@@ -1,5 +1,5 @@
-cosmic-files = Pliki ClawOS
-comment = Menedżer plików pulpitu ClawOS
+cosmic-files = Pliki Yu OS
+comment = Menedżer plików pulpitu Yu OS
 keywords = Katalogi;Pliki;Menedżer;
 empty-folder = Pusty katalog
 empty-folder-hidden = Pusty katalog (z ukrytymi plikami)
@@ -412,7 +412,7 @@ show-hidden-files = Pokaż ukryte pliki
 list-directories-first = Najpierw wyświetlaj katalogi
 gallery-preview = Podgąd galerii
 menu-settings = Ustawienia…
-menu-about = O Plikach ClawOS…
+menu-about = O Plikach Yu OS…
 
 ## Sort
 

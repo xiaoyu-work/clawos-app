@@ -1,5 +1,5 @@
 cosmic-terminal = Terminal
-comment = Terminalemulator för skrivbordsmiljön ClawOS
+comment = Terminalemulator för skrivbordsmiljön Yu OS
 keywords = Kommando;Skal;Terminal;CLI;Konsol;
 new-terminal = Ny terminal
 
@@ -114,7 +114,7 @@ pane-toggle-maximize = Växla maximerad
 clear-scrollback = Töm tillbakarullning
 menu-color-schemes = Färgscheman…
 menu-settings = Inställningar…
-menu-about = Om ClawOS Terminal…
+menu-about = Om Yu OS Terminal…
 repository = Källkod
 support = Support
 # Lösenordshanterare

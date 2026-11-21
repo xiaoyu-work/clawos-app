@@ -40,7 +40,7 @@ updates = Opdateringer
 # Explore Pages
 editors-choice = Redaktionens udvalgte
 popular-apps = Populære programmer
-made-for-cosmic = Lavet til ClawOS
+made-for-cosmic = Lavet til Yu OS
 new-apps = Nye apps
 recently-updated = Nyligt opdateret
 development-tools = Udviklerværktøjer

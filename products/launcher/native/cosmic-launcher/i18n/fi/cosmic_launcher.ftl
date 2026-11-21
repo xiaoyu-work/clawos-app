@@ -1,2 +1,2 @@
-app-name = ClawOSin käynnistin
+app-name = Yu OSin käynnistin
 type-to-search = Kirjoita etsiäksesi sovelluksia tai "?" saadaksesi lisää vaihtoehtoja...

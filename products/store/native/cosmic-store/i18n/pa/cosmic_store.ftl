@@ -85,7 +85,7 @@ donation = ਦਾਨ
 install = ਇੰਸਟਾਲ
 popular-apps = ਹਰਮਨਪਿਆਰੀਆਂ ਐਪਾ
 social-networking-apps = ਸ਼ੋਸ਼ਲ ਨੈੱਟਵਰਕਿੰਗ ਐਪਾਂ
-made-for-cosmic = ClawOS ਲਈ ਤਿਆਰ
+made-for-cosmic = Yu OS ਲਈ ਤਿਆਰ
 homepage = ਮੁੱਖ-ਸਫ਼ਾ
 system-package-updates = ਪੈਕੇਜ ਅੱਪਡੇਟ
 system-packages-summary =
@@ -94,7 +94,7 @@ system-packages-summary =
        *[other] { $count } ਪੈਕੇਜ
     }
 system-packages = ਸਿਸਟਮ ਪੈਕੇਜ
-comment = ClawOS ਡੈਸਕਟਾਪ ਲਈ ਐਪਲੀਕੇਸ਼ਨ ਸਟੋਰ
+comment = Yu OS ਡੈਸਕਟਾਪ ਲਈ ਐਪਲੀਕੇਸ਼ਨ ਸਟੋਰ
 keywords = ਐਪ;ਸਾਫਟਵੇਅਰ;ਸਟੋਰ;ਦੁਕਾਨ;
 faq = ਸਵਾਲ-ਜਵਾਬ
 flatpak-runtimes = ਫਲੈਟਪੈਕ ਰਨਟਾਈਮ

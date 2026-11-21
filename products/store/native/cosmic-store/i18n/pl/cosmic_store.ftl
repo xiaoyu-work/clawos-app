@@ -1,5 +1,5 @@
-app-name = Sklep ClawOS
-comment = Sklep z aplikacjami pulpitu ClawOS
+app-name = Sklep Yu OS
+comment = Sklep z aplikacjami pulpitu Yu OS
 keywords = Aplikacje;Soft;Oprogramowanie;Sklep;
 back = Powrót
 cancel = Anuluj
@@ -70,12 +70,12 @@ updates = Aktualizacje
 
 ## Applets page
 
-enable-flathub-cosmic = Musisz włączyć Flathub oraz ClawOS Flatpak by widzieć dostępne aplety.
+enable-flathub-cosmic = Musisz włączyć Flathub oraz Yu OS Flatpak by widzieć dostępne aplety.
 manage-repositories = Zarządzanie repozytoriami
 # Explore Pages
 editors-choice = Wybór redakcji
 popular-apps = Popularne aplikacje
-made-for-cosmic = Stworzone dla ClawOS
+made-for-cosmic = Stworzone dla Yu OS
 new-apps = Nowe aplikacje
 recently-updated = Ostatnio zaktualizowane
 development-tools = Narzędzia programistyczne

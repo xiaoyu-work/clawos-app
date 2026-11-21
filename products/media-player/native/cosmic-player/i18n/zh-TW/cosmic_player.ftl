@@ -47,5 +47,5 @@ playback = 回放
 next-frame = 下一幀
 previous-frame = 上一幀
 xdg-name = 媒體播放器
-xdg-comment = 媒體播放器 用於 ClawOS 桌面
+xdg-comment = 媒體播放器 用於 Yu OS 桌面
 xdg-keywords = 音訊;影片;電影;音樂;聲音;影像;

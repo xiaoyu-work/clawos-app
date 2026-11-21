@@ -1,4 +1,4 @@
-// Claw Mail AI — background event page.
+// Yu Mail AI — background event page.
 //
 // One long-lived port to the Native Messaging host `os.claw.mail_ai`,
 // which Thunderbird spawns when we call `connectNative`. The port stays
@@ -15,7 +15,7 @@
 //   - browser.action                (main toolbar): opens the Assistant space
 //   - browser.messageDisplayAction  (read window):  Summarize popup
 //   - browser.composeAction         (compose):      Smart Reply / Smart Compose
-//   - browser.spaces                (left rail):    Claw AI Assistant
+//   - browser.spaces                (left rail):    Yu AI Assistant
 //   - browser.menus                 (context):      Summarize / Translate / Smart Reply
 //   - browser.messages.onNewMailReceived           : optional auto-triage
 //   - browser.runtime.onMessage                    : popup → background bridge
@@ -104,7 +104,7 @@ async function ensureAssistantSpace() {
     const list = await browser.spaces.query({ name: ASSISTANT_SPACE_NAME });
     if (list && list.length) return list[0];
     return await browser.spaces.create(ASSISTANT_SPACE_NAME, ASSISTANT_PAGE, {
-      title: browser.i18n.getMessage("assistant_title") || "Claw AI",
+      title: browser.i18n.getMessage("assistant_title") || "Yu AI",
       defaultIcons: { 16: browser.runtime.getURL("icons/icon.svg") },
       badgeBackgroundColor: "#10b981",
     });
@@ -152,21 +152,21 @@ async function rebuildMenus() {
   if (s.features.summarize) {
     browser.menus.create({
       id: MENU_IDS.summarize,
-      title: browser.i18n.getMessage("ctx_summarize") || "Summarize with Claw AI",
+      title: browser.i18n.getMessage("ctx_summarize") || "Summarize with Yu AI",
       contexts: ["message_list", "message_display_action_menu"],
     });
   }
   if (s.features.translate) {
     browser.menus.create({
       id: MENU_IDS.translate,
-      title: browser.i18n.getMessage("ctx_translate") || "Translate with Claw AI",
+      title: browser.i18n.getMessage("ctx_translate") || "Translate with Yu AI",
       contexts: ["message_list", "message_display_action_menu", "selection"],
     });
   }
   if (s.features.smartReply) {
     browser.menus.create({
       id: MENU_IDS.reply,
-      title: browser.i18n.getMessage("ctx_smart_reply") || "Smart Reply with Claw AI",
+      title: browser.i18n.getMessage("ctx_smart_reply") || "Smart Reply with Yu AI",
       contexts: ["message_list", "message_display_action_menu"],
     });
   }
@@ -361,7 +361,7 @@ function notify(message, title) {
     browser.notifications.create({
       type: "basic",
       iconUrl: browser.runtime.getURL("icons/icon.svg"),
-      title: title || "Claw Mail AI",
+      title: title || "Yu Mail AI",
       message,
     });
   } catch (_) { /* notifications may be disabled */ }
@@ -434,7 +434,7 @@ browser.runtime.onMessage.addListener((msg, _sender) => {
       // open in Thunderbird. Fall back to a notification so the user
       // knows the shortcut was received.
       notify(browser.i18n.getMessage("hint_open_compose_popup")
-        || "Click the Claw AI button in the compose toolbar to open Smart Reply.");
+        || "Click the Yu AI button in the compose toolbar to open Smart Reply.");
       return Promise.resolve({ ok: true });
 
     case "nativeStatus":

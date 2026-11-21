@@ -1,4 +1,4 @@
-comment = Textový editor pro prostředí ClawOS
+comment = Textový editor pro prostředí Yu OS
 new-document = Nový dokument
 open-project = Otevřít projekt
 
@@ -77,8 +77,8 @@ highlight-current-line = Zvýraznění aktuálního řádku
 syntax-highlighting = Zvýraznění syntaxe...
 menu-settings = Nastavení...
 menu-keyboard-shortcuts = Klávesové zkratky...
-menu-about = O aplikaci Textový editor ClawOS...
-cosmic-text-editor = Textový editor ClawOS
+menu-about = O aplikaci Textový editor Yu OS...
+cosmic-text-editor = Textový editor Yu OS
 repository = Repozitář
 support = Podpora
 git-management = Správa Git

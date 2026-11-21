@@ -2,6 +2,7 @@
 
 use std::io::{self, Write};
 use std::process::{Command, Stdio};
+use std::sync::Mutex;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
@@ -40,6 +41,18 @@ pub fn query(operation: &str, arguments: Value) -> io::Result<Value> {
             }
             _ => {}
         }
+        // All backend snapshots share one bounded OS route. Queue them here
+        // without making a slow source refresh block browsing.
+        static SNAPSHOT_QUERY: Mutex<()> = Mutex::new(());
+        let _guard = if matches!(operation, "store" | "refresh" | "flatpak-refresh") {
+            None
+        } else {
+            Some(
+                SNAPSHOT_QUERY
+                    .lock()
+                    .map_err(|_| io::Error::other("Store metadata reader is unavailable"))?,
+            )
+        };
         return claw_os_sdk::cos_call_json("package", "query", args)
             .map_err(|error| io::Error::other(error.to_string()));
     }

@@ -1,4 +1,4 @@
-cosmic-files = Fitxers del ClawOS
+cosmic-files = Fitxers del Yu OS
 empty-folder = Carpeta buida
 empty-folder-hidden = Carpeta buida (té elements ocults)
 no-results = No s'ha trobat cap resultat
@@ -341,7 +341,7 @@ show-hidden-files = Mostra els fitxers ocults
 list-directories-first = Mostra els directoris primer
 gallery-preview = Vista prèvia en galeria
 menu-settings = Configuració...
-menu-about = Quant a Fitxers del ClawOS...
+menu-about = Quant a Fitxers del Yu OS...
 
 ## Sort
 

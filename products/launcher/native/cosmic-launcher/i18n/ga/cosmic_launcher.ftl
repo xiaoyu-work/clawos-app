@@ -1,2 +1,2 @@
-app-name = Tosaitheoir ClawOS
+app-name = Tosaitheoir Yu OS
 type-to-search = Clóscríobh chun aipeanna a chuardach nó clóscríobh “?” le haghaidh tuilleadh roghanna...

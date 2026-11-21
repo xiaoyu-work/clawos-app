@@ -16,7 +16,7 @@ little-endian length followed by UTF-8 JSON. Replies preserve `id`, `ok` and
 the structured `result` or error. See the [business contract](../apps/mail-ai/README.md).
 
 `tools/stage.py mail --root <staging-root>` builds the reproducible XPI alongside
-the matching App. The signed Claw OS package installs both and supplies the
+the matching App. The signed Yu OS package installs both and supplies the
 native launcher/runtime. Rootfs registration must not overwrite their files.
 
 From the repository root, run `python3 tools/test.py mail`. Fixtures exercise

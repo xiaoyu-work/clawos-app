@@ -1,4 +1,4 @@
-app-name = חנות ClawOS
+app-name = חנות Yu OS
 back = חזרה
 cancel = ביטול
 check-for-updates = איתור עדכונים
@@ -31,7 +31,7 @@ updates = עדכונים
 # Explore Pages
 editors-choice = בחירת העורכים
 popular-apps = יישומים נפוצים
-made-for-cosmic = נוצר עבור ClawOS
+made-for-cosmic = נוצר עבור Yu OS
 new-apps = יישומים חדשים
 recently-updated = עודכנו לאחרונה
 development-tools = כלי פיתוח

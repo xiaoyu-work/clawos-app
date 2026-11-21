@@ -48,4 +48,4 @@ ab-repeat-set-b = A-B-Wiederholung (B)
 ab-repeat-clear = A-B-Wiederholung löschen
 xdg-keywords = Audio;Film;Musik;Ton;Video;
 xdg-name = Mediaplayer
-xdg-comment = Mediaplayer für den ClawOS-Desktop
+xdg-comment = Mediaplayer für den Yu OS-Desktop

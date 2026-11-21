@@ -1,4 +1,4 @@
-app-name = Claw Launcher
+app-name = Yu Launcher
 type-to-search = Search apps, files, commands, or ask with “?”…
 
 category-all = All
@@ -18,12 +18,12 @@ state-no-recent = No recent items
 state-no-results = No results in this category
 desktop-action-unsupported = This shortcut is not available here. Open the application from its main result.
 
-ask-claw-ai = Ask Claw AI: { $query }
+ask-claw-ai = Ask Yu AI: { $query }
 ask-claw-ai-hint = Forward to the AI agent
 
-ai-card-title = Claw AI
-ai-card-error-title = Claw AI — error
+ai-card-title = Yu AI
+ai-card-error-title = Yu AI — error
 ai-card-thinking = Thinking about “{ $query }”…
-ai-card-hint-thinking = Press Enter to open in Claw
-ai-card-hint-streaming = Press Enter to open in Claw
-ai-card-hint-open = Press Enter to continue in Claw
+ai-card-hint-thinking = Press Enter to open in Yu
+ai-card-hint-streaming = Press Enter to open in Yu
+ai-card-hint-open = Press Enter to continue in Yu

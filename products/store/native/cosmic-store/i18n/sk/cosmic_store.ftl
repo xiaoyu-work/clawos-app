@@ -1,5 +1,5 @@
-app-name = Obchod ClawOS
-comment = Obchod s aplikáciami pre pracovné prostredie ClawOS
+app-name = Obchod Yu OS
+comment = Obchod s aplikáciami pre pracovné prostredie Yu OS
 keywords = Aplikácie;Softvér;Obchod;Shop;Programy;
 back = Späť
 cancel = Zrušiť
@@ -74,13 +74,13 @@ installed-apps = Nainštalované aplikácie
 updates = Aktualizácie
 
 ## Applets page
-enable-flathub-cosmic = Povoliť Flathub a ClawOS Flatpak pre zobrazenie dostupných miniaplikácií.
+enable-flathub-cosmic = Povoliť Flathub a Yu OS Flatpak pre zobrazenie dostupných miniaplikácií.
 manage-repositories = Spravovať repozitáre
 
 # Explore Pages
 editors-choice = Výber redaktora
 popular-apps = Populárne aplikácie
-made-for-cosmic = Vytvorené pre ClawOS
+made-for-cosmic = Vytvorené pre Yu OS
 new-apps = Nové aplikácie
 recently-updated = Nedávno aktualizované
 development-tools = Vývojárske nástroje

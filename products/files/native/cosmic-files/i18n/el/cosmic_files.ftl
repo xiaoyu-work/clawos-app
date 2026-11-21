@@ -2,12 +2,12 @@ empty-folder = Άδειος φάκελος
 no-results = Δεν βρέθηκαν αποτελέσματα
 trash = Απορρίμματα
 recents = Πρόσφατα
-cosmic-files = Αρχεία ClawOS
+cosmic-files = Αρχεία Yu OS
 empty-folder-hidden = Άδειος φάκελος (περιέχει κρυφά στοιχεία)
 filesystem = Σύστημα αρχείων
 home = Προσωπικός φάκελος
 networks = Δίκτυα
-comment = Διαχείριση αρχείων για το περιβάλλον επιφάνειας εργασίας ClawOS
+comment = Διαχείριση αρχείων για το περιβάλλον επιφάνειας εργασίας Yu OS
 keywords = Αρχείο;Φάκελος;Διαχείριση;Folder;Manager;
 rename = Μετονομασία...
 close-tab = Κλείσιμο καρτέλας
@@ -131,7 +131,7 @@ compressing =
        *[other] στοιχείων
     } από τον φάκελο «{ $from }» στο αρχείο «{ $to }» ({ $progress })...
 move-to-trash = Μετακίνηση στα απορρίμματα
-menu-about = Σχετικά με τα Αρχεία ClawOS...
+menu-about = Σχετικά με τα Αρχεία Yu OS...
 setting-executable-and-launching = Ορισμός του «{ $name }» ως εκτελέσιμου και εκκίνηση
 open-multiple-files = Άνοιγμα πολλαπλών αρχείων
 menu-open-with = Άνοιγμα με...

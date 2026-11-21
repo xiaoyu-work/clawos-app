@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Terminal
-Comment=Terminal emulator for the ClawOS desktop
+Comment=Terminal emulator for the Yu OS desktop
 Exec=cosmic-term
 Terminal=false
 Type=Application

@@ -67,7 +67,7 @@ StyledWindow {
             width: 36
             height: 36
             objectName: "taskbarLogo"
-            Accessible.name: Tr.tr("Open Claw AI")
+            Accessible.name: Tr.tr("Open Yu AI")
             ToolTip.visible: hovered
             ToolTip.delay: 450
             ToolTip.text: Accessible.name

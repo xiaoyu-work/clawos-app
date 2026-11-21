@@ -1,2 +1,2 @@
-app-name = Trình khởi chạy ClawOS
+app-name = Trình khởi chạy Yu OS
 type-to-search = Nhập để tìm ứng dụng hoặc gõ “?” để xem thêm tùy chọn...

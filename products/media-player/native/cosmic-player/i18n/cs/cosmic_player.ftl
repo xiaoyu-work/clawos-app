@@ -34,6 +34,6 @@ ab-repeat-clear = Vymazat opakování A-B
 
 # XDG Metadata
 
-xdg-name = Přehrávač médií ClawOS
-xdg-comment = Přehrávač médií pro prostředí ClawOS
+xdg-name = Přehrávač médií Yu OS
+xdg-comment = Přehrávač médií pro prostředí Yu OS
 xdg-keywords = Audio;Film;Hudba;Zvuk;Video;

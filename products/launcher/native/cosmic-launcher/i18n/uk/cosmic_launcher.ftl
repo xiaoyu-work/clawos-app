@@ -1,2 +1,2 @@
-app-name = Запускач ClawOS
+app-name = Запускач Yu OS
 type-to-search = Введіть для пошуку застосунків або «?» для опцій…

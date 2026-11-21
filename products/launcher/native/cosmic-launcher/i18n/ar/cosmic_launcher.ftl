@@ -1,2 +1,2 @@
-app-name = مُشغِّل ClawOS
+app-name = مُشغِّل Yu OS
 type-to-search = اكتب للبحث عن التطبيقات أو اكتب "?" لمزيد من الخيارات...

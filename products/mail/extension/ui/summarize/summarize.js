@@ -2,7 +2,7 @@
 //
 // Triggered three ways:
 //   1. message_display_action (toolbar button in the read window)
-//   2. context menu "Summarize with Claw AI"
+//   2. context menu "Summarize with Yu AI"
 //   3. assistant page action
 //
 // Always works on the currently-displayed message. If launched from a

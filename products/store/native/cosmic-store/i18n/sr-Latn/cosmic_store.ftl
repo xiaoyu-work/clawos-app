@@ -31,7 +31,7 @@ updates = Ažuriranja
 # Explore Pages
 editors-choice = Izbor urednika
 popular-apps = Popularne aplikacije
-made-for-cosmic = Napravljeno za ClawOS
+made-for-cosmic = Napravljeno za Yu OS
 new-apps = Nove aplikacije
 recently-updated = Nedavno ažurirano
 development-tools = Razvojni alati

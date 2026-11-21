@@ -1,4 +1,4 @@
-// Claw Agent — background service worker.
+// Yu OS Agent — background service worker.
 //
 // Connects a long-lived Native Messaging port to com.clawos.browser, then
 // translates requests coming from the host into chrome.tabs / chrome.scripting

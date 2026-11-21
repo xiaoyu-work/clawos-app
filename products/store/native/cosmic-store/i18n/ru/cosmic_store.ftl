@@ -69,8 +69,8 @@ light = Светлая
 close = Закрыть
 notification-in-progress = Выполняются установка и обновление.
 applets = Апплеты
-made-for-cosmic = Специально для ClawOS
-enable-flathub-cosmic = Включите Flathub и ClawOS Flatpak для просмотра списка апплетов.
+made-for-cosmic = Специально для Yu OS
+enable-flathub-cosmic = Включите Flathub и Yu OS Flatpak для просмотра списка апплетов.
 manage-repositories = Управление репозиториями
 licenses = Лицензии
 proprietary = Проприетарная
@@ -139,4 +139,4 @@ system-packages-summary =
         [few] { $count } пакета
        *[other] { $count } пакетов
     }
-comment = Магазин приложений для среды ClawOS
+comment = Магазин приложений для среды Yu OS

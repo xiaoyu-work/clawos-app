@@ -1,20 +1,20 @@
 {
-  "extension_name":            { "message": "Claw 邮件 AI" },
+  "extension_name":            { "message": "Yu 邮件 AI" },
   "extension_description":     { "message": "为 Thunderbird 接入 claw-os 本地 AI 的辅助插件。" },
 
-  "action_title":              { "message": "Claw AI 助手" },
+  "action_title":              { "message": "Yu AI 助手" },
   "summarize_title":           { "message": "摘要" },
   "compose_title":             { "message": "AI 写信" },
   "translate_title":           { "message": "翻译" },
   "assistant_title":           { "message": "邮件助手" },
-  "options_title":             { "message": "Claw 邮件 AI 设置" },
+  "options_title":             { "message": "Yu 邮件 AI 设置" },
 
   "tab_smart_reply":           { "message": "智能回复" },
   "tab_smart_compose":         { "message": "智能写信" },
 
-  "ctx_summarize":             { "message": "用 Claw AI 总结" },
-  "ctx_translate":             { "message": "用 Claw AI 翻译" },
-  "ctx_smart_reply":           { "message": "用 Claw AI 起草回复" },
+  "ctx_summarize":             { "message": "用 Yu AI 总结" },
+  "ctx_translate":             { "message": "用 Yu AI 翻译" },
+  "ctx_smart_reply":           { "message": "用 Yu AI 起草回复" },
 
   "label_summary":             { "message": "摘要" },
   "label_key_points":          { "message": "要点" },
@@ -86,5 +86,5 @@
   "triage_autoMoveNewsletter": { "message": "订阅类邮件标为已读" },
   "triage_tagPrefix":          { "message": "标签前缀" },
 
-  "hint_open_compose_popup":   { "message": "请点击写信工具栏的 Claw AI 按钮打开智能回复。" }
+  "hint_open_compose_popup":   { "message": "请点击写信工具栏的 Yu AI 按钮打开智能回复。" }
 }

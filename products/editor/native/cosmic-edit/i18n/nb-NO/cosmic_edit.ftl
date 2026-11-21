@@ -86,5 +86,5 @@ show-line-numbers = Vis linjenummer
 highlight-current-line = Merker nåværende linje
 convert-indentation-to-spaces = Konverter innrykk til mellomrom
 convert-indentation-to-tabs = Konverter innrykk til tabber
-menu-about = OM ClawOS Tekstredigerer...
+menu-about = OM Yu OS Tekstredigerer...
 tab-width = Tab-bredde: { $tab_width }

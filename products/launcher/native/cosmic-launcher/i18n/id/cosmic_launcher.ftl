@@ -1,2 +1,2 @@
-app-name = Peluncur ClawOS
+app-name = Peluncur Yu OS
 type-to-search = Ketik untuk mencari apps atau tipe "?" informasi lainnya...

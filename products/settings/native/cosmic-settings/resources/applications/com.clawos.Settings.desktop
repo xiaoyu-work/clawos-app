@@ -1,11 +1,11 @@
 [Desktop Entry]
 Name=Settings
-Comment=Settings application for ClawOS.
+Comment=Settings application for Yu OS.
 Type=Application
 Exec=cosmic-settings
 Terminal=false
 Categories=ClawOS
-Keywords=ClawOS;Settings;
+Keywords=Yu OS;Settings;
 OnlyShowIn=COSMIC
 Icon=com.clawos.Settings
 StartupNotify=true

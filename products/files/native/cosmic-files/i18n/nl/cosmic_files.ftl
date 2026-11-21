@@ -394,7 +394,7 @@ show-hidden-files = Verborgen bestanden tonen
 list-directories-first = Mappen bovenaan weergeven
 gallery-preview = Galerijweergave
 menu-settings = Instellingen…
-menu-about = Over ClawOS Bestanden…
+menu-about = Over Yu OS Bestanden…
 
 ## Sort
 
@@ -425,7 +425,7 @@ removed-from-recents =
     } uit { recents } verwijderd
 remove-from-recents = Uit recente verwijderen
 type-to-search-select = Dit selecteert het eerst overeenkomende bestand of map
-comment = Bestandsbeheerder voor ClawOS desktop
+comment = Bestandsbeheerder voor Yu OS desktop
 copy-to-title = Kopieerbestemming aanwijzen
 copy-to-button-label = Kopiëren
 move-to-button-label = Verplaatsen

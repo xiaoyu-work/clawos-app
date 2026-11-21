@@ -1,4 +1,4 @@
-cosmic-terminal = Terminal ClawOS
+cosmic-terminal = Terminal Yu OS
 new-terminal = Nouveau terminal
 
 # Context Pages
@@ -108,7 +108,7 @@ split-vertical = Scinder en vertical
 pane-toggle-maximize = Vue unique
 menu-color-schemes = Palettes de couleurs...
 menu-settings = Paramètres...
-menu-about = À propos de terminal ClawOS...
+menu-about = À propos de terminal Yu OS...
 repository = Dépôt
 support = Support
 menu-password-manager = Mots de passe...
@@ -145,7 +145,7 @@ focus-pane-right = Passer au panneau de droite
 focus-pane-up = Passer au panneau du dessus
 reset-to-default = Rétablir les paramètres par défaut
 toggle-fullscreen = Basculer en plein écran
-comment = Émulateur de terminal pour le bureau ClawOS
+comment = Émulateur de terminal pour le bureau Yu OS
 keywords = Commande;Shell;Terminal;CLI;
 tab-new-inherit-working-directory = Les nouveaux onglets utilisent le répertoire actuel
 tab-new-inherit-working-directory-description = Ouvrir les nouveaux onglets dans le répertoire de travail de l'onglet actif

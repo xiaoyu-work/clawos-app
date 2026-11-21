@@ -303,7 +303,7 @@ show-hidden-files = Gizli dosyaları göster
 list-directories-first = Önce dizinleri listele
 gallery-preview = Galeri ön izlemesi
 menu-settings = Ayarlar...
-menu-about = ClawOS Dosyalar hakkında...
+menu-about = Yu OS Dosyalar hakkında...
 
 ## Sort
 
@@ -384,7 +384,7 @@ delete-permanently = Kalıcı olarak sil
 eject = Çıkart
 remove-from-recents = Son kullanılanlardan kaldır
 reload-folder = Klasörü yeniden yükle
-comment = ClawOS masaüstü için dosya yöneticisi
+comment = Yu OS masaüstü için dosya yöneticisi
 keywords = Klasör;Yönetici;
 empty-trash-title = Çöp boşaltılsın mı?
 copy-to-title = Kopyalama hedefini seçin

@@ -33,6 +33,6 @@ quit = Ukončiť
 
 # XDG Metadata
 
-xdg-name = Prehrávač Médií ClawOS
-xdg-comment = Prehrávač médií pre pracovné prostredie ClawOS
+xdg-name = Prehrávač Médií Yu OS
+xdg-comment = Prehrávač médií pre pracovné prostredie Yu OS
 xdg-keywords = audio;film;hudba;video;prehrávač;média;zvuk;
