@@ -217,7 +217,7 @@ jobs:
               "/xiaoyu-work/claw-os/releases/download/"
           ) or not re.fullmatch(r"[0-9a-f]{64}", checksum):
               raise ValueError("A pinned published OS provenance tool is required")
-          tool = Path("build/provenance-cos")
+          tool = Path("build/provenance-yu")
           _download(url, tool)
           if digest(tool) != checksum:
               raise ValueError("Public provenance tool SHA256 mismatch")
@@ -236,7 +236,7 @@ jobs:
           if [ "$INITIALIZE" = true ]; then args+=(--initialize); fi
           python3 tools/release_publish.py publish --plan build/release-plan.json \
             --artifacts build/release "${args[@]}" \
-            --cos build/provenance-cos --cos-sha256 "$PROVENANCE_SHA256" \
+            --yu build/provenance-yu --yu-sha256 "$PROVENANCE_SHA256" \
             --publisher-key-id "$PROVENANCE_KEY_ID" --app-signing-key build/provenance-signing-key.json
       - uses: actions/upload-pages-artifact@v3
         with:

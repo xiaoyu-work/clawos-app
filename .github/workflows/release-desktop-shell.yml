@@ -85,5 +85,5 @@ jobs:
         run: |
           export HOME="$(mktemp -d "$RUNNER_TEMP/desktop-shell-sign.XXXXXX")"
           python3 tools/release_desktop_shell.py publish --version "$RELEASE_VERSION" \
-            --cos-url "$PROVENANCE_URL" --cos-sha256 "$PROVENANCE_SHA256" \
+            --yu-url "$PROVENANCE_URL" --yu-sha256 "$PROVENANCE_SHA256" \
             --publisher-key-id "$PROVENANCE_KEY_ID"

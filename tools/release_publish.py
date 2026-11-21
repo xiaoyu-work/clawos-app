@@ -339,8 +339,8 @@ def main():
     publishing.add_argument("--plan", type=Path, required=True)
     publishing.add_argument("--artifacts", type=Path, required=True)
     publishing.add_argument("--initialize", action="store_true")
-    publishing.add_argument("--cos", type=Path, help="Verified public provenance-capable CLI")
-    publishing.add_argument("--cos-sha256", help="Explicit public executable SHA256")
+    publishing.add_argument("--yu", type=Path, help="Verified public provenance-capable CLI")
+    publishing.add_argument("--yu-sha256", help="Explicit public executable SHA256")
     publishing.add_argument("--publisher-key-id", help="Trusted App package publisher key ID")
     publishing.add_argument("--app-signing-key", type=Path, help="Private input to the existing public signer")
     for action in (publishing, commands.add_parser("refresh")):
@@ -373,10 +373,10 @@ def main():
             from release_store import prepare_release_snapshots, compose as compose_store, refresh
             if plan:
                 if any(entry["apps"] for entry in plan["packages"]):
-                    if not all((options.cos, options.cos_sha256, options.publisher_key_id, options.app_signing_key)):
+                    if not all((options.yu, options.yu_sha256, options.publisher_key_id, options.app_signing_key)):
                         raise ValueError("App Store publication requires the public provenance CLI, its pins and the App signing key")
                     from release_snapshots import Provenance
-                    provenance = Provenance(options.cos, options.cos_sha256, options.publisher_key_id)
+                    provenance = Provenance(options.yu, options.yu_sha256, options.publisher_key_id)
                 packages, snapshot_groups = prepare_release_snapshots(
                     plan, packages, snapshots_root, provenance, signing, options.app_signing_key,
                 )

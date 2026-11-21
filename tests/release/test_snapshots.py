@@ -20,11 +20,11 @@ import stage
 
 @pytest.fixture
 def runtime(request, tmp_path, monkeypatch):
-    selected = request.config.getoption("--provenance-cos-fixture")
+    selected = request.config.getoption("--provenance-yu-fixture")
     if not selected:
-        pytest.skip("Real signature checks require an explicit --provenance-cos-fixture")
+        pytest.skip("Real signature checks require an explicit --provenance-yu-fixture")
     binary = Path(selected).resolve(strict=True)
-    expected_digest = request.config.getoption("--provenance-cos-sha256")
+    expected_digest = request.config.getoption("--provenance-yu-sha256")
     if expected_digest:
         assert digest(binary) == expected_digest, "Explicit provenance fixture digest changed"
     home = tmp_path / "home"
@@ -35,7 +35,7 @@ def runtime(request, tmp_path, monkeypatch):
         "bwrap", "--unshare-all", "--uid", "0", "--gid", "0", "--die-with-parent", "--new-session",
         "--clearenv", "--ro-bind", "/usr", "/usr", "--ro-bind", "/lib", "/lib",
         "--ro-bind", "/lib64", "/lib64", "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp",
-        "--dir", "/etc", "--dir", "/tools", "--ro-bind", binary, "/tools/cos",
+        "--dir", "/etc", "--dir", "/tools", "--ro-bind", binary, "/tools/yu",
         "--bind", home, "/root", "--bind", tmp_path, tmp_path,
         "--ro-bind", tmp_path / "passwd", "/etc/passwd", "--ro-bind", tmp_path / "group", "/etc/group",
         "--setenv", "HOME", "/root", "--setenv", "PATH", "/usr/bin:/bin",
@@ -45,7 +45,7 @@ def runtime(request, tmp_path, monkeypatch):
 
     def execute(arguments, **kwargs):
         assert Path(arguments[0]).resolve() == binary
-        return run([*prefix, "/tools/cos", *arguments[1:]], **kwargs)
+        return run([*prefix, "/tools/yu", *arguments[1:]], **kwargs)
 
     def cli(*arguments):
         result = execute([binary, *arguments], check=False)
@@ -169,7 +169,7 @@ def test_cli_build_and_verify_use_existing_signing_contracts(
     monkeypatch.setattr(snapshots, "Signing", lambda workspace: type(signing)(workspace, signing.settings))
     arguments = [
         "release_snapshots.py", "build", "--app-directory", str(root), "--release-version", "1.0.0",
-        "--output", str(output), "--cos", str(verifier.binary), "--cos-sha256", verifier.binary_sha256,
+        "--output", str(output), "--yu", str(verifier.binary), "--yu-sha256", verifier.binary_sha256,
         "--publisher-key-id", verifier.publisher_key_id,
     ]
     monkeypatch.setattr(sys, "argv", arguments)
@@ -179,7 +179,7 @@ def test_cli_build_and_verify_use_existing_signing_contracts(
     assert "CLAW_APPS_APT_SIGNING_PASSPHRASE" not in os.environ
     monkeypatch.setattr(sys, "argv", [
         "release_snapshots.py", "verify", "--output", str(output),
-        "--cos", str(verifier.binary), "--cos-sha256", verifier.binary_sha256,
+        "--yu", str(verifier.binary), "--yu-sha256", verifier.binary_sha256,
         "--publisher-key-id", verifier.publisher_key_id,
     ])
     snapshots.main()

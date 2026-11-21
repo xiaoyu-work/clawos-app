@@ -535,8 +535,8 @@ def main():
                         help="Final authenticated Debian payload; repeat for every selected package")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--previous", type=Path)
-    parser.add_argument("--cos", type=Path)
-    parser.add_argument("--cos-sha256")
+    parser.add_argument("--yu", type=Path)
+    parser.add_argument("--yu-sha256")
     parser.add_argument("--publisher-key-id")
     options = parser.parse_args()
     workspace = work_path(options.output).parent / ".store-signing"
@@ -544,10 +544,10 @@ def main():
         if options.action == "verify":
             result = verified_index(options.output, signing)
         else:
-            if not all((options.cos, options.cos_sha256, options.publisher_key_id)):
+            if not all((options.yu, options.yu_sha256, options.publisher_key_id)):
                 parser.error("build requires the existing public provenance CLI and its exact pins")
             provenance = snapshots.Provenance(
-                options.cos, options.cos_sha256, options.publisher_key_id,
+                options.yu, options.yu_sha256, options.publisher_key_id,
             )
             signing.import_environment()
             result = compose(

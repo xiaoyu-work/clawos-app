@@ -138,8 +138,8 @@ def main():
     native = commands.add_parser("build")
     native.add_argument("--architecture", choices=["amd64", "arm64"], required=True)
     release = commands.add_parser("publish")
-    release.add_argument("--cos-url", required=True)
-    release.add_argument("--cos-sha256", required=True)
+    release.add_argument("--yu-url", required=True)
+    release.add_argument("--yu-sha256", required=True)
     release.add_argument("--publisher-key-id", required=True)
     for action in (native, release):
         action.add_argument("--version", required=True)
@@ -149,7 +149,7 @@ def main():
     if args.command == "build":
         build(args.architecture, args.version)
     else:
-        publish(args.version, args.cos_url, args.cos_sha256, args.publisher_key_id)
+        publish(args.version, args.yu_url, args.yu_sha256, args.publisher_key_id)
 
 
 if __name__ == "__main__":

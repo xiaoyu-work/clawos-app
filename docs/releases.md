@@ -188,7 +188,7 @@ inputs. The publisher key must be authorized for `package-signing` and kind
 is not a publication substitute. The App APT OpenPGP key authenticates catalogs;
 it is **not** an App provenance key merely because it signs Debian delivery.
 
-From this repository root, after setting `COS_BIN` and `COS_BIN_SHA256` from
+From this repository root, after setting `PROVENANCE_YU` and `PROVENANCE_YU_SHA256` from
 the verified public CLI artifact, `APP_PUBLISHER_KEY_ID` from the checked-in
 App publisher contract, and the two existing App APT signing secrets:
 
@@ -197,13 +197,13 @@ python3 tools/release_snapshots.py build \
   --app-directory build/prepared/first-app \
   --app-directory build/prepared/second-app \
   --release-version 1.0.0 --architecture all \
-  --cos "$COS_BIN" --cos-sha256 "$COS_BIN_SHA256" \
+  --yu "$PROVENANCE_YU" --yu-sha256 "$PROVENANCE_YU_SHA256" \
   --publisher-key-id "$APP_PUBLISHER_KEY_ID" \
   --output build/app-snapshots-1.0.0
 
 # Verification requires the public archive key, not private APT signing secrets.
 python3 tools/release_snapshots.py verify \
-  --cos "$COS_BIN" --cos-sha256 "$COS_BIN_SHA256" \
+  --yu "$PROVENANCE_YU" --yu-sha256 "$PROVENANCE_YU_SHA256" \
   --publisher-key-id "$APP_PUBLISHER_KEY_ID" \
   --output build/app-snapshots-1.0.0
 ```
@@ -314,7 +314,7 @@ no-network/no-desktop sandbox:
 
 ```bash
 python3 -m pytest -q tests/release/test_snapshots.py \
-  --provenance-cos-fixture="$COS_BIN"
+  --provenance-yu-fixture="$PROVENANCE_YU"
 ```
 
 Without that explicit fixture, signature integration cases are reported as

@@ -27,8 +27,8 @@ jobs:
   contracts:
     runs-on: ubuntu-24.04
     env:
-      PROVENANCE_COS_URL: https://github.com/xiaoyu-work/claw-os/releases/download/sdk-v0.2.1/cos-provenance-linux-amd64
-      PROVENANCE_COS_SHA256: df30cf7d57fe3dc81532e2c5599ce61de91ad3a625d1305b2f848640f5ed2a9b
+      PROVENANCE_YU_URL: https://github.com/xiaoyu-work/claw-os/releases/download/sdk-v0.2.1/cos-provenance-linux-amd64
+      PROVENANCE_YU_SHA256: df30cf7d57fe3dc81532e2c5599ce61de91ad3a625d1305b2f848640f5ed2a9b
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
@@ -49,9 +49,9 @@ jobs:
           sys.path.insert(0, "tools")
           from platform_dependency import _download
           from release_common import digest
-          tool = Path("build/provenance-cos")
-          _download(os.environ["PROVENANCE_COS_URL"], tool)
-          if digest(tool) != os.environ["PROVENANCE_COS_SHA256"]:
+          tool = Path("build/provenance-yu")
+          _download(os.environ["PROVENANCE_YU_URL"], tool)
+          if digest(tool) != os.environ["PROVENANCE_YU_SHA256"]:
               raise ValueError("Public provenance fixture SHA256 mismatch")
           tool.chmod(0o755)
           PY
@@ -62,5 +62,5 @@ jobs:
       - run: |
           export TMPDIR="$PWD/build/ci-work"
           python3 -m pytest -q tests/release --basetemp=build/release-tests \
-            --provenance-cos-fixture="$PWD/build/provenance-cos" \
-            --provenance-cos-sha256="$PROVENANCE_COS_SHA256"
+            --provenance-yu-fixture="$PWD/build/provenance-yu" \
+            --provenance-yu-sha256="$PROVENANCE_YU_SHA256"

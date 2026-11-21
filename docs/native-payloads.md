@@ -229,8 +229,8 @@ python3 -m pytest -q tests/release/test_native_payload.py
 
 python3 -m pytest -q tests/release/test_snapshots.py \
   -k real_native_package_local_signed_acceptance \
-  --provenance-cos-fixture="$COS_BIN" \
-  --provenance-cos-sha256="$COS_BIN_SHA256" \
+  --provenance-yu-fixture="$PROVENANCE_YU" \
+  --provenance-yu-sha256="$PROVENANCE_YU_SHA256" \
   --native-settings-fixture="$SETTINGS_ELF" \
   --native-notifications-fixture="$NOTIFICATIONS_ELF"
 ```

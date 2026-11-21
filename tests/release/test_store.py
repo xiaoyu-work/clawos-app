@@ -512,7 +512,7 @@ def test_publisher_hands_final_signed_bytes_to_indexes_assets_and_state(
     monkeypatch.setattr(sys, "argv", [
         "release_publish.py", "publish", "--plan", str(tmp_path / "fixture-plan.json"),
         "--artifacts", str(tmp_path / "ci"), "--output", str(tmp_path / "publisher-apt"),
-        "--cos", str(verifier.binary), "--cos-sha256", verifier.binary_sha256,
+        "--yu", str(verifier.binary), "--yu-sha256", verifier.binary_sha256,
         "--publisher-key-id", verifier.publisher_key_id,
         "--app-signing-key", str(tmp_path / "package-key.json"), "--initialize",
     ])
