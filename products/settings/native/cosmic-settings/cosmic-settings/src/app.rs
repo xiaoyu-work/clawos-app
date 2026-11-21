@@ -441,6 +441,20 @@ impl cosmic::Application for SettingsApp {
 
             Message::PageMessage(message) => match message {
                 crate::pages::Message::CloseContextDrawer => return self.close_context_drawer(),
+                crate::pages::Message::MachineSettings(login, message) => {
+                    let task = if login {
+                        self.pages
+                            .page_mut::<system::machine::SignInPage>()
+                            .map(|page| page.update(message))
+                    } else {
+                        self.pages
+                            .page_mut::<system::machine::UpdatesPage>()
+                            .map(|page| page.update(message))
+                    };
+                    if let Some(task) = task {
+                        return task.map(|message| Message::PageMessage(message).into());
+                    }
+                }
 
                 #[cfg(feature = "page-accessibility")]
                 crate::pages::Message::Accessibility(message) => {

@@ -60,6 +60,11 @@ binds changes to the displayed App revision, and reloads the actual state
 after a change. The shared MCP client cannot submit these owner decisions.
 Exact secret and icon-file authority remain separate requirements.
 
+**Sign-in** and **System Updates** use the closed OS machine settings interface
+from the system-launched Settings window. The App displays confirmed state;
+automatic login, signed APT, administrator authentication, and restart
+decisions remain OS-owned. These controls are not exposed through MCP.
+
 | Path | Responsibility |
 | --- | --- |
 | `apps/accessibility-manager/app.json` | Separate observation/control scopes and closed toggle/filter choices |

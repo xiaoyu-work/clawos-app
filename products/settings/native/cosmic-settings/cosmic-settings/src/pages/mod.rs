@@ -73,6 +73,7 @@ pub enum Message {
     LegacyApplications(applications::legacy_applications::Message),
     #[cfg(feature = "page-input")]
     ManageWindowShortcuts(input::keyboard::shortcuts::ShortcutMessage),
+    MachineSettings(bool, system::machine::Message),
     #[cfg(feature = "page-input")]
     MoveWindowShortcuts(input::keyboard::shortcuts::ShortcutMessage),
     #[cfg(feature = "page-input")]

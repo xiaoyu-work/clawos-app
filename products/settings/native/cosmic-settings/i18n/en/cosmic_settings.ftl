@@ -1055,6 +1055,38 @@ legacy-app-scaling = X11 window system application scaling
 ## System
 
 system = System & accounts
+claw-sign-in = Sign-in
+claw-sign-in-description = Automatic login applies once after boot. Unlocking the screen and administrator actions still require authentication.
+claw-auto-login = Automatic login at startup
+claw-login-on = Signs in as { $user } at startup.
+claw-login-off = A password is required at startup.
+claw-login-enable = Sign in as me automatically
+claw-login-disable = Require sign-in at startup
+claw-system-updates = System Updates
+claw-update-description = Check and install signed updates for Claw OS and its desktop.
+claw-update-check = Check for updates
+claw-update-download = Download and prepare
+claw-update-cancel = Cancel scheduled install
+claw-update-restart = Restart and install
+claw-update-checked = Last checked: { $time }
+claw-update-held = { $versions } (held by administrator)
+claw-update-automatic = Automatic updates
+claw-update-automatic-help = Check daily and prepare signed updates. Installation happens at the next restart.
+claw-update-auto-restart = Automatic restart
+claw-update-auto-restart-help = Restart to install only when no one is signed in and the system allows it.
+claw-setting-turn-on = Turn on
+claw-setting-turn-off = Turn off
+claw-settings-refresh = Refresh
+claw-settings-working = Waiting for Claw OS…
+claw-update-unchecked = No update check has completed.
+claw-update-checking = Checking the signed Claw OS channel…
+claw-update-available = Claw OS updates are available.
+claw-update-current = Your installed Claw OS packages are up to date.
+claw-update-downloading = Downloading updates…
+claw-update-ready = Updates will install before sign-in at the next restart.
+claw-update-save-work = Save your work before restarting. Your apps will close during the update.
+claw-update-installed = The last system update was installed successfully.
+claw-update-failed = The update did not complete.
 
 ## System: About
 

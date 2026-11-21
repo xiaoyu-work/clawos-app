@@ -818,6 +818,38 @@ legacy-app-scaling = X11 窗口系统应用程序缩放
 ## System
 
 system = 系统与账户
+claw-sign-in = 登录
+claw-sign-in-description = 自动登录每次开机只执行一次。解锁屏幕和管理员操作仍需要验证。
+claw-auto-login = 开机自动登录
+claw-login-on = 开机后自动登录 { $user }。
+claw-login-off = 开机后需要输入密码登录。
+claw-login-enable = 开机自动登录此账户
+claw-login-disable = 恢复开机登录验证
+claw-system-updates = 系统更新
+claw-update-description = 检查并安装已签名的 Claw OS 和桌面更新。
+claw-update-check = 检查更新
+claw-update-download = 下载并准备安装
+claw-update-cancel = 取消计划安装
+claw-update-restart = 重启并安装
+claw-update-checked = 上次检查：{ $time }
+claw-update-held = { $versions }（管理员已锁定版本）
+claw-update-automatic = 自动更新
+claw-update-automatic-help = 每天检查并准备已签名的更新，下次重启时安装。
+claw-update-auto-restart = 自动重启
+claw-update-auto-restart-help = 只有无人登录且系统允许时，才会自动重启安装。
+claw-setting-turn-on = 开启
+claw-setting-turn-off = 关闭
+claw-settings-refresh = 刷新
+claw-settings-working = 正在等待 Claw OS…
+claw-update-unchecked = 尚未完成更新检查。
+claw-update-checking = 正在检查 Claw OS 签名更新源…
+claw-update-available = 有可用的 Claw OS 更新。
+claw-update-current = 已安装的 Claw OS 软件包是最新版本。
+claw-update-downloading = 正在下载更新…
+claw-update-ready = 更新将在下次重启时、登录之前安装。
+claw-update-save-work = 重启前请保存工作。更新期间会关闭应用。
+claw-update-installed = 上次系统更新已成功安装。
+claw-update-failed = 更新未完成。
 
 ## System: About
 
