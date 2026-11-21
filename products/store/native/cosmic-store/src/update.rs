@@ -146,19 +146,44 @@ impl App {
                 }
             }
             Message::CheckUpdates | Message::PeriodicUpdateCheck => {
-                if matches!(message, Message::PeriodicUpdateCheck) {
-                    log::info!("periodic background update check triggered");
+                if self.refreshing_sources || !self.pending_operations.is_empty() {
+                    return Task::none();
                 }
-                //TODO: this only checks updates if they have already been checked
-                if self.updates.take().is_some() {
-                    if self.pending_operations.is_empty() {
-                        return self.update_backends(true);
-                    } else {
-                        log::warn!("cannot check for updates, operations are in progress");
+                self.refreshing_sources = true;
+                self.refresh_error = None;
+                return Task::perform(async {
+                    let jobs = [
+                        tokio::task::spawn_blocking(|| crate::product::query("refresh", serde_json::json!({}))),
+                        #[cfg(feature = "flatpak")]
+                        tokio::task::spawn_blocking(|| crate::product::query("flatpak-refresh", serde_json::json!({}))),
+                    ];
+                    let mut errors = Vec::new();
+                    for job in jobs {
+                        match job.await {
+                            Ok(Ok(value)) => {
+                                if let Some(error) = value["error"].as_str() {
+                                    errors.push(error.to_string());
+                                }
+                            }
+                            Ok(Err(error)) => errors.push(error.to_string()),
+                            Err(error) => errors.push(error.to_string()),
+                        }
                     }
-                } else {
-                    log::warn!("already checking for updates");
-                }
+                    if errors.is_empty() { Ok(()) } else { Err(errors.join("; ")) }
+                }, |result| action::app(Message::SourcesRefreshed(result)));
+            }
+            Message::SourcesRefreshed(result) => {
+                self.refreshing_sources = false;
+                self.refresh_error = result.err();
+                return self.update_backends(true);
+            }
+            Message::ClawCatalog(result) => {
+                self.claw_catalog = Some(result);
+            }
+            Message::UpdateQueryFailed(backend, error) => {
+                self.pending_backend_updates.remove(&backend);
+                self.update_errors.insert(backend, error);
+                self.updates.get_or_insert_with(Vec::new).retain(|(name, _)| *name != backend);
             }
             Message::Config(config) => {
                 if config != self.config {
@@ -500,12 +525,7 @@ impl App {
                 let applied = request.confirmed_applied();
                 self.root_operations.insert(request.intent.invocation_id.clone(), request);
                 if applied {
-                    let mut tasks = Vec::new();
-                    for (name, backend) in self.backends.clone() {
-                        tasks.push(self.update_backend_installed(name, backend.clone()));
-                        tasks.push(self.update_backend_updates(name, backend));
-                    }
-                    return Task::batch(tasks);
+                    return self.update_backends(false);
                 }
             }
             Message::PendingDismiss => {
@@ -947,13 +967,25 @@ impl App {
                         op.package_ids.push(package.id.clone());
                         op.infos.push(package.info.clone());
                     }
-                    for (_backend_name, op) in ops {
-                        self.operation(op);
+                    for (backend_name, op) in ops {
+                        if backend_name.is_flatpak() {
+                            for (id, info) in op.package_ids.into_iter().zip(op.infos) {
+                                if !id.is_system() {
+                                    self.operation(Operation {
+                                        kind: OperationKind::Update, backend_name,
+                                        package_ids: vec![id], infos: vec![info],
+                                    });
+                                }
+                            }
+                        } else {
+                            self.operation(op);
+                        }
                     }
                 }
             }
             Message::Updates((backend_name, updates)) => {
                 self.pending_backend_updates.remove(&backend_name);
+                self.update_errors.remove(&backend_name);
                 let mut updates = match self.updates.take() {
                     Some(mut existing) => {
                         existing.retain(|(backend, _)| *backend != backend_name);

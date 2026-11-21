@@ -2,15 +2,23 @@
 
 use std::io::{self, Write};
 use std::process::{Command, Stdio};
+use serde::Deserialize;
 use serde_json::{Value, json};
 
 const BACKEND: &str = include_str!("../catalog_backend.py");
 const BRIDGE: &str = include_str!("../product_bridge.py");
 
 pub fn query(operation: &str, arguments: Value) -> io::Result<Value> {
-    if matches!(operation, "search" | "installed" | "show" | "catalog" | "updates") {
+    if matches!(operation, "search" | "installed" | "show" | "catalog" | "updates" | "store" | "refresh"
+        | "flatpak-refresh" | "flatpak-catalog" | "flatpak-installed" | "flatpak-updates")
+    {
         let invalid = || io::Error::new(io::ErrorKind::InvalidInput, "invalid package query");
         let mut args = vec!["__package_query".to_string(), operation.to_string()];
+        if matches!(operation, "flatpak-catalog" | "flatpak-installed" | "flatpak-updates") {
+            let scope = arguments["scope"].as_str().filter(|scope| matches!(*scope, "user" | "system"))
+                .ok_or_else(invalid)?;
+            args.push(scope.to_string());
+        }
         match operation {
             "search" => {
                 let query = arguments["query"].as_str().ok_or_else(invalid)?;
@@ -23,7 +31,7 @@ pub fn query(operation: &str, arguments: Value) -> io::Result<Value> {
                     .ok_or_else(invalid)?;
                 args.push(name.to_string());
             }
-            "catalog" => {
+            "catalog" | "flatpak-catalog" => {
                 if let Some(cursor) = arguments.get("cursor").filter(|value| !value.is_null()) {
                     let cursor = cursor.as_str().filter(|cursor| cursor.len() <= 128)
                         .ok_or_else(invalid)?;
@@ -70,6 +78,57 @@ pub fn query(operation: &str, arguments: Value) -> io::Result<Value> {
     }
     written?;
     Ok(value)
+}
+
+#[derive(Deserialize)]
+struct CatalogItem {
+    source: String,
+    xml: String,
+}
+
+#[derive(Deserialize)]
+struct CatalogPage {
+    revision: String,
+    configured: bool,
+    items: Vec<CatalogItem>,
+    count: usize,
+    total: usize,
+    next: Option<String>,
+}
+
+pub fn visit_catalog(
+    mut visit: impl FnMut(&str, &str) -> Result<(), Box<dyn std::error::Error>>,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    let mut cursor: Option<String> = None;
+    let mut snapshot = None;
+    let mut received = 0;
+    loop {
+        let page: CatalogPage = serde_json::from_value(query("catalog", json!({"cursor": cursor}))?)?;
+        let identity = (page.revision, page.configured, page.total);
+        if page.count != page.items.len() || page.total > 100_000
+            || received + page.count > page.total
+            || snapshot.as_ref().is_some_and(|prior| *prior != identity)
+            || page.items.is_empty() && page.next.is_some()
+        {
+            return Err("The OS catalog page does not match its retained revision".into());
+        }
+        snapshot = Some(identity);
+        for item in page.items {
+            visit(&item.source, &item.xml)?;
+        }
+        received += page.count;
+        match page.next {
+            Some(next) => cursor = Some(next),
+            None if received == page.total => return Ok(page.configured),
+            None => return Err("The OS catalog snapshot is incomplete".into()),
+        }
+    }
+}
+
+pub(crate) fn claw_app_package(name: &str) -> bool {
+    name.starts_with("claw-cap-") || name.starts_with("claw-app-")
+        && !name.starts_with("claw-app-python-")
+        && name != "claw-app-support" && name != "claw-app-support-v1"
 }
 
 pub fn open(name: Option<&str>) -> Result<(), cos_runtime::BridgeError> {

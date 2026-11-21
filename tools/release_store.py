@@ -30,6 +30,13 @@ PACKAGE_FIELDS = {"package", "version", "architecture", "size", "sha256", "apps"
 MAX_PACKAGE_BYTES = 1024**3
 
 
+def retired_ids():
+    values = config().get("retired_store_apps", [])
+    if not isinstance(values, list) or any(not app_id(value) for value in values) or len(set(values)) != len(values):
+        raise ValueError("Claw Store retirements require unique exact App identities")
+    return set(values)
+
+
 def app_id(value):
     return isinstance(value, str) and re.fullmatch(r"[a-z][a-z0-9_-]*", value) is not None
 
@@ -188,7 +195,8 @@ def validate_index(index, *, now=None, allow_expired=False):
             raise ValueError("App Store delivery has no matching containing Debian package")
         if latest[package["package"], package["architecture"]]["sha256"] != checksum:
             raise ValueError("App Store cannot downgrade or split an installed package's App bundle")
-    if identities != set(owners):
+    missing = set(owners) - identities
+    if identities - set(owners) or any(app not in retired_ids() for app, _ in missing):
         raise ValueError("App Store package inventory contains Apps without catalog records")
     return index
 
@@ -278,8 +286,11 @@ def compose(directories, output, provenance, signing, *, packages, previous=None
     records = {(item["app_id"], item["architecture"]): item for item in prior["apps"]} if prior else {}
     retained = {identity(item): item for item in prior["packages"]} if prior else {}
     additions, inventories = {}, {}
+    retired = retired_ids()
     for directory in directories:
         for record in snapshot_records(directory, provenance, signing, inventories=inventories):
+            if record["app_id"] in retired:
+                raise ValueError("Retired App cannot be published as a new Store release")
             additions[record["app_id"], record["architecture"]] = record
     tuples, bound = set(), set()
     with tempfile.TemporaryDirectory(prefix=".store-packages-", dir=output.parent) as scratch:
@@ -347,7 +358,8 @@ def compose(directories, output, provenance, signing, *, packages, previous=None
         "schema": SCHEMA, "repository": config()["repository"], "runtime_abi": 1,
         "generation": str(generation), "issued_at": utc(now),
         "expires_at": utc(now + timedelta(days=config()["validity_days"])),
-        "apps": sorted(records.values(), key=lambda item: (item["app_id"], item["architecture"])),
+        "apps": sorted((record for record in records.values() if record["app_id"] not in retired),
+                       key=lambda item: (item["app_id"], item["architecture"])),
         "packages": sorted(retained.values(), key=identity),
     }
     validate_index(index, now=now)
@@ -361,9 +373,11 @@ def compose(directories, output, provenance, signing, *, packages, previous=None
 def refresh(directory, signing, *, now=None):
     now = (now or datetime.now(timezone.utc)).replace(microsecond=0)
     index = verified_index(directory, signing, now=now, allow_expired=True)
+    retired = retired_ids()
     index.update(
         generation=str(max(int(now.timestamp()), int(index["generation"]) + 1)),
         issued_at=utc(now), expires_at=utc(now + timedelta(days=config()["validity_days"])),
+        apps=[record for record in index["apps"] if record["app_id"] not in retired],
     )
     write_json(Path(directory) / INDEX, index)
     signing.sign(Path(directory) / INDEX, Path(directory) / SIGNATURE, armored=True)

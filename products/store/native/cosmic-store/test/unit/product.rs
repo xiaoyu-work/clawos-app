@@ -32,6 +32,8 @@ fn mcp_process_cannot_use_human_filesystem_adapters() {
         invocation_id: "a".repeat(32),
         action: crate::package::Action::Install,
         packages: vec!["fixture-one".into()],
+        version: None,
+        flatpak: None,
     };
     let result = crate::package::refresh(&intent, crate::package::Mode::Submit);
     assert!(
@@ -56,6 +58,8 @@ mod retained_packages {
             invocation_id: "a".repeat(32),
             action,
             packages: vec!["fixture-one:amd64".into(), "fixture-two".into()],
+            version: None,
+            flatpak: None,
         }
     }
 

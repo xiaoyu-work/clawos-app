@@ -677,6 +677,21 @@ impl App {
                     .active_data::<NavPage>()
                     .map_or(NavPage::default(), |nav_page| *nav_page)
                 {
+                    NavPage::ClawApps => {
+                        let mut column = widget::column::with_capacity(3)
+                            .padding([0, space_s, space_m, space_s])
+                            .spacing(space_s)
+                            .width(Length::Fill)
+                            .push(widget::flex_row(vec![
+                                widget::text::title2(NavPage::ClawApps.title()).into(),
+                                widget::space::horizontal().width(Length::Fill).into(),
+                                self.source_check_button(),
+                            ]));
+                        if let Some(error) = &self.refresh_error {
+                            column = column.push(widget::text::body(fl!("claw-refresh-failed", error = error.as_str())));
+                        }
+                        column.push(self.claw_apps_view(false)).into()
+                    }
                     NavPage::Explore => {
                         match self.explore_page_opt {
                             Some(explore_page) => {
@@ -864,35 +879,50 @@ impl App {
                             .padding([0, space_s, space_m, space_s])
                             .spacing(space_xxs)
                             .width(Length::Fill);
+                        column = column.push(widget::flex_row(vec![
+                            widget::text::title2(NavPage::Updates.title()).into(),
+                            widget::space::horizontal().width(Length::Fill).into(),
+                            self.source_check_button(),
+                        ]));
+                        if let Some(error) = &self.refresh_error {
+                            column = column.push(widget::text::body(
+                                fl!("claw-refresh-failed", error = error.as_str())));
+                        }
+                        let checked = self.claw_catalog.as_ref()
+                            .and_then(|result| result.as_ref().ok())
+                            .and_then(|catalog| catalog.checked_at.as_deref());
+                        column = column.push(widget::text::caption(match checked {
+                            Some(time) => fl!("claw-last-checked", time = time),
+                            None => fl!("claw-not-checked"),
+                        }));
+                        column = column.push(widget::text::title3(NavPage::ClawApps.title()))
+                            .push(self.claw_apps_view(true))
+                            .push(widget::text::title3(fl!("linux-system-updates")));
+                        for (source, error) in &self.update_errors {
+                            column = column.push(widget::text::body(fl!("claw-update-query-failed",
+                                source = source.as_str(), error = error.as_str())));
+                        }
                         match &self.updates {
                             Some(updates) => {
                                 if updates.is_empty() {
-                                    column = column
-                                        .push(widget::text::title2(NavPage::Updates.title()))
+                                    if self.update_errors.is_empty() && self.pending_backend_updates.is_empty()
+                                        && !self.fetching_backends && !self.refreshing_sources && self.refresh_error.is_none()
+                                    {
+                                        column = column
                                         .push(
-                                            widget::column::with_capacity(2)
+                                            widget::column::with_capacity(1)
                                                 .spacing(space_s)
                                                 .padding([space_l, 0])
                                                 .width(Length::Fill)
                                                 .align_x(Alignment::Center)
-                                                .push(widget::text::body(fl!("no-updates")))
-                                                .push(
-                                                    widget::button::standard(fl!(
-                                                        "check-for-updates"
-                                                    ))
-                                                    .on_press(Message::CheckUpdates),
-                                                ),
+                                                .push(widget::text::body(fl!("no-updates"))),
                                         );
+                                    }
                                 } else {
                                     column = column.push(widget::flex_row(vec![
-                                        widget::text::title2(NavPage::Updates.title()).into(),
                                         widget::space::horizontal().width(Length::Fill).into(),
                                         widget::row::with_capacity(2)
                                             .spacing(space_xxs)
-                                            .push(
-                                                widget::button::standard(fl!("check-for-updates"))
-                                                    .on_press(Message::CheckUpdates),
-                                            )
                                             .push(
                                                 widget::button::standard(fl!("update-all"))
                                                     .on_press(Message::UpdateAll),
@@ -995,7 +1025,6 @@ impl App {
                             }
                             None => {
                                 column = column
-                                    .push(widget::text::title2(NavPage::Updates.title()))
                                     .push(
                                         widget::column::with_capacity(2)
                                             .spacing(space_s)

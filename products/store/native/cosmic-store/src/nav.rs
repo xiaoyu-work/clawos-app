@@ -49,6 +49,7 @@ pub type CategoryIndex = HashMap<String, Vec<AppId>>;
 
 #[derive(Clone, Copy, Default, Debug, Eq, PartialEq)]
 pub enum NavPage {
+    ClawApps,
     #[default]
     Explore,
     Create,
@@ -67,6 +68,7 @@ pub enum NavPage {
 impl NavPage {
     pub fn all() -> &'static [Self] {
         &[
+            Self::ClawApps,
             Self::Explore,
             Self::Create,
             Self::Work,
@@ -84,7 +86,8 @@ impl NavPage {
 
     pub fn title(&self) -> String {
         match self {
-            Self::Explore => fl!("explore"),
+            Self::ClawApps => fl!("claw-apps"),
+            Self::Explore => fl!("linux-apps"),
             Self::Create => fl!("create"),
             Self::Work => fl!("work"),
             Self::Develop => fl!("develop"),
@@ -117,6 +120,7 @@ impl NavPage {
 
     pub fn icon(&self) -> widget::icon::Icon {
         match self {
+            Self::ClawApps => icon_cache_icon("store-home-symbolic", 16),
             Self::Explore => icon_cache_icon("store-home-symbolic", 16),
             Self::Create => icon_cache_icon("store-create-symbolic", 16),
             Self::Work => icon_cache_icon("store-work-symbolic", 16),

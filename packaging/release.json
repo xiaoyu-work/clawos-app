@@ -16,6 +16,7 @@
   "support_abi": 1,
   "python_library_abi": 1,
   "headless_set": "claw-apps-agent",
+  "retired_store_apps": ["cosmic-launcher"],
   "dependencies": {
     "browser": ["claw-os-browser-bridge-v1 (= 1)", "claw-os-browser-render-v1 (= 1)", "helium-bin (>= 0.22.1.1-1)"],
     "files": ["coreutils", "ripgrep", "recollcmd", "python3-fitz", "python3-docx", "python3-openpyxl", "python3-lxml", "python3-pil", "python3-xlsxwriter", "python3-typing-extensions (>= 4.9)"],
@@ -33,7 +34,7 @@
     "capture": ["claw-os-capture-v1", "xdg-desktop-portal"],
     "media-player": ["claw-os-media-player-v1", "pipewire-bin", "libvulkan1", "mesa-vulkan-drivers", "gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good", "gstreamer1.0-libav"],
     "notifications": ["claw-os-notifications-v1"],
-    "store": ["flatpak", "packagekit"],
+    "store": ["claw-os-software-store-v1 (= 1)", "appstream", "flatpak", "gir1.2-flatpak-1.0", "packagekit"],
     "settings": ["claw-os-app-permissions-v1", "xkb-data"]
   },
   "desktop_assets": {

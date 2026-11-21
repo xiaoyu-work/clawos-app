@@ -17,7 +17,7 @@
         "verb": "sys.observe",
         "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "packages"}},
         "why": {
-          "en": "Browse the controlled system software catalog and installed or upgradable package metadata. This grants no package mutation authority."
+          "en": "Browse and refresh signed software sources and check installed or upgradable packages. Refresh does not install software."
         }
       }
     ],
@@ -26,7 +26,7 @@
         "verb": "sys.package",
         "scope": {"kind": "wild"},
         "why": {
-          "en": "Request an exact Debian package action through protected OS review when you choose a mutation. This declaration grants no package authority or all-App-stop consent."
+          "en": "Request an exact Debian or supported Flatpak package action through protected OS review. This declaration grants no package authority or all-App-stop consent."
         }
       }
     ]

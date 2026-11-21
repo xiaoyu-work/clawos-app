@@ -15,7 +15,8 @@ translations, assets, original Cargo graph and `flathub-stats` workspace member.
 | `native/cosmic-store/src/mcp.rs` | Three catalog queries and fixed Store activation |
 | `native/cosmic-store/src/argparse.rs`, `native/cosmic-store/test/unit/argparse.rs` | Native search/helper arguments, bounded Host GUI selector adaptation and parser regressions |
 | `native/cosmic-store/src/product.rs`, `product_bridge.py` | Controlled OS catalog reads; embedded human filesystem/snapshot and fixed desktop adapters |
-| `native/cosmic-store/src/package.rs`, `backend/packagekit.rs` | Exact Debian intent/correlation, retained Root handoff, status and read-only recovery; controlled OS catalog/inventory/update queries |
+| `native/cosmic-store/src/claw_apps.rs` | Claw Apps navigation, official release versions and exact install/update actions |
+| `native/cosmic-store/src/package.rs`, `backend/{packagekit,flatpak}.rs` | Exact Debian and Flatpak intents, retained Root handoff, status and read-only recovery; controlled catalog, inventory and update queries |
 | `native/test_process.py` | Real binary/resource installation and authenticated synthetic stdio fixture |
 
 Preserve the installed `pkg` identity and existing permissions. The OS package
@@ -136,20 +137,29 @@ authority; changed, incomplete or unconfigured catalogs are errors, never a
 local-file/raw-bus fallback or a cached authorization verdict. Inventory and
 updates use the same controlled OS reader, including real installed/candidate
 versions. No payload mutator, interactive polkit transaction or privileged cache
-refresh remains in Store.
+refresh runs inside the Store process.
 Local `.deb` files are explicitly unsupported by the authenticated APT-channel
 transport; metadata is not authority to install arbitrary archives. Their
 inspection and GStreamer codec resolution also fail explicitly until controlled
-OS providers exist rather than reintroducing a raw PackageKit path. Flatpak
-catalog/installed/source presentation remains, but refs, updates, removals,
-rebases and repository changes fail with `OS_PACKAGE_PROVIDER_UNSUPPORTED`.
-There is currently no typed retained Root Flatpak provider; its future contract
-must bind owner/session, exact user/system installation, remote/ref/commit and
-dependencies, checked runtime/GUI retirement, unknown helper/shared effects,
-protected consent, durable outcome/inverse and read-only recovery. Flatpak IDs
-are never passed to Debian, and no App-owned root D-Bus/helper exception exists.
-Catalog refresh rereads existing metadata rather than activating privileged
-PackageKit/Flatpak refresh helpers.
+OS providers exist rather than reintroducing a raw PackageKit path.
+
+**Claw Apps** uses the signed `clawos-app` catalog for the native architecture.
+The install and update actions bind to its current Debian version; they do not
+install snapshots or bypass per-App review. **Linux Apps** uses the existing
+localized AppStream views for OS-approved APT sources and configured signed
+Flatpak remotes. A Flatpak install or update selects one exact application ref
+in one user or system installation. The Root provider binds its resolved signed
+commits and dependencies into the protected review. No Flatpak IDs enter
+Debian, and the GUI needs no raw repository mounts or root D-Bus access.
+Local archives, removals, rebases and remote changes are unsupported for Flatpak.
+
+**Check for updates** asks the OS to fetch signed source metadata separately
+from payload transactions, then reloads the installed and candidate versions.
+The Updates view separates Claw releases from Linux and system updates.
+Update All applies to the Linux and system section, with separate reviews
+for Flatpak apps. Claw App upgrades are selected individually.
+These features use the paired `claw-os-software-store-v1` provider. The Agent
+Web Store remains a separate Web-only catalog and does not present Linux packages.
 
 The separate clean-CI Store lane at OS source
 `d18c4dc5cba0227662f46a88a4534b70584410c7` verified this App's original

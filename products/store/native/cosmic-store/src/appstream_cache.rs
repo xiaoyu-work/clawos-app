@@ -438,7 +438,15 @@ impl AppstreamCache {
     }
 
     pub fn extend_controlled_xml(&mut self, source: &str, xml: &str) -> Result<(), Box<dyn Error>> {
-        let (origin, infos, addons) = self.parse_xml(source, xml.as_bytes())?;
+        self.extend_controlled_bytes(source, xml.as_bytes())
+    }
+
+    pub fn extend_controlled_bytes(&mut self, source: &str, data: &[u8]) -> Result<(), Box<dyn Error>> {
+        let (origin, infos, addons) = if data.starts_with(b"\x1f\x8b") {
+            self.parse_xml(source, GzDecoder::new(data).take(128 * 1024 * 1024))?
+        } else {
+            self.parse_xml(source, data)?
+        };
         self.append_metadata(origin, infos, addons);
         Ok(())
     }

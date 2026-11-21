@@ -52,6 +52,7 @@ use backend::{BackendName, Backends, Package};
 mod backend;
 
 mod claw_glue;
+mod claw_apps;
 mod mcp;
 mod product;
 mod package;
@@ -287,6 +288,9 @@ pub enum Message {
     CategoryResults(&'static [Category], Vec<SearchResult>),
     CategoryIconsLoaded(&'static [Category], Vec<(usize, widget::icon::Handle)>),
     CheckUpdates,
+    SourcesRefreshed(Result<(), String>),
+    ClawCatalog(Result<claw_apps::Catalog, String>),
+    UpdateQueryFailed(BackendName, String),
     Config(Config),
     DialogCancel,
     DialogConfirm,
@@ -467,6 +471,10 @@ pub struct App {
     pub pending_backend_updates:
         HashMap<BackendName, (Arc<atomic::AtomicBool>, cosmic::iced::task::Handle)>,
     pub fetching_backends: bool,
+    pub refreshing_sources: bool,
+    pub refresh_error: Option<String>,
+    pub update_errors: BTreeMap<BackendName, String>,
+    pub claw_catalog: Option<Result<claw_apps::Catalog, String>>,
     pub update_apps_in_progress: bool,
     /// Prevents multiple instances of `App::update_apps()` tasks
     pub update_apps_scheduled: bool,
@@ -1021,6 +1029,9 @@ impl App {
     }
 
     fn search(&self) -> Task<Message> {
+        if matches!(self.nav_model.active_data::<NavPage>(), Some(NavPage::ClawApps)) {
+            return Task::none();
+        }
         let input = self.search_input.clone();
 
         // Handle supported URI schemes before trying plain text search
@@ -1191,13 +1202,21 @@ impl App {
         let backend_updates = backend::backends(&locale, refresh)
             .map(|(name, backend)| Message::BackendUpdate(name, backend));
 
-        cosmic::task::stream(
+        let backends = cosmic::task::stream(
             futures::stream::once(async { Message::BackendUpdateStart })
                 .chain(backend_updates)
                 .chain(futures::stream::once(async {
                     Message::BackendUpdateFinished
                 })),
-        )
+        );
+        if matches!(self.mode, Mode::Normal) {
+            Task::batch([backends, Task::perform(
+                async { tokio::task::spawn_blocking(claw_apps::load).await.unwrap_or_else(|error| Err(error.to_string())) },
+                |value| action::app(Message::ClawCatalog(value)),
+            )])
+        } else {
+            backends
+        }
     }
 
     fn update_config(&mut self) -> Task<Message> {
@@ -1439,7 +1458,7 @@ impl App {
                         .collect(),
                     Err(err) => {
                         log::error!("failed to list updates: {}", err);
-                        Vec::new()
+                        return Some(Message::UpdateQueryFailed(backend_name, err.to_string()));
                     }
                 };
                 let duration = start.elapsed();
@@ -1818,6 +1837,13 @@ impl App {
                 .into();
         }
 
+        let version_pair = self.updates.as_deref().and_then(|updates| updates.get(index))
+            .and_then(|(_, package)| {
+                package.extra.get("previous_version").map(|current| {
+                    fl!("claw-version-pair", current = current.as_str(), available = package.version.as_str())
+                })
+            });
+
         // Regular package release notes
         // Note: appstream releases are ordered from newest to oldest, so first() is the latest
         let (version, date, summary, url) = {
@@ -1836,7 +1862,7 @@ impl App {
                 })
                 .unwrap_or(("", None, None, None))
         };
-        widget::column::with_capacity(3)
+        widget::column::with_capacity(4)
             .push(
                 widget::column::with_capacity(2)
                     .push(widget::text::title4(format!(
@@ -1855,6 +1881,7 @@ impl App {
                         .map(widget::text),
                     ),
             )
+            .push_maybe(version_pair.map(widget::text))
             .push(widget::scrollable(widget::text(
                 summary.unwrap_or_else(|| fl!("no-description")),
             )))
@@ -2131,6 +2158,10 @@ impl Application for App {
             selected_opt: None,
             applet_placement_buttons,
             fetching_backends: false,
+            refreshing_sources: false,
+            refresh_error: None,
+            update_errors: BTreeMap::new(),
+            claw_catalog: None,
             update_apps_scheduled: false,
             update_apps_in_progress: false,
             uninstall_purge_data: false,

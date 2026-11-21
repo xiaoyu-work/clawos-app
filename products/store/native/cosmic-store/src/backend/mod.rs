@@ -115,18 +115,9 @@ pub fn backends<'a>(
             tokio::task::spawn_blocking(move || {
                 let start = Instant::now();
                 log::info!("adding flatpak repository");
-                _ = tx.send(match flatpak::Flatpak::new(user, &locale) {
-                    Ok(backend) => {
-                        let duration = start.elapsed();
-                        log::warn!("initialized {} backend in {:?}", backend_name, duration);
-                        let backend: Arc<dyn Backend> = Arc::new(backend);
-                        Some((backend_name, backend))
-                    }
-                    Err(err) => {
-                        log::warn!("failed to load {} backend: {}", backend_name, err);
-                        None
-                    }
-                });
+                let backend: Arc<dyn Backend> = Arc::new(flatpak::Flatpak::new(user, &locale));
+                log::debug!("initialized {} backend in {:?}", backend_name, start.elapsed());
+                _ = tx.send(Some((backend_name, backend)));
             });
 
             backends.push(rx)

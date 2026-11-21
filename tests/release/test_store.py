@@ -145,18 +145,27 @@ def test_store_index_binds_signed_product_ui_and_immutable_release(tmp_path, pub
         store.verified_index(tmp_path / "store", signing)
 
 
-def test_store_refresh_keeps_artifacts_and_advances_signed_freshness(tmp_path, public_signer, signing, app, deb):
+def test_store_refresh_keeps_artifacts_and_advances_signed_freshness(
+    tmp_path, public_signer, signing, app, deb, monkeypatch,
+):
     verifier, sign = public_signer
-    root = sign(web_app(app()))
-    snapshots.build_catalog([root], tmp_path / "snapshots", release_version="1.0.0",
+    roots = [sign(web_app(app())), sign(web_app(app("cosmic-launcher")))]
+    snapshots.build_catalog(roots, tmp_path / "snapshots", release_version="1.0.0",
                             architecture="all", provenance=verifier, signing=signing)
-    initial = store.compose([tmp_path / "snapshots"], tmp_path / "store", verifier, signing,
-                            packages=[app_deb(deb, [root])])
-    refreshed = store.refresh(tmp_path / "store", signing)
-    assert refreshed["apps"] == initial["apps"]
+    package = app_deb(deb, roots)
+    historical = digest(package)
+    output = tmp_path / "store"
+    with monkeypatch.context() as original:
+        original.setattr(store, "retired_ids", set)
+        initial = store.compose([tmp_path / "snapshots"], output, verifier, signing, packages=[package])
+        assert store.refresh(output, signing)["apps"] == initial["apps"]
+    refreshed = store.refresh(output, signing)
+    assert refreshed["apps"] == [record for record in initial["apps"] if record["app_id"] != "cosmic-launcher"]
+    assert len(initial["apps"]) == 2
     assert refreshed["packages"] == initial["packages"]
+    assert refreshed["packages"][0]["sha256"] == digest(package) == historical
     assert int(refreshed["generation"]) > int(initial["generation"])
-    assert store.verified_index(tmp_path / "store", signing) == refreshed
+    assert store.verified_index(output, signing) == refreshed
 
 
 def test_publication_signs_exact_debian_app_payload_and_retains_web_assets(

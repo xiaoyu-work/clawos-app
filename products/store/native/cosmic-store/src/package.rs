@@ -14,15 +14,17 @@ use crate::{Operation, OperationKind, backend::BackendName};
 const HISTORY_LIMIT: usize = 128;
 const INTENT_BYTES: u64 = 64 * 1024;
 pub const FLATPAK_UNAVAILABLE: &str =
-    "OS_PACKAGE_PROVIDER_UNSUPPORTED: Claw OS has no retained Flatpak transaction service. \
-     Flatpak browsing remains available; installation, removal, updates and source changes \
-     are unavailable until the OS provides coordinated Flatpak effects. No PackageKit, \
-     polkit or Debian fallback was attempted.";
+    "OS_PACKAGE_PROVIDER_UNSUPPORTED: Only exact Flatpak installs and updates from configured \
+     signed sources are supported here. Use the system administrator's Flatpak tools for \
+     source changes, local bundles and removals.";
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Action {
     Install,
+    InstallRelease,
+    FlatpakInstall,
+    FlatpakUpdate,
     Remove,
     Purge,
     Upgrade,
@@ -32,6 +34,9 @@ impl Action {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Install => "install",
+            Self::InstallRelease => "install-release",
+            Self::FlatpakInstall => "flatpak-install",
+            Self::FlatpakUpdate => "flatpak-update",
             Self::Remove => "remove",
             Self::Purge => "purge",
             Self::Upgrade => "upgrade",
@@ -64,12 +69,25 @@ pub struct Intent {
     pub invocation_id: String,
     pub action: Action,
     pub packages: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flatpak: Option<FlatpakTarget>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct FlatpakTarget {
+    pub(crate) scope: String,
+    pub(crate) remote: String,
+    #[serde(rename = "ref")]
+    pub(crate) reference: String,
 }
 
 impl Intent {
     pub fn for_operation(op: &Operation) -> io::Result<Self> {
-        if op.backend_name != BackendName::Packagekit {
-            return Err(io::Error::other("only Debian catalog actions use the Root APT service"));
+        if op.backend_name != BackendName::Packagekit && !op.backend_name.is_flatpak() {
+            return Err(io::Error::other("The OS Store supports Debian and Flatpak packages"));
         }
         if op.infos.iter().any(|info| !info.package_paths.is_empty()) {
             return Err(io::Error::other(
@@ -78,7 +96,34 @@ impl Intent {
                  authenticated repository; no install-files or PackageKit fallback was attempted.",
             ));
         }
+        let version = match op.infos.as_slice() {
+            [info] if info.source_id == super::claw_apps::SOURCE_ID
+                && matches!(op.kind, OperationKind::Install | OperationKind::Update) =>
+            {
+                Some(info.releases.first().ok_or_else(|| io::Error::other(
+                    "The official App has no authenticated release version"))?.version.clone())
+            }
+            _ => None,
+        };
+        let flatpak = if op.backend_name.is_flatpak() {
+            let [info] = op.infos.as_slice() else {
+                return Err(io::Error::other("Select one exact Flatpak application"));
+            };
+            let [reference] = info.flatpak_refs.as_slice() else {
+                return Err(io::Error::other("The selected source does not provide one exact application ref"));
+            };
+            let (scope, remote) = if op.backend_name == BackendName::FlatpakUser {
+                ("user", info.source_id.as_str())
+            } else {
+                ("system", info.source_id.strip_suffix(" (system)").ok_or_else(|| io::Error::other("Missing system Flatpak remote"))?)
+            };
+            Some(FlatpakTarget { scope: scope.into(), remote: remote.into(), reference: reference.clone() })
+        } else { None };
         let action = match op.kind {
+            OperationKind::Install if flatpak.is_some() => Action::FlatpakInstall,
+            OperationKind::Update if flatpak.is_some() => Action::FlatpakUpdate,
+            _ if flatpak.is_some() => return Err(io::Error::other(FLATPAK_UNAVAILABLE)),
+            OperationKind::Install | OperationKind::Update if version.is_some() => Action::InstallRelease,
             OperationKind::Install => Action::Install,
             OperationKind::Uninstall { purge_data: false } => Action::Remove,
             OperationKind::Uninstall { purge_data: true } => Action::Purge,
@@ -91,13 +136,27 @@ impl Intent {
             invocation_id: bytes.iter().map(|byte| format!("{byte:02x}")).collect(),
             action,
             packages: op.infos.iter().flat_map(|info| info.pkgnames.clone()).collect(),
+            version,
+            flatpak,
         };
         intent.canonical()
     }
 
     pub(crate) fn canonical(mut self) -> io::Result<Self> {
-        if !valid_id(&self.invocation_id)
-            || self.packages.is_empty()
+        if !valid_id(&self.invocation_id) {
+            return Err(io::Error::other("Invalid package intent correlation"));
+        }
+        if matches!(self.action, Action::FlatpakInstall | Action::FlatpakUpdate) {
+            if self.packages.is_empty() && self.version.is_none() && self.flatpak.as_ref().is_some_and(|target| {
+                matches!(target.scope.as_str(), "user" | "system")
+                    && !target.remote.is_empty() && target.remote.len() <= 128
+                    && target.reference.starts_with("app/") && target.reference.len() <= 255
+            }) {
+                return Ok(self);
+            }
+            return Err(io::Error::other("Expected one Flatpak application and named source"));
+        }
+        if self.flatpak.is_some() || self.packages.is_empty()
             || self.packages.len() > HISTORY_LIMIT
             || self.packages.iter().any(|name| !crate::product::valid_package_name(name))
         {
@@ -105,10 +164,27 @@ impl Intent {
         }
         self.packages.sort();
         self.packages.dedup();
+        if self.action == Action::InstallRelease {
+            if self.packages.len() != 1 || !crate::product::claw_app_package(&self.packages[0])
+                || !self.version.as_ref().is_some_and(|value| !value.is_empty()
+                    && value.len() <= 128 && value.as_bytes()[0].is_ascii_digit()
+                    && value.bytes().all(|byte| byte.is_ascii_alphanumeric() || b".+~-:".contains(&byte)))
+            {
+                return Err(io::Error::other("Expected one Claw App and its exact Debian release"));
+            }
+        } else if self.version.is_some() {
+            return Err(io::Error::other("This package action does not accept a version"));
+        }
         Ok(self)
     }
 
     pub fn operation(&self) -> Value {
+        if let Some(target) = &self.flatpak {
+            return json!({"action": "flatpak", "install": self.action == Action::FlatpakInstall, "target": target});
+        }
+        if let Some(version) = &self.version {
+            return json!({"action": self.action, "package": self.packages[0], "version": version});
+        }
         if self.packages.len() == 1 {
             json!({"action": self.action, "package": self.packages[0]})
         } else {
@@ -121,7 +197,13 @@ impl Intent {
             "__package_intent".into(), "--retained".into(), mode.as_str().into(),
             self.invocation_id.clone(), self.action.as_str().into(),
         ];
-        args.extend(self.packages.iter().cloned());
+        if let Some(target) = &self.flatpak {
+            args.extend([target.scope.clone(), target.remote.clone(), target.reference.clone()]);
+        } else if let Some(version) = &self.version {
+            args.push(format!("{}={version}", self.packages[0]));
+        } else {
+            args.extend(self.packages.iter().cloned());
+        }
         args
     }
 
@@ -230,10 +312,15 @@ impl Tracked {
                  The OS must provide retained package-intent support; no direct provider fallback is available."
             ),
         };
+        let target = match (&self.intent.flatpak, &self.intent.version) {
+            (Some(target), _) => format!("{}: {} / {}", target.scope, target.remote, target.reference),
+            (_, Some(version)) => format!("{}={version}", self.intent.packages[0]),
+            _ => self.intent.packages.join(", "),
+        };
         format!(
             "{}: {}\n{evidence}\nCorrelation: {}. Outside Store: cos package-transactions --invocation {}. \
              Recovery only reconciles evidence; it never reruns APT.",
-            self.intent.action.as_str(), self.intent.packages.join(", "),
+            self.intent.action.as_str(), target,
             self.intent.invocation_id, self.intent.invocation_id,
         )
     }

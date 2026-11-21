@@ -17,10 +17,12 @@ the same product catalog functions as `pkg`, without calling that App or
 borrowing transaction authority. Human UI file handling uses OS policy and
 snapshots; window activation uses the fixed OS Store target.
 
-This source move preserves native UI backends rather than merging the apt MCP
-catalog with AppStream/Flatpak/PackageKit. No user data, package database, apt
-configuration or accounts move. Interactive package operations and visual
-acceptance have not been exercised by the synthetic tests.
+The desktop **Claw Apps** tab shows signed releases from this repository.
+**Linux Apps** browses the configured APT and signed Flatpak catalogs, and
+**Updates** shows available releases separately. **Check for updates** refreshes
+software indexes without installing anything. Installs and updates use the
+protected OS review and retained status; Flatpak requires a configured signed
+remote. The Agent Web Store is separate and does not list Linux software.
 
 See [native/PROVENANCE.md](native/PROVENANCE.md) for source origins and licensing.
 

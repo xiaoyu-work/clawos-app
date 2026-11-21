@@ -7,22 +7,6 @@ use super::{Backend, Package};
 use crate::{AppId, AppInfo, AppstreamCache, GStreamerCodec, Operation, product};
 
 #[derive(Deserialize)]
-struct CatalogItem {
-    source: String,
-    xml: String,
-}
-
-#[derive(Deserialize)]
-struct CatalogPage {
-    revision: String,
-    configured: bool,
-    items: Vec<CatalogItem>,
-    count: usize,
-    total: usize,
-    next: Option<String>,
-}
-
-#[derive(Deserialize)]
 struct Installed {
     packages: Vec<String>,
     versions: HashMap<String, String>,
@@ -123,43 +107,20 @@ impl Packagekit {
 impl Backend for Packagekit {
     fn load_caches(&mut self, _refresh: bool) -> Result<(), Box<dyn Error>> {
         let mut cache = Self::cache(&self.appstream_caches[0].locale);
-        let mut cursor: Option<String> = None;
-        let mut revision = None;
-        let mut received = 0;
-        loop {
-            let page: CatalogPage =
-                serde_json::from_value(product::query("catalog", json!({"cursor": cursor}))?)?;
-            if !page.configured {
-                return Err(
-                    "OS_PACKAGE_CATALOG_UNAVAILABLE: no standard system catalog is configured"
-                        .into(),
-                );
-            }
-            if page.count != page.items.len()
-                || page.total > 100_000
-                || received + page.count > page.total
-                || revision
-                    .as_ref()
-                    .is_some_and(|expected| expected != &page.revision)
-                || page.items.is_empty() && page.next.is_some()
-            {
-                return Err("The OS catalog page does not match its retained revision".into());
-            }
-            revision = Some(page.revision);
-            for item in page.items {
-                cache.extend_controlled_xml(&item.source, &item.xml)?;
-            }
-            received += page.count;
-            match page.next {
-                Some(next) => cursor = Some(next),
-                None => {
-                    if received != page.total {
-                        return Err("The OS catalog snapshot is incomplete".into());
-                    }
-                    break;
-                }
-            }
+        if !product::visit_catalog(|source, xml| cache.extend_controlled_xml(source, xml))? {
+            return Err(
+                "OS_PACKAGE_CATALOG_UNAVAILABLE: no standard system catalog is configured".into(),
+            );
         }
+        cache.infos.retain(|_, info| {
+            !info
+                .pkgnames
+                .iter()
+                .any(|name| product::claw_app_package(name))
+        });
+        cache
+            .pkgnames
+            .retain(|name, _| !product::claw_app_package(name));
         self.appstream_caches[0] = cache;
         Ok(())
     }
@@ -190,16 +151,24 @@ impl Backend for Packagekit {
         let mut installed = HashMap::new();
         let mut rows = Vec::new();
         for update in updates.upgradable {
+            if product::claw_app_package(&update.package) {
+                continue;
+            }
             installed.insert(update.package.clone(), update.old_version);
             rows.push((update.package, update.new_version));
         }
         let mut packages = self.packages(rows)?;
-        for package in packages.iter_mut().filter(|package| package.id.is_system()) {
+        for package in &mut packages {
             for name in &package.info.pkgnames {
                 if let Some(version) = installed.get(name) {
                     package
                         .extra
                         .insert(format!("{}_installed", name), version.clone());
+                    if !package.id.is_system() {
+                        package
+                            .extra
+                            .insert("previous_version".into(), version.clone());
+                    }
                 }
             }
         }
