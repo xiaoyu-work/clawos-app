@@ -46,7 +46,7 @@ To debug issues with asynchronous code, install [tokio-console](https://github.c
 ## Claw OS MCP service
 
 The App Host starts `/usr/bin/cosmic-notifications` with `COS_MCP_SERVER=1`.
-This mode submits bounded intent through `/usr/local/bin/cos` to the
+This mode submits bounded intent through `/usr/local/bin/yu` to the
 capability-gated OS Notification Service; it never opens a session bus or starts
 a second daemon. The manifest owns the tool catalog.
 

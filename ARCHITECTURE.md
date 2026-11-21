@@ -361,7 +361,7 @@ Requests are pending until the OS polkit helper confirms; revocation and live
 enforcement remain in the OS. Until-revoked restoration is durable policy
 consent rather than expiring execution authority; old approved Settings receipts
 retain that meaning while newer owner/App/session revocations still win.
-The shared permission client explicitly selects installed `/usr/local/bin/cos`
+The shared permission client explicitly selects installed `/usr/local/bin/yu`
 through the SDK decoder without relying on PATH or changing process environment.
 Fixed Settings activation uses the authenticated owner's independent user
 systemd service, preserving daemon/worker `NoNewPrivileges` and immediate

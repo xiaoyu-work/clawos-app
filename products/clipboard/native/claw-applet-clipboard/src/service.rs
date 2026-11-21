@@ -36,7 +36,7 @@ pub(crate) async fn history(
     confirm: bool,
     deadline: Option<u64>,
 ) -> Result<Value, String> {
-    request("/usr/local/bin/cos", action, identity, confirm, deadline).await
+    request("/usr/local/bin/yu", action, identity, confirm, deadline).await
 }
 
 async fn request(

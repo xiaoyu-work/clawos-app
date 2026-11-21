@@ -13,8 +13,8 @@ pub fn query(operation: &str, arguments: Value) -> io::Result<Value> {
         .args(["-I", "-c", &format!(
             "import sys,os,json\n\
              sys.path[:0] = ['/usr/lib/cos/python']\n\
-             os.environ['COS_BIN'] = '/usr/local/bin/cos'\n\
-             os.environ['CLAW_COS_BIN'] = '/usr/local/bin/cos'\n\
+             os.environ['COS_BIN'] = '/usr/local/bin/yu'\n\
+             os.environ['CLAW_COS_BIN'] = '/usr/local/bin/yu'\n\
              exec(compile({bridge}, '<settings-human>', 'exec'))\n"
         )])
         .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped())

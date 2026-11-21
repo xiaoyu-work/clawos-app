@@ -66,11 +66,11 @@ grant, never the management Apps' device/account permissions. The OS activates
 the fixed GUI through the owner's independent user service manager, without
 relaxing daemon/worker isolation. Applications UI and MCP share the SDK
 permission client; permission and fixed-launch calls explicitly use installed
-`/usr/local/bin/cos` even when
+`/usr/local/bin/yu` even when
 PATH is sanitized and no override is set.
 
 Restoration stays pending until a human reviews it in the OS approval gate or
-with `cos review`. Neither Settings GUI nor MCP can approve requests or launch
+with `yu review`. Neither Settings GUI nor MCP can approve requests or launch
 the privileged approval helper. Pending requests and recent decisions are
 read-only; Refresh keeps the selected App and queries actual OS policy.
 An approved decision alone is not enabled policy, and enabled is not granted.

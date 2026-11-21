@@ -76,7 +76,7 @@ def test_all_routes_use_exact_power_scopes(mcp_app, transport, action):
         stdout=json.dumps({"requested": True}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         if transport == "direct":
@@ -96,7 +96,7 @@ def test_all_routes_use_exact_power_scopes(mcp_app, transport, action):
     else:
         require.assert_called_once_with("sys.power", wild=True)
     run.assert_called_once()
-    expected = ["/usr/local/bin/cos", "__power", action]
+    expected = ["/usr/local/bin/yu", "__power", action]
     if action != "status":
         expected.append("--confirm")
     assert run.call_args.args[0] == expected
@@ -111,7 +111,7 @@ def test_broker_error_raises():
         stdout=json.dumps({"error": "reboot failed"}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match="reboot failed"):

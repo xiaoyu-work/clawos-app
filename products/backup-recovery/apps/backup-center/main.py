@@ -19,7 +19,7 @@ TIMEOUT_SECS = int(os.environ.get("CLAW_BACKUP_CENTER_TIMEOUT", "10800"))
 
 
 def _cos_binary() -> str | None:
-    return os.environ.get("COS_BIN") or shutil.which("cos")
+    return os.environ.get("COS_BIN") or shutil.which("yu")
 
 
 def _canonical_path(
@@ -125,7 +125,7 @@ def _broker(
     cos_bin = _cos_binary()
     if not cos_bin:
         raise FileNotFoundError(
-            "cos binary not found; Backup Center broker unavailable"
+            "yu binary not found; Backup Center broker unavailable"
         )
     argv = [cos_bin, "__backup", action, "--repo", repo, "--credential", credential]
     if source is not None:

@@ -72,7 +72,7 @@
   "opt_compose":               { "message": "写信默认值" },
   "opt_translate":             { "message": "翻译默认值" },
   "opt_about":                 { "message": "关于" },
-  "about_body":                { "message": "所有 AI 请求都通过 cos ai chat 走 cos 权限系统调度，Thunderbird 内不保存任何模型密钥。" },
+  "about_body":                { "message": "所有 AI 请求都通过 yu ai chat 走 cos 权限系统调度，Thunderbird 内不保存任何模型密钥。" },
 
   "feat_summarize":            { "message": "邮件总结" },
   "feat_smartReply":           { "message": "智能回复" },

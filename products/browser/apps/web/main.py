@@ -2,12 +2,12 @@
 
 The desktop profile and renderer pipe are never exposed to this App.
 
-    cos app web read URL                 -> {url, title, text, links, engine}
-    cos app web read URL --html          -> {url, title, html, engine}
-    cos app web read URL --eval EXPR     -> {url, result}
-    cos app web scrape URL...            -> {results: [...], total_time_ms, ...}
-    cos app web screenshot URL --output P -> {ok, output, bytes, ...}
-    cos app web submit URL --data ...    -> {url, status, body}  (urllib POST)
+    yu app web read URL                 -> {url, title, text, links, engine}
+    yu app web read URL --html          -> {url, title, html, engine}
+    yu app web read URL --eval EXPR     -> {url, result}
+    yu app web scrape URL...            -> {results: [...], total_time_ms, ...}
+    yu app web screenshot URL --output P -> {ok, output, bytes, ...}
+    yu app web submit URL --data ...    -> {url, status, body}  (urllib POST)
 """
 
 import base64
@@ -143,7 +143,7 @@ _SUMMARIZE_SYSTEM = (
 def _cmd_read(args):
     """Render a URL and return text, links and title."""
     if not args:
-        return {"error": "usage: cos web read <url> [--selector CSS] "
+        return {"error": "usage: yu web read <url> [--selector CSS] "
                 "[--wait CSS] [--timeout SEC] [--max-length N] [--html] [--eval JS]"}
 
     positional, flags = _parse_args(args, {
@@ -157,7 +157,7 @@ def _cmd_read(args):
     })
 
     if not positional:
-        return {"error": "usage: cos web read <url>"}
+        return {"error": "usage: yu web read <url>"}
 
     url = _normalize_url(positional[0])
     host = _host_of(url)
@@ -198,7 +198,7 @@ def _cmd_read(args):
 def _cmd_summarize(args):
     """Fetch a URL and pipe its extracted text through the AI gate."""
     if not args:
-        return {"error": "usage: cos web summarize <url>"}
+        return {"error": "usage: yu web summarize <url>"}
 
     # Coarse-grained capability check — fail fast before fetching the
     # page if the agent doesn't actually have AI access.
@@ -273,7 +273,7 @@ def _remember_summary(url, title, summary):
             kind="note",
             entity_id=url,
             tags=["web", "summary"],
-            link=f"cos app web read {url}",
+            link=f"yu app web read {url}",
         )
     except memory.MemoryError:
         pass
@@ -282,7 +282,7 @@ def _remember_summary(url, title, summary):
 def _cmd_screenshot(args):
     """Capture a screenshot in Helium; publish only to the approved path."""
     if not args:
-        return {"error": "usage: cos web screenshot <url> --output PATH "
+        return {"error": "usage: yu web screenshot <url> --output PATH "
                 "[--width W] [--height H] [--full-page] [--timeout SEC]"}
 
     positional, flags = _parse_args(args, {
@@ -294,7 +294,7 @@ def _cmd_screenshot(args):
     })
 
     if not positional:
-        return {"error": "usage: cos web screenshot <url> --output PATH"}
+        return {"error": "usage: yu web screenshot <url> --output PATH"}
     url = _normalize_url(positional[0])
     output = flags["output"]
     if not output:
@@ -341,7 +341,7 @@ def _private_create(path, flags):
 def _cmd_scrape(args):
     """Render separately authorized pages with bounded concurrency."""
     if not args:
-        return {"error": "usage: cos web scrape <url> [<url>...] "
+        return {"error": "usage: yu web scrape <url> [<url>...] "
                 "[--eval JS] [--concurrency N] [--timeout SEC]"}
 
     positional, flags = _parse_args(args, {
@@ -401,7 +401,7 @@ def _cmd_scrape(args):
 def _cmd_submit(args):
     """POST form data via stdlib urllib (no JS render needed for typical forms)."""
     if not args:
-        return {"error": "usage: cos web submit <url> --data '{...}' [--method POST]"}
+        return {"error": "usage: yu web submit <url> --data '{...}' [--method POST]"}
 
     positional, flags = _parse_args(args, {
         "data": None,
@@ -409,7 +409,7 @@ def _cmd_submit(args):
         "timeout": str(TIMEOUT),
     })
     if not positional:
-        return {"error": "usage: cos web submit <url> --data '{...}'"}
+        return {"error": "usage: yu web submit <url> --data '{...}'"}
 
     url = _normalize_url(positional[0])
     host = _host_of(url)
@@ -453,7 +453,7 @@ def _cmd_submit(args):
 
 
 # ---------------------------------------------------------------------------
-# Schema (advertised to agents via `cos app web --schema`)
+# Schema (advertised to agents via `yu app web --schema`)
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -489,7 +489,7 @@ def main():
 
     if not argv:
         print(json.dumps({
-            "error": "usage: cos app web <read|scrape|screenshot|submit|summarize> [args...]",
+            "error": "usage: yu app web <read|scrape|screenshot|submit|summarize> [args...]",
             "commands": ["read", "scrape", "screenshot", "submit", "summarize"],
         }))
         return

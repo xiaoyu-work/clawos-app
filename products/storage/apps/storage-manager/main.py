@@ -22,7 +22,7 @@ DIAGNOSTIC_ACTIONS = frozenset({"health", "check"})
 
 
 def _cos_binary() -> str | None:
-    return os.environ.get("COS_BIN") or shutil.which("cos")
+    return os.environ.get("COS_BIN") or shutil.which("yu")
 
 
 def _canonical_device(raw: object) -> str:
@@ -43,7 +43,7 @@ def _broker(action: str, device: str | None = None) -> dict:
     cos_bin = _cos_binary()
     if not cos_bin:
         raise FileNotFoundError(
-            "cos binary not found; Storage Manager broker unavailable"
+            "yu binary not found; Storage Manager broker unavailable"
         )
     argv = [cos_bin, "__storage", action]
     if device is not None:

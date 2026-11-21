@@ -33,7 +33,7 @@ TIMEOUT_SECS = int(os.environ.get("CLAW_DISPLAY_MANAGER_TIMEOUT", "180"))
 
 
 def _cos_binary() -> str | None:
-    return os.environ.get("COS_BIN") or shutil.which("cos")
+    return os.environ.get("COS_BIN") or shutil.which("yu")
 
 
 def _name(raw: object, kind: str, maximum: int) -> str:
@@ -152,7 +152,7 @@ def _broker(
     cos_bin = _cos_binary()
     if not cos_bin:
         raise FileNotFoundError(
-            "cos binary not found; Display Manager broker unavailable"
+            "yu binary not found; Display Manager broker unavailable"
         )
     argv = [cos_bin, "__display", action]
     options = (

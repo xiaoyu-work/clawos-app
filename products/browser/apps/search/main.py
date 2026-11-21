@@ -303,7 +303,7 @@ def _remember_search(
         kind="event",
         tags=["search", kind, provider],
         link=(
-            f"cos app search {kind} --provider {provider} "
+            f"yu app search {kind} --provider {provider} "
             f"{shlex.quote(query)}"
         ),
     )

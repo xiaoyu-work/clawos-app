@@ -78,12 +78,12 @@ def test_native_staging_keeps_original_resources_modes_and_separate_renderer(tmp
 
 def test_native_mcp_and_ui_share_the_fixed_live_playback_boundary():
     mcp = (NATIVE / "src/mcp.rs").read_text()
-    assert '"/usr/local/bin/cos"' in mcp
+    assert '"/usr/local/bin/yu"' in mcp
     assert "cos_call_json_async_with_binary" in mcp
     assert "spawn_blocking" not in mcp
     assert '"__media-player"' in mcp
     assert "context.cancelled()" in mcp
-    for forbidden in ("Connection::session", "ListNames", "with_player", 'cos app', "CLAW_COS_BIN"):
+    for forbidden in ("Connection::session", "ListNames", "with_player", 'yu app', "CLAW_COS_BIN"):
         assert forbidden not in mcp
     backend = (NATIVE / "src/mpris_backend.rs").read_text()
     assert '&format!("com.clawos.Player.pid{}", process::id())' in backend

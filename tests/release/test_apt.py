@@ -230,7 +230,7 @@ def test_bound_file_ownership_transfer_refuses_a_post_split_os_package(tmp_path,
     assert run([*install, later], check=False, env=environment).returncode != 0
 
 
-@pytest.mark.parametrize("old_runtime", ["claw-os-app-runtime-v1", "claw-os-app-runtime-v1 (= 0.2.0)"])
+@pytest.mark.parametrize("old_runtime", ["yuos-app-runtime-v1", "yuos-app-runtime-v1 (= 0.2.0)"])
 def test_independent_support_requires_the_coordinated_runtime_implementation_without_a_desktop(
     tmp_path, deb, signing, old_runtime,
 ):
@@ -242,7 +242,7 @@ def test_independent_support_requires_the_coordinated_runtime_implementation_wit
     apt = IsolatedApt(tmp_path / "root", repository, signing)
     apt.update()
     assert apt.call("install", "-y", "claw-app-support", check=False).returncode != 0
-    extra["Provides"] = "claw-os-app-runtime-v1 (= 0.2.1), python3 (= 3.13), python3-idna (= 3.3)"
+    extra["Provides"] = "yuos-app-runtime-v1 (= 0.2.1), python3 (= 3.13), python3-idna (= 3.3)"
     current = deb("claw-app-fixture-runtime", "0.2.1", extra=extra)
     updated = compose([current], tmp_path / "updated", signing, previous=repository)
     shutil.rmtree(repository)

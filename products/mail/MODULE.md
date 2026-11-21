@@ -40,8 +40,8 @@ or ambiguous messages fail explicitly. Old provider object types/arguments
 are retired, not aliased to unrelated Thunderbird messages.
 
 ```bash
-cos app email read --account ACCOUNT_ID --id MESSAGE_REFERENCE_ID
-cos activity attach-object ACTIVITY_ID --label "Source email" \
+yu app email read --account ACCOUNT_ID --id MESSAGE_REFERENCE_ID
+yu activity attach-object ACTIVITY_ID --label "Source email" \
   --app email --type thunderbird-message --object-id MESSAGE_REFERENCE_ID
 ```
 
@@ -92,7 +92,7 @@ through its existing pinned non-overwriting filesystem target and task-bound
 snapshot path. Attachment bytes do not cross the Python SDK response limit.
 
 Email uses the published SDK's explicit-binary/cancellable kernel transport
-for `cos __mail request --request-stdin`. The ordinary Host supplies the real
+for `yu __mail request --request-stdin`. The ordinary Host supplies the real
 session. `clawd` validates closed requests, account grants and owner identity;
 no caller can choose a provider socket, UID, profile path or executable.
 When needed it starts fixed Thunderbird through the owner's service manager,

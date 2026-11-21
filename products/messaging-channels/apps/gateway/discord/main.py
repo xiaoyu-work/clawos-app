@@ -173,12 +173,12 @@ def _configure(args: Any) -> dict[str, Any]:
     return {
         "ok": True, "platform": PLATFORM, "configured": config,
         "owner_admission": False,
-        "note": "Legacy preferences only. Configure authenticated ingress with cos channels configure discord.",
+        "note": "Legacy preferences only. Configure authenticated ingress with yu channels configure discord.",
     }
 
 
 def _cos_bin() -> str:
-    return os.environ.get("COS_BIN", "cos")
+    return os.environ.get("COS_BIN", "yu")
 
 
 def _load_token() -> str:
@@ -187,7 +187,7 @@ def _load_token() -> str:
         return env_token.strip()
     token, error = safe_subprocess.safe_credential_load("discord_bot_token", timeout=10.0, cos_bin=_cos_bin())
     if token is None:
-        raise RuntimeError(error or "discord_bot_token is not configured; run `cos credential store discord_bot_token <token>`")
+        raise RuntimeError(error or "discord_bot_token is not configured; run `yu credential store discord_bot_token <token>`")
     return token
 
 

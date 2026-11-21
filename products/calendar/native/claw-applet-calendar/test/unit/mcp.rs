@@ -11,7 +11,7 @@ impl Fixture {
             std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
         fs::create_dir_all(&root).unwrap();
         let root = root.canonicalize().unwrap();
-        fs::write(root.join("cos"), r#"#!/usr/bin/python3
+        fs::write(root.join("yu"), r#"#!/usr/bin/python3
 import json, sys
 from pathlib import Path
 root = Path(__file__).parent
@@ -22,7 +22,7 @@ with (root / "calls.jsonl").open("a") as out:
 print(json.dumps(control["response"]))
 sys.exit(control["status"])
 "#).unwrap();
-        fs::set_permissions(root.join("cos"), fs::Permissions::from_mode(0o700)).unwrap();
+        fs::set_permissions(root.join("yu"), fs::Permissions::from_mode(0o700)).unwrap();
         Self(root)
     }
 
@@ -39,7 +39,7 @@ sys.exit(control["status"])
         }).to_string()).unwrap();
     }
 
-    fn client(&self) -> Client { Client::with_binary(self.0.join("cos")) }
+    fn client(&self) -> Client { Client::with_binary(self.0.join("yu")) }
 
     fn calls(&self) -> usize {
         fs::read_to_string(self.0.join("calls.jsonl")).unwrap_or_default().lines().count()

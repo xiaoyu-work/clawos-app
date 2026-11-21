@@ -73,7 +73,7 @@ def client(tmp_path, request):
     for neighbour in neighbours:
         neighbour.parent.mkdir(parents=True, exist_ok=True)
         neighbour.write_bytes(b"unrelated synthetic state")
-    peer = tmp_path / "cos"
+    peer = tmp_path / "yu"
     peer.write_text(f"#!{sys.executable}\n" + textwrap.dedent("""\
         import json, os, sys
         from pathlib import Path

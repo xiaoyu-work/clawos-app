@@ -597,7 +597,7 @@ ClawApp.ready.then((app) => {
             if (!permission.enabled) args.reason = text(reason, "restoration reason");
             review(command, args, permission.enabled ? "Revoke declared permission" : "Request permission restoration",
               permission.enabled ? "Disable this one brokered permission and invalidate this owner's target App grants. Restart/retry the affected App afterward. Already-authorized effects are not rolled back." :
-                "This creates a pending request, not approval or a live grant. A human must review it in the OS approval gate or cos review. This UI cannot approve, choose a grant duration or expand manifest ceilings.",
+                "This creates a pending request, not approval or a live grant. A human must review it in the OS approval gate or yu review. This UI cannot approve, choose a grant duration or expand manifest ceilings.",
               false, () => {
                 invalidate();
                 notice.textContent = permission.enabled ? "Revocation request returned. Inspect this App again to see actual policy state; restart/retry the affected App." : "Restoration request returned pending. Complete human OS review, then inspect this App again. No enabled state has been assumed.";

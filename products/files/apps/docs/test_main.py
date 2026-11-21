@@ -286,7 +286,7 @@ class DocsAppTests(unittest.TestCase):
         result = self.main.search("budget")
 
         self.assertEqual(result["count"], 0)
-        self.assertIn("cos app docs index", result["hint"])
+        self.assertIn("yu app docs index", result["hint"])
         self.assertEqual(
             self.policy.call_args_list,
             [

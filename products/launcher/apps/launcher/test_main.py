@@ -15,7 +15,7 @@ from test_support import authenticated_mcp_params, load_local_module
 APP_DIR = pathlib.Path(__file__).parent
 MANIFEST_PATH = APP_DIR / "app.json"
 SERVER_PATH = APP_DIR / "server.py"
-COS_BIN = "/usr/local/bin/cos"
+COS_BIN = "/usr/local/bin/yu"
 APP_ID = "com.example.Editor"
 TOOL_NAMES = [
     "launcher.list",
@@ -740,7 +740,7 @@ def test_broker_payload_failures_raise(
             "permission denied launching Launcher broker",
         ),
         (
-            main.subprocess.TimeoutExpired(["cos"], main.BROKER_TIMEOUT_SECS),
+            main.subprocess.TimeoutExpired(["yu"], main.BROKER_TIMEOUT_SECS),
             TimeoutError,
             "Launcher broker exceeded",
         ),

@@ -62,7 +62,7 @@ def test_staged_calendar_files_mail_chain_uses_public_mcp_and_isolated_wire(tmp_
     control = tmp_path / "wire-control.json"
     control.write_text('{"deny":null}')
     log = tmp_path / "wire.jsonl"
-    peer = tmp_path / "cos"
+    peer = tmp_path / "yu"
     peer.write_text(f"#!{sys.executable}\n" + textwrap.dedent("""\
         import json, os, sys
         from pathlib import Path
@@ -419,7 +419,7 @@ def test_staged_db_dispatches_with_real_sdk_and_preserves_its_data_namespace(tmp
     for sibling in siblings:
         sibling.parent.mkdir(parents=True, exist_ok=True)
         sibling.write_bytes(b"unrelated private state")
-    policy = tmp_path / "cos"
+    policy = tmp_path / "yu"
     policy.write_text(
         '#!/bin/sh\n'
         'test "$1:$2:$3" = "--wire=1:__policy:check" || exit 99\n'
@@ -630,7 +630,7 @@ def test_document_runs_with_only_the_actual_staged_library_and_platform(tmp_path
     stage_platform_python(python)
     document = tmp_path / "synthetic.txt"
     document.write_text("installed shared document parser")
-    policy = tmp_path / "cos"
+    policy = tmp_path / "yu"
     policy.write_text(
         '#!/bin/sh\n'
         'test "$1:$2:$3" = "--wire=1:__policy:check" || exit 99\n'

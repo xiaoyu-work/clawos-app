@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       provenance_cli_url:
-        description: "Owner-approved published amd64 cos provenance CLI URL"
+        description: "Owner-approved published amd64 yu provenance CLI URL"
         required: true
         type: string
       provenance_cli_sha256:

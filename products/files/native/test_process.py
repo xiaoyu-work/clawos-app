@@ -31,7 +31,7 @@ def main():
         (fixture / "work/a.txt").write_text("untrusted document")
         (fixture / "work/.cos-meta.json").write_text('{"a.txt":{"tags":["fixture"]}}')
         (fixture / "work/link.txt").symlink_to("a.txt")
-        broker = fixture / "cos"
+        broker = fixture / "yu"
         broker.write_text(
             "#!/usr/bin/python3\n"
             "import json,pathlib,sys\n"
@@ -81,14 +81,14 @@ def main():
             "--bind", str(fixture), namespace,
             "--ro-bind", str(Path("/usr/bin/python3").resolve()), "/usr/bin/python3",
             "--ro-bind", str(installed / "usr/lib/cos"), "/usr/lib/cos",
-            "--ro-bind", str(broker), "/usr/local/bin/cos",
+            "--ro-bind", str(broker), "/usr/local/bin/yu",
             "--ro-bind", str(recoll), "/usr/bin/recollq",
             "--setenv", "COS_MCP_SERVER", "1",
             "--setenv", "COS_APP_MANIFEST", "/usr/lib/cos/apps/cosmic-files/app.json",
             "--setenv", "COS_OWNER_HOME", namespace + "/owner",
             "--setenv", "COS_DATA_DIR", namespace + "/data",
             "--setenv", "TMPDIR", namespace,
-            "--setenv", "CLAW_COS_BIN", "/usr/local/bin/cos",
+            "--setenv", "CLAW_COS_BIN", "/usr/local/bin/yu",
             "--setenv", "COS_BIN", "/untrusted/must-not-execute",
             "--setenv", "DISPLAY", "", "--setenv", "WAYLAND_DISPLAY", "",
             "--", str(Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else

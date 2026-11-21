@@ -6,7 +6,7 @@ filesystem checks, mounting, unmounting and ejecting devices.
 | Path | Responsibility |
 | --- | --- |
 | `apps/storage-manager/app.json` | Separate observation, diagnosis and exact device mount scopes |
-| `apps/storage-manager/main.py` | Canonical device validation and `cos __storage` requests |
+| `apps/storage-manager/main.py` | Canonical device validation and `yu __storage` requests |
 | `apps/storage-manager/server.py` | Direct SDK MCP handlers |
 | `apps/storage-manager/test_main.py` | Device validation, error/timeout handling and all SDK routes |
 | `package.json` | Product-owned staging and test inputs |

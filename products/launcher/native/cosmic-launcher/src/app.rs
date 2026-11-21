@@ -346,7 +346,7 @@ pub struct CosmicLauncher {
 ///
 /// Transitions:
 /// `Idle` -> `Pending` on `InputChanged` with AI prefix (debounce starts).
-/// `Pending` -> `Streaming` once the debounce fires and `cos agent ask`
+/// `Pending` -> `Streaming` once the debounce fires and `yu agent ask`
 /// is spawned.
 /// `Streaming` -> `Done` when the child process exits with a final
 /// answer on stdout, or `Error` on non-zero exit / spawn failure.
@@ -1688,7 +1688,7 @@ impl cosmic::Application for CosmicLauncher {
                             use std::process::Stdio;
                             use tokio::io::AsyncReadExt;
                             use tokio::process::Command;
-                            let mut child = match Command::new("cos")
+                            let mut child = match Command::new("yu")
                                 .args(["agent", "ask", "--stream", &prompt])
                                 .stdin(Stdio::null())
                                 .stdout(Stdio::piped())
@@ -1701,7 +1701,7 @@ impl cosmic::Application for CosmicLauncher {
                                     let _ = tx
                                         .send(Message::AiInlineError(
                                             token,
-                                            format!("failed to spawn cos: {e}"),
+                                            format!("failed to spawn yu: {e}"),
                                         ))
                                         .await;
                                     return;

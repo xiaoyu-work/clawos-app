@@ -6,7 +6,7 @@ native `panel-clipboard` presentation, MCP service and Web history workflow.
 | Path | Responsibility |
 | --- | --- |
 | `apps/clipboard-manager/app.json` | Selection read/write grants, exact source read and clear confirmation |
-| `apps/clipboard-manager/main.py` | Selection/MIME/source validation and typed `cos __clipboard` requests |
+| `apps/clipboard-manager/main.py` | Selection/MIME/source validation and typed `yu __clipboard` requests |
 | `apps/clipboard-manager/server.py` | Direct SDK MCP handlers |
 | `apps/clipboard-manager/test_main.py` | Direct/SDK routes, selection defaults, scopes, validation and broker errors |
 | `apps/panel-clipboard/` | Existing identity's package-local binary manifest and exact per-tool history grants |
@@ -32,7 +32,7 @@ no clipboard contents, history or session state.
 The panel's existing CopyQ `history` scopes are not the same as `selection`.
 The native binary retains its linked shell's optional `HistoryPolicy` callback
 seam and GUI behavior. The installed GUI and MCP use the pinned public SDK and
-fixed OS `cos` binary directly; they do not spend a grant again in an App-local
+fixed OS `yu` binary directly; they do not spend a grant again in an App-local
 preflight. Every actual history operation crosses the OS-owned
 `system.clipboard.control` service; there is no App-side CopyQ execution,
 executable override or direct fallback.

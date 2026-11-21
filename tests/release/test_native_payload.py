@@ -108,7 +108,7 @@ def test_every_native_plan_binds_primary_and_explicit_additional_gui_entries(pro
     ]
     assert selected.entrypoints == tuple(sorted({expected, *(gui["entry"] for gui in additional.values())}))
     assert selected.record()["gui_command"] == [
-        "/usr/local/bin/cos", "app", manifest["id"], manifest["desktop"]["exec"],
+        "/usr/local/bin/yu", "app", manifest["id"], manifest["desktop"]["exec"],
     ]
     assert selected.record()["unsigned_preparation_only"] is True
     packages = release.packages_for(product)
@@ -291,7 +291,7 @@ def test_files_auxiliary_elf_exports_only_its_explicit_common_host_entry(install
     binaries = native_payload.install(selected, installed, destination, ARCHITECTURE)
     assert set(binaries) == {destination / selected.installed_app / entry for entry in result.entrypoints}
     assert (destination / "usr/bin/cosmic-files-applet").read_bytes() == (
-        b'#!/bin/sh\nexec /usr/local/bin/cos app cosmic-files --gui:applet "$@"\n'
+        b'#!/bin/sh\nexec /usr/local/bin/yu app cosmic-files --gui:applet "$@"\n'
     )
     assert (destination / "usr/bin/cosmic-files").read_bytes() == native_payload.compatibility_launcher(selected)
     assert (destination / desktop.relative_to(installed)).read_bytes() == desktop.read_bytes()
@@ -362,7 +362,7 @@ def test_compatibility_exports_only_enter_common_host(product, installer, tmp_pa
     wrapper = destination / "usr/bin" / selected.program
     assert wrapper.read_bytes() == native_payload.compatibility_launcher(selected)
     assert wrapper.stat().st_mode & 0o777 == 0o755
-    assert b'/usr/local/bin/cos app ' in wrapper.read_bytes()
+    assert b'/usr/local/bin/yu app ' in wrapper.read_bytes()
     assert b'"$@"' in wrapper.read_bytes()
     assert (destination / desktop.relative_to(installed)).read_bytes() == desktop.read_bytes()
     assert (destination / selected.installed_app / "app.json").read_bytes() == (selected.source / "app.json").read_bytes()
@@ -418,7 +418,7 @@ def test_wrapper_preserves_public_cli_arguments_and_host_error_without_executing
     wrapper.chmod(0o755)
     host_bin = tmp_path / "host-bin"
     host_bin.mkdir()
-    recorder = host_bin / "cos"
+    recorder = host_bin / "yu"
     recorder.write_text("#!/usr/bin/python3\nimport json,sys\nprint(json.dumps(sys.argv[1:]))\nsys.exit(23)\n")
     recorder.chmod(0o755)
     arguments = ["network", "--new-window", "file:///tmp/a b", "$(not-a-command)", "--", "-leading"]

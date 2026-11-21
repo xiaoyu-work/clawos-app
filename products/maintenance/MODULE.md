@@ -6,7 +6,7 @@ tools. Both assigned App sources have moved, without merging their authority.
 | Path | Responsibility |
 | --- | --- |
 | `apps/config-editor/app.json` | Exact target/source grants and apply/restore confirmation |
-| `apps/config-editor/main.py` | Canonical path checks, token normalization and typed `cos __config` requests |
+| `apps/config-editor/main.py` | Canonical path checks, token normalization and typed `yu __config` requests |
 | `apps/config-editor/server.py` | Direct SDK MCP handlers |
 | `apps/config-editor/test_main.py` | Direct/SDK routes, exact scopes, invalid inputs and broker errors |
 | `apps/systemd/` | Unit validation, exact-unit manifest grants, typed broker client and direct/SDK tests |

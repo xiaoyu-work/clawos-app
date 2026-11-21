@@ -59,7 +59,7 @@ def main():
             assert (resources / relative).is_file(), relative
         assert not (resources / "polkit-1").exists()
         namespace = "/run/settings-fixture"
-        broker = fixture / "cos"
+        broker = fixture / "yu"
         broker.write_text(
             "#!/usr/bin/python3\n"
             "import json,pathlib,sys,os\n"
@@ -92,7 +92,7 @@ def main():
             "--dev", "/dev", "--tmpfs", "/run", "--tmpfs", "/usr/local/bin", "--tmpfs", "/usr/bin",
             "--bind", str(fixture), namespace,
             "--ro-bind", str(Path("/usr/bin/python3").resolve()), "/usr/bin/python3",
-            "--ro-bind", str(broker), "/usr/local/bin/cos",
+            "--ro-bind", str(broker), "/usr/local/bin/yu",
             "--ro-bind", str(binary), "/usr/bin/cosmic-settings",
             "--chdir", namespace,
         ]

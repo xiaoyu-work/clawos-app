@@ -19,7 +19,7 @@ SOURCE = "/home/user/Documents"
 DESTINATION = "/home/user/restore"
 CREDENTIAL = "default/restic"
 SNAPSHOT_ID = "ABCDEF12"
-COS = "/usr/local/bin/cos"
+COS = "/usr/local/bin/yu"
 
 main = load_local_module(
     APP_DIR / "main.py",
@@ -544,7 +544,7 @@ def test_missing_broker_executable_raises():
             "permission denied launching Backup Center broker",
         ),
         (
-            main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+            main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
             TimeoutError,
             "Backup Center broker exceeded",
         ),

@@ -60,14 +60,14 @@ def test_permission_restoration_has_no_app_owned_approval_transport():
             assert forbidden not in text, (source, forbidden)
     client = sources[0].read_text()
     assert "cos_call_json_with_binary" in client
-    assert '"/usr/local/bin/cos"' in client and '"__app-permissions"' in client
+    assert '"/usr/local/bin/yu"' in client and '"__app-permissions"' in client
     cargo = tomllib.loads((NATIVE / "cosmic-settings/Cargo.toml").read_text())
     assert "clawd-client" not in cargo["dependencies"]
     labels = (NATIVE / "i18n/en/cosmic_settings.ftl").read_text()
     assert "app-permissions-approve =" not in labels
     assert "app-permissions-deny =" not in labels
     assert "app-permissions-review-in-os =" in labels
-    assert "cos review" in labels
+    assert "yu review" in labels
 
 
 def test_permission_manifest_preserves_request_only_tools_and_signed_ceiling():
@@ -87,7 +87,7 @@ def test_permission_manifest_preserves_request_only_tools_and_signed_ceiling():
         }
     request = tools["settings.permissions_request"]
     assert [arg["name"] for arg in request["args"]] == ["app_id", "permission_id", "reason"]
-    assert "OS approval gate or cos review" in request["summary"]["en"]
+    assert "OS approval gate or yu review" in request["summary"]["en"]
 
 
 def test_native_users_have_one_protected_transport_without_app_owned_authority():
@@ -101,7 +101,7 @@ def test_native_users_have_one_protected_transport_without_app_owned_authority()
         assert forbidden not in page, forbidden
         assert forbidden not in client, forbidden
     assert "cos_call_json_async_with_binary" in client
-    assert '"/usr/local/bin/cos"' in client and '"__users"' in client
+    assert '"/usr/local/bin/yu"' in client and '"__users"' in client
     assert '"--uid"' in client and '"--credential"' in client and '"--icon"' in client
     assert "self.pending.complete(generation)" in page
     assert "self.pending.revision()" in page

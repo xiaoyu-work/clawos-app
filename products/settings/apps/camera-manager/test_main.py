@@ -64,7 +64,7 @@ def test_capture_uses_camera_and_destination_scopes(
         stdout=json.dumps({"captured": True}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.os.path, "realpath", side_effect=lambda value: value
     ), mock.patch.object(main.os.path, "lexists", return_value=False), mock.patch.object(
         main.policy, "require"
@@ -96,7 +96,7 @@ def test_capture_uses_camera_and_destination_scopes(
         mock.call("fs.write", path="/home/user/photo.png"),
     ]
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__camera",
         "capture",
         "--node-id",
@@ -184,7 +184,7 @@ def test_status_uses_camera_observe_scope(mcp_app, transport):
         stdout=json.dumps({"cameras": []}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         if transport == "direct":
@@ -199,7 +199,7 @@ def test_status_uses_camera_observe_scope(mcp_app, transport):
             )
             result = response["structuredContent"]
     require.assert_called_once_with("sys.observe", name="camera")
-    assert run.call_args.args[0] == ["/usr/local/bin/cos", "__camera", "status"]
+    assert run.call_args.args[0] == ["/usr/local/bin/yu", "__camera", "status"]
     assert result == {"cameras": []}
 
 
@@ -216,7 +216,7 @@ def test_status_uses_camera_observe_scope(mcp_app, transport):
 )
 def test_broker_payload_failures_raise(returncode, stdout, message):
     completed = mock.Mock(returncode=returncode, stdout=stdout, stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match=message):
@@ -228,7 +228,7 @@ def test_missing_broker_executable_raises():
     with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
         main.shutil, "which", return_value=None
     ), mock.patch.object(main.policy, "require") as require:
-        with pytest.raises(FileNotFoundError, match="cos binary not found"):
+        with pytest.raises(FileNotFoundError, match="yu binary not found"):
             main.status()
     require.assert_called_once_with("sys.observe", name="camera")
 
@@ -249,7 +249,7 @@ def test_missing_broker_executable_raises():
     ],
 )
 def test_broker_launch_failures_raise(error, exception, message):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", side_effect=error):
         with pytest.raises(exception, match=message):
@@ -258,12 +258,12 @@ def test_broker_launch_failures_raise(error, exception, message):
 
 
 def test_broker_timeout_raises():
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess,
         "run",
-        side_effect=main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+        side_effect=main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
     ):
         with pytest.raises(TimeoutError, match="Camera Manager broker exceeded"):
             main.status()

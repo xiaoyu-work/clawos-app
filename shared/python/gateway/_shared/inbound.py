@@ -4,7 +4,7 @@ Two classes of risk we want to keep out of every individual gateway:
 
 1. **Anyone-can-DM-the-bot drives the agent.** Without a sender
    allowlist, the public side of a chat platform turns into a
-   wide-open jailbreak for whatever ``cos agent ask`` happens to be
+   wide-open jailbreak for whatever ``yu agent ask`` happens to be
    wired up to. :func:`verify_sender` enforces an allowlist sourced
    from an env var (comma-separated IDs).
 

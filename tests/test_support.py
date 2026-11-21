@@ -109,7 +109,7 @@ def unit_policy_bridge(tmp_path, monkeypatch):
     """Imported only by App unit modules that use the original OS policy stub."""
     if os.environ.get("CLAW_COS_BIN"):
         return
-    stub = tmp_path / "cos"
+    stub = tmp_path / "yu"
     stub.write_text(
         '#!/bin/sh\n'
         'case "$1:$2:$3" in\n'
@@ -121,7 +121,7 @@ def unit_policy_bridge(tmp_path, monkeypatch):
         '    echo \'{"ok":true,"wire_version":1,"data":{"accepted":true}}\'\n'
         '    exit 0;;\n'
         'esac\n'
-        'echo "unsupported unit-test cos command" >&2\n'
+        'echo "unsupported unit-test yu command" >&2\n'
         'exit 99\n'
     )
     stub.chmod(0o755)

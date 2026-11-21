@@ -65,7 +65,7 @@ are nonempty strings and `args` is an object. Argument spellings are identical
 to the table above; underscore/hyphen/`from` aliases are not supported.
 
 Requests call the business functions in process. This transport does not
-invoke `cos app`, manufacture an MCP identity, or access SDK authentication
+invoke `yu app`, manufacture an MCP identity, or access SDK authentication
 internals. Bad requests return an error and leave the host healthy. Truncated,
 zero/oversized, non-UTF-8, or invalid-JSON frames produce a diagnostic on stderr
 and a nonzero exit. Normal EOF exits successfully. Unexpected request errors
@@ -77,7 +77,7 @@ The primary manifest entry is `native_host.py`; `mcp.entry` remains `server.py`.
 The generic human/host frontend is:
 
 ```bash
-cos app stdio mail-ai native-host
+yu app stdio mail-ai native-host
 ```
 
 It binds the verified App and ordinary operation before releasing incremental
@@ -90,7 +90,7 @@ one-shot `main.py` wrapper.
 
 Ordinary Python operations whose primary entry is not `main.py` remain
 unsupported outside this stdio contract. In particular, use the command above,
-not `cos app mail-ai native-host`; no fallback rewrite or `run` wrapper is
+not `yu app mail-ai native-host`; no fallback rewrite or `run` wrapper is
 installed.
 
 The OS `claw-mail-ai-host` compatibility launcher selects this same verified

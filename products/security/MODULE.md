@@ -8,7 +8,7 @@ not a unified UI or permission domain.
 | Path | Responsibility |
 | --- | --- |
 | `apps/security-center/app.json` | Sensitive `sys.security:audit` grant for all seven tools |
-| `apps/security-center/main.py` | Typed `cos __security` broker client; no direct privileged inspection |
+| `apps/security-center/main.py` | Typed `yu __security` broker client; no direct privileged inspection |
 | `apps/security-center/server.py` | Direct SDK handlers for summary/auth/ssh/sudo/mac/ports/events |
 | `apps/security-center/test_main.py` | Direct/SDK routes, exact scopes/argv and broker errors |
 | `apps/firewall-manager/` | Firewall manifest, typed broker client, MCP handlers and direct/SDK contract tests |

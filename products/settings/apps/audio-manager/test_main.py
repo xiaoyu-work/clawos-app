@@ -34,14 +34,14 @@ def _completed(payload: object, returncode: int = 0) -> mock.Mock:
             "status",
             (),
             mock.call("sys.observe", name="audio"),
-            ["/usr/local/bin/cos", "__audio", "status"],
+            ["/usr/local/bin/yu", "__audio", "status"],
         ),
         (
             "output_volume",
             (75,),
             mock.call("device.audio", name="output"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__audio",
                 "output-volume",
                 "--value",
@@ -53,7 +53,7 @@ def _completed(payload: object, returncode: int = 0) -> mock.Mock:
             (80,),
             mock.call("device.microphone", name="input"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__audio",
                 "input-volume",
                 "--value",
@@ -65,7 +65,7 @@ def _completed(payload: object, returncode: int = 0) -> mock.Mock:
             ("toggle",),
             mock.call("device.audio", name="output"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__audio",
                 "output-mute",
                 "--value",
@@ -77,7 +77,7 @@ def _completed(payload: object, returncode: int = 0) -> mock.Mock:
             ("off",),
             mock.call("device.microphone", name="input"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__audio",
                 "input-mute",
                 "--value",
@@ -89,7 +89,7 @@ def _completed(payload: object, returncode: int = 0) -> mock.Mock:
             (42,),
             mock.call("device.media-route", name="pipewire"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__audio",
                 "output-default",
                 "--target",
@@ -101,7 +101,7 @@ def _completed(payload: object, returncode: int = 0) -> mock.Mock:
             (43,),
             mock.call("device.media-route", name="pipewire"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__audio",
                 "input-default",
                 "--target",
@@ -113,7 +113,7 @@ def _completed(payload: object, returncode: int = 0) -> mock.Mock:
             (42, 3),
             mock.call("device.media-route", name="pipewire"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__audio",
                 "output-route",
                 "--target",
@@ -127,7 +127,7 @@ def _completed(payload: object, returncode: int = 0) -> mock.Mock:
             (43, 4),
             mock.call("device.media-route", name="pipewire"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__audio",
                 "input-route",
                 "--target",
@@ -141,7 +141,7 @@ def _completed(payload: object, returncode: int = 0) -> mock.Mock:
             (5, 2),
             mock.call("device.media-route", name="pipewire"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__audio",
                 "profile",
                 "--target",
@@ -155,7 +155,7 @@ def _completed(payload: object, returncode: int = 0) -> mock.Mock:
 def test_commands_use_expected_capability_and_argv(
     function_name, args, expected_policy, expected_argv, transport
 ):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess, "run", return_value=_completed({"changed": True})
@@ -236,7 +236,7 @@ def test_invalid_arguments_are_rejected_before_policy(function_name, args, messa
 )
 def test_broker_payload_failures_raise(returncode, stdout, message):
     completed = mock.Mock(returncode=returncode, stdout=stdout, stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ), mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match=message):
@@ -247,7 +247,7 @@ def test_missing_broker_executable_raises():
     with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
         main.shutil, "which", return_value=None
     ), mock.patch.object(main.policy, "require"):
-        with pytest.raises(FileNotFoundError, match="cos binary not found"):
+        with pytest.raises(FileNotFoundError, match="yu binary not found"):
             main.status()
 
 
@@ -267,7 +267,7 @@ def test_missing_broker_executable_raises():
     ],
 )
 def test_broker_launch_failures_raise(error, exception, message):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ), mock.patch.object(main.subprocess, "run", side_effect=error):
         with pytest.raises(exception, match=message):
@@ -275,12 +275,12 @@ def test_broker_launch_failures_raise(error, exception, message):
 
 
 def test_broker_timeout_raises():
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ), mock.patch.object(
         main.subprocess,
         "run",
-        side_effect=main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+        side_effect=main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
     ):
         with pytest.raises(
             TimeoutError,

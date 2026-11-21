@@ -15,9 +15,9 @@ def load_credential(name, *, namespace="default", timeout=10):
     if not isinstance(namespace, str) or not namespace.strip():
         return None, "credential namespace required"
 
-    cos_bin = os.environ.get("COS_BIN") or shutil.which("cos")
+    cos_bin = os.environ.get("COS_BIN") or shutil.which("yu")
     if not cos_bin:
-        return None, "cos binary not found"
+        return None, "yu binary not found"
     try:
         result = subprocess.run(
             [
@@ -35,7 +35,7 @@ def load_credential(name, *, namespace="default", timeout=10):
             env=scrub_env(),
         )
     except FileNotFoundError:
-        return None, "cos binary not found"
+        return None, "yu binary not found"
     except subprocess.TimeoutExpired:
         return None, f"credential load timed out after {timeout}s"
     except OSError as exc:

@@ -87,14 +87,14 @@ def _canonical_paths():
 
 def test_inspect_uses_exact_scope_and_argv(invoke):
     with _canonical_paths(), mock.patch.dict(
-        os.environ, {"COS_BIN": "/usr/local/bin/cos"}
+        os.environ, {"COS_BIN": "/usr/local/bin/yu"}
     ), mock.patch.object(main.policy, "require") as require, mock.patch.object(
         main.subprocess, "run", return_value=_completed({"content": "hosts"})
     ) as run:
         result = invoke("inspect", target=TARGET)
     require.assert_called_once_with("sys.config", path=TARGET)
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__config",
         "inspect",
         "--target",
@@ -107,7 +107,7 @@ def test_inspect_uses_exact_scope_and_argv(invoke):
 
 def test_validate_uses_exact_scopes_and_argv(invoke):
     with _canonical_paths(), mock.patch.dict(
-        os.environ, {"COS_BIN": "/usr/local/bin/cos"}
+        os.environ, {"COS_BIN": "/usr/local/bin/yu"}
     ), mock.patch.object(main.policy, "require") as require, mock.patch.object(
         main.subprocess, "run", return_value=_completed({"valid": True})
     ) as run:
@@ -117,7 +117,7 @@ def test_validate_uses_exact_scopes_and_argv(invoke):
         mock.call("fs.read", path=SOURCE),
     ]
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__config",
         "validate",
         "--target",
@@ -130,7 +130,7 @@ def test_validate_uses_exact_scopes_and_argv(invoke):
 
 def test_apply_uses_exact_scopes_and_argv(invoke):
     with _canonical_paths(), mock.patch.dict(
-        os.environ, {"COS_BIN": "/usr/local/bin/cos"}
+        os.environ, {"COS_BIN": "/usr/local/bin/yu"}
     ), mock.patch.object(main.policy, "require") as require, mock.patch.object(
         main.subprocess, "run", return_value=_completed({"applied": True})
     ) as run:
@@ -140,7 +140,7 @@ def test_apply_uses_exact_scopes_and_argv(invoke):
         mock.call("fs.read", path=SOURCE),
     ]
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__config",
         "apply",
         "--target",
@@ -154,14 +154,14 @@ def test_apply_uses_exact_scopes_and_argv(invoke):
 
 def test_restore_uses_exact_scope_and_normalized_token_argv(invoke):
     with _canonical_paths(), mock.patch.dict(
-        os.environ, {"COS_BIN": "/usr/local/bin/cos"}
+        os.environ, {"COS_BIN": "/usr/local/bin/yu"}
     ), mock.patch.object(main.policy, "require") as require, mock.patch.object(
         main.subprocess, "run", return_value=_completed({"restored": True})
     ) as run:
         result = invoke("restore", target=TARGET, backup_token=BACKUP_TOKEN, confirm=True)
     require.assert_called_once_with("sys.config", path=TARGET)
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__config",
         "restore",
         "--target",
@@ -303,7 +303,7 @@ def test_confirmation_requires_real_true_before_policy(action, confirm):
 def test_broker_payload_failures_raise(returncode, stdout, stderr, message):
     completed = mock.Mock(returncode=returncode, stdout=stdout, stderr=stderr)
     with _canonical_paths(), mock.patch.dict(
-        os.environ, {"COS_BIN": "/usr/local/bin/cos"}
+        os.environ, {"COS_BIN": "/usr/local/bin/yu"}
     ), mock.patch.object(main.policy, "require"), mock.patch.object(
         main.subprocess, "run", return_value=completed
     ):
@@ -317,7 +317,7 @@ def test_missing_broker_executable_raises():
     ), mock.patch.object(main.shutil, "which", return_value=None), mock.patch.object(
         main.policy, "require"
     ):
-        with pytest.raises(FileNotFoundError, match="cos binary not found"):
+        with pytest.raises(FileNotFoundError, match="yu binary not found"):
             main.inspect(TARGET)
 
 
@@ -338,7 +338,7 @@ def test_missing_broker_executable_raises():
 )
 def test_broker_launch_failures_raise(error, exception, message):
     with _canonical_paths(), mock.patch.dict(
-        os.environ, {"COS_BIN": "/usr/local/bin/cos"}
+        os.environ, {"COS_BIN": "/usr/local/bin/yu"}
     ), mock.patch.object(main.policy, "require"), mock.patch.object(
         main.subprocess, "run", side_effect=error
     ):
@@ -348,11 +348,11 @@ def test_broker_launch_failures_raise(error, exception, message):
 
 def test_broker_timeout_raises():
     with _canonical_paths(), mock.patch.dict(
-        os.environ, {"COS_BIN": "/usr/local/bin/cos"}
+        os.environ, {"COS_BIN": "/usr/local/bin/yu"}
     ), mock.patch.object(main.policy, "require"), mock.patch.object(
         main.subprocess,
         "run",
-        side_effect=main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+        side_effect=main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
     ):
         with pytest.raises(
             TimeoutError,

@@ -75,13 +75,13 @@ def test_block_uses_usb_control_scope_and_broker_command(invoke):
         stdout=json.dumps({"blocked": True}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         result = invoke("block", device="1-2.3", confirm=True)
     require.assert_called_once_with("device.usb", name="control")
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__usb",
         "block",
         "--device",
@@ -120,13 +120,13 @@ def test_authorization_without_confirm_preserves_historical_behavior(invoke):
         stdout=json.dumps({"authorized": True}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         result = invoke("authorize", device="1-2", state="on")
     require.assert_called_once_with("device.usb", name="control")
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos", "__usb", "authorize", "--device", "1-2", "--state", "on",
+        "/usr/local/bin/yu", "__usb", "authorize", "--device", "1-2", "--state", "on",
     ]
     assert result["authorized"] is True
 
@@ -134,13 +134,13 @@ def test_authorization_without_confirm_preserves_historical_behavior(invoke):
 def test_unblock_normalizes_rule_id(invoke):
     completed = mock.Mock(returncode=0, stdout=json.dumps({"unblocked": True}), stderr="")
     rule_id = "ABCDEF0123456789ABCDEF0123456789"
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         invoke("unblock", rule_id=rule_id, confirm=True)
     require.assert_called_once_with("device.usb", name="control")
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__usb",
         "unblock",
         "--rule-id",
@@ -163,7 +163,7 @@ def test_unblock_normalizes_rule_id(invoke):
 ])
 def test_remaining_routes_keep_exact_scopes_and_argv(invoke, command, arguments, flags):
     completed = mock.Mock(returncode=0, stdout='{"ok":true}', stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         assert invoke(command, **arguments) == {"ok": True}
@@ -171,7 +171,7 @@ def test_remaining_routes_keep_exact_scopes_and_argv(invoke, command, arguments,
         require.assert_called_once_with("sys.observe", name="usb")
     else:
         require.assert_called_once_with("device.usb", name="control")
-    assert run.call_args.args[0] == ["/usr/local/bin/cos", "__usb", command, *flags]
+    assert run.call_args.args[0] == ["/usr/local/bin/yu", "__usb", command, *flags]
     assert run.call_args.kwargs["timeout"] == main.TIMEOUT_SECS
     assert run.call_args.kwargs["stdin"] is main.subprocess.DEVNULL
 
@@ -207,7 +207,7 @@ def test_control_rejects_non_true_confirmation_before_policy(command, arguments,
 )
 def test_broker_failures_raise(returncode, stdout, message):
     completed = mock.Mock(returncode=returncode, stdout=stdout, stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match=message):
@@ -225,7 +225,7 @@ def test_missing_broker_executable_raises():
 
 
 def test_broker_execution_failure_raises():
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess, "run", side_effect=PermissionError("access denied")
@@ -238,12 +238,12 @@ def test_broker_execution_failure_raises():
 
 
 def test_broker_timeout_raises():
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess,
         "run",
-        side_effect=main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+        side_effect=main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
     ):
         with pytest.raises(RuntimeError, match="USB Guard broker exceeded"):
             main.status()

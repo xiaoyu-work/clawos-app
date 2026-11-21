@@ -31,11 +31,11 @@ Product branding, identity consolidation and installed native/GUI acceptance
 remain separate; this source change does not publish or install a release.
 
 ```bash
-cos app email accounts
-cos app email folders --account ACCOUNT_ID
-cos app email list --account ACCOUNT_ID --unread --max-results 10
-cos app email read --account ACCOUNT_ID --id MESSAGE_REFERENCE_ID
-cos app email draft_save --account SENDER_ACCOUNT_ID \
+yu app email accounts
+yu app email folders --account ACCOUNT_ID
+yu app email list --account ACCOUNT_ID --unread --max-results 10
+yu app email read --account ACCOUNT_ID --id MESSAGE_REFERENCE_ID
+yu app email draft_save --account SENDER_ACCOUNT_ID \
   --to user@example.com --subject "Report" --body "Please review."
 ```
 

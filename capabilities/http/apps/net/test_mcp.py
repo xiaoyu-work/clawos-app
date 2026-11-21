@@ -105,7 +105,7 @@ def client(tmp_path, request):
     downloads = tmp_path / "downloads"
     downloads.mkdir()
     log = tmp_path / "policy.jsonl"
-    policy = tmp_path / "cos"
+    policy = tmp_path / "yu"
     policy.write_text(
         f"#!{sys.executable}\n"
         "import json, os, sys\n"

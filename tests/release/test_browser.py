@@ -108,7 +108,7 @@ def test_real_browser_apt_upgrade_updates_extension_and_host_together_without_re
     release.build(release.make_plan("browser", "1.0.0"), "all", tmp_path / "first")
     platform = [
         deb("claw-app-fixture-platform", extra={
-            "Provides": "claw-os-app-runtime-v1 (= 0.2.1), claw-os-browser-bridge-v1 (= 1), claw-app-support-v1, python3 (= 3.13)",
+            "Provides": "yuos-app-runtime-v1 (= 0.2.1), claw-os-browser-bridge-v1 (= 1), claw-app-support-v1, python3 (= 3.13)",
         }),
         deb("claw-app-unrelated"),
     ]

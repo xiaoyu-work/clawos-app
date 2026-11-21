@@ -97,7 +97,7 @@ def test_manifest_is_mcp_only_with_closed_choices_and_cli_bindings():
         (
             lambda invoke: invoke("status"),
             mock.call("sys.observe", name="firewall"),
-            ["/usr/local/bin/cos", "__firewall", "status"],
+            ["/usr/local/bin/yu", "__firewall", "status"],
         ),
         (
             lambda invoke: invoke(
@@ -111,7 +111,7 @@ def test_manifest_is_mcp_only_with_closed_choices_and_cli_bindings():
             ),
             mock.call("net.firewall", name="manage"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__firewall",
                 "add",
                 "--rule-action",
@@ -132,7 +132,7 @@ def test_manifest_is_mcp_only_with_closed_choices_and_cli_bindings():
             lambda invoke: invoke("delete", rule_id=RULE_ID),
             mock.call("net.firewall", name="manage"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__firewall",
                 "delete",
                 "--rule-id",
@@ -143,7 +143,7 @@ def test_manifest_is_mcp_only_with_closed_choices_and_cli_bindings():
             lambda invoke: invoke("clear", confirm=True),
             mock.call("net.firewall", name="manage"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__firewall",
                 "clear",
                 "--confirm",
@@ -153,7 +153,7 @@ def test_manifest_is_mcp_only_with_closed_choices_and_cli_bindings():
             lambda invoke: invoke("restore", backup_token=BACKUP_TOKEN, confirm=True),
             mock.call("net.firewall", name="manage"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__firewall",
                 "restore",
                 "--token",
@@ -169,7 +169,7 @@ def test_routes_use_exact_capability_and_broker_argv(invoke, call, capability, a
         stdout=json.dumps({"changed": True}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         result = call(invoke)
@@ -182,12 +182,12 @@ def test_routes_use_exact_capability_and_broker_argv(invoke, call, capability, a
 
 def test_add_omits_optional_flags_when_not_supplied(invoke):
     completed = mock.Mock(returncode=0, stdout="{}", stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ), mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         invoke("add", action="allow", direction="output", protocol="udp", port=53)
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__firewall",
         "add",
         "--rule-action",
@@ -323,7 +323,7 @@ def test_destructive_actions_require_real_true_before_policy(call):
 )
 def test_broker_parses_stdout_before_stderr(stdout, stderr, expected):
     completed = mock.Mock(returncode=0, stdout=stdout, stderr=stderr)
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ), mock.patch.object(main.subprocess, "run", return_value=completed):
         assert main.status() == expected
@@ -354,7 +354,7 @@ def test_broker_parses_stdout_before_stderr(stdout, stderr, expected):
 )
 def test_broker_payload_failures_raise(returncode, stdout, stderr, message):
     completed = mock.Mock(returncode=returncode, stdout=stdout, stderr=stderr)
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match=re.escape(message)):
@@ -385,14 +385,14 @@ def test_missing_broker_executable_raises():
             "permission denied launching Firewall Manager broker",
         ),
         (
-            main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+            main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
             TimeoutError,
             "Firewall Manager broker exceeded",
         ),
     ],
 )
 def test_broker_execution_failures_raise(failure, exception_type, message):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", side_effect=failure):
         with pytest.raises(exception_type, match=message):

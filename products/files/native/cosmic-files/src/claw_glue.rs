@@ -17,7 +17,7 @@ pub(crate) fn desktop_events() -> impl cosmic::iced::futures::Stream<Item = crat
     use tokio::io::{AsyncBufReadExt, BufReader};
 
     cosmic::iced::stream::channel(2, |mut out: cosmic::iced::futures::channel::mpsc::Sender<Message>| async move {
-        let mut command = tokio::process::Command::new("/usr/local/bin/cos");
+        let mut command = tokio::process::Command::new("/usr/local/bin/yu");
         command.arg("__desktop-events").kill_on_drop(true).stdout(Stdio::piped());
         if let Ok(mut child) = command.spawn()
             && let Some(stdout) = child.stdout.take()

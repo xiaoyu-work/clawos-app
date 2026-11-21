@@ -16,7 +16,7 @@ def request(intent: dict[str, object]) -> dict[str, object]:
     if context.deadline_unix_ms is not None:
         deadline = min(deadline, context.deadline_unix_ms)
     return kernel.call_json_with_stdin_binary(
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         ["__notifications", "request", "--request-stdin", "--deadline", str(deadline)],
         json.dumps(intent, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
         deadline_unix_ms=deadline,

@@ -176,7 +176,7 @@ def test_publication_signs_exact_debian_app_payload_and_retains_web_assets(
     app_id = snapshots.read_metadata(root / "app.json")["id"]
     desktop = root / "resources/usr/share/applications/com.clawos.Fixture.desktop"
     desktop.parent.mkdir(parents=True)
-    desktop.write_text(f"[Desktop Entry]\nType=Application\nName=Fixture\nExec=cos app {app_id} --gui\n")
+    desktop.write_text(f"[Desktop Entry]\nType=Application\nName=Fixture\nExec=yu app {app_id} --gui\n")
     artifact = app_deb(deb, [root])
     plan = {"version": "1.0.0", "source_date_epoch": 1700000000, "packages": [{
         "package": "claw-app-fixture", "architecture": "all",

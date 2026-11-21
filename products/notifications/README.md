@@ -9,7 +9,7 @@ The installed binary remains `/usr/bin/cosmic-notifications`, with identity
 
 Normal UI and MCP share the existing **OS durable Notification Service**
 through its single desktop delivery consumer. MCP submits bounded intent using
-the versioned SDK and fixed `/usr/local/bin/cos`; it does not open a session bus,
+the versioned SDK and fixed `/usr/local/bin/yu`; it does not open a session bus,
 call another App or maintain a second notification store.
 
 ## Native MCP 0.2 compatibility
@@ -69,7 +69,7 @@ projections as errors, rather than reading App configuration as a fallback.
 ## Legacy `notify` 0.2 compatibility
 
 `apps/notify` now owns both MCP-only commands and the same human CLI aliases:
-`cos app notify send MESSAGE [--urgent]` and `cos app notify list [--limit N]`.
+`yu app notify send MESSAGE [--urgent]` and `yu app notify list [--limit N]`.
 They use the shared SDK's fixed installed-binary, cancellable stdin transport.
 The App does not open a bus/database, invoke the native App, claim deliveries,
 or maintain a JSON/SQLite/ID-alias store.

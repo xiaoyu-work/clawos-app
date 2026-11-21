@@ -16,7 +16,7 @@ from test_support import authenticated_mcp_params, load_local_module
 APP_DIR = pathlib.Path(__file__).parent
 MANIFEST_PATH = APP_DIR / "app.json"
 SERVER_PATH = APP_DIR / "server.py"
-COS_BIN = "/usr/local/bin/cos"
+COS_BIN = "/usr/local/bin/yu"
 LAYOUT_SOURCE = str((APP_DIR / "layout.kdl").resolve())
 BACKUP_TOKEN = "ABCDEF0123456789ABCDEF0123456789"
 TOOL_NAMES = [
@@ -617,7 +617,7 @@ def test_missing_broker_executable_raises():
             "permission denied launching Display Manager broker",
         ),
         (
-            main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+            main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
             TimeoutError,
             "Display Manager broker exceeded",
         ),

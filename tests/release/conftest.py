@@ -19,7 +19,7 @@ from release_signing import Signing, primary_fingerprints
 def pytest_addoption(parser):
     parser.addoption(
         "--provenance-cos-fixture",
-        help="Explicit public cos CLI fixture for isolated snapshot signing; never a production tool pin",
+        help="Explicit public yu CLI fixture for isolated snapshot signing; never a production tool pin",
     )
     parser.addoption("--provenance-cos-sha256", help="Expected digest of the explicit test-only CLI")
     parser.addoption("--native-settings-fixture", help="Explicit real Settings ELF for snapshot acceptance")

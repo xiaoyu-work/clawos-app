@@ -7,7 +7,7 @@ privilege separation, mutation serialization and process/network isolation.
 | Path | Responsibility |
 | --- | --- |
 | `apps/container-manager/app.json` | Runtime choices, namespace condition, confirmation and observe/control scopes |
-| `apps/container-manager/main.py` | Validated requests to the existing `cos __container` broker interface |
+| `apps/container-manager/main.py` | Validated requests to the existing `yu __container` broker interface |
 | `apps/container-manager/server.py` | Direct SDK MCP handlers |
 | `apps/container-manager/test_main.py` | Fourteen routes, exact argv/scopes, validation and broker failures |
 | `package.json` | Product-owned staging and test inputs |

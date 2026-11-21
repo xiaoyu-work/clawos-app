@@ -53,7 +53,7 @@ def test_routes_use_exact_scopes_and_broker_argv(
     completed = mock.Mock(
         returncode=0, stdout=json.dumps(expected), stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         function = getattr(main, function_name)
@@ -85,7 +85,7 @@ def test_routes_use_exact_scopes_and_broker_argv(
     assert require.call_args_list == capabilities
     run.assert_called_once()
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos", "__desktop", action, *flags,
+        "/usr/local/bin/yu", "__desktop", action, *flags,
     ]
     assert run.call_args.kwargs["timeout"] == main.TIMEOUT_SECS
     assert run.call_args.kwargs["stdin"] is main.subprocess.DEVNULL
@@ -148,7 +148,7 @@ def test_restart_validates_before_policy(identifier, app_id, message):
 )
 def test_broker_failures_raise(returncode, stdout, message):
     completed = mock.Mock(returncode=returncode, stdout=stdout, stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match=message):
@@ -160,13 +160,13 @@ def test_missing_broker_executable_raises():
     with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
         main.shutil, "which", return_value=None
     ), mock.patch.object(main.policy, "require") as require:
-        with pytest.raises(FileNotFoundError, match="cos binary not found"):
+        with pytest.raises(FileNotFoundError, match="yu binary not found"):
             main.list_windows()
     require.assert_called_once_with("sys.observe", name="desktop")
 
 
 def test_broker_execution_failure_raises():
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess, "run", side_effect=PermissionError("access denied")
@@ -179,12 +179,12 @@ def test_broker_execution_failure_raises():
 
 
 def test_broker_timeout_raises():
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess,
         "run",
-        side_effect=main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+        side_effect=main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
     ):
         with pytest.raises(RuntimeError, match="Desktop Manager broker exceeded"):
             main.list_windows()

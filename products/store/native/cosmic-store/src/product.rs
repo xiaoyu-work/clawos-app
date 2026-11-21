@@ -62,8 +62,8 @@ pub fn query(operation: &str, arguments: Value) -> io::Result<Value> {
         .args(["-I", "-c", &format!(
             "import sys,os,json,types\n\
              sys.path[:0] = ['/usr/lib/cos/python']\n\
-             os.environ['COS_BIN'] = '/usr/local/bin/cos'\n\
-             os.environ['CLAW_COS_BIN'] = '/usr/local/bin/cos'\n\
+             os.environ['COS_BIN'] = '/usr/local/bin/yu'\n\
+             os.environ['CLAW_COS_BIN'] = '/usr/local/bin/yu'\n\
              backend = types.ModuleType('store_catalog')\n\
              backend.__file__ = '/usr/lib/cos/apps/cosmic-store/embedded.py'\n\
              exec(compile({backend}, '<store-catalog>', 'exec'), backend.__dict__)\n\

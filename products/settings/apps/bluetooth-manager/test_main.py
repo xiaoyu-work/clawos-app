@@ -133,14 +133,14 @@ def test_manifest_and_handlers_are_mcp_only_and_aligned():
             "status",
             (),
             mock.call("sys.observe", name="bluetooth"),
-            ["/usr/local/bin/cos", "__bluetooth", "status"],
+            ["/usr/local/bin/yu", "__bluetooth", "status"],
         ),
         (
             "power",
             (ADAPTER.lower(), "on"),
             mock.call("device.bluetooth", name="control"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__bluetooth",
                 "power",
                 "--adapter",
@@ -154,7 +154,7 @@ def test_manifest_and_handlers_are_mcp_only_and_aligned():
             (ADAPTER.lower(),),
             mock.call("device.bluetooth", name="control"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__bluetooth",
                 "scan",
                 "--adapter",
@@ -168,7 +168,7 @@ def test_manifest_and_handlers_are_mcp_only_and_aligned():
             (ADAPTER.lower(), DEVICE.lower()),
             mock.call("device.bluetooth", name="control"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__bluetooth",
                 "pair",
                 "--adapter",
@@ -182,7 +182,7 @@ def test_manifest_and_handlers_are_mcp_only_and_aligned():
             (PAIRING_ID,),
             mock.call("device.bluetooth", name="control"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__bluetooth",
                 "pair-status",
                 "--pairing-id",
@@ -194,7 +194,7 @@ def test_manifest_and_handlers_are_mcp_only_and_aligned():
             (PAIRING_ID, "123456"),
             mock.call("device.bluetooth", name="control"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__bluetooth",
                 "pair-respond",
                 "--pairing-id",
@@ -207,7 +207,7 @@ def test_manifest_and_handlers_are_mcp_only_and_aligned():
             (PAIRING_ID,),
             mock.call("device.bluetooth", name="control"),
             [
-                "/usr/local/bin/cos",
+                "/usr/local/bin/yu",
                 "__bluetooth",
                 "pair-cancel",
                 "--pairing-id",
@@ -220,7 +220,7 @@ def test_manifest_and_handlers_are_mcp_only_and_aligned():
                 (ADAPTER.lower(), DEVICE.lower()),
                 mock.call("device.bluetooth", name="control"),
                 [
-                    "/usr/local/bin/cos",
+                    "/usr/local/bin/yu",
                     "__bluetooth",
                     action,
                     "--adapter",
@@ -241,7 +241,7 @@ def test_routes_use_exact_capability_and_broker_argv(
         stdout=json.dumps({"changed": True}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         function = getattr(main, function_name)
@@ -361,7 +361,7 @@ def test_invalid_arguments_are_rejected_before_policy(function_name, args, messa
 )
 def test_broker_parses_stdout_before_stderr(stdout, stderr, expected):
     completed = mock.Mock(returncode=0, stdout=stdout, stderr=stderr)
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ), mock.patch.object(main.subprocess, "run", return_value=completed):
         assert main.status() == expected
@@ -392,7 +392,7 @@ def test_broker_parses_stdout_before_stderr(stdout, stderr, expected):
 )
 def test_broker_payload_failures_raise(returncode, stdout, stderr, message):
     completed = mock.Mock(returncode=returncode, stdout=stdout, stderr=stderr)
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match=re.escape(message)):
@@ -423,14 +423,14 @@ def test_missing_broker_executable_raises():
             "permission denied launching Bluetooth Manager broker",
         ),
         (
-            main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+            main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
             TimeoutError,
             "Bluetooth Manager broker exceeded",
         ),
     ],
 )
 def test_broker_execution_failures_raise(failure, exception_type, message):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", side_effect=failure):
         with pytest.raises(exception_type, match=message):

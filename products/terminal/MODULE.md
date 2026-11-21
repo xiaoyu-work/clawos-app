@@ -64,6 +64,6 @@ The included Rust parser regressions use the `cli::tests::` filter.
 
 The native payload now selects one real `bin/cosmic-term` for primary GUI and
 MCP, with original resources/licenses in the App snapshot. Its legacy command
-routes through `cos app cosmic-term --gui`, preserving argument boundaries and
+routes through `yu app cosmic-term --gui`, preserving argument boundaries and
 Host errors. PTY, argument and resource acceptance remains separate; see
 [native payloads](../../docs/native-payloads.md).

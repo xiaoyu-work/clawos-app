@@ -88,7 +88,7 @@ def test_installed_notify_mcp_sdk_errors_cancellation_and_untouched_history(tmp_
         "--ro-bind", "/usr/bin", "/usr/bin", "--ro-bind", "/usr/lib", "/usr/lib",
         "--ro-bind", "/lib", "/lib", "--ro-bind", "/lib64", "/lib64",
         "--dir", "/usr/local/bin", "--proc", "/proc", "--dev", "/dev",
-        "--ro-bind", str(cli), "/usr/local/bin/cos",
+        "--ro-bind", str(cli), "/usr/local/bin/yu",
         "--ro-bind", str(app), "/app", "--ro-bind", str(sdk), "/sdk",
         "--bind", str(data), "/state", "--bind", str(signals), "/signals",
         "--setenv", "COS_APP_MANIFEST", "/app/app.json",

@@ -149,7 +149,7 @@ def test_sdk_ai_uses_untrusted_document_and_doc_memory_identity(
             remember.assert_called_once_with(
                 source="doc", text=f"Summarised document {source}: Presented document",
                 kind="note", entity_id=str(source), tags=["doc", "summary"],
-                link=f"cos doc summarize --file {source}",
+                link=f"yu doc summarize --file {source}",
             )
         else:
             assert result["text"] == "Presented document"

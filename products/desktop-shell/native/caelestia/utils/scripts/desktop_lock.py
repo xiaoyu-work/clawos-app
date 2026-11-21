@@ -8,7 +8,7 @@ from claw_os_sdk.kernel import KernelDenied, KernelUnavailable, call_json_with_s
 def main() -> int:
     try:
         reply = call_json_with_stdin_binary(
-            "/usr/local/bin/cos", ["__desktop-lock"], b"",
+            "/usr/local/bin/yu", ["__desktop-lock"], b"",
             deadline_unix_ms=time.time_ns() // 1_000_000 + 10_000,
         )
     except (KernelDenied, KernelUnavailable):

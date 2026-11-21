@@ -23,13 +23,13 @@ def test_diagnose_uses_sensitive_crash_scope_and_explicit_bounds():
         stdout=json.dumps({"status": "warning"}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         result = main.diagnose(120, 10)
     require.assert_called_once_with("sys.crash", name="system")
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__crash",
         "diagnose",
         "--since-minutes",
@@ -72,13 +72,13 @@ def test_backtrace_normalizes_id_and_uses_sensitive_crash_scope():
         stdout=json.dumps({"frames": []}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         result = main.backtrace(coredump_id)
     require.assert_called_once_with("sys.crash", name="system")
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__crash",
         "backtrace",
         "--id",
@@ -103,7 +103,7 @@ def test_backtrace_normalizes_id_and_uses_sensitive_crash_scope():
 )
 def test_broker_failures_raise(returncode, stdout, message):
     completed = mock.Mock(returncode=returncode, stdout=stdout, stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match=message):
@@ -115,7 +115,7 @@ def test_missing_broker_executable_raises():
     with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
         main.shutil, "which", return_value=None
     ), mock.patch.object(main.policy, "require") as require:
-        with pytest.raises(FileNotFoundError, match="cos binary not found"):
+        with pytest.raises(FileNotFoundError, match="yu binary not found"):
             main.recent()
     require.assert_called_once_with("sys.crash", name="system")
 
@@ -138,7 +138,7 @@ def test_missing_broker_executable_raises():
 def test_broker_launch_failures_raise_precise_exceptions(
     exception, error_type, message
 ):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", side_effect=exception):
         with pytest.raises(error_type, match=message):
@@ -147,12 +147,12 @@ def test_broker_launch_failures_raise_precise_exceptions(
 
 
 def test_broker_timeout_raises():
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess,
         "run",
-        side_effect=main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+        side_effect=main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
     ):
         with pytest.raises(TimeoutError, match="Crash Doctor broker exceeded"):
             main.recent()
@@ -188,7 +188,7 @@ def test_relocated_sdk_preserves_crash_authority_bounds_and_selectors(
     with mock.patch.dict(sys.modules, {"main": main}), mock.patch.dict(
         os.environ, {
             "COS_APP_MANIFEST": str(APP_DIR / "app.json"),
-            "COS_BIN": "/usr/local/bin/cos",
+            "COS_BIN": "/usr/local/bin/yu",
         }
     ):
         server = load_local_module(APP_DIR / "server.py", "claw_test_crash_doctor_server")
@@ -206,6 +206,6 @@ def test_relocated_sdk_preserves_crash_authority_bounds_and_selectors(
             )
         assert result["structuredContent"] == {"action": action}
         require.assert_called_once_with("sys.crash", name="system")
-        assert run.call_args.args[0] == ["/usr/local/bin/cos", "__crash", action, *tail]
+        assert run.call_args.args[0] == ["/usr/local/bin/yu", "__crash", action, *tail]
         assert run.call_args.kwargs["stdin"] is main.subprocess.DEVNULL
         assert run.call_args.kwargs["timeout"] == main.TIMEOUT_SECS

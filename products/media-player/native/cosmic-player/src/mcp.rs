@@ -28,7 +28,7 @@ impl Tool for PlayerTool {
         let action = self.0.strip_prefix("player.").expect("fixed tool name");
         let deadline = deadline.to_string();
         let call = claw_os_sdk::cos_call_json_async_with_binary(
-            "/usr/local/bin/cos", "media-player", action,
+            "/usr/local/bin/yu", "media-player", action,
             ["__media-player", action, "--deadline", &deadline],
         );
         tokio::select! {

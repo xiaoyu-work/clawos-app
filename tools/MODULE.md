@@ -238,7 +238,7 @@ protocol is OS-defined and part of the public Rust SDK artifact.
 
 `release_snapshots.py` accepts selected prepared, signed App directories rooted
 at `app.json` and `.provenance.json`, preserving all identities, binaries and
-resources. It invokes the digest-pinned public `cos provenance verify` command,
+resources. It invokes the digest-pinned public `yu provenance verify` command,
 not OS source, and emits deterministic App archives plus an OpenPGP-signed
 `claw.app-snapshot-catalog/v1` catalog/checksum set. Exact manifest/envelope bytes
 are bound to artifact digests and checked again from the completed archives.

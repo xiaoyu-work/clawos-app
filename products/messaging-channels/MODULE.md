@@ -20,13 +20,13 @@ Notification Delivery and Home Integration remain separate products.
 The OS owns authenticated owner/provider/sender configuration, credential
 custody, receiver lifetime, cursors, rate limits, durable replay and reply
 receipts. Apps call the versioned SDK `channels.control`; they never call
-`cos agent ask`, manage receiver processes, choose an owner/source or submit
+`yu agent ask`, manage receiver processes, choose an owner/source or submit
 Agent tasks. There is no local-process fallback if `clawd` is unavailable.
 Import App client support through `gateway._shared`, not a sibling OS checkout.
 
 A human first creates a bounded Activity and an ordinary generation-bound
 trigger matching `channel:gateway-<platform>` and `message.received`. Protected
-`cos channels configure <platform>` binds one exact sender/channel and the
+`yu channels configure <platform>` binds one exact sender/channel and the
 provider account to that owned trigger. It verifies the owner's fixed
 credentials and requires normal scheduler consent. Enabling ingress cannot
 create a trigger or grant Agent authority.

@@ -21,7 +21,7 @@ COREDUMP_ID_RE = re.compile(
 
 
 def _cos_binary() -> str | None:
-    return os.environ.get("COS_BIN") or shutil.which("cos")
+    return os.environ.get("COS_BIN") or shutil.which("yu")
 
 
 def _broker(
@@ -33,7 +33,7 @@ def _broker(
     cos_bin = _cos_binary()
     if not cos_bin:
         raise FileNotFoundError(
-            "cos binary not found; Crash Doctor broker unavailable"
+            "yu binary not found; Crash Doctor broker unavailable"
         )
     argv = [cos_bin, "__crash", action]
     if since_minutes is not None:

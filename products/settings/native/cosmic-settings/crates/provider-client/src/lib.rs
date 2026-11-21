@@ -37,7 +37,7 @@ fn confirmed(value: Value) -> Result<Value, String> {
 pub fn call(service: &str, action: &str, options: Vec<String>) -> Result<Value, String> {
     confirmed(
         claw_os_sdk::cos_call_json_with_binary(
-            "/usr/local/bin/cos",
+            "/usr/local/bin/yu",
             "settings",
             service,
             arguments(service, action, options),
@@ -54,7 +54,7 @@ pub async fn call_stdin_async(
 ) -> Result<Value, String> {
     confirmed(
         claw_os_sdk::cos_call_json_async_with_stdin_binary(
-            "/usr/local/bin/cos",
+            "/usr/local/bin/yu",
             "settings",
             service,
             arguments(service, action, options),
@@ -72,7 +72,7 @@ pub async fn call_async(
 ) -> Result<Value, String> {
     confirmed(
         claw_os_sdk::cos_call_json_async_with_binary(
-            "/usr/local/bin/cos",
+            "/usr/local/bin/yu",
             "settings",
             service,
             arguments(service, action, options),

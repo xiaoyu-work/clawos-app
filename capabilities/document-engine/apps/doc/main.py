@@ -105,7 +105,7 @@ def _remember_doc_summary(source, summary):
         memory.remember(
             source="doc", text=f"Summarised document {source}: {head}",
             kind="note", entity_id=source, tags=["doc", "summary"],
-            link=f"cos doc summarize --file {source}" if source != "<stdin>" else None,
+            link=f"yu doc summarize --file {source}" if source != "<stdin>" else None,
         )
     except memory.MemoryError:
         pass

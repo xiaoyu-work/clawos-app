@@ -66,7 +66,7 @@ to exercise an OS-composed build from the same immutable source.
 
 The native payload binds both declared surfaces to real
 `bin/cosmic-screenshot`, retaining resources/licenses. Its compatibility
-command enters `cos app cosmic-screenshot --gui`, never the ELF directly.
+command enters `yu app cosmic-screenshot --gui`, never the ELF directly.
 The native Clap parser consumes one leading Host selector only in GUI mode,
 preserving its original defaults, boolean/value syntax, save-path bytes,
 help/version, errors and MCP-first ordering. CLI early exits precede localization;

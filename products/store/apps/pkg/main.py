@@ -41,13 +41,13 @@ def _cos_binary():
     explicit = os.environ.get("COS_BIN")
     if explicit:
         return explicit
-    return shutil.which("cos")
+    return shutil.which("yu")
 
 
 def _package_query(action, *arguments):
     binary = _cos_binary()
     if not binary:
-        return {"error": "cos binary not found; package catalog provider unavailable"}
+        return {"error": "yu binary not found; package catalog provider unavailable"}
     try:
         return kernel.call_json_with_stdin_binary(
             binary,
@@ -65,7 +65,7 @@ def _package_broker(action, package=None, version=None, packages=None):
     """Run one privileged package action through clawd."""
     cos_bin = _cos_binary()
     if not cos_bin:
-        return {"error": "cos binary not found; privileged package broker unavailable"}
+        return {"error": "yu binary not found; privileged package broker unavailable"}
     payload_action = action not in ("update-index", "hold", "unhold")
     argv = [cos_bin, "__package"]
     if payload_action:
@@ -273,7 +273,7 @@ def cmd_upgrade_all(args):
 
 
 def run(command, args):
-    """Entry point called by the cos router."""
+    """Entry point called by the yu router."""
     if command != "search":
         from canonical_argv import parse_canonical_argv
         try:

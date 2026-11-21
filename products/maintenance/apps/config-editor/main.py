@@ -17,7 +17,7 @@ TIMEOUT_SECS = int(os.environ.get("CLAW_CONFIG_EDITOR_TIMEOUT", "180"))
 
 
 def _cos_binary() -> str | None:
-    return os.environ.get("COS_BIN") or shutil.which("cos")
+    return os.environ.get("COS_BIN") or shutil.which("yu")
 
 
 def _canonical_target(raw: object) -> str:
@@ -80,7 +80,7 @@ def _broker(
     cos_bin = _cos_binary()
     if not cos_bin:
         raise FileNotFoundError(
-            "cos binary not found; Safe Config Editor broker unavailable"
+            "yu binary not found; Safe Config Editor broker unavailable"
         )
     argv = [cos_bin, "__config", action, "--target", target]
     if source is not None:

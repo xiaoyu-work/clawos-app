@@ -361,9 +361,9 @@ def _validate_launch_targets(
 
 
 def _cos_binary() -> str:
-    cos_binary = os.environ.get("COS_BIN") or shutil.which("cos")
+    cos_binary = os.environ.get("COS_BIN") or shutil.which("yu")
     if not cos_binary:
-        raise FileNotFoundError("cos binary not found; Launcher broker unavailable")
+        raise FileNotFoundError("yu binary not found; Launcher broker unavailable")
     return cos_binary
 
 

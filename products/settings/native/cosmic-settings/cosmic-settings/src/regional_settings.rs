@@ -40,7 +40,7 @@ pub struct Status {
 
 pub async fn status() -> Result<Status, Failure> {
     let response = claw_os_sdk::cos_call_json_async_with_binary(
-        "/usr/local/bin/cos", "regional-settings", "control",
+        "/usr/local/bin/yu", "regional-settings", "control",
         ["__regional-settings".to_owned(), json_request("status")],
     ).await.map_err(classify)?;
     let status: Status = serde_json::from_value(response)
@@ -74,7 +74,7 @@ pub struct TimeStatus {
 
 pub async fn time_status() -> Result<TimeStatus, Failure> {
     let response = claw_os_sdk::cos_call_json_async_with_binary(
-        "/usr/local/bin/cos", "regional-settings", "control",
+        "/usr/local/bin/yu", "regional-settings", "control",
         ["__regional-settings".to_owned(), json_request("time_status")],
     ).await.map_err(classify)?;
     let status: TimeStatus = serde_json::from_value(response)
@@ -161,7 +161,7 @@ enum ReviewStatus {
 
 pub async fn call(change: Change) -> Result<(), Failure> {
     let response = claw_os_sdk::cos_call_json_async_with_binary(
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "regional-settings",
         "control",
         [

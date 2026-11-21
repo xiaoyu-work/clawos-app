@@ -22,7 +22,7 @@ Validate untrusted input before `ai.chat.untrusted`; keep AI budget/safety
 handling and `mail-ai` memory scope aligned with the manifest. Native callers
 must never construct MCP metadata or use SDK-private authentication methods.
 Core owns launcher trust, verified App sessions, owner identity, and consent.
-`cos app stdio mail-ai native-host` runs this primary entry through the generic
+`yu app stdio mail-ai native-host` runs this primary entry through the generic
 verified App-operation host. The operation explicitly requests wildcard
 `ai.chat.untrusted` for the shared AI gate and `memory.write:self:mail-ai`
 for summaries/notable triage; the OS does not infer grants from MCP tools.

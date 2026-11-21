@@ -131,7 +131,7 @@ and GIO examples do not use this adaptation.
 and filesystem needs. Both are signed executable entries under the same
 `cosmic-files` identity, owner data and audit; the original separate Cargo
 feature/renderer graphs remain unchanged. The compatibility applet command is
-only `cos app cosmic-files --gui:applet "$@"`; the main command is unchanged.
+only `yu app cosmic-files --gui:applet "$@"`; the main command is unchanged.
 
 Each GUI declares only `fs.meta` as a required filesystem need. Content read,
 watch, write and delete are separate `desktop.optional_needs`; their acquisition

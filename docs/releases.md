@@ -180,7 +180,7 @@ licenses before signing; this producer copies the entire tree, without payload
 filters, build hooks or installed-system path mappings.
 
 Sign prepared trees with the existing public
-[`cos provenance sign` contract](https://github.com/xiaoyu-work/claw-os/blob/main/docs/extension-provenance.md#publisher).
+[`yu provenance sign` contract](https://github.com/xiaoyu-work/claw-os/blob/main/docs/extension-provenance.md#publisher).
 The release producer deliberately does not implement Ed25519 canonicalization,
 import OS implementation code, create trust roots, or silently sign unsigned
 inputs. The publisher key must be authorized for `package-signing` and kind
@@ -226,7 +226,7 @@ mode. The producer follows the public Linux manifest runtime defaults:
 Explicit `entry` and `mcp.entry` override those defaults without rewriting
 `app.json`. MCP-only Apps do not acquire a fabricated `main.py`; lazy,
 always-on and while-app-running services use the same signed-entry rule.
-`desktop.exec` remains arguments for the OS-owned `cos app` launcher, not
+`desktop.exec` remains arguments for the OS-owned `yu app` launcher, not
 an independent executable path or a package hook. This entry binding is not
 runtime admission or permission enforcement, and it does not authorize direct
 GUI/resource registration or rewrite compatibility installers' absolute paths.
@@ -279,7 +279,7 @@ There is no `.deb` maintainer-hook execution or post-extraction installer.
 
 **Explicit development/preflight consumer contract:** authenticate the catalog and exact artifact, verify
 the extracted App with the existing provenance machinery, then request
-`cos app install <directory> --review`. Its preflight has `installed: false`
+`yu app install <directory> --review`. Its preflight has `installed: false`
 and `permission_review.permissions_granted: false`; permissions/scopes/purposes
 come from authenticated manifest bytes, not this catalog. Protected human
 confirmation, permission-change review, re-verification and activation remain
@@ -375,7 +375,7 @@ The release order deliberately separates tested inputs from final publication:
 1. Authenticate each matrix build record against the original unsigned CI
    `.deb` bytes and complete selected package/architecture plan.
 2. Privately extract **data and DEBIAN control**. Sign each actual App directory
-   through the existing digest-pinned public `cos provenance sign` interface
+   through the existing digest-pinned public `yu provenance sign` interface
    and reverify its ordinary pinned package-signing publisher. No private
    provenance implementation or new trust root is introduced.
 3. Repack the Debian payload with the signed `.provenance.json` files, preserving
@@ -408,6 +408,12 @@ apply. This source implementation does not publish packages, adopt a platform
 pin, complete OS integration or declare release readiness.
 
 ## Packages and ownership
+
+The Yu OS App builds target `/usr/local/bin/yu` and require the new
+`yuos-app-runtime-v1` package provider. These packages and the matching
+Desktop Shell must be released together with the corresponding OS build.
+Previously published assets keep their original bytes and are not a Yu OS
+runtime fallback.
 
 [`packaging/release.json`](../packaging/release.json) defines the channel and
 compatibility policy. [`tools/release.py`](../tools/release.py) derives the
@@ -470,7 +476,7 @@ Common safe HTTP/IDNA helpers require Debian `python3-idna (>= 3.3)` and
 `python3-idna (<< 4)` through `claw-app-support`; consumers do not vendor a
 separate IDNA implementation or install it dynamically.
 
-Apps depend on `claw-os-app-runtime-v1 (>= 0.2.1)`, with additional permission, capture,
+Apps depend on `yuos-app-runtime-v1 (>= 0.2.1)`, with additional permission, capture,
 media-player and notification service interfaces where required. Native runtime
 library dependencies are computed from the actual installed ELF binaries with
 `dpkg-shlibdeps`. Python/system package mappings remain explicit in the release

@@ -11,7 +11,7 @@ pub(crate) struct Output {
 
 impl Output {
     pub(crate) fn open() -> Result<Self, String> {
-        let mut child = Command::new("/usr/local/bin/cos")
+        let mut child = Command::new("/usr/local/bin/yu")
             .args(["__gui-audio", "--pcm-stdin"])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())

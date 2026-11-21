@@ -132,7 +132,7 @@ def scrub_env(
 
     ``extra_drop`` is appended to the denylist. ``keep`` overrides the
     denylist (use sparingly — only when a child genuinely needs a
-    credential, e.g. an explicit ``cos pkg apt-get install`` spawn).
+    credential, e.g. an explicit ``yu pkg apt-get install`` spawn).
     """
     source = os.environ if env is None else env
     keep_set = {k.upper() for k in (keep or ())}

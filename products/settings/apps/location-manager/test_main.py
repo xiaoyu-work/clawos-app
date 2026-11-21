@@ -58,7 +58,7 @@ def test_queries_require_location_capability(mcp_app, transport, action, accurac
         stdout=json.dumps({"provider": "geoclue2"}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         arguments = {} if accuracy is None else {"accuracy": accuracy}
@@ -77,7 +77,7 @@ def test_queries_require_location_capability(mcp_app, transport, action, accurac
     assert result["provider"] == "geoclue2"
     run.assert_called_once()
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos", "__location", action, "--accuracy",
+        "/usr/local/bin/yu", "__location", action, "--accuracy",
         "city" if accuracy is None else accuracy,
     ]
     assert run.call_args.kwargs["timeout"] == main.TIMEOUT_SECS

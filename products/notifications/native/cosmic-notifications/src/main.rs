@@ -20,7 +20,7 @@ fn main() -> anyhow::Result<()> {
     }
     anyhow::ensure!(
         subscriptions::managed::enabled(),
-        "Notifications requires the authenticated GUI Host; use cos app cosmic-notifications --gui"
+        "Notifications requires the authenticated GUI Host; use yu app cosmic-notifications --gui"
     );
 
     color_backtrace::install();

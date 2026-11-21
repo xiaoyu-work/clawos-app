@@ -90,6 +90,6 @@ The included Rust parser tests use the `cli::tests::` filter.
 
 `native_payload` prepares the real `bin/cosmic-edit` for both signed primary
 and MCP entries, preserving resources/licenses. The legacy command enters
-`cos app cosmic-edit --gui`; file arguments remain forwarded, not silently
+`yu app cosmic-edit --gui`; file arguments remain forwarded, not silently
 discarded or executed outside the Host. Native argv/resource admission remains
 gated as described in [native payloads](../../docs/native-payloads.md).

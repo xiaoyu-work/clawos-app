@@ -12,7 +12,7 @@ from test_support import load_local_module
 
 
 APP_DIR = pathlib.Path(__file__).parent
-COS = "/usr/local/bin/cos"
+COS = "/usr/local/bin/yu"
 RUNTIME_CHOICES = ["docker", "podman", "podman-root", "containerd"]
 SIGNAL_CHOICES = ["TERM", "KILL", "HUP", "INT", "USR1", "USR2"]
 OBSERVE = {"status", "list", "inspect", "logs", "processes", "stats", "namespaces"}
@@ -584,7 +584,7 @@ def test_missing_broker_executable_raises():
     ), mock.patch.object(main.policy, "require") as require:
         with pytest.raises(
             FileNotFoundError,
-            match="cos binary not found; Container Manager broker unavailable",
+            match="yu binary not found; Container Manager broker unavailable",
         ):
             main.status()
     require.assert_called_once_with("sys.container", name="observe")
@@ -619,7 +619,7 @@ def test_broker_timeout_raises():
     ), mock.patch.object(
         main.subprocess,
         "run",
-        side_effect=main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+        side_effect=main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
     ):
         with pytest.raises(
             TimeoutError,

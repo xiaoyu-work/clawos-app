@@ -3,7 +3,7 @@
 ``send`` preserves the direct Web API client. Signed inbound reception,
 Activity admission, lifecycle and safe replies use the Root channel service.
 
-Credentials: ``cos credential store slack_bot_token`` (or env
+Credentials: ``yu credential store slack_bot_token`` (or env
 ``COS_SLACK_TOKEN``).
 """
 

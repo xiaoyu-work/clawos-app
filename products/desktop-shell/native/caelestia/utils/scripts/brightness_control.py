@@ -21,7 +21,7 @@ def main(args: list[str]) -> int:
         return 2
     try:
         reply = call_json_with_stdin_binary(
-            "/usr/local/bin/cos", ["__display", *command], b"",
+            "/usr/local/bin/yu", ["__display", *command], b"",
             deadline_unix_ms=time.time_ns() // 1_000_000 + 35_000,
         )
     except (KernelDenied, KernelUnavailable):

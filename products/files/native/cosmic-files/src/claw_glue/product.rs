@@ -19,8 +19,8 @@ fn command() -> Command {
     command.args(["-I", "-c", &format!(
         "import sys,os,types,json\n\
          sys.path[:0] = ['/usr/lib/cos/python']\n\
-         os.environ['COS_BIN'] = '/usr/local/bin/cos'\n\
-         os.environ['CLAW_COS_BIN'] = '/usr/local/bin/cos'\n\
+         os.environ['COS_BIN'] = '/usr/local/bin/yu'\n\
+         os.environ['CLAW_COS_BIN'] = '/usr/local/bin/yu'\n\
          request = json.load(sys.stdin)\n\
          needed = {{'document':'document', 'recoll':'recoll', 'remember':None}}.get(request['operation'], 'fs')\n\
          for name,source in {sources}:\n\

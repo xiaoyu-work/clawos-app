@@ -147,17 +147,17 @@ same original installer privately, stages the App under
 only as a fixed common-Host launcher:
 
 ```text
-/usr/local/bin/cos app <identity> <desktop.exec> [original arguments...]
+/usr/local/bin/yu app <identity> <desktop.exec> [original arguments...]
 ```
 
-This is the public `cos app` route in the OS's
-`core/src/router/app_commands.rs`, not `cos app run`, a direct ELF invocation
+This is the public `yu app` route in the OS's
+`core/src/router/app_commands.rs`, not `yu app run`, a direct ELF invocation
 or an App-to-App call. Arguments remain distinct argv values; errors and exit
 status are propagated. The launcher does not clear caller identity, manufacture
 approval, choose another executable or fall back when the Host refuses.
 An auxiliary command is exported only when exactly one explicit additional
 GUI entry selects its declared binary; its wrapper uses
-`/usr/local/bin/cos app <identity> --gui:<entry-name> "$@"`, never the ELF.
+`/usr/local/bin/yu app <identity> --gui:<entry-name> "$@"`, never the ELF.
 Desktop and thumbnailer exports may target only the primary command or these
 mapped auxiliary commands, not a shell, arbitrary path or unbound helper.
 D-Bus activation without a Host contract is refused.

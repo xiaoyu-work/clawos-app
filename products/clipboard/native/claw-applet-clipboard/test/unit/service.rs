@@ -31,7 +31,7 @@ async fn history_uses_public_typed_kernel_decoder_and_no_copyq_or_policy_preflig
     let root = std::env::current_exe().unwrap().parent().unwrap()
         .join(format!("clipboard-client-fixture-{}", std::process::id()));
     fs::create_dir_all(&root).unwrap();
-    let binary = root.join("cos");
+    let binary = root.join("yu");
     fs::write(&binary, concat!(
         "#!/usr/bin/python3\nimport json,sys\n",
         "args=sys.argv[1:]\nassert args[:4]==['--wire=1','__clipboard','history-list','--deadline']\n",

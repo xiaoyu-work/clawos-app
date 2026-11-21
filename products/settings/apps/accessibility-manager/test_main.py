@@ -23,13 +23,13 @@ def test_magnifier_uses_accessibility_control_scope():
         stdout=json.dumps({"changed": True}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         result = main.set_toggle("magnifier", "on")
     require.assert_called_once_with("ui.accessibility", name="control")
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__accessibility",
         "magnifier",
         "--value",
@@ -90,7 +90,7 @@ def test_relocated_sdk_preserves_choices_and_accessibility_scope(action, argumen
     with mock.patch.dict(sys.modules, {"main": main}), mock.patch.dict(
         os.environ, {
             "COS_APP_MANIFEST": str(APP_DIR / "app.json"),
-            "COS_BIN": "/usr/local/bin/cos",
+            "COS_BIN": "/usr/local/bin/yu",
         }
     ):
         server = load_local_module(APP_DIR / "server.py", "claw_test_accessibility_manager_server")
@@ -109,6 +109,6 @@ def test_relocated_sdk_preserves_choices_and_accessibility_scope(action, argumen
         assert result["structuredContent"] == {"action": action}
         require.assert_called_once_with(verb, name=scope)
         tail = [] if value is None else ["--value", value]
-        assert run.call_args.args[0] == ["/usr/local/bin/cos", "__accessibility", action, *tail]
+        assert run.call_args.args[0] == ["/usr/local/bin/yu", "__accessibility", action, *tail]
         assert run.call_args.kwargs["stdin"] is main.subprocess.DEVNULL
         assert run.call_args.kwargs["timeout"] == main.TIMEOUT_SECS

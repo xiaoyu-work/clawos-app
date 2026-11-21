@@ -344,7 +344,7 @@ class TestProviderErrors(unittest.TestCase):
         self.assertTrue(result["setup"]["interactive_oauth_available"])
         self.assertEqual(
             result["setup"]["login_command"],
-            "cos credential oauth-login google",
+            "yu credential oauth-login google",
         )
         self.assertEqual(
             result["setup"]["agent_action"],
@@ -387,7 +387,7 @@ class TestProviderErrors(unittest.TestCase):
         self.assertTrue(result["setup"]["interactive_oauth_available"])
         self.assertEqual(
             result["setup"]["login_command"],
-            "cos credential oauth-login microsoft",
+            "yu credential oauth-login microsoft",
         )
         self.assertEqual(
             result["setup"]["agent_action"],

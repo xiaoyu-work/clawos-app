@@ -145,7 +145,7 @@ class TestCmdStartScratchNaming(unittest.TestCase):
 
 
 class TestShellScope(unittest.TestCase):
-    """Regression coverage for CR-2 (``cos exec run --shell`` scope).
+    """Regression coverage for CR-2 (``yu exec run --shell`` scope).
 
     Shell syntax can execute substitutions, functions and pipelines not
     represented by any first token, so every shell invocation must require

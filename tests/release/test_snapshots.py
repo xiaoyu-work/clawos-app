@@ -831,7 +831,7 @@ def test_real_elf_cannot_be_labeled_architecture_independent(app):
 
 
 def test_wrong_tool_pin_fails_before_running_any_command(tmp_path, monkeypatch):
-    binary = tmp_path / "cos"
+    binary = tmp_path / "yu"
     binary.write_text("#!/bin/sh\nexit 99\n")
     binary.chmod(0o755)
     monkeypatch.setattr(snapshots, "run", lambda *_a, **_k: pytest.fail("unverified tool must not execute"))

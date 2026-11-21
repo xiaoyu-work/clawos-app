@@ -22,7 +22,7 @@ from release_snapshots import (
     tree_inventory, validate_manifest_entries,
 )
 
-HOST = "/usr/local/bin/cos"
+HOST = "/usr/local/bin/yu"
 PROGRAM = re.compile(r"[a-z][a-z0-9-]*")
 RESOURCE_EXPORTS = (
     "usr/share/applications", "usr/share/icons", "usr/share/metainfo",

@@ -72,7 +72,7 @@ def test_rejects_option_and_path_units():
 
 def test_accepts_instantiated_service_unit(invoke):
     completed = mock.Mock(returncode=0, stdout="{}", stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as runner:
         invoke("status", "user@1000.service")
@@ -89,13 +89,13 @@ def test_status_uses_observe_capability(invoke, unit):
         stdout=json.dumps({"state": {"active": True}}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as runner:
         result = invoke("status", unit)
     require.assert_called_once_with("sys.observe", name=unit)
     assert runner.call_args[0][0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__systemd",
         "status",
         unit,
@@ -107,7 +107,7 @@ def test_status_uses_observe_capability(invoke, unit):
 @pytest.mark.parametrize("action", ACTIONS)
 def test_controls_use_exact_service_capability(invoke, action):
     completed = mock.Mock(returncode=0, stdout=json.dumps({"changed": True}), stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess, "run", return_value=completed
@@ -115,7 +115,7 @@ def test_controls_use_exact_service_capability(invoke, action):
         result = invoke(action, "demo.service")
     require.assert_called_once_with("sys.service", name="demo.service")
     assert runner.call_args.args[0] == [
-        "/usr/local/bin/cos", "__systemd", action, "demo.service",
+        "/usr/local/bin/yu", "__systemd", action, "demo.service",
     ]
     assert runner.call_args.kwargs["timeout"] == main.CONTROL_TIMEOUT_SECS
     assert runner.call_args.kwargs["stdin"] is main.subprocess.DEVNULL
@@ -150,7 +150,7 @@ def test_broker_error_raises():
         stdout=json.dumps({"error": "restart failed"}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match="restart failed"):
@@ -160,7 +160,7 @@ def test_broker_error_raises():
 
 def test_invalid_json_raises():
     completed = mock.Mock(returncode=0, stdout="not-json", stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ), mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match="systemd broker returned invalid JSON"):

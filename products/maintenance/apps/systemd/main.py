@@ -33,14 +33,14 @@ def _validate_unit(unit: str) -> None:
 
 
 def _cos_binary() -> str | None:
-    return os.environ.get("COS_BIN") or shutil.which("cos")
+    return os.environ.get("COS_BIN") or shutil.which("yu")
 
 
 def _broker(action: str, unit: str) -> dict:
     cos_bin = _cos_binary()
     if not cos_bin:
         raise FileNotFoundError(
-            "cos binary not found; privileged systemd broker unavailable"
+            "yu binary not found; privileged systemd broker unavailable"
         )
     try:
         result = subprocess.run(

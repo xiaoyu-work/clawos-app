@@ -46,7 +46,7 @@ async fn all_editor_handlers_use_controlled_primitives_and_ai_identity() {
         gui: std::env::var_os("COS_APP_GUI"),
         mcp: std::env::var_os("COS_MCP_SERVER"),
     };
-    let script = path.join("cos");
+    let script = path.join("yu");
     std::fs::write(&script, r#"#!/bin/sh
 printf '%s\n' "$@" >> "$0.args"
 case "$2" in

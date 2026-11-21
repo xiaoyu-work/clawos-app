@@ -74,7 +74,7 @@ struct Entry {
 async fn exchange(event: Option<Value>) -> Result<Reply> {
     let payload = json!({"event":event}).to_string();
     let value = claw_os_sdk::cos_call_json_async_with_stdin_binary(
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "notification",
         "presentation",
         ["__gui_notifications", "--request-stdin"],

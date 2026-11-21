@@ -15,7 +15,7 @@ def emit(**fields) -> None:
 def call(command: str, *args: str) -> dict:
     timeout_ms = 15_000 if command == "__desktop-power" else 8_000
     return call_json_with_stdin_binary(
-        "/usr/local/bin/cos", [command, *args], b"",
+        "/usr/local/bin/yu", [command, *args], b"",
         deadline_unix_ms=time.time_ns() // 1_000_000 + timeout_ms,
     )
 

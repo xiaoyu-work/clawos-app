@@ -260,7 +260,7 @@ impl Tracked {
         let evidence = match &self.state {
             State::PermissionRequired(ids) => format!(
                 "Critical sys.package permission is awaiting protected OS review: {}. \
-                 Open OS Approvals (cos agent serve --open) or cos review show <id> outside \
+                 Open OS Approvals (yu agent serve --open) or yu review show <id> outside \
                  Store, then continue this exact request. No package acceptance or effect is confirmed.",
                 ids.join(", ")
             ),
@@ -269,7 +269,7 @@ impl Tracked {
                 this status is not authority, acceptance or package success.".into(),
             State::Accepted(id) => format!(
                 "Handed off to Root, request {id}. Accepted is not installed, removed or successful. \
-                 Root may stop this Store window. Inspect cos package-transactions {id} outside Store."
+                 Root may stop this Store window. Inspect yu package-transactions {id} outside Store."
             ),
             State::Transaction(record) => {
                 let phase = record["phase"].as_str().unwrap_or("unknown");
@@ -318,7 +318,7 @@ impl Tracked {
             _ => self.intent.packages.join(", "),
         };
         format!(
-            "{}: {}\n{evidence}\nCorrelation: {}. Outside Store: cos package-transactions --invocation {}. \
+            "{}: {}\n{evidence}\nCorrelation: {}. Outside Store: yu package-transactions --invocation {}. \
              Recovery only reconciles evidence; it never reruns APT.",
             self.intent.action.as_str(), target,
             self.intent.invocation_id, self.intent.invocation_id,
@@ -416,7 +416,7 @@ pub fn refresh(intent: &Intent, mode: Mode) -> Tracked {
             return Err(io::Error::other("package intent is not canonical"));
         }
         let value = claw_os_sdk::cos_call_json_with_binary(
-            "/usr/local/bin/cos", "package", "intent", intent.argv(mode),
+            "/usr/local/bin/yu", "package", "intent", intent.argv(mode),
         ).map_err(io::Error::other)?;
         decode(intent, value)
     })().unwrap_or_else(|error| State::Unconfirmed(error.to_string()));

@@ -16,7 +16,7 @@ MUTE_STATES = frozenset({"on", "off", "toggle"})
 
 
 def _cos_binary() -> str | None:
-    return os.environ.get("COS_BIN") or shutil.which("cos")
+    return os.environ.get("COS_BIN") or shutil.which("yu")
 
 
 def _broker(
@@ -27,7 +27,7 @@ def _broker(
     cos_bin = _cos_binary()
     if not cos_bin:
         raise FileNotFoundError(
-            "cos binary not found; Audio Manager broker unavailable"
+            "yu binary not found; Audio Manager broker unavailable"
         )
     argv = [cos_bin, "__audio", action]
     if target is not None:

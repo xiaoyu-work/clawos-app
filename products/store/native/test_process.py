@@ -37,7 +37,7 @@ def main():
         assert (installed / "usr/share/icons/hicolor/scalable/apps/com.clawos.Store.svg").is_file()
         assert (ROOT / "build/native-target/debug/flathub-stats").is_file()
         namespace = "/run/store-fixture"
-        broker = fixture / "cos"
+        broker = fixture / "yu"
         broker.write_text(
             "#!/usr/bin/python3\n"
             "import json,pathlib,sys,os\n"
@@ -76,13 +76,13 @@ def main():
             "--bind", str(fixture), namespace,
             "--ro-bind", str(Path("/usr/bin/python3").resolve()), "/usr/bin/python3",
             "--ro-bind", str(installed / "usr/lib/cos"), "/usr/lib/cos",
-            "--ro-bind", str(broker), "/usr/local/bin/cos",
+            "--ro-bind", str(broker), "/usr/local/bin/yu",
             "--ro-bind", str(binary), "/usr/bin/cosmic-store",
         ]
         for name, value in {
             "COS_MCP_SERVER": "1", "COS_APP_MANIFEST": "/usr/lib/cos/apps/cosmic-store/app.json",
             "COS_SESSION": "worker-session", "COS_DATA_DIR": namespace + "/data",
-            "HOME": namespace, "TMPDIR": namespace, "CLAW_COS_BIN": "/usr/local/bin/cos",
+            "HOME": namespace, "TMPDIR": namespace, "CLAW_COS_BIN": "/usr/local/bin/yu",
             "COS_BIN": "/untrusted/must-not-execute", "OPENAI_API_KEY": "synthetic-scrub-me",
             "PATH": "/usr/bin", "DISPLAY": "", "WAYLAND_DISPLAY": "",
         }.items():

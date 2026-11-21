@@ -90,7 +90,7 @@ def test_actual_manifest_dispatch_uses_fixed_sdk_transport_not_caller_metadata(
     assert response["result"]["structuredContent"] == SENT
     assert response["result"].get("isError", False) is False
     binary, argv, data = transport.call_args.args
-    assert binary == "/usr/local/bin/cos"
+    assert binary == "/usr/local/bin/yu"
     assert argv == ["__notifications", "request", "--request-stdin", "--deadline", str(deadline)]
     assert json.loads(data) == intent
     assert transport.call_args.kwargs["deadline_unix_ms"] == deadline
@@ -206,5 +206,5 @@ def test_staged_facade_is_complete_and_does_not_package_an_os_provider(tmp_path)
     assert not (tmp_path / "var").exists()
     for filename in ("main.py", "server.py", "client.py"):
         source = (APP / filename).read_text()
-        for forbidden in ("notifications.json", "COS_DATA_DIR", "sqlite", "subprocess", "Connection::session", "cos app"):
+        for forbidden in ("notifications.json", "COS_DATA_DIR", "sqlite", "subprocess", "Connection::session", "yu app"):
             assert forbidden not in source

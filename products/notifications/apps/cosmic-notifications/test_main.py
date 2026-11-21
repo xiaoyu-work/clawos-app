@@ -118,11 +118,11 @@ def test_original_default_and_optional_graph_remain_separate_from_os_applet_rend
 
 def test_mcp_is_fixed_os_intent_and_never_an_authoritative_state_or_bus_owner():
     mcp = (NATIVE / "src/mcp.rs").read_text()
-    assert '"/usr/local/bin/cos"' in mcp
+    assert '"/usr/local/bin/yu"' in mcp
     assert "cos_call_json_async_with_stdin_binary" in mcp
     assert '"__notifications"' in mcp
     assert "context.cancelled()" in mcp
-    for forbidden in ("Connection::session", "notifications.json", "rusqlite", "COS_DATA_DIR", "cos app"):
+    for forbidden in ("Connection::session", "notifications.json", "rusqlite", "COS_DATA_DIR", "yu app"):
         assert forbidden not in mcp
     package = json.loads((PRODUCT / "package.json").read_text())
     assert package["apps"] == ["apps/cosmic-notifications", "apps/notify"]

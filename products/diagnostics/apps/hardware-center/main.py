@@ -18,14 +18,14 @@ TIMEOUT_SECS = int(os.environ.get("CLAW_HARDWARE_CENTER_TIMEOUT", "180"))
 
 
 def _cos_binary():
-    return os.environ.get("COS_BIN") or shutil.which("cos")
+    return os.environ.get("COS_BIN") or shutil.which("yu")
 
 
 def _broker(action):
     cos_bin = _cos_binary()
     if not cos_bin:
         raise FileNotFoundError(
-            "cos binary not found; Hardware Center broker unavailable"
+            "yu binary not found; Hardware Center broker unavailable"
         )
     try:
         result = subprocess.run(

@@ -18,12 +18,12 @@ calendar, task executor, telemetry authority or persistent state owner.
 | `PROVENANCE.md`, `native/LICENSE` | Preserved origin and GPL terms |
 
 The published SDK 0.2.0 generic wire client selects the fixed
-`/usr/local/bin/cos` binary for each independently authorized read. Calendar
+`/usr/local/bin/yu` binary for each independently authorized read. Calendar
 retains `data.db.read:Name(calendar)` and uses the owner-scoped
 `__calendar day <year> <month> <day>` service with the runtime's local day.
-Tasks retain `agent.observe:Name(tasks)` and use `cos --wire=1 __observe tasks`;
+Tasks retain `agent.observe:Name(tasks)` and use `yu --wire=1 __observe tasks`;
 telemetry requests only `sys.observe:Name(resources)` and uses
-`cos --wire=1 __observe resources`. These commands use the existing SessionAction
+`yu --wire=1 __observe resources`. These commands use the existing SessionAction
 wire to the generic Root-owned read-only observer. The OS binds the authenticated
 owner; task results contain only `id`, `purpose`, `status` and `created_at`,
 never leases or task arguments. The ordinary `agent ls` Task-only route is not

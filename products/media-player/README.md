@@ -6,7 +6,7 @@ integration, 72 locales, resources and seven MCP tools.
 
 UI and MCP operate the same live native playback session. MCP calls the
 versioned OS `system.media-player.control` service using the installed
-`/usr/local/bin/cos`, not another App or a direct session bus. Status requires
+`/usr/local/bin/yu`, not another App or a direct session bus. Status requires
 `desktop.media.observe:cosmic-player`; the six controls require
 `desktop.media.control:cosmic-player`. Neither grant implies the other.
 Both require explicit consent and can be revoked through Settings.

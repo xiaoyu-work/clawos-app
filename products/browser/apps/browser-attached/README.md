@@ -1,4 +1,4 @@
-# `cos app browser-attached`
+# `yu app browser-attached`
 
 Operate the user's running Helium tabs while preserving their cookies, SSO,
 MFA, extensions, and visible browser state.

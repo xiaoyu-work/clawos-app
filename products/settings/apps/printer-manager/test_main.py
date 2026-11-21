@@ -80,19 +80,19 @@ def _completed(payload: object, returncode: int = 0) -> mock.Mock:
 
 
 def test_status_uses_printing_observe_scope(invoke):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess, "run", return_value=_completed({"printers": []})
     ) as run:
         result = invoke("status")
     require.assert_called_once_with("sys.observe", name="printing")
-    assert run.call_args.args[0] == ["/usr/local/bin/cos", "__printer", "status"]
+    assert run.call_args.args[0] == ["/usr/local/bin/yu", "__printer", "status"]
     assert result == {"printers": []}
 
 
 def test_capabilities_uses_printing_observe_scope(invoke):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess, "run", return_value=_completed({"capabilities": []})
@@ -100,7 +100,7 @@ def test_capabilities_uses_printing_observe_scope(invoke):
         result = invoke("capabilities", printer="office")
     require.assert_called_once_with("sys.observe", name="printing")
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__printer",
         "capabilities",
         "--printer",
@@ -111,14 +111,14 @@ def test_capabilities_uses_printing_observe_scope(invoke):
 
 @pytest.mark.parametrize("printer", [None, "office"])
 def test_jobs_uses_printer_observe_scope_and_optional_printer(invoke, printer):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess, "run", return_value=_completed({"jobs": []})
     ) as run:
         result = invoke("jobs", **({} if printer is None else {"printer": printer}))
     require.assert_called_once_with("device.printer", name="observe")
-    expected = ["/usr/local/bin/cos", "__printer", "jobs"]
+    expected = ["/usr/local/bin/yu", "__printer", "jobs"]
     if printer is not None:
         expected.extend(["--printer", printer])
     assert run.call_args.args[0] == expected
@@ -136,7 +136,7 @@ def test_jobs_uses_printer_observe_scope_and_optional_printer(invoke, printer):
     ],
 )
 def test_print_uses_exact_scopes_and_safe_arguments(invoke, options):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.os.path, "realpath", side_effect=lambda value: value
     ), mock.patch.object(main.os.path, "islink", return_value=False), mock.patch.object(
         main.policy, "require"
@@ -154,7 +154,7 @@ def test_print_uses_exact_scopes_and_safe_arguments(invoke, options):
         mock.call("fs.read", path="/home/user/document.pdf"),
     ]
     expected = [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__printer",
         "print",
         "--printer",
@@ -183,7 +183,7 @@ def test_cancel_requires_confirmation_before_policy(confirm):
 
 
 def test_cancel_uses_control_scope_and_confirm_flag(invoke):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess, "run", return_value=_completed({"cancelled": True})
@@ -191,7 +191,7 @@ def test_cancel_uses_control_scope_and_confirm_flag(invoke):
         result = invoke("cancel", job_id="office-1", confirm=True)
     require.assert_called_once_with("device.printer", name="control")
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__printer",
         "cancel",
         "--job-id",
@@ -283,7 +283,7 @@ def test_invalid_print_options_are_rejected_before_policy(options, message):
 )
 def test_broker_payload_failures_raise(returncode, stdout, message):
     completed = mock.Mock(returncode=returncode, stdout=stdout, stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ), mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match=message):
@@ -294,7 +294,7 @@ def test_missing_broker_executable_raises():
     with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
         main.shutil, "which", return_value=None
     ), mock.patch.object(main.policy, "require"):
-        with pytest.raises(FileNotFoundError, match="cos binary not found"):
+        with pytest.raises(FileNotFoundError, match="yu binary not found"):
             main.status()
 
 
@@ -314,7 +314,7 @@ def test_missing_broker_executable_raises():
     ],
 )
 def test_broker_launch_failures_raise(error, exception, message):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ), mock.patch.object(main.subprocess, "run", side_effect=error):
         with pytest.raises(exception, match=message):
@@ -322,12 +322,12 @@ def test_broker_launch_failures_raise(error, exception, message):
 
 
 def test_broker_timeout_raises():
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ), mock.patch.object(
         main.subprocess,
         "run",
-        side_effect=main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+        side_effect=main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
     ):
         with pytest.raises(
             TimeoutError,

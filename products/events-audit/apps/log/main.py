@@ -1,6 +1,6 @@
-"""log — System audit log: every cos command is recorded automatically.
+"""log — System audit log: every yu command is recorded automatically.
 
-The cos CLI writes an audit entry for every command execution.
+The yu CLI writes an audit entry for every command execution.
 This app lets you read, tail, and search that log.
 You can also write manual entries.
 """

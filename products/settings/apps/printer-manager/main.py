@@ -20,7 +20,7 @@ TIMEOUT_SECS = int(os.environ.get("CLAW_PRINTER_MANAGER_TIMEOUT", "600"))
 
 
 def _cos_binary() -> str | None:
-    return os.environ.get("COS_BIN") or shutil.which("cos")
+    return os.environ.get("COS_BIN") or shutil.which("yu")
 
 
 def _printer_name(raw: object) -> str:
@@ -99,7 +99,7 @@ def _broker(
     cos_bin = _cos_binary()
     if not cos_bin:
         raise FileNotFoundError(
-            "cos binary not found; Printer Manager broker unavailable"
+            "yu binary not found; Printer Manager broker unavailable"
         )
     argv = [cos_bin, "__printer", action]
     values = {

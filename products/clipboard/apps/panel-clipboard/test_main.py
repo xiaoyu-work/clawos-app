@@ -19,7 +19,7 @@ def test_existing_identity_has_one_real_package_local_gui_and_mcp_entry():
     assert manifest["runtime"] == "binary"
     assert manifest["entry"] == manifest["mcp"]["entry"] == "bin/claw-applet-clipboard"
     assert plan["entrypoints"] == ["bin/claw-applet-clipboard"]
-    assert plan["gui_command"] == ["/usr/local/bin/cos", "app", "panel-clipboard", "open"]
+    assert plan["gui_command"] == ["/usr/local/bin/yu", "app", "panel-clipboard", "open"]
     assert manifest["desktop"]["single_instance"] is True
     assert manifest["desktop"]["panel_applet"] is True
     assert not (APP / "main.sh").exists()

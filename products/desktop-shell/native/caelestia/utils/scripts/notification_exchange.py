@@ -14,7 +14,7 @@ def main() -> int:
         return 1
     try:
         reply = call_json_with_stdin_binary(
-            "/usr/local/bin/cos",
+            "/usr/local/bin/yu",
             ["__gui_notifications", "--request-stdin"],
             data,
             deadline_unix_ms=time.time_ns() // 1_000_000 + 5_000,

@@ -60,7 +60,7 @@ App's implementation or call its CLI/MCP interface.
 Only fixed OS SDK/runtime/shared-library directories are added to Python's
 isolated import path. The authenticated host transport, sandbox, identity
 and data directory survive process replacement. Policy checks and typed
-`cos __desktop launch` requests remain OS-owned. Arbitrary command-line text
+`yu __desktop launch` requests remain OS-owned. Arbitrary command-line text
 and file URIs are rejected; canonical local files additionally require exact
 read authority, which the native descriptor does not automatically grant.
 

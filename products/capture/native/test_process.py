@@ -63,7 +63,7 @@ def main():
         (fixture / "image.png").write_bytes(PNG)
         for permission in ("screen", "write", "notify"):
             (fixture / permission).touch()
-        broker = fixture / "cos"
+        broker = fixture / "yu"
         broker.write_text(
             """#!/usr/bin/python3
 import json, os, pathlib, sys

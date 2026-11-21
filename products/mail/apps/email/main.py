@@ -72,7 +72,7 @@ def _mail(action, account=None, **arguments):
     if account is not None:
         request["account"] = account
     return kernel.call_json_with_stdin_binary(
-        os.environ.get("CLAW_COS_BIN", "/usr/local/bin/cos"),
+        os.environ.get("CLAW_COS_BIN", "/usr/local/bin/yu"),
         ["__mail", "request", "--request-stdin"],
         json.dumps(request, ensure_ascii=False, allow_nan=False).encode("utf-8"),
         deadline_unix_ms=deadline,

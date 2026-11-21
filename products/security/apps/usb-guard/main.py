@@ -20,7 +20,7 @@ USB_STATES = frozenset({"on", "off"})
 
 
 def _cos_binary() -> str | None:
-    return os.environ.get("COS_BIN") or shutil.which("cos")
+    return os.environ.get("COS_BIN") or shutil.which("yu")
 
 
 def _validate_action(action: object) -> str:
@@ -57,7 +57,7 @@ def _broker(
     cos_bin = _cos_binary()
     if not cos_bin:
         raise FileNotFoundError(
-            "cos binary not found; USB Guard broker unavailable"
+            "yu binary not found; USB Guard broker unavailable"
         )
     argv = [cos_bin, "__usb", action]
     for flag, value in [

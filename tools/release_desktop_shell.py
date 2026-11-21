@@ -21,7 +21,7 @@ WORK = ROOT / "build/desktop-shell-release"
 APP = "desktop-shell"
 ENTRY = "bin/claw-desktop-shell"
 SHELL_QML = "resources/usr/share/claw-desktop-shell/shell.qml"
-BUILD_FORMAT = "claw.desktop-shell-build/v1"
+BUILD_FORMAT = "yuos.desktop-shell-build/v1"
 
 
 def source_revision():
@@ -95,7 +95,7 @@ def publish(version, url, sha256, key_id):
     snapshots.sha256_value(sha256)
     with tempfile.TemporaryDirectory(prefix="publish-", dir=WORK) as scratch:
         scratch = Path(scratch)
-        tool = scratch / "cos"
+        tool = scratch / "yu"
         _download(url, tool)
         if digest(tool) != sha256:
             raise ValueError("Public provenance tool SHA256 mismatch")

@@ -134,7 +134,7 @@ impl Tool for NotificationTool {
             Err(_) => return ToolResult::error("invalid system clock"),
         };
         let call = claw_os_sdk::cos_call_json_async_with_stdin_binary(
-            "/usr/local/bin/cos",
+            "/usr/local/bin/yu",
             "notification",
             self.0,
             [

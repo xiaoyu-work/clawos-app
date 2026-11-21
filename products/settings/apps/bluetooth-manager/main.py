@@ -19,7 +19,7 @@ TIMEOUT_SECS = int(os.environ.get("CLAW_BLUETOOTH_MANAGER_TIMEOUT", "240"))
 
 
 def _cos_binary() -> str | None:
-    return os.environ.get("COS_BIN") or shutil.which("cos")
+    return os.environ.get("COS_BIN") or shutil.which("yu")
 
 
 def _address(raw: object, name: str) -> str:
@@ -92,7 +92,7 @@ def _broker(
     cos_bin = _cos_binary()
     if not cos_bin:
         raise FileNotFoundError(
-            "cos binary not found; Bluetooth Manager broker unavailable"
+            "yu binary not found; Bluetooth Manager broker unavailable"
         )
     argv = [cos_bin, "__bluetooth", action]
     if adapter is not None:

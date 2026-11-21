@@ -113,7 +113,7 @@ Singleton {
 
     Process {
         running: true
-        command: ["/usr/local/bin/cos", "__desktop-events"]
+        command: ["/usr/local/bin/yu", "__desktop-events"]
         stdout: SplitParser {
             onRead: line => root.installState(JSON.parse(line))
         }

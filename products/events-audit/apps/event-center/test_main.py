@@ -64,12 +64,12 @@ def test_manifest_keeps_sensitive_event_grant_and_query_default():
 
 def test_status_uses_event_scope_and_safe_argv(invoke):
     completed = mock.Mock(returncode=0, stdout='{"active_pid_watches":0}', stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         assert invoke("status") == {"active_pid_watches": 0}
     require.assert_called_once_with("sys.events", name="observe")
-    assert run.call_args.args[0] == ["/usr/local/bin/cos", "__events", "status"]
+    assert run.call_args.args[0] == ["/usr/local/bin/yu", "__events", "status"]
 
 
 @pytest.mark.parametrize("source", ["udev", "systemd", "journal", "storage", "security", "process"])
@@ -80,13 +80,13 @@ def test_filtered_events_use_event_scope(invoke, source, limit):
         stdout=json.dumps({"count": 2}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         result = invoke("recent", limit=limit, source=source)
     require.assert_called_once_with("sys.events", name="observe")
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__events",
         "recent",
         "--source",
@@ -122,26 +122,26 @@ def test_invalid_pid_is_rejected_before_policy(pid):
 
 def test_recent_default_limit_is_forwarded(invoke):
     completed = mock.Mock(returncode=0, stdout=json.dumps({"count": 1}), stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         invoke("recent")
     require.assert_called_once_with("sys.events", name="observe")
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos", "__events", "recent", "--limit", "100",
+        "/usr/local/bin/yu", "__events", "recent", "--limit", "100",
     ]
 
 
 @pytest.mark.parametrize("pid", [1, 123, 2**32 - 1])
 def test_watch_pid_uses_event_scope_and_safe_argv(invoke, pid):
     completed = mock.Mock(returncode=0, stdout=json.dumps({"watching": pid}), stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         result = invoke("watch-pid", pid=pid)
     require.assert_called_once_with("sys.events", name="observe")
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__events",
         "watch-pid",
         "--pid",
@@ -169,7 +169,7 @@ def test_watch_pid_uses_event_scope_and_safe_argv(invoke, pid):
 )
 def test_broker_payload_failures_raise(returncode, stdout, message):
     completed = mock.Mock(returncode=returncode, stdout=stdout, stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match=message):
@@ -181,7 +181,7 @@ def test_missing_broker_executable_raises():
     with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
         main.shutil, "which", return_value=None
     ), mock.patch.object(main.policy, "require") as require:
-        with pytest.raises(FileNotFoundError, match="cos binary not found"):
+        with pytest.raises(FileNotFoundError, match="yu binary not found"):
             main.status()
     require.assert_called_once_with("sys.events", name="observe")
 
@@ -202,7 +202,7 @@ def test_missing_broker_executable_raises():
     ],
 )
 def test_broker_launch_failures_raise(error, exception, message):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ), mock.patch.object(main.subprocess, "run", side_effect=error):
         with pytest.raises(exception, match=message):
@@ -210,12 +210,12 @@ def test_broker_launch_failures_raise(error, exception, message):
 
 
 def test_broker_timeout_raises():
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess,
         "run",
-        side_effect=main.subprocess.TimeoutExpired(["cos"], main.TIMEOUT_SECS),
+        side_effect=main.subprocess.TimeoutExpired(["yu"], main.TIMEOUT_SECS),
     ):
         with pytest.raises(TimeoutError, match="Event Center broker exceeded"):
             main.status()

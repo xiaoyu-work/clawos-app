@@ -19,7 +19,7 @@ def main():
     process = None
     try:
         stage("editor", fixture / "installed")
-        broker = fixture / "cos"
+        broker = fixture / "yu"
         broker.write_text(
             "#!/usr/bin/python3\n"
             "import json, pathlib, sys\n"

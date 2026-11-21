@@ -150,7 +150,7 @@ fn client_uses_only_the_fixed_public_sdk_service_bridge() {
         "/src/regional_settings.rs"
     ));
     assert!(source.contains("cos_call_json_async_with_binary"));
-    assert!(source.contains("\"/usr/local/bin/cos\""));
+    assert!(source.contains("\"/usr/local/bin/yu\""));
     assert!(!source.contains("pkexec"));
     assert!(!source.contains("approval-helper"));
     assert!(!source.contains("clawd_client::"));

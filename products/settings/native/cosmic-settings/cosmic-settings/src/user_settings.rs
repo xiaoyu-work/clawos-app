@@ -204,7 +204,7 @@ impl Drop for AccountRequest<'_> {
 }
 
 async fn call(args: Vec<String>) -> Result<Value, Failure> {
-    claw_os_sdk::cos_call_json_async_with_binary("/usr/local/bin/cos", "users", "control", args)
+    claw_os_sdk::cos_call_json_async_with_binary("/usr/local/bin/yu", "users", "control", args)
         .await
         .map_err(bridge_failure)
 }
@@ -335,7 +335,7 @@ pub(crate) fn decode(change: &Change, value: Value) -> Result<(), Failure> {
 pub async fn apply(change: Change) -> Result<(), Failure> {
     if let Some(request) = change.account_request()? {
         let value = claw_os_sdk::cos_call_json_async_with_stdin_binary(
-            "/usr/local/bin/cos", "users", "control",
+            "/usr/local/bin/yu", "users", "control",
             ["__system-settings", "--request-stdin"], &request.input,
         ).await.map_err(bridge_failure)?;
         return check_account_reply(request.action, request.user, request.uid, value);

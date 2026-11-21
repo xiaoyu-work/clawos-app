@@ -262,9 +262,9 @@ def _provider_auth_error(provider, detail):
     title = "Google Calendar" if provider == "google" else "Outlook Calendar"
     oauth_provider = "google" if provider == "google" else "microsoft"
     login_command = (
-        "cos credential oauth-login google"
+        "yu credential oauth-login google"
         if provider == "google"
-        else "cos credential oauth-login microsoft"
+        else "yu credential oauth-login microsoft"
     )
     return {
         "error": f"{title} authorization is required or has expired",

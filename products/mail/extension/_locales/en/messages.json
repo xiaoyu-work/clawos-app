@@ -72,7 +72,7 @@
   "opt_compose":               { "message": "Compose defaults" },
   "opt_translate":             { "message": "Translate defaults" },
   "opt_about":                 { "message": "About" },
-  "about_body":                { "message": "All AI calls route through the host's cos ai chat, gated by the cos permission system. No model keys are stored in Thunderbird." },
+  "about_body":                { "message": "All AI calls route through the host's yu ai chat, gated by the yu permission system. No model keys are stored in Thunderbird." },
 
   "feat_summarize":            { "message": "Summarize thread" },
   "feat_smartReply":           { "message": "Smart reply" },

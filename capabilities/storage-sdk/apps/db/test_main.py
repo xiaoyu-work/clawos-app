@@ -322,7 +322,7 @@ def sdk_app(tmp_path):
     log = tmp_path / "policy.jsonl"
     decision = tmp_path / "decision.json"
     decision.write_text('{"decision":"allow"}')
-    policy = tmp_path / "cos"
+    policy = tmp_path / "yu"
     policy.write_text(
         f"#!{sys.executable}\n"
         "import json, pathlib, sys\n"

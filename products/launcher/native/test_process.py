@@ -35,7 +35,7 @@ def main():
             (applications / f"{name}.desktop").write_text(
                 f"[Desktop Entry]\nType=Application\nName={name}\nExec=never-executed\n"
             )
-        broker = fixture / "cos"
+        broker = fixture / "yu"
         broker.write_text(
             "#!/bin/sh\n"
             "printf '%s\\n' \"$*\" >> /fixture/broker-calls\n"
@@ -67,7 +67,7 @@ def main():
         command += [
             "--bind", str(fixture), "/fixture",
             "--ro-bind", str(installed / "usr/lib/cos"), "/usr/lib/cos",
-            "--ro-bind", str(broker), "/usr/local/bin/cos",
+            "--ro-bind", str(broker), "/usr/local/bin/yu",
             "--setenv", "COS_MCP_SERVER", "1",
             "--setenv", "COS_APP_MANIFEST", "/usr/lib/cos/apps/claw-launcher/app.json",
             "--setenv", "COS_DATA_DIR", "/fixture/data",

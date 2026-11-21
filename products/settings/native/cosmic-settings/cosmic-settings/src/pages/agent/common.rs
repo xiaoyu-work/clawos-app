@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 //
-// Shared state, messages, view helpers and `cos agent setup` shell-out
+// Shared state, messages, view helpers and `yu agent setup` shell-out
 // plumbing for the Agent settings page. Each modality (LLM / TTS / STT /
 // image gen / embeddings) gets its own thin `Page` wrapper around `State`;
 // all the actual logic lives here so the per-modality files stay tiny.
@@ -8,11 +8,11 @@
 // The page never touches `~/.config/cos/config.json` directly. Reads and writes
 // are funnelled through the kernel's non-interactive subcommands:
 //
-//   * `cos agent setup --providers <modality>` -> provider/model catalogue
-//   * `cos agent setup <modality> --status`    -> currently-configured row
-//   * `cos agent setup <modality> apply ...`   -> persist a new selection
-//   * `cos agent setup <modality> test`        -> upstream / resolvability probe
-//   * `cos agent setup <modality> --reset`     -> clear the row
+//   * `yu agent setup --providers <modality>` -> provider/model catalogue
+//   * `yu agent setup <modality> --status`    -> currently-configured row
+//   * `yu agent setup <modality> apply ...`   -> persist a new selection
+//   * `yu agent setup <modality> test`        -> upstream / resolvability probe
+//   * `yu agent setup <modality> --reset`     -> clear the row
 //
 // This keeps the atomic-write + credential-store logic in one place
 // (`core/src/agent/setup.rs`) and the UI as a thin client. The kernel
@@ -1053,7 +1053,7 @@ pub struct Loaded {
 }
 
 // ---------------------------------------------------------------------------
-// Shell-out helpers (cos agent setup ...)
+// Shell-out helpers (yu agent setup ...)
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug)]
@@ -1253,11 +1253,11 @@ async fn sleep_secs(secs: u64) {
     .await;
 }
 
-/// Invoke `cos agent setup <argv...>`, optionally piping a secret via stdin.
+/// Invoke `yu agent setup <argv...>`, optionally piping a secret via stdin.
 /// Returns stdout on success. On failure returns stderr (or stdout if stderr
 /// is empty — `cos` writes JSON error envelopes there too).
 async fn cos_setup(extra_argv: &[&str], stdin_input: Option<String>) -> Result<String, String> {
-    let mut cmd = Command::new("cos");
+    let mut cmd = Command::new("yu");
     cmd.arg("agent")
         .arg("setup")
         .args(extra_argv)
@@ -1301,7 +1301,7 @@ async fn cos_setup(extra_argv: &[&str], stdin_input: Option<String>) -> Result<S
     } else if !stdout.trim().is_empty() {
         stdout
     } else {
-        format!("`cos agent setup` exited with {}", output.status)
+        format!("`yu agent setup` exited with {}", output.status)
     };
     // If stderr is itself a JSON error envelope, pull the human-readable
     // pieces out so we surface "error: details" instead of raw braces.

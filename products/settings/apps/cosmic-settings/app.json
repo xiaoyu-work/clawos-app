@@ -391,7 +391,7 @@
       {
         "name": "settings.permissions_request",
         "summary": {
-          "en": "Request restoration of a revoked, declared brokered permission. Returns pending, not granted. A human must use the OS approval gate or cos review; neither Settings GUI nor MCP can approve. Manifest/caller ceilings remain unchanged."
+          "en": "Request restoration of a revoked, declared brokered permission. Returns pending, not granted. A human must use the OS approval gate or yu review; neither Settings GUI nor MCP can approve. Manifest/caller ceilings remain unchanged."
         },
         "args": [
           {
@@ -438,7 +438,7 @@
           {
             "kind": "create",
             "label": {
-              "en": "Request restoration of a revoked, declared brokered permission. Returns pending, not granted. A human must use the OS approval gate or cos review; neither Settings GUI nor MCP can approve. Manifest/caller ceilings remain unchanged."
+              "en": "Request restoration of a revoked, declared brokered permission. Returns pending, not granted. A human must use the OS approval gate or yu review; neither Settings GUI nor MCP can approve. Manifest/caller ceilings remain unchanged."
             },
             "recovery": "unknown",
             "target_arg": "app_id"

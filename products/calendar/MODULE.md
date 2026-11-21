@@ -26,7 +26,7 @@ migration, policy and credential authority. App-owned support comes from
 command is exported through the common Host, not `cosmic-applets`.
 The binary retains the existing UI and internal `AgendaProvider` seam. Both
 surfaces use the published SDK 0.2.1 generic wire client with the fixed
-`/usr/local/bin/cos __calendar day <year> <month> <day>` OS command and SDK
+`/usr/local/bin/yu __calendar day <year> <month> <day>` OS command and SDK
 `CalendarEvent` records. No Desktop-only applet-provider, other App, raw
 database, user bus or process-global credential override is used.
 The existing read-only `data.db.read:Name(calendar)` provider stays OS-owned,

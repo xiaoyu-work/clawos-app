@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 //
 // Top-level "Agent" settings page. Owns no state of its own; every modality
-// is a sub-page that talks to `cos agent setup` over the kernel's
+// is a sub-page that talks to `yu agent setup` over the kernel's
 // non-interactive subcommands. See `common.rs` for the shared form.
 
 pub mod common;

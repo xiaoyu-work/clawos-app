@@ -20,7 +20,7 @@ on:
         default: false
         type: boolean
       provenance_cli_url:
-        description: "Owner-approved published provenance-capable cos executable URL"
+        description: "Owner-approved published provenance-capable yu executable URL"
         required: true
         type: string
       provenance_cli_sha256:

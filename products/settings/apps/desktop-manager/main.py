@@ -17,7 +17,7 @@ APP_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,254}$")
 
 
 def _cos_binary() -> str | None:
-    return os.environ.get("COS_BIN") or shutil.which("cos")
+    return os.environ.get("COS_BIN") or shutil.which("yu")
 
 
 def _validate_identifier(value: object) -> str:
@@ -47,7 +47,7 @@ def _broker(
     cos_bin = _cos_binary()
     if not cos_bin:
         raise FileNotFoundError(
-            "cos binary not found; Desktop Manager broker unavailable"
+            "yu binary not found; Desktop Manager broker unavailable"
         )
     argv = [cos_bin, "__desktop", action]
     if identifier is not None:

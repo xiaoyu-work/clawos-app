@@ -485,7 +485,7 @@ def build_catalog(app_directories, output, *, release_version, architecture, pro
         records, identities = [], set()
         for index, source in enumerate(sources):
             if not (source / ".provenance.json").is_file():
-                raise ValueError("Unsigned App input: first use the public cos provenance sign command")
+                raise ValueError("Unsigned App input: first use the public yu provenance sign command")
             before = tree_inventory(source, architecture)
             root = scratch / f"app-{index}"
             shutil.copytree(source, root, symlinks=True)

@@ -92,7 +92,7 @@ fn decode(id: &str, value: Value) -> Result<Progress, String> {
 async fn call(action: &str, request: Value) -> Result<Value, String> {
     let input = serde_json::to_vec(&request).map_err(cosmic_settings_provider_client::refused)?;
     claw_os_sdk::cos_call_json_async_with_stdin_binary(
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "file-picker",
         action,
         ["__gui-file-picker", action, "--request-stdin"],

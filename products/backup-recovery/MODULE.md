@@ -7,11 +7,11 @@ These remain distinct contracts and must not inherit one another's permissions.
 | Path | Responsibility |
 | --- | --- |
 | `apps/backup-center/app.json` | Repository/source/destination scopes, credential reference and explicit confirmation |
-| `apps/backup-center/main.py` | Validated backup lifecycle requests through `cos __backup` |
+| `apps/backup-center/main.py` | Validated backup lifecycle requests through `yu __backup` |
 | `apps/backup-center/server.py` | Direct SDK MCP handlers |
 | `apps/backup-center/test_main.py` | Argument validation, exact capabilities/argv, SDK dispatch and broker errors |
 | `apps/system-snapshot/app.json` | Named observation, machine-wide snapshot authority and rollback confirmation |
-| `apps/system-snapshot/main.py`, `server.py` | Direct SDK handlers and validated `cos __snapshot` broker requests |
+| `apps/system-snapshot/main.py`, `server.py` | Direct SDK handlers and validated `yu __snapshot` broker requests |
 | `apps/system-snapshot/test_main.py` | MCP contract/dispatch, snapshot IDs, defaults, confirmation and broker failures |
 | `package.json` | Product-owned staging and test inputs |
 

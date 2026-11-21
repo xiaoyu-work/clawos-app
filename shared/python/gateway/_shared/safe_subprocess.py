@@ -1,21 +1,21 @@
 """Hardened :mod:`subprocess` wrappers for gateway apps.
 
-Every external command a gateway runs (``cos credential load``,
-``cos agent ask``, ``taskkill``, …) must come through here. The
+Every external command a gateway runs (``yu credential load``,
+``yu agent ask``, ``taskkill``, …) must come through here. The
 wrappers enforce:
 
 * **Mandatory timeouts.** Raw :func:`subprocess.run` without a
   ``timeout=`` parameter has bitten us once already — the telegram
-  long-poll loop hung forever when ``cos credential load`` did not
+  long-poll loop hung forever when ``yu credential load`` did not
   return. Every call here demands an explicit timeout.
 
 * **``stdin=DEVNULL``.** Without this the child inherits the
-  gateway's stdin, which (under ``cos service``) may be a control
+  gateway's stdin, which (under ``yu service``) may be a control
   pipe. Closing stdin defensively prevents accidental cross-talk
   with whatever spawned us.
 
 * **Scrubbed environment.** Only an explicit allowlist of variables
-  is passed through to the child. ``cos credential load`` does need
+  is passed through to the child. ``yu credential load`` does need
   ``HOME`` and ``COS_*`` to function, but it does not need (and
   should not see) ad-hoc tokens like ``COS_SLACK_TOKEN`` that the
   caller set just to authenticate this particular send.
@@ -144,7 +144,7 @@ def safe_subprocess(
 
 
 # ---------------------------------------------------------------------------
-# Convenience: load a credential via ``cos credential load <name>``.
+# Convenience: load a credential via ``yu credential load <name>``.
 # ---------------------------------------------------------------------------
 
 
@@ -152,12 +152,12 @@ def safe_credential_load(
     name: str,
     *,
     timeout: float = 10.0,
-    cos_bin: str = "cos",
+    cos_bin: str = "yu",
 ) -> Tuple[Optional[str], Optional[str]]:
     """Look up a credential and return ``(value, error)``.
 
     The credential value is parsed out of the JSON envelope that
-    ``cos credential load`` returns. Importantly, on every error path
+    ``yu credential load`` returns. Importantly, on every error path
     the *literal credential value* is **never** echoed back into the
     returned error string — even if ``cos`` accidentally writes it to
     stderr. We squelch stderr through a generic placeholder so a
@@ -172,16 +172,16 @@ def safe_credential_load(
             timeout=timeout,
         )
     except FileNotFoundError:
-        return None, "cos binary not found on PATH"
+        return None, "yu binary not found on PATH"
     except subprocess.TimeoutExpired:
-        return None, f"cos credential load timed out after {timeout}s"
+        return None, f"yu credential load timed out after {timeout}s"
 
     if proc.returncode != 0:
         # Deliberately discard proc.stderr — a misbehaving credential
         # helper that echoes the secret into stderr must not leak it
         # back into the gateway's structured error response.
         return None, (
-            f"cos credential load returned {proc.returncode} "
+            f"yu credential load returned {proc.returncode} "
             f"(stderr suppressed to avoid leaking secret material)"
         )
 

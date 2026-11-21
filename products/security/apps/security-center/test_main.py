@@ -58,7 +58,7 @@ def test_routes_use_sensitive_security_scope(mcp_app, transport, action):
         stdout=json.dumps({"status": "warning"}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed) as run:
         if transport == "direct":
@@ -74,7 +74,7 @@ def test_routes_use_sensitive_security_scope(mcp_app, transport, action):
             result = response["structuredContent"]
     require.assert_called_once_with("sys.security", name="audit")
     run.assert_called_once()
-    assert run.call_args.args[0] == ["/usr/local/bin/cos", "__security", action]
+    assert run.call_args.args[0] == ["/usr/local/bin/yu", "__security", action]
     assert run.call_args.kwargs["timeout"] == main.TIMEOUT_SECS
     assert run.call_args.kwargs["stdin"] is main.subprocess.DEVNULL
     assert result["status"] == "warning"
@@ -94,7 +94,7 @@ def test_broker_error_raises():
         stdout=json.dumps({"error": "security inspection failed"}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match="security inspection failed"):

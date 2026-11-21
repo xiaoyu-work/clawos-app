@@ -7,7 +7,7 @@ translations, assets, original Cargo graph and `flathub-stats` workspace member.
 | Path | Responsibility |
 | --- | --- |
 | `apps/pkg/app.json` | CLI/MCP arguments and existing package/observation capabilities |
-| `apps/pkg/main.py` | Controlled OS catalog/details/inventory/availability reads and retained `cos __package` mutation/ensure requests |
+| `apps/pkg/main.py` | Controlled OS catalog/details/inventory/availability reads and retained `yu __package` mutation/ensure requests |
 | `apps/pkg/server.py` | Runtime adapter from manifest operations to SDK MCP |
 | `apps/pkg/test_main.py` | Catalog client validation, scoped broker requests and all MCP operation routes |
 | `package.json` | Product-owned staging and test inputs |
@@ -44,7 +44,7 @@ every installed App by default. If helper, trigger or shared-runtime effects
 cannot be bounded, the existing protected OS review channel must separately
 confirm the all-App stop for the exact plan and impact before any such stop.
 Neither Critical package permission, an App-install review nor a client flag
-supplies that confirmation. The owner uses `cos package-transactions [request-id]` or
+supplies that confirmation. The owner uses `yu package-transactions [request-id]` or
 `--invocation <id>` outside the affected App to inspect completion. `--recover`
 performs read-only outcome reconciliation and never replays APT. App deliveries
 still need separate protected per-App confirmation; Critical package permission
@@ -76,7 +76,7 @@ fallback.
 permission as a substitute for its exact Critical mutation authorization.
 Older runtimes reject its closed ensure action; there is no plain-install fallback.
 Native MCP uses the public SDK's generic call primitive for the closed
-`cos __package_query` search/details/installed interface. Root independently
+`yu __package_query` search/details/installed interface. Root independently
 requires `sys.observe:packages` for search/list and the exact named observation
 scope for details. The App receives metadata, not raw system D-Bus or APT/dpkg
 state mounts; package mutation authority does not substitute for read access.
@@ -124,7 +124,7 @@ publication while the controller waits for this GUI provider to retire.
 Only a matching authenticated Root `applied` record with confirmed completion
 can report applied; even the codec helper cannot turn acceptance into success.
 Unknown `/usr` readers still require the separate protected global-impact
-review in top-level OS Approvals (`cos agent serve --open`), and App deliveries
+review in top-level OS Approvals (`yu agent serve --open`), and App deliveries
 still need independent per-App confirmation. The active `clawd` package remains
 refused by the same Root controller.
 

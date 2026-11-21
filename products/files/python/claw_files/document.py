@@ -190,7 +190,7 @@ def _read_pdf(document):
     try:
         import fitz  # pymupdf
     except ImportError:
-        return None, {"error": "pymupdf is not installed", "hint": "cos pkg need python3-pymupdf"}
+        return None, {"error": "pymupdf is not installed", "hint": "yu pkg need python3-pymupdf"}
     with document.open_binary() as source:
         doc = fitz.open(stream=source.read(), filetype="pdf")
     try:
@@ -206,7 +206,7 @@ def _read_docx(document):
     try:
         import docx
     except ImportError:
-        return None, {"error": "python-docx is not installed", "hint": "cos pkg need python3-docx"}
+        return None, {"error": "python-docx is not installed", "hint": "yu pkg need python3-docx"}
     with document.open_binary() as source:
         doc = docx.Document(source)
         paragraphs = [p.text for p in doc.paragraphs]
@@ -217,7 +217,7 @@ def _read_xlsx(document):
     try:
         import openpyxl
     except ImportError:
-        return None, {"error": "openpyxl is not installed", "hint": "cos pkg need python3-openpyxl"}
+        return None, {"error": "openpyxl is not installed", "hint": "yu pkg need python3-openpyxl"}
     with document.open_binary() as source:
         wb = openpyxl.load_workbook(source, read_only=True, data_only=True)
         try:
@@ -275,7 +275,7 @@ def _line_count(text):
 
 def cmd_read(args):
     if not args:
-        return {"error": "usage: cos doc read <path>"}
+        return {"error": "usage: yu doc read <path>"}
     path = args[0]
     try:
         document = _open_document(path, "fs.read")
@@ -337,7 +337,7 @@ def cmd_read(args):
 
 def cmd_info(args):
     if not args:
-        return {"error": "usage: cos doc info <path>"}
+        return {"error": "usage: yu doc info <path>"}
     path = args[0]
     try:
         document = _open_document(path, "fs.meta")
@@ -390,7 +390,7 @@ def cmd_info(args):
 
 def cmd_convert(args):
     if not args:
-        return {"error": "usage: cos doc convert <path> --to <format>"}
+        return {"error": "usage: yu doc convert <path> --to <format>"}
 
     path = args[0]
     target_fmt = None
@@ -399,7 +399,7 @@ def cmd_convert(args):
             target_fmt = args[i + 1].lstrip(".")
             break
     if not target_fmt:
-        return {"error": "usage: cos doc convert <path> --to <format>"}
+        return {"error": "usage: yu doc convert <path> --to <format>"}
 
     ext = _ext(path)
     if (ext, target_fmt) not in ((".json", "csv"), (".csv", "json")):

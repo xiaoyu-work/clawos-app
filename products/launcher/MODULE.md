@@ -17,7 +17,7 @@ Own the Python `launcher` App's five MCP tools and the complete native
 
 Preserve installed identity, XDG precedence, localization and visibility.
 Open accepts bounded absolute non-file URIs and canonical existing local files;
-it sends only AppID/URIs to `cos __desktop launch`, never raw Exec commands.
+it sends only AppID/URIs to `yu __desktop launch`, never raw Exec commands.
 The OS checks App identity, exact launch/file authority, desktop session and
 user environment before launching. Opening a native desktop program is not
 calling another App's business/MCP interface.
@@ -81,7 +81,7 @@ policy/launch services. It never uses live desktop entries or user history.
 
 `native_payload` prepares the real `bin/claw-launcher` as the shared signed
 GUI/MCP entry, without moving the OS launcher backend or common Python support.
-The installed `claw-launcher` command enters `cos app claw-launcher --gui`; this does not
+The installed `claw-launcher` command enters `yu app claw-launcher --gui`; this does not
 grant desktop transport, catalog/history access or activate resources. See
 [native payloads](../../docs/native-payloads.md).
 

@@ -7,11 +7,11 @@ The product groups diagnostic interfaces, not their permissions or OS providers.
 | Path | Responsibility |
 | --- | --- |
 | `apps/hardware-center/app.json` | Nine tools with the exact named hardware observation scope |
-| `apps/hardware-center/main.py` | Validated `cos __hardware` broker requests and structured results |
+| `apps/hardware-center/main.py` | Validated `yu __hardware` broker requests and structured results |
 | `apps/hardware-center/server.py` | Direct SDK MCP handlers |
 | `apps/hardware-center/test_main.py` | Scope/argv contracts, all SDK routes and broker failures |
 | `apps/crash-doctor/app.json` | Sensitive crash scope, bounded queries and coredump selector |
-| `apps/crash-doctor/main.py`, `server.py` | Validated `cos __crash` requests and direct SDK MCP handlers |
+| `apps/crash-doctor/main.py`, `server.py` | Validated `yu __crash` requests and direct SDK MCP handlers |
 | `apps/crash-doctor/test_main.py` | Bounds/ID validation, error propagation and real SDK dispatch |
 | `apps/netdiag/app.json` | Network observation and exact target resolution/probe needs |
 | `apps/netdiag/main.py`, `server.py` | Validated bounded requests through the private network diagnostics runtime bridge |

@@ -38,7 +38,7 @@ def request(arguments: list[str]) -> dict:
         if flag != actual or pattern.fullmatch(value) is None:
             raise ValueError(f"{flag} must be a literal desktop identifier")
     return call_json_with_stdin_binary(
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         ["__desktop", *arguments],
         b"",
         deadline_unix_ms=time.time_ns() // 1_000_000 + (45_000 if action == "launch" else 9_000),

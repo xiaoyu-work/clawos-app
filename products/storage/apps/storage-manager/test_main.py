@@ -23,7 +23,7 @@ def test_mount_requires_exact_device_scope():
         stdout=json.dumps({"changed": True}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.os.path, "realpath", return_value="/dev/sdb1"
     ), mock.patch.object(main.policy, "require") as require, mock.patch.object(
         main.subprocess, "run", return_value=completed
@@ -31,7 +31,7 @@ def test_mount_requires_exact_device_scope():
         result = main.mount("/dev/sdb1")
     require.assert_called_once_with("sys.mount", path="/dev/sdb1")
     assert run.call_args.args[0] == [
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "__storage",
         "mount",
         "--device",
@@ -46,7 +46,7 @@ def test_health_uses_diagnostic_scope():
         stdout=json.dumps({"status": "ok"}),
         stderr="",
     )
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.os.path, "realpath", return_value="/dev/nvme0n1"
     ), mock.patch.object(main.policy, "require") as require, mock.patch.object(
         main.subprocess, "run", return_value=completed
@@ -107,7 +107,7 @@ def test_unknown_action_is_rejected_before_policy():
 )
 def test_broker_failures_raise(returncode, stdout, message):
     completed = mock.Mock(returncode=returncode, stdout=stdout, stderr="")
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(main.subprocess, "run", return_value=completed):
         with pytest.raises(RuntimeError, match=message):
@@ -119,13 +119,13 @@ def test_missing_broker_executable_raises():
     with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
         main.shutil, "which", return_value=None
     ), mock.patch.object(main.policy, "require") as require:
-        with pytest.raises(FileNotFoundError, match="cos binary not found"):
+        with pytest.raises(FileNotFoundError, match="yu binary not found"):
             main.status()
     require.assert_called_once_with("sys.observe", name="storage")
 
 
 def test_broker_execution_failure_raises():
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.policy, "require"
     ) as require, mock.patch.object(
         main.subprocess, "run", side_effect=PermissionError("access denied")
@@ -145,12 +145,12 @@ def test_broker_execution_failure_raises():
     ],
 )
 def test_broker_timeout_raises(call, timeout, action):
-    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/cos"}), mock.patch.object(
+    with mock.patch.dict(os.environ, {"COS_BIN": "/usr/local/bin/yu"}), mock.patch.object(
         main.os.path, "realpath", side_effect=lambda value: value
     ), mock.patch.object(main.policy, "require"), mock.patch.object(
         main.subprocess,
         "run",
-        side_effect=main.subprocess.TimeoutExpired(["cos"], timeout),
+        side_effect=main.subprocess.TimeoutExpired(["yu"], timeout),
     ) as run:
         with pytest.raises(
             RuntimeError,
@@ -188,7 +188,7 @@ def test_relocated_sdk_preserves_storage_authority_and_broker_contract(action):
     with mock.patch.dict(sys.modules, {"main": main}), mock.patch.dict(
         os.environ, {
             "COS_APP_MANIFEST": str(APP_DIR / "app.json"),
-            "COS_BIN": "/usr/local/bin/cos",
+            "COS_BIN": "/usr/local/bin/yu",
         }
     ):
         server = load_local_module(APP_DIR / "server.py", "claw_test_storage_manager_server")
@@ -207,7 +207,7 @@ def test_relocated_sdk_preserves_storage_authority_and_broker_contract(action):
         assert result["structuredContent"] == {"action": action}
         require.assert_called_once_with(verb, **scope)
         tail = [] if action == "status" else ["--device", device]
-        assert run.call_args.args[0] == ["/usr/local/bin/cos", "__storage", action, *tail]
+        assert run.call_args.args[0] == ["/usr/local/bin/yu", "__storage", action, *tail]
         assert run.call_args.kwargs["stdin"] is main.subprocess.DEVNULL
         expected_timeout = main.CHECK_TIMEOUT_SECS if action == "check" else main.QUERY_TIMEOUT_SECS
         assert run.call_args.kwargs["timeout"] == expected_timeout

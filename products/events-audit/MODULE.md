@@ -7,7 +7,7 @@ still pending and grouping does not merge event and audit authority.
 | Path | Responsibility |
 | --- | --- |
 | `apps/event-center/app.json` | Sensitive `sys.events:observe` grant and bounded-query argument contract |
-| `apps/event-center/main.py` | Limit/source/PID validation and typed `cos __events` requests |
+| `apps/event-center/main.py` | Limit/source/PID validation and typed `yu __events` requests |
 | `apps/event-center/server.py` | Direct SDK MCP handlers |
 | `apps/event-center/test_main.py` | Direct/SDK routing, defaults, bounds, scopes and broker errors |
 | `apps/log/` | Legacy JSONL read/tail/search/manual-write implementation and isolated direct/SDK tests |

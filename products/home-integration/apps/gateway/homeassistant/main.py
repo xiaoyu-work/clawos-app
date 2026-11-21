@@ -8,9 +8,9 @@ long-lived access token.
 
 Common notification flows::
 
-    cos app gateway-homeassistant send notify.mobile_app_pixel "deploy ok"
-    cos app gateway-homeassistant send notify "deploy ok"   # uses notify.notify
-    cos app gateway-homeassistant call light.turn_on '{"entity_id":"light.kitchen"}'
+    yu app gateway-homeassistant send notify.mobile_app_pixel "deploy ok"
+    yu app gateway-homeassistant send notify "deploy ok"   # uses notify.notify
+    yu app gateway-homeassistant call light.turn_on '{"entity_id":"light.kitchen"}'
 
 Credentials needed:
 

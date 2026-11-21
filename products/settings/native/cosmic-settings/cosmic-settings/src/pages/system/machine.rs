@@ -79,7 +79,7 @@ async fn request(action: Action) -> Result<State, String> {
         .as_str()
         .ok_or("Invalid system settings action")?;
     let response = claw_os_sdk::cos_call_json_async_with_binary(
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "settings",
         "system",
         ["__system-settings", name],

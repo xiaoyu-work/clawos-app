@@ -6,7 +6,7 @@ pub fn ask_claw(query: &str) -> Result<(), cos_runtime::ask_claw::LaunchError> {
 
 pub async fn open_desktop_entry(id: &str) -> Result<(), String> {
     let response = claw_os_sdk::cos_call_json_async_with_binary(
-        "/usr/local/bin/cos",
+        "/usr/local/bin/yu",
         "desktop",
         "launch",
         ["__desktop-menu", "run", id],

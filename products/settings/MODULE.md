@@ -68,38 +68,38 @@ decisions remain OS-owned. These controls are not exposed through MCP.
 | Path | Responsibility |
 | --- | --- |
 | `apps/accessibility-manager/app.json` | Separate observation/control scopes and closed toggle/filter choices |
-| `apps/accessibility-manager/main.py` | Validated `cos __accessibility` requests |
+| `apps/accessibility-manager/main.py` | Validated `yu __accessibility` requests |
 | `apps/accessibility-manager/server.py` | Direct SDK MCP handlers |
 | `apps/accessibility-manager/test_main.py` | All SDK routes/choices, exact scopes and pre-policy validation |
 | `apps/audio-manager/app.json` | Separate audio observation, output, microphone and media-route scopes |
-| `apps/audio-manager/main.py`, `server.py` | Validated `cos __audio` requests and direct SDK MCP handlers |
+| `apps/audio-manager/main.py`, `server.py` | Validated `yu __audio` requests and direct SDK MCP handlers |
 | `apps/audio-manager/test_main.py` | Direct/SDK routes, exact scopes/argv, numeric bounds and broker errors |
 | `apps/bluetooth-manager/app.json` | Observation/control scopes, scan default and pairing contracts |
-| `apps/bluetooth-manager/main.py`, `server.py` | Validated `cos __bluetooth` requests and SDK handlers; pairing responses use stdin |
+| `apps/bluetooth-manager/main.py`, `server.py` | Validated `yu __bluetooth` requests and SDK handlers; pairing responses use stdin |
 | `apps/bluetooth-manager/test_main.py` | Direct/SDK routes, MAC/ID normalization, validation and stdin-only pairing responses |
 | `apps/camera-manager/app.json` | Separate observation, camera capture and exact destination write scopes |
-| `apps/camera-manager/main.py`, `server.py` | Validated `cos __camera` requests and SDK handlers with bounded capture dimensions |
+| `apps/camera-manager/main.py`, `server.py` | Validated `yu __camera` requests and SDK handlers with bounded capture dimensions |
 | `apps/camera-manager/test_main.py` | Direct/SDK PNG/JPEG routes, default/explicit dimensions and pre-policy validation |
 | `apps/display-manager/app.json` | Observation/manage scopes, exact layout-read scope and explicit confirmation |
-| `apps/display-manager/main.py`, `server.py` | Validated `cos __display` requests and direct SDK handlers |
+| `apps/display-manager/main.py`, `server.py` | Validated `yu __display` requests and direct SDK handlers |
 | `apps/display-manager/test_main.py` | Direct/SDK routes, optional mode fields, numeric bounds and strict confirmation |
 | `apps/desktop-manager/app.json` | Separate desktop observation, window control and exact AppID launch grants |
-| `apps/desktop-manager/main.py`, `server.py` | Validated `cos __desktop` window requests and direct SDK handlers |
+| `apps/desktop-manager/main.py`, `server.py` | Validated `yu __desktop` window requests and direct SDK handlers |
 | `apps/desktop-manager/test_main.py` | All direct/SDK routes, exact scopes/argv, identifier validation and broker failures |
 | `apps/location-manager/app.json` | Existing location grant, five accuracy choices and city default |
-| `apps/location-manager/main.py`, `server.py` | Validated `cos __location` requests and direct SDK handlers |
+| `apps/location-manager/main.py`, `server.py` | Validated `yu __location` requests and direct SDK handlers |
 | `apps/location-manager/test_main.py` | Both direct/SDK routes across every accuracy/default and pre-policy validation |
 | `apps/network-manager/app.json` | Separate observation/Wi-Fi/VPN/airplane scopes and conditional exact secret grant |
-| `apps/network-manager/main.py`, `server.py` | Validated `cos __network` requests and SDK handlers using credential references |
+| `apps/network-manager/main.py`, `server.py` | Validated `yu __network` requests and SDK handlers using credential references |
 | `apps/network-manager/test_main.py` | All direct/SDK routes, open/protected Wi-Fi, radio states and exact scopes/argv |
 | `apps/power-manager/app.json` | Separate power observation and critical system power grant; explicit true confirmation |
-| `apps/power-manager/main.py`, `server.py` | Validated `cos __power` requests and direct SDK handlers |
+| `apps/power-manager/main.py`, `server.py` | Validated `yu __power` requests and direct SDK handlers |
 | `apps/power-manager/test_main.py` | All direct/SDK routes, strict confirmation for all six mutations and broker errors |
 | `apps/printer-manager/app.json` | Separate discovery/queue/print/control grants and exact source-file read scope |
-| `apps/printer-manager/main.py`, `server.py` | Validated `cos __printer` requests and SDK handlers with bounded print options |
+| `apps/printer-manager/main.py`, `server.py` | Validated `yu __printer` requests and SDK handlers with bounded print options |
 | `apps/printer-manager/test_main.py` | Direct/SDK routes, optional printer, all duplex choices, print defaults and strict cancel confirmation |
 | `apps/user-manager/app.json` | Separate identity observation/manage grants and exact password credential read |
-| `apps/user-manager/main.py`, `server.py` | Validated `cos __users` requests and SDK handlers; no password plaintext |
+| `apps/user-manager/main.py`, `server.py` | Validated `yu __users` requests and SDK handlers; no password plaintext |
 | `apps/user-manager/test_main.py` | All direct/SDK routes, optional creation fields, group/token normalization and destructive confirmation |
 | `package.json` | Product-owned staging and test inputs |
 | `native/cosmic-settings/` | Entire independent GPL workspace, lock, all page/subscription crates and resource/config/translation inputs |
@@ -202,7 +202,7 @@ The Applications UI and MCP use the same OS service; identity comes from the
 authenticated broker session, never MCP metadata or user-provided owner
 fields. Neither client invokes the privileged approval helper, offers grant
 durations, or imports the OS review presenter.
-Permission and fixed-launch clients explicitly select `/usr/local/bin/cos`
+Permission and fixed-launch clients explicitly select `/usr/local/bin/yu`
 through the SDK's shared wire/error transport. A sanitized desktop PATH and absent `CLAW_COS_BIN` are
 supported without process-wide environment mutation or another subprocess
 implementation.
@@ -228,8 +228,8 @@ state or independent manager grants are migrated.
 
 The native human UI retains its original Wayland and unrelated configuration
 query behavior, not the eleven Apps' combined grants. Region/language and About
-mutations instead use `cos __regional-settings` through the published SDK's
-fixed `/usr/local/bin/cos` transport. Locale changes require `sys.locale`
+mutations instead use `yu __regional-settings` through the published SDK's
+fixed `/usr/local/bin/yu` transport. Locale changes require `sys.locale`
 Name `system`; the owner's AccountsService preference requires `sys.language`
 Name `self`; static hostname requires `sys.hostname` Name `static`.
 No caller owner, bus, path, command, approval or privilege escalation is sent.
@@ -238,7 +238,7 @@ unavailable, stale and ambiguous outcomes remain visible; separate system and
 owner-language writes never imply rollback. Local preference lists remain
 App-owned, and partial clock-format persistence errors are reported separately.
 
-The Users page uses the fixed-binary SDK transport to `cos __users` for
+The Users page uses the fixed-binary SDK transport to `yu __users` for
 metadata and non-password edits. `status` and the closed
 `show-user --user NAME --uid UID` require `sys.observe:identities`.
 `rename-user --new-name`, `set-full-name --full-name`, `set-account-type

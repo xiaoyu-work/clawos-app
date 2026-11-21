@@ -53,7 +53,7 @@ pub(crate) struct Client {
 
 impl Client {
     pub(crate) fn installed() -> Self {
-        Self { binary: "/usr/local/bin/cos".into() }
+        Self { binary: "/usr/local/bin/yu".into() }
     }
 
     #[cfg(test)]

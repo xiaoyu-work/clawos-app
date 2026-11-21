@@ -164,7 +164,7 @@ def main():
         listener.listen(8)
         thread = threading.Thread(target=serve)
         thread.start()
-        cli = fixture / "cos"
+        cli = fixture / "yu"
         cli.write_text(
             "#!/usr/bin/python3\n"
             "import json,os,socket,struct,sys,pathlib\n"
@@ -199,7 +199,7 @@ def main():
             "--ro-bind", "/lib", "/lib",
             "--ro-bind", "/lib64", "/lib64", "--proc", "/proc", "--dev", "/dev",
             "--tmpfs", "/run", "--tmpfs", "/work", "--dir", "/run/cos",
-            "--ro-bind", str(options.cos_binary.resolve() if options.cos_binary else cli), "/usr/local/bin/cos",
+            "--ro-bind", str(options.cos_binary.resolve() if options.cos_binary else cli), "/usr/local/bin/yu",
             "--ro-bind", str(binary), "/work/cosmic-player",
             "--ro-bind", str(installed / "usr/lib/cos/apps/cosmic-player/app.json"), "/work/app.json",
             "--ro-bind", str(fixture / "broker.sock"), "/run/cos/clawd.sock",
