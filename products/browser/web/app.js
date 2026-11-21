@@ -84,7 +84,7 @@ ClawApp.ready.then((app) => {
   function readerActions() {
     pageAction("Save page screenshot", "screenshot", () => ({ url: currentUrl }), saved, {
       title: "Save a web page screenshot", submitLabel: "Capture to file",
-      description: "Uses this entry's headless browser, not the user's desktop. Review the exact output path; the Web backend may overwrite it.",
+      description: "Uses isolated Helium, not the desktop profile. Saves a PNG only to a new file at the approved path.",
       fields: { url: { readOnly: true }, output: { label: "Authorized output file" } },
     });
     pageAction("Request AI summary", "summarize", () => ({ url: currentUrl }), (value) => {

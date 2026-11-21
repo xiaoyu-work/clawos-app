@@ -6,7 +6,7 @@
     "en": "Browser (attached)"
   },
   "summary": {
-    "en": "Drive the user's logged-in Chromium tabs through a daemon-authorized Native Messaging bridge"
+    "en": "Operate the user's signed-in Helium tabs through the authorized Native Messaging bridge"
   },
   "icon": "🦾",
   "runtime": "python",

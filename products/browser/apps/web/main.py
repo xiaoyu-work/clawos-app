@@ -1,10 +1,6 @@
-"""cos web — Browser via cos-browser engine (vendored from Obscura).
+"""Read and render pages in the OS broker's private Helium process.
 
-Subprocesses the `cos-browser` binary for read / scrape / screenshot. Falls
-back to a pure-stdlib urllib path only for the simplest read case when the
-binary is unavailable.
-
-Output shapes (deliberately *not* the legacy Reader/Markdown shape):
+The desktop profile and renderer pipe are never exposed to this App.
 
     cos app web read URL                 -> {url, title, text, links, engine}
     cos app web read URL --html          -> {url, title, html, engine}
@@ -14,28 +10,26 @@ Output shapes (deliberately *not* the legacy Reader/Markdown shape):
     cos app web submit URL --data ...    -> {url, status, body}  (urllib POST)
 """
 
+import base64
+import concurrent.futures
 import json
 import os
-import re
-import shutil
-import subprocess
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 
-# Shared env scrubbing — drop OPENAI_API_KEY / GITHUB_TOKEN / etc. out
-# of the cos-browser child's environment.
-from _shared.env_scrub import scrub_env  # noqa: E402
 from _shared.safe_http import canonical_url, host_scope, open_url, parse_url  # noqa: E402
 
 from claw_os_sdk import ai  # noqa: E402
-from cos_runtime import memory, policy  # noqa: E402
+from cos_runtime import browser_bridge, memory, policy  # noqa: E402
 
 TIMEOUT = int(os.environ.get("COS_WEB_TIMEOUT", "30"))
 DEFAULT_MAX_LENGTH = int(os.environ.get("COS_WEB_MAX_CONTENT_LENGTH", "50000"))
-COS_BROWSER_BIN = os.environ.get("COS_BROWSER_BIN", "cos-browser")
 USER_AGENT = "cos/" + os.environ.get("COS_VERSION", "0.1.0")
+MAX_RENDER_TIMEOUT = 55
+MAX_SCREENSHOT = 4 * 1024 * 1024
 
 
 # ---------------------------------------------------------------------------
@@ -72,43 +66,11 @@ _EXTRACT_JS = r"""(function(){
 })()"""
 
 
-# ---------------------------------------------------------------------------
-# Subprocess helpers
-# ---------------------------------------------------------------------------
-
-def _has_cos_browser():
-    if os.path.isabs(COS_BROWSER_BIN):
-        return os.path.isfile(COS_BROWSER_BIN) and os.access(COS_BROWSER_BIN, os.X_OK)
-    return shutil.which(COS_BROWSER_BIN) is not None
-
-
-def _run_cos_browser(argv, timeout_secs=None):
-    """Run `cos-browser <argv...>` and return (stdout, stderr, returncode, error).
-
-    On binary-not-found returns (None, None, None, "<reason>").
-    """
-    if not _has_cos_browser():
-        return None, None, None, (
-            f"cos-browser binary not found ({COS_BROWSER_BIN}). "
-            "Install Claw OS or set $COS_BROWSER_BIN."
-        )
-    timeout_secs = timeout_secs if timeout_secs is not None else TIMEOUT
-    try:
-        # ``stdin=DEVNULL`` so cos-browser can't block waiting for input
-        # if it ever tries to prompt; ``env=scrub_env()`` keeps provider
-        # API keys / OAuth tokens out of the browser engine.
-        proc = subprocess.run(
-            [COS_BROWSER_BIN] + argv,
-            capture_output=True,
-            text=True,
-            timeout=timeout_secs + 10,
-            stdin=subprocess.DEVNULL,
-            env=scrub_env(),
-            check=False,
-        )
-        return proc.stdout, proc.stderr, proc.returncode, None
-    except subprocess.TimeoutExpired:
-        return None, None, None, f"cos-browser exceeded {timeout_secs}s"
+def _render(url, output, timeout, *, selector=None, user_agent=None):
+    return browser_bridge.request(
+        "render", url=url, output=output, timeout_secs=min(timeout, MAX_RENDER_TIMEOUT),
+        selector=selector, user_agent=user_agent,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -165,54 +127,6 @@ def _truncate(s, n):
 
 
 # ---------------------------------------------------------------------------
-# urllib fallback (used only if cos-browser is missing)
-# ---------------------------------------------------------------------------
-
-def _urllib_fallback(url, max_length):
-    try:
-        req = urllib.request.Request(url, method="GET")
-        req.add_header("User-Agent", USER_AGENT)
-        resp = open_url(req, timeout=TIMEOUT, initial_authorized=True)[0]
-        html = resp.read().decode("utf-8", errors="replace")
-        final_url = resp.url
-    except urllib.error.HTTPError as e:
-        return {"error": f"HTTP {e.code}: {e.reason}", "url": url}
-    except urllib.error.URLError as e:
-        return {"error": f"could not fetch: {e.reason}", "url": url}
-    except policy.PolicyError:
-        raise
-    except Exception as e:
-        return {"error": str(e), "url": url}
-
-    title = ""
-    m = re.search(r"<title[^>]*>(.*?)</title>", html, re.DOTALL | re.IGNORECASE)
-    if m:
-        title = re.sub(r"<[^>]+>", "", m.group(1)).strip()
-
-    for tag in ("script", "style", "nav", "footer", "header", "noscript"):
-        html = re.sub(rf"<{tag}[\s>].*?</{tag}>", " ", html,
-                      flags=re.DOTALL | re.IGNORECASE)
-    html = re.sub(r"<br\s*/?>", "\n", html, flags=re.IGNORECASE)
-    html = re.sub(r"</(p|div|li|tr|h[1-6]|blockquote|section|article)>",
-                  "\n", html, flags=re.IGNORECASE)
-    text = re.sub(r"<[^>]+>", " ", html)
-    for entity, char in (("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"),
-                         ("&quot;", '"'), ("&apos;", "'"), ("&nbsp;", " ")):
-        text = text.replace(entity, char)
-    text = re.sub(r"[ \t]+", " ", text)
-    text = re.sub(r"\n{3,}", "\n\n", text).strip()
-
-    return {
-        "url": final_url,
-        "title": title,
-        "text": _truncate(text, max_length),
-        "links": [],
-        "engine": "urllib-fallback",
-        "warning": "cos-browser unavailable; using stdlib urllib (no JS rendering)",
-    }
-
-
-# ---------------------------------------------------------------------------
 # AI summarisation prompt
 # ---------------------------------------------------------------------------
 
@@ -227,7 +141,7 @@ _SUMMARIZE_SYSTEM = (
 # ---------------------------------------------------------------------------
 
 def _cmd_read(args):
-    """Fetch a URL via cos-browser and return clean text + links + title."""
+    """Render a URL and return text, links and title."""
     if not args:
         return {"error": "usage: cos web read <url> [--selector CSS] "
                 "[--wait CSS] [--timeout SEC] [--max-length N] [--html] [--eval JS]"}
@@ -259,73 +173,25 @@ def _cmd_read(args):
     except (TypeError, ValueError):
         max_length = DEFAULT_MAX_LENGTH
 
-    # cos-browser missing? graceful degrade for plain reads only.
-    if not _has_cos_browser():
-        if flags["html"] or flags["eval"]:
-            return {"error": "cos-browser is required for --html / --eval", "url": url}
-        return _urllib_fallback(url, max_length)
-
-    cb_args = ["fetch", url, "--quiet", "--timeout", str(timeout_secs)]
-    if flags["selector"]:
-        cb_args += ["--selector", flags["selector"]]
-    if flags["wait"]:
-        cb_args += ["--selector", flags["wait"]]  # alias
-    if flags["user-agent"]:
-        cb_args += ["--user-agent", flags["user-agent"]]
-
+    output = {"kind": "html"} if flags["html"] else {
+        "kind": "eval", "expression": flags["eval"] or _EXTRACT_JS,
+    }
+    data = _render(url, output, timeout_secs, selector=flags["wait"] or flags["selector"],
+                   user_agent=flags["user-agent"])["result"]
     if flags["html"]:
-        cb_args += ["--dump", "html"]
-        out, err, rc, error = _run_cos_browser(cb_args, timeout_secs)
-        if error:
-            return {"error": error, "url": url}
-        if rc != 0:
-            return {"error": (err or "").strip() or f"cos-browser exit {rc}", "url": url}
-        return {
-            "url": url,
-            "title": "",
-            "html": _truncate(out or "", max_length),
-            "engine": "cos-browser",
-        }
+        return {"url": url, "title": "", "html": _truncate(data, max_length), "engine": "helium"}
 
     if flags["eval"]:
-        cb_args += ["--eval", flags["eval"]]
-        out, err, rc, error = _run_cos_browser(cb_args, timeout_secs)
-        if error:
-            return {"error": error, "url": url}
-        if rc != 0:
-            return {"error": (err or "").strip() or f"cos-browser exit {rc}", "url": url}
-        body = (out or "").strip()
-        # Try JSON first; if not JSON, return as-is.
-        try:
-            result = json.loads(body)
-        except (ValueError, json.JSONDecodeError):
-            result = body
-        return {"url": url, "result": result, "engine": "cos-browser"}
-
-    # Default: extract {title, text, links} via single eval pass.
-    cb_args += ["--eval", _EXTRACT_JS]
-    out, err, rc, error = _run_cos_browser(cb_args, timeout_secs)
-    if error:
-        return {"error": error, "url": url}
-    if rc != 0:
-        return {"error": (err or "").strip() or f"cos-browser exit {rc}", "url": url}
-
-    body = (out or "").strip()
-    try:
-        data = json.loads(body)
-    except (ValueError, json.JSONDecodeError):
-        return {
-            "error": "cos-browser returned non-JSON output",
-            "url": url,
-            "stdout_head": body[:500],
-        }
+        return {"url": url, "result": data, "engine": "helium"}
+    if not isinstance(data, dict):
+        return {"error": "Helium returned no readable page", "url": url}
 
     return {
         "url": url,
         "title": data.get("title", ""),
         "text": _truncate(data.get("text", ""), max_length),
         "links": data.get("links", []),
-        "engine": "cos-browser",
+        "engine": "helium",
     }
 
 
@@ -414,7 +280,7 @@ def _remember_summary(url, title, summary):
 
 
 def _cmd_screenshot(args):
-    """Capture a screenshot via cos-browser (which shells out to chromium)."""
+    """Capture a screenshot in Helium; publish only to the approved path."""
     if not args:
         return {"error": "usage: cos web screenshot <url> --output PATH "
                 "[--width W] [--height H] [--full-page] [--timeout SEC]"}
@@ -448,31 +314,32 @@ def _cmd_screenshot(args):
     except (TypeError, ValueError):
         return {"error": "width/height/timeout must be integers"}
 
-    cb_args = [
-        "screenshot", url,
-        "--output", output,
-        "--width", str(width),
-        "--height", str(height),
-        "--timeout", str(timeout_secs),
-    ]
-    if flags["full-page"]:
-        cb_args.append("--full-page")
-
-    out, err, rc, error = _run_cos_browser(cb_args, timeout_secs)
-    if error:
-        return {"error": error, "url": url}
-    if rc != 0:
-        return {"error": (err or "").strip() or f"cos-browser exit {rc}", "url": url}
-
-    body = (out or "").strip()
+    result = _render(url, {
+        "kind": "screenshot", "width": width, "height": height, "full_page": flags["full-page"],
+    }, timeout_secs)
+    encoded = result.get("data")
+    if not isinstance(encoded, str) or len(encoded) > ((MAX_SCREENSHOT + 2) // 3) * 4:
+        return {"error": "Helium screenshot is missing or oversized", "url": url}
     try:
-        return json.loads(body)
-    except (ValueError, json.JSONDecodeError):
-        return {"ok": True, "url": url, "output": output, "raw": body}
+        png = base64.b64decode(encoded, validate=True)
+    except ValueError:
+        return {"error": "Helium returned invalid screenshot data", "url": url}
+    if not png.startswith(b"\x89PNG\r\n\x1a\n") or len(png) > MAX_SCREENSHOT:
+        return {"error": "Helium returned an invalid or oversized PNG", "url": url}
+    try:
+        with open(output_abs, "xb", opener=_private_create) as target:
+            target.write(png)
+    except OSError as exc:
+        return {"error": f"cannot save screenshot: {exc.strerror}", "url": url}
+    return {"ok": True, "url": url, "output": output_abs, "bytes": len(png)}
+
+
+def _private_create(path, flags):
+    return os.open(path, flags | os.O_NOFOLLOW, 0o600)
 
 
 def _cmd_scrape(args):
-    """Scrape multiple URLs in parallel via cos-browser."""
+    """Render separately authorized pages with bounded concurrency."""
     if not args:
         return {"error": "usage: cos web scrape <url> [<url>...] "
                 "[--eval JS] [--concurrency N] [--timeout SEC]"}
@@ -500,27 +367,35 @@ def _cmd_scrape(args):
     except (TypeError, ValueError):
         return {"error": "concurrency/timeout must be integers"}
 
-    cb_args = [
-        "scrape",
-        "--concurrency", str(concurrency),
-        "--timeout", str(timeout_secs),
-        "--format", flags["format"],
-    ]
-    if flags["eval"]:
-        cb_args += ["--eval", flags["eval"]]
-    cb_args += urls
+    if concurrency < 1 or len(urls) > 10:
+        return {"error": "render batch requires positive concurrency and at most 10 URLs"}
+    concurrency = min(concurrency, 2)
 
-    out, err, rc, error = _run_cos_browser(cb_args, timeout_secs * max(1, len(urls) // concurrency + 1))
-    if error:
-        return {"error": error}
-    if rc != 0:
-        return {"error": (err or "").strip() or f"cos-browser exit {rc}"}
+    def fetch(index_url):
+        index, url = index_url
+        started = time.monotonic()
+        try:
+            value = _render(url, {"kind": "eval", "expression": flags["eval"]}, timeout_secs)
+            row = {"title": value["title"], "eval": value["result"], "worker": index}
+        except browser_bridge.BrowserBridgeError as exc:
+            row = {"error": str(exc)}
+        return {"url": url, "time_ms": int((time.monotonic() - started) * 1000), **row}
 
-    body = (out or "").strip()
-    try:
-        return json.loads(body)
-    except (ValueError, json.JSONDecodeError):
-        return {"raw": body}
+    start = time.monotonic()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
+        results = list(pool.map(fetch, enumerate(urls)))
+    elapsed = int((time.monotonic() - start) * 1000)
+    if flags["format"] != "json":
+        return {"raw": "\n".join(
+            f'{row["time_ms"]}ms\t{row["url"]}\t'
+            + (json.dumps(row["eval"], ensure_ascii=False) if row.get("eval") is not None
+               else row.get("title", row.get("error", "")))
+            for row in results
+        )}
+    return {
+        "total_urls": len(urls), "concurrency": concurrency, "total_time_ms": elapsed,
+        "avg_time_ms": elapsed / len(urls), "results": results,
+    }
 
 
 def _cmd_submit(args):
@@ -605,6 +480,8 @@ def run(command, args):
         return {"error": str(denied), "denial": denied.denial}
     except policy.PolicyUnavailable as exc:
         return {"error": f"capability check failed: {exc}"}
+    except (browser_bridge.BrowserBridgeError, ValueError) as exc:
+        return {"error": str(exc)}
 
 
 def main():

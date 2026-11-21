@@ -1,0 +1,770 @@
+--- /dev/null
++++ b/chrome/browser/extensions/api/sync_vault_provider/sync_vault_provider_service.cc
+@@ -0,0 +1,575 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#include "chrome/browser/extensions/api/sync_vault_provider/sync_vault_provider_service.h"
++
++#include <utility>
++
++#include "base/check.h"
++#include "base/functional/bind.h"
++#include "base/numerics/safe_conversions.h"
++#include "base/task/sequenced_task_runner.h"
++#include "base/time/time.h"
++#include "base/uuid.h"
++#include "chrome/browser/profiles/profile_selections.h"
++#include "chrome/browser/ui/webui/extensions/extension_icon_source.h"
++#include "chrome/common/extensions/api/sync_vault_provider/sync_vault_provider_manifest_handler.h"
++#include "components/sync/engine/sync_vault/sync_vault_cryptographer.h"
++#include "components/sync/engine/sync_vault/sync_vault_limits.h"
++#include "content/public/browser/service_worker_external_request_timeout_type.h"
++#include "extensions/browser/event_router.h"
++#include "extensions/browser/event_router_factory.h"
++#include "extensions/browser/extension_event_histogram_value.h"
++#include "extensions/browser/extension_registry.h"
++#include "extensions/browser/extension_registry_factory.h"
++#include "extensions/browser/process_manager_factory.h"
++#include "extensions/common/constants.h"
++#include "extensions/common/event_args.h"
++#include "extensions/common/extension.h"
++#include "extensions/common/icons/extension_icon_set.h"
++#include "third_party/blink/public/mojom/service_worker/service_worker_database.mojom.h"
++
++namespace extensions {
++
++namespace {
++
++namespace provider_api = api::sync_vault_provider;
++using Host = browser_sync::PrivateSyncProviderHost;
++
++constexpr base::TimeDelta kRequestTimeout = base::Minutes(2);
++constexpr size_t kMaximumDisplayNameBytes = 128;
++constexpr size_t kMaximumFailureMessageBytes = 1024;
++constexpr char kKeepaliveActivity[] = "syncVaultProvider.request";
++
++bool IsValidVaultUuid(const std::string& value) {
++  return base::Uuid::ParseLowercase(value).is_valid();
++}
++
++Host::Error ToError(provider_api::SyncVaultProviderError error) {
++  switch (error) {
++    case provider_api::SyncVaultProviderError::kAuthRequired:
++      return Host::Error::kAuthRequired;
++    case provider_api::SyncVaultProviderError::kNotFound:
++      return Host::Error::kNotFound;
++    case provider_api::SyncVaultProviderError::kConflict:
++      return Host::Error::kConflict;
++    case provider_api::SyncVaultProviderError::kNetworkError:
++      return Host::Error::kNetworkError;
++    case provider_api::SyncVaultProviderError::kTemporaryError:
++      return Host::Error::kTemporaryError;
++    case provider_api::SyncVaultProviderError::kQuotaExceeded:
++      return Host::Error::kQuotaExceeded;
++    case provider_api::SyncVaultProviderError::kAccessDenied:
++      return Host::Error::kAccessDenied;
++    case provider_api::SyncVaultProviderError::kUnsupported:
++      return Host::Error::kUnsupported;
++    case provider_api::SyncVaultProviderError::kAborted:
++      return Host::Error::kAborted;
++    case provider_api::SyncVaultProviderError::kNone:
++    case provider_api::SyncVaultProviderError::kInvalidData:
++      return Host::Error::kInvalidData;
++  }
++}
++
++}  // namespace
++
++SyncVaultProviderService::PendingRequest::PendingRequest() = default;
++SyncVaultProviderService::PendingRequest::PendingRequest(PendingRequest&&) =
++    default;
++SyncVaultProviderService::PendingRequest&
++SyncVaultProviderService::PendingRequest::operator=(PendingRequest&&) = default;
++SyncVaultProviderService::PendingRequest::~PendingRequest() = default;
++
++SyncVaultProviderService::SyncVaultProviderService(
++    content::BrowserContext* browser_context)
++    : browser_context_(browser_context),
++      event_router_(EventRouter::Get(browser_context)),
++      extension_registry_(ExtensionRegistry::Get(browser_context)) {
++  registry_observation_.Observe(extension_registry_);
++}
++
++SyncVaultProviderService::~SyncVaultProviderService() = default;
++
++std::vector<Host::Provider> SyncVaultProviderService::GetProviders() const {
++  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
++  std::vector<Provider> providers;
++  for (const auto& extension : extension_registry_->enabled_extensions()) {
++    const SyncVaultProviderInfo* info =
++        SyncVaultProviderInfo::Get(extension.get());
++    if (!info) {
++      continue;
++    }
++    Provider provider{
++        Kind::kExtension, extension->id(), extension->name(),
++        ExtensionIconSource::GetIconURL(
++            extension.get(), extension_misc::EXTENSION_ICON_MEDIUM,
++            ExtensionIconSet::Match::kBigger, /*grayscale=*/false)};
++    if (info->account_key()) {
++      provider.account_key_reason = info->account_key()->reason;
++    }
++    providers.push_back(std::move(provider));
++  }
++  return providers;
++}
++
++std::optional<Host::State> SyncVaultProviderService::GetProviderState(
++    const std::string& provider_id) const {
++  auto it = provider_states_.find(provider_id);
++  if (it == provider_states_.end()) {
++    return std::nullopt;
++  }
++  return it->second;
++}
++
++void SyncVaultProviderService::Configure(const std::string& provider_id,
++                                         ResponseCallback callback) {
++  provider_api::ProviderRequest request;
++  request.request_id = NextRequestId();
++  Dispatch(provider_id, request.request_id, RequestType::kConfigure,
++           provider_api::OnConfigureRequested::kEventName,
++           provider_api::OnConfigureRequested::Create(request),
++           std::move(callback));
++}
++
++void SyncVaultProviderService::ListVaults(const std::string& provider_id,
++                                          ResponseCallback callback) {
++  provider_api::ProviderRequest request;
++  request.request_id = NextRequestId();
++  Dispatch(provider_id, request.request_id, RequestType::kListVaults,
++           provider_api::OnListVaultsRequested::kEventName,
++           provider_api::OnListVaultsRequested::Create(request),
++           std::move(callback));
++}
++
++void SyncVaultProviderService::CreateVault(const std::string& provider_id,
++                                           const std::string& vault_uuid,
++                                           const std::string& name,
++                                           ResponseCallback callback) {
++  provider_api::CreateVaultRequest request;
++  request.request_id = NextRequestId();
++  request.vault_uuid = vault_uuid;
++  request.display_name = name;
++  Dispatch(provider_id, request.request_id, RequestType::kCreateVault,
++           provider_api::OnCreateVaultRequested::kEventName,
++           provider_api::OnCreateVaultRequested::Create(request),
++           std::move(callback));
++}
++
++void SyncVaultProviderService::ReadObject(const std::string& provider_id,
++                                          const std::string& vault_uuid,
++                                          const std::string& object_id,
++                                          size_t max_bytes,
++                                          ResponseCallback callback) {
++  CHECK_LE(max_bytes, syncer::kSyncVaultMaximumEncryptedObjectBytes);
++  provider_api::ReadObjectRequest request;
++  request.request_id = NextRequestId();
++  request.vault_uuid = vault_uuid;
++  request.object_id = object_id;
++  request.max_bytes = max_bytes;
++  Dispatch(provider_id, request.request_id, RequestType::kReadObject,
++           provider_api::OnReadObjectRequested::kEventName,
++           provider_api::OnReadObjectRequested::Create(request),
++           std::move(callback), max_bytes);
++}
++
++void SyncVaultProviderService::WriteObject(
++    const std::string& provider_id,
++    const std::string& vault_uuid,
++    const std::string& object_id,
++    std::vector<uint8_t> data,
++    std::optional<std::string> expected_revision,
++    std::optional<uint32_t> retention_epoch,
++    ResponseCallback callback) {
++  provider_api::WriteObjectRequest request;
++  request.request_id = NextRequestId();
++  request.vault_uuid = vault_uuid;
++  request.object_id = object_id;
++  request.data = std::move(data);
++  request.expected_revision = std::move(expected_revision);
++  if (retention_epoch) {
++    request.retention_epoch = base::checked_cast<int>(*retention_epoch);
++  }
++  Dispatch(provider_id, request.request_id, RequestType::kWriteObject,
++           provider_api::OnWriteObjectRequested::kEventName,
++           provider_api::OnWriteObjectRequested::Create(request),
++           std::move(callback));
++}
++
++void SyncVaultProviderService::CollectEpochs(const std::string& provider_id,
++                                             const std::string& vault_uuid,
++                                             uint32_t minimum_retained_epoch,
++                                             ResponseCallback callback) {
++  provider_api::CollectEpochsRequest request;
++  request.request_id = NextRequestId();
++  request.vault_uuid = vault_uuid;
++  request.minimum_retained_epoch =
++      base::checked_cast<int>(minimum_retained_epoch);
++  Dispatch(provider_id, request.request_id, RequestType::kCollectEpochs,
++           provider_api::OnCollectEpochsRequested::kEventName,
++           provider_api::OnCollectEpochsRequested::Create(request),
++           std::move(callback));
++}
++
++void SyncVaultProviderService::WrapKey(const std::string& provider_id,
++                                       const std::string& vault_uuid,
++                                       std::vector<uint8_t> vault_key,
++                                       ResponseCallback callback) {
++  provider_api::WrapKeyRequest request;
++  request.request_id = NextRequestId();
++  request.vault_uuid = vault_uuid;
++  request.vault_key = std::move(vault_key);
++  Dispatch(provider_id, request.request_id, RequestType::kWrapKey,
++           provider_api::OnWrapKeyRequested::kEventName,
++           provider_api::OnWrapKeyRequested::Create(request),
++           std::move(callback));
++}
++
++void SyncVaultProviderService::UnwrapKey(const std::string& provider_id,
++                                         const std::string& vault_uuid,
++                                         std::vector<uint8_t> key_envelope,
++                                         ResponseCallback callback) {
++  provider_api::UnwrapKeyRequest request;
++  request.request_id = NextRequestId();
++  request.vault_uuid = vault_uuid;
++  request.key_envelope = std::move(key_envelope);
++  Dispatch(provider_id, request.request_id, RequestType::kUnwrapKey,
++           provider_api::OnUnwrapKeyRequested::kEventName,
++           provider_api::OnUnwrapKeyRequested::Create(request),
++           std::move(callback));
++}
++
++void SyncVaultProviderService::CancelRequests(const std::string& provider_id) {
++  std::vector<RequestId> request_ids;
++  for (const auto& [request_id, request] : pending_requests_) {
++    if (request.provider_id == provider_id) {
++      request_ids.push_back(request_id);
++    }
++  }
++  for (RequestId request_id : request_ids) {
++    Cancel(request_id, Error::kAborted);
++  }
++}
++
++void SyncVaultProviderService::AddObserver(Observer* observer) {
++  observers_.AddObserver(observer);
++}
++
++void SyncVaultProviderService::RemoveObserver(Observer* observer) {
++  observers_.RemoveObserver(observer);
++}
++
++base::WeakPtr<Host> SyncVaultProviderService::GetWeakPtr() {
++  return weak_ptr_factory_.GetWeakPtr();
++}
++
++std::optional<std::string> SyncVaultProviderService::Respond(
++    const ExtensionId& provider_id,
++    provider_api::ProviderResponse response) {
++  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
++  auto it = pending_requests_.find(response.request_id);
++  if (it == pending_requests_.end() || it->second.provider_id != provider_id) {
++    return "Invalid or expired requestId.";
++  }
++  if (response.success.has_value() == response.failure.has_value()) {
++    return "A response must contain exactly one of success or failure.";
++  }
++  PendingRequest& request = it->second;
++
++  // Configuring continues until the provider is ready.
++  if (request.type == RequestType::kConfigure && response.success) {
++    switch (response.success->configuration_state) {
++      case provider_api::ProviderConfigurationState::kConfiguring:
++        request.timeout->Reset();
++        return std::nullopt;
++      case provider_api::ProviderConfigurationState::kPendingUserAction:
++        // The user may take any time, during which the provider's worker
++        // should not be kept alive.
++        request.timeout->Stop();
++        request.keepalives.clear();
++        for (Observer& observer : observers_) {
++          observer.OnProviderWaitingForUser(provider_id);
++        }
++        return std::nullopt;
++      case provider_api::ProviderConfigurationState::kNone:
++      case provider_api::ProviderConfigurationState::kReady:
++        break;
++    }
++  }
++
++  std::optional<std::string> error;
++  Response result = base::unexpected(Failure{Error::kInvalidData});
++  if (response.failure) {
++    result = base::unexpected(Failure{ToError(response.failure->error)});
++    if (response.failure->message) {
++      result.error().message = SanitizeSyncVaultProviderDisplayText(
++          *response.failure->message, kMaximumFailureMessageBytes);
++    }
++  } else if (std::optional<Result> success =
++                 ToResult(request, std::move(*response.success))) {
++    result = std::move(*success);
++  } else {
++    error = "The response does not contain valid results for the request.";
++  }
++  ResponseCallback callback = std::move(request.callback);
++  pending_requests_.erase(it);
++  std::move(callback).Run(std::move(result));
++  return error;
++}
++
++std::optional<std::string> SyncVaultProviderService::NotifyVaultChanged(
++    const ExtensionId& provider_id,
++    const std::string& vault_uuid) {
++  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
++  if (!IsValidVaultUuid(vault_uuid)) {
++    return "Invalid vaultUuid.";
++  }
++  for (Observer& observer : observers_) {
++    observer.OnVaultChanged(provider_id, vault_uuid);
++  }
++  return std::nullopt;
++}
++
++std::optional<std::string> SyncVaultProviderService::NotifyProviderStateChanged(
++    const ExtensionId& provider_id,
++    provider_api::ProviderState state) {
++  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
++  switch (state) {
++    case provider_api::ProviderState::kReady:
++      provider_states_[provider_id] = State::kReady;
++      break;
++    case provider_api::ProviderState::kAuthRequired:
++      provider_states_[provider_id] = State::kAuthRequired;
++      break;
++    case provider_api::ProviderState::kOffline:
++      provider_states_[provider_id] = State::kOffline;
++      break;
++    case provider_api::ProviderState::kQuotaExceeded:
++      provider_states_[provider_id] = State::kQuotaExceeded;
++      break;
++    case provider_api::ProviderState::kNone:
++      return "Invalid state.";
++  }
++  for (Observer& observer : observers_) {
++    observer.OnProvidersChanged();
++  }
++  return std::nullopt;
++}
++
++void SyncVaultProviderService::Shutdown() {
++  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
++  registry_observation_.Reset();
++  auto requests = std::move(pending_requests_);
++  for (auto& [request_id, request] : requests) {
++    std::move(request.callback).Run(base::unexpected(Failure{Error::kAborted}));
++  }
++}
++
++void SyncVaultProviderService::Dispatch(const ExtensionId& provider_id,
++                                        RequestId request_id,
++                                        RequestType type,
++                                        const std::string& event_name,
++                                        base::ListValue args,
++                                        ResponseCallback callback,
++                                        size_t max_bytes) {
++  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
++  std::optional<Error> error;
++  if (!registry_observation_.IsObserving() || !GetProvider(provider_id)) {
++    error = Error::kAborted;
++  } else if (!event_router_->ExtensionHasEventListener(provider_id,
++                                                       event_name)) {
++    error = Error::kUnsupported;
++  }
++  if (error) {
++    base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
++        FROM_HERE,
++        base::BindOnce(std::move(callback), base::unexpected(Failure{*error})));
++    return;
++  }
++
++  PendingRequest& request = pending_requests_[request_id];
++  request.provider_id = provider_id;
++  request.type = type;
++  request.max_bytes = max_bytes;
++  request.callback = std::move(callback);
++  request.timeout = std::make_unique<base::RetainingOneShotTimer>();
++  request.timeout->Start(
++      FROM_HERE, kRequestTimeout,
++      base::BindRepeating(&SyncVaultProviderService::Cancel,
++                          base::Unretained(this), request_id,
++                          Error::kTemporaryError));
++  auto event =
++      std::make_unique<Event>(events::SYNC_VAULT_PROVIDER_REQUEST, event_name,
++                              base::MakeRefCounted<EventArgs>(std::move(args)),
++                              browser_context_);
++  event->did_dispatch_callback =
++      base::BindRepeating(&SyncVaultProviderService::OnRequestDispatched,
++                          weak_ptr_factory_.GetWeakPtr(), request_id);
++  event_router_->DispatchEventToExtension(provider_id, std::move(event));
++}
++
++void SyncVaultProviderService::OnRequestDispatched(RequestId request_id,
++                                                   const EventTarget& target) {
++  // Keep the provider's service worker alive until it responds.
++  auto it = pending_requests_.find(request_id);
++  if (it == pending_requests_.end() ||
++      target.service_worker_version_id ==
++          blink::mojom::kInvalidServiceWorkerVersionId) {
++    return;
++  }
++  it->second.keepalives.push_back(std::make_unique<ServiceWorkerKeepalive>(
++      browser_context_,
++      WorkerId{
++          target.extension_id,
++          content::ChildProcessId::FromUnsafeValue(target.render_process_id),
++          target.service_worker_version_id, target.worker_thread_id},
++      content::ServiceWorkerExternalRequestTimeoutType::kDefault,
++      Activity::EVENT, kKeepaliveActivity));
++}
++
++void SyncVaultProviderService::Cancel(RequestId request_id, Error error) {
++  auto it = pending_requests_.find(request_id);
++  if (it == pending_requests_.end()) {
++    return;
++  }
++  const ExtensionId provider_id = it->second.provider_id;
++  ResponseCallback callback = std::move(it->second.callback);
++  pending_requests_.erase(it);
++  if (GetProvider(provider_id) &&
++      event_router_->ExtensionHasEventListener(
++          provider_id, provider_api::OnCancelRequested::kEventName)) {
++    provider_api::RequestCancellation cancellation;
++    cancellation.request_id = request_id;
++    event_router_->DispatchEventToExtension(
++        provider_id, std::make_unique<Event>(
++                         events::SYNC_VAULT_PROVIDER_REQUEST,
++                         provider_api::OnCancelRequested::kEventName,
++                         base::MakeRefCounted<EventArgs>(
++                             provider_api::OnCancelRequested::Create(
++                                 cancellation)),
++                         browser_context_));
++  }
++  std::move(callback).Run(base::unexpected(Failure{error}));
++}
++
++std::optional<Host::Result> SyncVaultProviderService::ToResult(
++    const PendingRequest& request,
++    provider_api::ProviderSuccess success) const {
++  Result result;
++  switch (request.type) {
++    case RequestType::kConfigure:
++    case RequestType::kCreateVault:
++    case RequestType::kCollectEpochs:
++      return result;
++    case RequestType::kListVaults:
++      if (!success.vaults) {
++        return std::nullopt;
++      }
++      for (provider_api::VaultInfo& vault : *success.vaults) {
++        std::optional<std::string> name = SanitizeSyncVaultProviderDisplayText(
++            vault.display_name, kMaximumDisplayNameBytes);
++        if (!name || !IsValidVaultUuid(vault.vault_uuid)) {
++          return std::nullopt;
++        }
++        result.vaults.push_back({std::move(vault.vault_uuid), *name});
++      }
++      return result;
++    case RequestType::kReadObject:
++      if (!success.data || success.data->size() > request.max_bytes ||
++          !success.revision ||
++          !syncer::IsValidSyncVaultRevision(*success.revision)) {
++        return std::nullopt;
++      }
++      result.data = std::move(*success.data);
++      result.revision = std::move(*success.revision);
++      return result;
++    case RequestType::kWriteObject:
++      if (!success.revision ||
++          !syncer::IsValidSyncVaultRevision(*success.revision)) {
++        return std::nullopt;
++      }
++      result.revision = std::move(*success.revision);
++      return result;
++    case RequestType::kWrapKey:
++      if (!success.key_envelope || success.key_envelope->empty() ||
++          success.key_envelope->size() >
++              syncer::kSyncVaultMaximumMetadataPlaintextBytes) {
++        return std::nullopt;
++      }
++      result.key_envelope = std::move(*success.key_envelope);
++      return result;
++    case RequestType::kUnwrapKey:
++      if (!success.vault_key ||
++          success.vault_key->size() !=
++              syncer::SyncVaultCryptographer::kVaultKeySize) {
++        return std::nullopt;
++      }
++      result.vault_key = std::move(*success.vault_key);
++      return result;
++  }
++}
++
++const Extension* SyncVaultProviderService::GetProvider(
++    const ExtensionId& provider_id) const {
++  const Extension* extension =
++      extension_registry_->enabled_extensions().GetByID(provider_id);
++  return extension && SyncVaultProviderInfo::Get(extension) ? extension
++                                                            : nullptr;
++}
++
++void SyncVaultProviderService::OnExtensionLoaded(
++    content::BrowserContext* browser_context,
++    const Extension* extension) {
++  if (SyncVaultProviderInfo::Get(extension)) {
++    for (Observer& observer : observers_) {
++      observer.OnProvidersChanged();
++    }
++  }
++}
++
++void SyncVaultProviderService::OnExtensionUnloaded(
++    content::BrowserContext* browser_context,
++    const Extension* extension,
++    UnloadedExtensionReason reason) {
++  if (!SyncVaultProviderInfo::Get(extension)) {
++    return;
++  }
++  provider_states_.erase(extension->id());
++  CancelRequests(extension->id());
++  for (Observer& observer : observers_) {
++    observer.OnProvidersChanged();
++  }
++}
++
++// static
++SyncVaultProviderServiceFactory*
++SyncVaultProviderServiceFactory::GetInstance() {
++  static base::NoDestructor<SyncVaultProviderServiceFactory> instance;
++  return instance.get();
++}
++
++// static
++SyncVaultProviderService* SyncVaultProviderServiceFactory::GetForBrowserContext(
++    content::BrowserContext* context) {
++  return static_cast<SyncVaultProviderService*>(
++      GetInstance()->GetServiceForBrowserContext(context, /*create=*/true));
++}
++
++SyncVaultProviderServiceFactory::SyncVaultProviderServiceFactory()
++    : ProfileKeyedServiceFactory(
++          "SyncVaultProviderService",
++          ProfileSelections::BuildRedirectedInIncognito()) {
++  DependsOn(EventRouterFactory::GetInstance());
++  DependsOn(ExtensionRegistryFactory::GetInstance());
++  DependsOn(ProcessManagerFactory::GetInstance());
++}
++
++SyncVaultProviderServiceFactory::~SyncVaultProviderServiceFactory() = default;
++
++std::unique_ptr<KeyedService>
++SyncVaultProviderServiceFactory::BuildServiceInstanceForBrowserContext(
++    content::BrowserContext* context) const {
++  return std::make_unique<SyncVaultProviderService>(context);
++}
++
++}  // namespace extensions
+--- /dev/null
++++ b/chrome/browser/extensions/api/sync_vault_provider/sync_vault_provider_service.h
+@@ -0,0 +1,189 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#ifndef CHROME_BROWSER_EXTENSIONS_API_SYNC_VAULT_PROVIDER_SYNC_VAULT_PROVIDER_SERVICE_H_
++#define CHROME_BROWSER_EXTENSIONS_API_SYNC_VAULT_PROVIDER_SYNC_VAULT_PROVIDER_SERVICE_H_
++
++#include <map>
++#include <memory>
++#include <optional>
++#include <string>
++#include <vector>
++
++#include "base/memory/raw_ptr.h"
++#include "base/memory/weak_ptr.h"
++#include "base/no_destructor.h"
++#include "base/observer_list.h"
++#include "base/scoped_observation.h"
++#include "base/sequence_checker.h"
++#include "base/timer/timer.h"
++#include "base/values.h"
++#include "chrome/browser/profiles/profile_keyed_service_factory.h"
++#include "chrome/browser/sync/private_sync/private_sync_provider_host.h"
++#include "chrome/common/extensions/api/sync_vault_provider.h"
++#include "components/keyed_service/core/keyed_service.h"
++#include "extensions/browser/extension_registry_observer.h"
++#include "extensions/browser/service_worker/service_worker_keepalive.h"
++#include "extensions/common/extension_id.h"
++
++namespace content {
++class BrowserContext;
++}
++
++namespace extensions {
++
++class EventRouter;
++class Extension;
++class ExtensionRegistry;
++struct EventTarget;
++
++// Hosts private sync providers as extensions that declare the
++// "sync_vault_provider" manifest key: sends them requests as events, and
++// relays their responses and notifications.
++class SyncVaultProviderService : public KeyedService,
++                                 public ExtensionRegistryObserver,
++                                 public browser_sync::PrivateSyncProviderHost {
++ public:
++  explicit SyncVaultProviderService(content::BrowserContext* browser_context);
++  ~SyncVaultProviderService() override;
++  SyncVaultProviderService(const SyncVaultProviderService&) = delete;
++  SyncVaultProviderService& operator=(const SyncVaultProviderService&) = delete;
++
++  // browser_sync::PrivateSyncProviderHost:
++  std::vector<Provider> GetProviders() const override;
++  std::optional<State> GetProviderState(
++      const std::string& provider_id) const override;
++  void Configure(const std::string& provider_id,
++                 ResponseCallback callback) override;
++  void ListVaults(const std::string& provider_id,
++                  ResponseCallback callback) override;
++  void CreateVault(const std::string& provider_id,
++                   const std::string& vault_uuid,
++                   const std::string& name,
++                   ResponseCallback callback) override;
++  void ReadObject(const std::string& provider_id,
++                  const std::string& vault_uuid,
++                  const std::string& object_id,
++                  size_t max_bytes,
++                  ResponseCallback callback) override;
++  void WriteObject(const std::string& provider_id,
++                   const std::string& vault_uuid,
++                   const std::string& object_id,
++                   std::vector<uint8_t> data,
++                   std::optional<std::string> expected_revision,
++                   std::optional<uint32_t> retention_epoch,
++                   ResponseCallback callback) override;
++  void CollectEpochs(const std::string& provider_id,
++                     const std::string& vault_uuid,
++                     uint32_t minimum_retained_epoch,
++                     ResponseCallback callback) override;
++  void WrapKey(const std::string& provider_id,
++               const std::string& vault_uuid,
++               std::vector<uint8_t> vault_key,
++               ResponseCallback callback) override;
++  void UnwrapKey(const std::string& provider_id,
++                 const std::string& vault_uuid,
++                 std::vector<uint8_t> key_envelope,
++                 ResponseCallback callback) override;
++  void CancelRequests(const std::string& provider_id) override;
++  void AddObserver(Observer* observer) override;
++  void RemoveObserver(Observer* observer) override;
++  base::WeakPtr<PrivateSyncProviderHost> GetWeakPtr() override;
++
++  // Called by the extension API; return an error for the caller.
++  std::optional<std::string> Respond(
++      const ExtensionId& provider_id,
++      api::sync_vault_provider::ProviderResponse response);
++  std::optional<std::string> NotifyVaultChanged(const ExtensionId& provider_id,
++                                                const std::string& vault_uuid);
++  std::optional<std::string> NotifyProviderStateChanged(
++      const ExtensionId& provider_id,
++      api::sync_vault_provider::ProviderState state);
++
++  // KeyedService:
++  void Shutdown() override;
++
++ private:
++  using RequestId = int;
++  enum class RequestType {
++    kConfigure,
++    kListVaults,
++    kCreateVault,
++    kReadObject,
++    kWriteObject,
++    kCollectEpochs,
++    kWrapKey,
++    kUnwrapKey,
++  };
++  struct PendingRequest {
++    PendingRequest();
++    PendingRequest(PendingRequest&&);
++    PendingRequest& operator=(PendingRequest&&);
++    ~PendingRequest();
++
++    ExtensionId provider_id;
++    RequestType type;
++    size_t max_bytes = 0;
++    ResponseCallback callback;
++    // Retains its task when stopped, so that a configure request can resume
++    // its timeout after waiting for the user.
++    std::unique_ptr<base::RetainingOneShotTimer> timeout;
++    std::vector<std::unique_ptr<ServiceWorkerKeepalive>> keepalives;
++  };
++
++  void Dispatch(const ExtensionId& provider_id,
++                RequestId request_id,
++                RequestType type,
++                const std::string& event_name,
++                base::ListValue args,
++                ResponseCallback callback,
++                size_t max_bytes = 0);
++  RequestId NextRequestId() { return next_request_id_++; }
++  void OnRequestDispatched(RequestId request_id, const EventTarget& target);
++  // Fails the request, and tells the provider that it is no longer needed.
++  void Cancel(RequestId request_id, Error error);
++  std::optional<Result> ToResult(
++      const PendingRequest& request,
++      api::sync_vault_provider::ProviderSuccess success) const;
++  const Extension* GetProvider(const ExtensionId& provider_id) const;
++
++  // ExtensionRegistryObserver:
++  void OnExtensionLoaded(content::BrowserContext* browser_context,
++                         const Extension* extension) override;
++  void OnExtensionUnloaded(content::BrowserContext* browser_context,
++                           const Extension* extension,
++                           UnloadedExtensionReason reason) override;
++
++  raw_ptr<content::BrowserContext> browser_context_;
++  raw_ptr<EventRouter> event_router_;
++  raw_ptr<ExtensionRegistry> extension_registry_;
++  std::map<ExtensionId, State> provider_states_;
++  std::map<RequestId, PendingRequest> pending_requests_;
++  RequestId next_request_id_ = 1;
++  base::ObserverList<Observer> observers_;
++  base::ScopedObservation<ExtensionRegistry, ExtensionRegistryObserver>
++      registry_observation_{this};
++  SEQUENCE_CHECKER(sequence_checker_);
++  base::WeakPtrFactory<SyncVaultProviderService> weak_ptr_factory_{this};
++};
++
++class SyncVaultProviderServiceFactory : public ProfileKeyedServiceFactory {
++ public:
++  static SyncVaultProviderServiceFactory* GetInstance();
++  static SyncVaultProviderService* GetForBrowserContext(
++      content::BrowserContext* context);
++
++ private:
++  friend class base::NoDestructor<SyncVaultProviderServiceFactory>;
++
++  SyncVaultProviderServiceFactory();
++  ~SyncVaultProviderServiceFactory() override;
++
++  std::unique_ptr<KeyedService> BuildServiceInstanceForBrowserContext(
++      content::BrowserContext* context) const override;
++};
++
++}  // namespace extensions
++
++#endif  // CHROME_BROWSER_EXTENSIONS_API_SYNC_VAULT_PROVIDER_SYNC_VAULT_PROVIDER_SERVICE_H_

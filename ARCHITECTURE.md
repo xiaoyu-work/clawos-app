@@ -67,7 +67,7 @@ already been published or that every physical device has been exercised.
 | `capabilities/storage-sdk/` | Legacy `db` SQLite and `kv` JSON clients, independent MCP/CLI contracts and state; separate from the Storage business product and OS SDK/providers |
 | `capabilities/http/` | Complete `net` HTTP client and MCP contract; shared transport, egress authority, SDK/runtime and installation remain OS-owned |
 | `capabilities/ai-helpers/` | Complete `summarize` presentation/MCP client and tests; Agent, AI/provider/consent/budget/safety/audit and memory authority remain OS-owned |
-| `products/browser/` | Search, headless browsing and attached-browser Apps, MV3 extension and transport launchers; Native Messaging transport, privileged provider and native engine remain OS-owned |
+| `products/browser/` | Search, private and attached Helium browsing, MV3 extension, launchers and vendored Helium source; process and network authority stay in Claw OS |
 | `products/terminal/` | Complete native Terminal UI/MCP/resources and command/script/background App operations; sandbox, snapshots and process authority remain OS-owned |
 | `products/containers/` | Container-management App contract and typed broker client; privileged backend remains OS-owned |
 | `products/backup-recovery/` | Data-backup and whole-system recovery App contracts; backend execution, credentials, mount authorization and snapshot index remain OS-owned |

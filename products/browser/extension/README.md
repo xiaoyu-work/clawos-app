@@ -1,7 +1,7 @@
 # Claw Agent — WebExtension
 
 The user-facing half of the `browser-attached` app.  Loaded inside the user's
-running Chromium (or any Chromium-flavoured browser) so the agent inherits
+running Helium so the agent can use
 the user's logged-in session.
 
 ## Layout
@@ -50,14 +50,15 @@ Reload the extension/browser normally after an update.
 Load the installed directory unpacked, or this source directory during development:
 
 ```
-chromium --no-default-browser-check
-# chrome://extensions → Developer mode → Load unpacked
+helium --no-default-browser-check
+# helium://extensions → Developer mode → Load unpacked
 # Installed package: /usr/share/claw/extensions/claw-agent-browser
 ```
 
 Note the resulting extension ID and put it into
 `/etc/chromium/native-messaging-hosts/com.clawos.browser.json`'s
-`allowed_origins` array so Chromium will spawn the native host.
+`allowed_origins` array so Helium will start the native host. This is the
+upstream-compatible Linux path the Helium binary resolves.
 
 ## Wire protocol
 

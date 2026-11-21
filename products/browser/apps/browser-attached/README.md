@@ -1,6 +1,6 @@
 # `cos app browser-attached`
 
-Drive the user's running Chromium tabs while preserving their cookies, SSO,
+Operate the user's running Helium tabs while preserving their cookies, SSO,
 MFA, extensions, and visible browser state.
 
 ```text

@@ -1,8 +1,9 @@
 # Browser Product
 
 Own the Browser product's search, headless and attached App implementations,
-MCP contracts, Chromium extension and Native Messaging launchers. Native browser
-presentation and the reusable engine have not moved.
+MCP contracts, Helium-compatible extension and Native Messaging launchers.
+The [vendored Helium source](native/SOURCE.md) is distinct from the installed
+upstream `helium-bin` runtime.
 
 | Path | Responsibility |
 | --- | --- |
@@ -21,7 +22,7 @@ presentation and the reusable engine have not moved.
 Use the immutable platform dependency for SDK/runtime and
 [`shared/python`](../../shared/MODULE.md) for credential-client and safe HTTP
 helpers. The OS retains secret storage, memory, network authority and
-the broker, and the reusable `cos-browser` engine. No App invokes another App; searches never silently switch
+the renderer process. No App invokes another App; searches never silently switch
 provider or borrow an attached browser's login state.
 
 ```bash
@@ -33,10 +34,11 @@ Product unit tests use synthetic provider responses without live API keys.
 OS integration tests exercise the published source through the real worker
 sandbox and broker.
 
-The `web` source move preserves its legacy operation-to-MCP adapter and plain
-read urllib degradation when the native engine is missing. It does not claim
-an MCP-only refactor or native engine migration. Its unit fixtures do not
-replace native browser build/rendering acceptance.
+The `web` App uses the existing runtime bridge to send a typed render request
+to `clawd`. No browser socket, display, profile or direct network access
+enters the App worker. A missing renderer fails explicitly. Screenshots
+create a new PNG at an approved output path; form submissions keep the
+separately approved HTTP path.
 
 `package.json` binds both `installed_assets` to `browser-attached`. The same
 staging contract used by the independent `claw-app-browser` Debian package
@@ -51,8 +53,8 @@ Canonical `stage.py` invokes the asset helper once;
 release assembly does not repeat it. Selecting only Search or Web does not add these
 attached-browser assets.
 
-Updating Browser updates its extension and launchers together, without a
-separate desktop package or Chromium dependency. The OS
+Updating Browser updates its extension and launchers together. The App package
+depends on the signed upstream Helium runtime and the matching OS renderer. The OS
 `tools/install-browser-agent.sh` only validates installed files and configures
 the chosen extension ID, Native Messaging registration and policy. It does not
 clone App sources, copy package assets or alter browser profiles. Ordinary

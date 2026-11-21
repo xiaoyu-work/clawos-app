@@ -1,0 +1,80 @@
+--- /dev/null
++++ b/chrome/browser/ui/views/helium/frame_corner_radius.h
+@@ -0,0 +1,12 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#ifndef CHROME_BROWSER_UI_VIEWS_HELIUM_FRAME_CORNER_RADIUS_H_
++#define CHROME_BROWSER_UI_VIEWS_HELIUM_FRAME_CORNER_RADIUS_H_
++
++int GetGenericFrameRadius();
++int GetSystemWindowRadius();
++int GetPaddedFrameRadius();
++
++#endif  // CHROME_BROWSER_UI_VIEWS_HELIUM_FRAME_CORNER_RADIUS_H_
+--- /dev/null
++++ b/chrome/browser/ui/views/helium/frame_corner_radius.cc
+@@ -0,0 +1,23 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#include "chrome/browser/ui/views/helium/frame_corner_radius.h"
++
++#include "build/build_config.h"
++#include "chrome/browser/ui/layout_constants.h"
++
++int GetGenericFrameRadius() {
++  return 8;
++}
++
++#if !BUILDFLAG(IS_MAC)
++int GetSystemWindowRadius() {
++  return 8;
++}
++#endif
++
++int GetPaddedFrameRadius() {
++  return GetSystemWindowRadius() -
++         GetLayoutConstant(LayoutConstant::kHeliumBasePadding);
++}
+--- /dev/null
++++ b/chrome/browser/ui/views/helium/frame_corner_radius_mac.mm
+@@ -0,0 +1,12 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#include "chrome/browser/ui/views/helium/frame_corner_radius.h"
++
++int GetSystemWindowRadius() {
++  if (@available(macOS 26, *)) {
++    return 17;
++  }
++  return 12;
++}
+--- /dev/null
++++ b/chrome/browser/ui/views/helium/BUILD.gn
+@@ -0,0 +1,21 @@
++# Copyright 2026 The Helium Authors
++# You can use, redistribute, and/or modify this source code under
++# the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++assert(!is_android)
++
++source_set("frame_corner_radius") {
++  sources = [
++    "frame_corner_radius.cc",
++    "frame_corner_radius.h",
++  ]
++
++  deps = [
++    "//build:buildflag_header_h",
++    "//chrome/browser/ui:layout_constants",
++  ]
++
++  if (is_mac) {
++    sources += [ "frame_corner_radius_mac.mm" ]
++  }
++}

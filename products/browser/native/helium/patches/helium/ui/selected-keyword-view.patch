@@ -1,0 +1,83 @@
+--- a/chrome/browser/ui/views/location_bar/selected_keyword_view.cc
++++ b/chrome/browser/ui/views/location_bar/selected_keyword_view.cc
+@@ -34,6 +34,7 @@
+ #include "ui/gfx/paint_vector_icon.h"
+ #include "ui/gfx/text_constants.h"
+ #include "ui/views/accessibility/view_accessibility.h"
++#include "ui/views/border.h"
+ #include "ui/views/property_effects.h"
+ 
+ namespace {
+@@ -136,6 +137,9 @@ SelectedKeywordView::SelectedKeywordView
+   partial_label_.SetVisible(false);
+   label()->SetElideBehavior(gfx::FADE_TAIL);
+ 
++  SetExpandedLabelAdditionalInsets(views::Inset1D(2, 0));
++  UpdateBorder();
++
+   // TODO(crbug.com/40890218): `IconLabelBubbleView::GetAccessibleNodeData`
+   // would set the name to explicitly empty when the name was missing.
+   // That function no longer exists. As a result we need to handle that here.
+@@ -209,9 +213,23 @@ const std::u16string& SelectedKeywordVie
+   return keyword_;
+ }
+ 
++void SelectedKeywordView::UpdateBorder() {
++  if (!IsSpaciousUiDensity()) {
++    IconLabelBubbleView::UpdateBorder();
++    return;
++  }
++
++  // Spacious density aligns the icon with the suggestion icons.
++  const int vertical =
++      GetLayoutConstant(LayoutConstant::kLocationBarChildInteriorPadding);
++  SetBorder(views::CreateEmptyBorder(gfx::Insets::TLBR(
++      vertical, 4, vertical,
++      GetLayoutInsets(LOCATION_BAR_ICON_INTERIOR_PADDING).right())));
++}
++
+ int SelectedKeywordView::GetExtraInternalSpacing() const {
+   // Align the label text with the suggestion text.
+-  return 14;
++  return IsSpaciousUiDensity() ? 11 : 2;
+ }
+ 
+ void SelectedKeywordView::SetLabelForCurrentWidth() {
+--- a/components/search_engines/template_url.cc
++++ b/components/search_engines/template_url.cc
+@@ -2591,11 +2591,7 @@ std::u16string TemplateURL::GetFullName(
+   if (is_ask_type()) {
+     return l10n_util::GetStringFUTF16(IDS_OMNIBOX_SELECTED_KEYWORD_ASK_TEXT,
+                                       short_name);
+-  } else if (starter_pack_id() ==
+-             template_url_starter_pack_data::StarterPackId::kPage) {
+-    return l10n_util::GetStringUTF16(IDS_STARTER_PACK_PAGE_KEYWORD_TEXT);
+-  } else if (type() == TemplateURL::OMNIBOX_API_EXTENSION) {
+-    return short_name;
+   }
+-  return l10n_util::GetStringFUTF16(IDS_OMNIBOX_KEYWORD_TEXT_MD, short_name);
++
++  return short_name;
+ }
+--- a/components/omnibox/browser/searchbox_utils.cc
++++ b/components/omnibox/browser/searchbox_utils.cc
+@@ -571,8 +571,7 @@ KeywordLabelNames GetKeywordLabelNames(c
+     return names;
+   }
+ 
+-  names.full_name =
+-      l10n_util::GetStringFUTF16(IDS_OMNIBOX_KEYWORD_TEXT_MD, names.short_name);
++  names.full_name = names.short_name;
+   return names;
+ }
+ 
+--- a/chrome/browser/ui/views/location_bar/selected_keyword_view.h
++++ b/chrome/browser/ui/views/location_bar/selected_keyword_view.h
+@@ -68,6 +68,7 @@ class SelectedKeywordView : public IconL
+   // IconLabelBubbleView:
+   void OnBoundsChanged(const gfx::Rect& previous_bounds) override;
+   int GetExtraInternalSpacing() const override;
++  void UpdateBorder() override;
+ 
+   void SetLabelForCurrentWidth();
+ 

@@ -1,6 +1,5 @@
 """Web App contracts independent of the native browser engine."""
 
-import json
 from pathlib import Path
 from unittest import mock
 
@@ -52,35 +51,25 @@ def test_manifest_mcp_tools_dispatch_to_existing_handlers(command, arguments, po
 
 def test_read_passes_the_canonical_url_to_policy_and_browser():
     payload = {"title": "Example", "text": "Page text", "links": []}
-    with mock.patch.object(web, "_has_cos_browser", return_value=True), mock.patch.object(
-        web, "_run_cos_browser", return_value=(json.dumps(payload), "", 0, None)
+    with mock.patch.object(
+        web.browser_bridge, "request", return_value={"result": payload},
     ) as browser, mock.patch.object(web.policy, "require") as require:
         result = web.run("read", ["https://exam\u00adple.com/path", "--timeout=7"])
     require.assert_called_once_with("net.dial", host="example.com:443")
-    assert browser.call_args.args[0][:5] == [
-        "fetch", "https://example.com/path", "--quiet", "--timeout", "7",
-    ]
-    assert browser.call_args.args[1] == 7
-    assert result == {"url": "https://example.com/path", **payload, "engine": "cos-browser"}
+    browser.assert_called_once_with(
+        "render", url="https://example.com/path", timeout_secs=7,
+        output={"kind": "eval", "expression": web._EXTRACT_JS},
+        selector=None, user_agent=None,
+    )
+    assert result == {"url": "https://example.com/path", **payload, "engine": "helium"}
 
 
-def test_plain_read_preserves_the_existing_missing_engine_path():
-    with mock.patch.object(web, "_has_cos_browser", return_value=False), mock.patch.object(
-        web, "_urllib_fallback", return_value={"engine": "urllib-fallback"}
-    ) as fallback, mock.patch.object(web.policy, "require"):
-        result = web.run("read", ["https://example.com", "--max-length=100"])
-    fallback.assert_called_once_with("https://example.com", 100)
-    assert result == {"engine": "urllib-fallback"}
-
-
-@pytest.mark.parametrize("option", ["--html", "--eval=1+1"])
-def test_engine_specific_reads_do_not_use_the_urllib_path(option):
-    with mock.patch.object(web, "_has_cos_browser", return_value=False), mock.patch.object(
-        web, "_urllib_fallback"
-    ) as fallback, mock.patch.object(web.policy, "require"):
-        result = web.run("read", ["https://example.com", option])
-    assert "cos-browser is required" in result["error"]
-    fallback.assert_not_called()
+def test_missing_renderer_does_not_fall_back_to_direct_network():
+    with mock.patch.object(
+        web.browser_bridge, "request", side_effect=web.browser_bridge.BrowserUnavailable("renderer unavailable"),
+    ), mock.patch.object(web, "open_url") as direct, mock.patch.object(web.policy, "require"):
+        assert web.run("read", ["https://example.com"]) == {"error": "renderer unavailable"}
+    direct.assert_not_called()
 
 
 def test_summarize_requires_ai_authority_before_loading_external_content():

@@ -5,7 +5,7 @@
     "en": "Browser"
   },
   "summary": {
-    "en": "Browser via cos-browser (vendored Obscura) — text/links/JSON output, JS rendering, optional CDP"
+    "en": "Isolated Helium page rendering through the Claw OS broker"
   },
   "icon": "🧭",
   "runtime": "python",
@@ -162,7 +162,7 @@
     },
     "screenshot": {
       "label": {
-        "en": "Capture a screenshot of a URL (shells out to chromium)"
+        "en": "Render a URL in Helium and save a PNG to a new file"
       },
       "args": [
         {
@@ -232,7 +232,7 @@
         {
           "kind": "create",
           "label": {
-            "en": "Capture a screenshot of a URL (shells out to chromium)"
+            "en": "Render a URL in Helium and save a PNG to a new file"
           },
           "recovery": "unknown",
           "target_arg": "output"
@@ -370,17 +370,6 @@
         }
       ]
     }
-  },
-  "dependencies": {
-    "binaries": [
-      "cos-browser"
-    ],
-    "optional_binaries": [
-      "chromium",
-      "chromium-browser",
-      "google-chrome-stable",
-      "google-chrome"
-    ]
   },
   "schema_version": 2,
   "mcp": {
@@ -526,7 +515,7 @@
       {
         "name": "web.screenshot",
         "summary": {
-          "en": "Capture a screenshot of a URL (shells out to chromium)"
+          "en": "Render a URL in Helium and save a PNG to a new file"
         },
         "args": [
           {
@@ -591,7 +580,7 @@
           {
             "kind": "create",
             "label": {
-              "en": "Capture a screenshot of a URL (shells out to chromium)"
+              "en": "Render a URL in Helium and save a PNG to a new file"
             },
             "recovery": "unknown",
             "target_arg": "output"

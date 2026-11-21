@@ -1,0 +1,84 @@
+--- a/chrome/browser/extensions/sync/extension_sync_service.cc
++++ b/chrome/browser/extensions/sync/extension_sync_service.cc
+@@ -25,6 +25,7 @@
+ #include "chrome/browser/extensions/sync/extension_sync_util.h"
+ #include "chrome/browser/profiles/profile.h"
+ #include "chrome/browser/sync/glue/sync_start_util.h"
++#include "chrome/common/extensions/api/sync_vault_provider/sync_vault_provider_manifest_handler.h"
+ #include "chrome/common/extensions/extension_constants.h"
+ #include "chrome/common/extensions/sync_helper.h"
+ #include "components/sync/model/sync_change.h"
+@@ -942,6 +943,11 @@ bool ExtensionSyncService::ShouldReceive
+     return false;
+   }
+ 
++  // Sync vault providers store the data that would sync them.
++  if (extensions::SyncVaultProviderInfo::Get(&extension)) {
++    return false;
++  }
++
+   // Otherwise, defer to the general extension sync calculation.
+   return extensions::sync_util::ShouldSync(profile_, &extension);
+ }
+--- a/chrome/browser/extensions/api/storage/sync_value_store_cache.cc
++++ b/chrome/browser/extensions/api/storage/sync_value_store_cache.cc
+@@ -9,10 +9,13 @@
+ #include <utility>
+ 
+ #include "base/functional/bind.h"
++#include "base/functional/callback_helpers.h"
+ #include "base/task/sequenced_task_runner.h"
+ #include "chrome/browser/extensions/api/storage/sync_storage_backend.h"
+ #include "chrome/browser/sync/glue/sync_start_util.h"
++#include "chrome/common/extensions/api/sync_vault_provider/sync_vault_provider_manifest_handler.h"
+ #include "components/value_store/value_store_factory.h"
++#include "components/value_store/value_store_factory_impl.h"
+ #include "content/public/browser/browser_thread.h"
+ #include "extensions/browser/api/storage/backend_task_runner.h"
+ #include "extensions/buildflags/buildflags.h"
+@@ -88,6 +91,11 @@ void SyncValueStoreCache::RunWithValueSt
+     scoped_refptr<const Extension> extension) {
+   CHECK(IsOnBackendSequence(), base::NotFatalUntil::M161);
+   CHECK(initialized_, base::NotFatalUntil::M161);
++  if (SyncVaultProviderInfo::Get(extension.get())) {
++    std::move(callback).Run(provider_backend_->GetStorage(extension->id()));
++    return;
++  }
++
+   SyncStorageBackend* backend =
+       extension->is_app() ? app_backend_.get() : extension_backend_.get();
+   std::move(callback).Run(backend->GetStorage(extension->id()));
+@@ -97,6 +105,7 @@ void SyncValueStoreCache::DeleteStorageS
+   CHECK(IsOnBackendSequence(), base::NotFatalUntil::M161);
+   app_backend_->DeleteStorage(extension_id);
+   extension_backend_->DeleteStorage(extension_id);
++  provider_backend_->DeleteStorage(extension_id);
+ }
+ 
+ void SyncValueStoreCache::InitOnBackend(
+@@ -108,6 +117,13 @@ void SyncValueStoreCache::InitOnBackend(
+   app_backend_ = std::make_unique<SyncStorageBackend>(
+       factory, GetSyncQuotaLimits(), observer, syncer::APP_SETTINGS,
+       sync_start_util::GetFlareForSyncableService(profile_path));
++  // It keeps its own files, so no synced changes reach them, and it is never
++  // offered to Sync, so it never starts syncing.
++  provider_backend_ = std::make_unique<SyncStorageBackend>(
++      base::MakeRefCounted<value_store::ValueStoreFactoryImpl>(
++          profile_path.AppendASCII("Sync Vault Providers")),
++      GetSyncQuotaLimits(), observer, syncer::EXTENSION_SETTINGS,
++      base::DoNothing());
+   extension_backend_ = std::make_unique<SyncStorageBackend>(
+       std::move(factory), GetSyncQuotaLimits(), std::move(observer),
+       syncer::EXTENSION_SETTINGS,
+--- a/chrome/browser/extensions/api/storage/sync_value_store_cache.h
++++ b/chrome/browser/extensions/api/storage/sync_value_store_cache.h
+@@ -64,6 +64,9 @@ class SyncValueStoreCache : public Value
+   bool initialized_;
+   std::unique_ptr<SyncStorageBackend> app_backend_;
+   std::unique_ptr<SyncStorageBackend> extension_backend_;
++  // Sync vault providers' storage stays on this device, as it would otherwise
++  // be stored in the vaults they provide.
++  std::unique_ptr<SyncStorageBackend> provider_backend_;
+   base::WeakPtrFactory<SyncValueStoreCache> weak_ptr_factory_{this};
+ };
+ 
