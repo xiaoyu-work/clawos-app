@@ -145,7 +145,7 @@ def test_manifest_and_handlers_are_mcp_only_and_aligned() -> None:
     assert [tool["summary"]["en"] for tool in tools] == [
         "Enumerate every `.desktop` entry installed under the standard XDG application directories. Returns AppID, localized name, comment, categories, keywords, and icon.",
         "Fuzzy-search installed apps by localized name, generic name, comment, or keywords. Returns the top matches ranked by relevance.",
-        "Launch an installed graphical app. `app_id` is the AppID — the `.desktop` filename without extension (e.g. `com.clawos.Files`, `org.mozilla.firefox`). Repeat `--uri` for absolute non-file URIs and `--path` for exact local files the app should open.",
+        "Launch an installed graphical app. `app_id` is the AppID — the `.desktop` filename without extension (e.g. `com.yuos.Files`, `org.mozilla.firefox`). Repeat `--uri` for absolute non-file URIs and `--path` for exact local files the app should open.",
         "Show desktop apps the agent has launched recently, newest first. Useful for re-opening the last app the user worked with.",
         "Look for live processes whose executable matches the AppID's `Exec=` binary. Returns the list of matching PIDs (empty if the app is not running).",
     ]

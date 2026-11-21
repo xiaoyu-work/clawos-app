@@ -69,7 +69,7 @@ def test_preserves_native_catalog_and_exact_authority():
         "list", "metadata", "search", "reveal", "summarize", "explain", "find_similar",
     )}
     assert tools["files.reveal"]["needs"][1]["scope"]["scope"] == {
-        "kind": "name", "value": "com.clawos.Files",
+        "kind": "name", "value": "com.yuos.Files",
     }
     assert tools["files.summarize"]["needs"][2]["scope"]["scope"] == {
         "kind": "self-ref", "value": "cosmic-files",

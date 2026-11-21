@@ -71,13 +71,13 @@ def main():
         binary = installed / "usr/bin/cosmic-player"
         assert binary.stat().st_mode & 0o777 == 0o755
         for source, target in [
-            ("target/xdgen/com.clawos.Player.desktop", "applications/com.clawos.Player.desktop"),
-            ("target/xdgen/com.clawos.Player.metainfo.xml", "metainfo/com.clawos.Player.metainfo.xml"),
-            ("res/com.clawos.Player.thumbnailer", "thumbnailers/com.clawos.Player.thumbnailer"),
-            ("res/icons/hicolor/scalable/apps/com.clawos.Player.svg", "icons/hicolor/scalable/apps/com.clawos.Player.svg"),
+            ("target/xdgen/com.yuos.Player.desktop", "applications/com.yuos.Player.desktop"),
+            ("target/xdgen/com.yuos.Player.metainfo.xml", "metainfo/com.yuos.Player.metainfo.xml"),
+            ("res/com.yuos.Player.thumbnailer", "thumbnailers/com.yuos.Player.thumbnailer"),
+            ("res/icons/hicolor/scalable/apps/com.yuos.Player.svg", "icons/hicolor/scalable/apps/com.yuos.Player.svg"),
         ]:
             assert (installed / "usr/share" / target).read_bytes() == (native / source).read_bytes()
-        desktop = (installed / "usr/share/applications/com.clawos.Player.desktop").read_text()
+        desktop = (installed / "usr/share/applications/com.yuos.Player.desktop").read_text()
         assert "Exec=cosmic-player" in desktop and "Name[fr]=" in desktop
         address = f"unix:path={fixture}/bus"
         bus = subprocess.Popen([
@@ -96,7 +96,7 @@ def main():
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         processes.append(ui)
         own_name = line(ui).strip()
-        assert own_name == f"org.mpris.MediaPlayer2.com.clawos.Player.pid{ui.pid}"
+        assert own_name == f"org.mpris.MediaPlayer2.com.yuos.Player.pid{ui.pid}"
 
         listener = socket.socket(socket.AF_UNIX)
         listener.bind(str(fixture / "broker.sock"))

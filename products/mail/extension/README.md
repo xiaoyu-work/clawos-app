@@ -5,8 +5,8 @@ UI and Agent MCP call the same six operations: `summarize`, `smart_reply`,
 `smart_compose`, `translate`, `triage` and `chat`. Schemas live only in
 [`app.json`](../apps/mail-ai/app.json).
 
-The extension identity remains `claw-mail-ai@claw.os`, and the native host is
-`os.claw.mail_ai`. The OS-owned `claw-mail-ai-host` launcher validates the
+The extension identity remains `yu-mail-ai@yuos.io`, and the native host is
+`os.yuos.mail_ai`. The OS-owned `claw-mail-ai-host` launcher validates the
 Thunderbird parent and registers the restricted App session before starting
 the canonical `/usr/lib/cos/apps/mail-ai/native_host.py`. This extension does
 not manufacture an MCP caller or own model credentials.

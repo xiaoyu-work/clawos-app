@@ -35,7 +35,7 @@ def main():
             " elif request['action'] == 'write': data = {'path':request['path'],'bytes':len(request['content'].encode())}\n"
             " else: data = {'replacements':1}\n"
             "elif args[1] == '__desktop':\n"
-            " data = {'launched':True,'app_id':'com.clawos.Edit','launcher':'/usr/bin/gtk4-launch'}\n"
+            " data = {'launched':True,'app_id':'com.yuos.Edit','launcher':'/usr/bin/gtk4-launch'}\n"
             "elif args[1] == 'ai':\n"
             " prompt = pathlib.Path(args[args.index('--prompt-file')+1]).read_text()\n"
             " with (root / 'prompts').open('a') as f: f.write(prompt + '\\n')\n"

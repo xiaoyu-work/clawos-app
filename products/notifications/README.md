@@ -4,7 +4,7 @@ This product owns the complete native `cosmic-notifications` Layer Shell
 daemon, MCP, configuration/util libraries and original build/provenance inputs,
 plus the complete Python `notify` facade and its tests.
 The installed binary remains `/usr/bin/cosmic-notifications`, with identity
-`com.clawos.Notifications`; the independent native package is
+`com.yuos.Notifications`; the independent native package is
 `claw-app-notifications-desktop`.
 
 Normal UI and MCP share the existing **OS durable Notification Service**

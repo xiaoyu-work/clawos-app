@@ -1134,7 +1134,7 @@ impl cosmic::Application for CosmicLauncher {
     type Message = Message;
     type Executor = cosmic::executor::single::Executor;
     type Flags = Args;
-    const APP_ID: &'static str = "com.clawos.Launcher";
+    const APP_ID: &'static str = "com.yuos.Launcher";
 
     fn init(mut core: Core, flags: Args) -> (Self, Task<Message>) {
         let dummy_id = window::Id::unique();

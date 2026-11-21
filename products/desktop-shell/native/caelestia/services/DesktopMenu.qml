@@ -7,9 +7,9 @@ import Caelestia
 import Caelestia.I18n
 
 Singleton {
-    readonly property string files: "com.clawos.Files"
-    readonly property string launcher: "com.clawos.Launcher"
-    readonly property string agent: "com.clawos.Agent"
+    readonly property string files: "com.yuos.Files"
+    readonly property string launcher: "com.yuos.Launcher"
+    readonly property string agent: "com.yuos.Agent"
 
     function launch(desktopId: string): void {
         submit("launch", desktopId);

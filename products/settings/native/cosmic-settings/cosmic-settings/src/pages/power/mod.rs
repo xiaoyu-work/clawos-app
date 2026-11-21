@@ -65,7 +65,7 @@ pub struct Page {
 
 impl Default for Page {
     fn default() -> Self {
-        let idle_config = Config::new("com.clawos.Idle", 1).unwrap();
+        let idle_config = Config::new("com.yuos.Idle", 1).unwrap();
         let idle_conf = CosmicIdleConfig::get_entry(&idle_config).unwrap_or_else(|(_, conf)| conf);
 
         Self {

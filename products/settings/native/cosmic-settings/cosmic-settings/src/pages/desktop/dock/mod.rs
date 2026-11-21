@@ -41,7 +41,7 @@ impl Page {
                     return Task::none();
                 };
 
-                let Ok(helper) = crate::owner_config::Config::new("com.clawos.Panel", 1) else {
+                let Ok(helper) = crate::owner_config::Config::new("com.yuos.Panel", 1) else {
                     return Task::none();
                 };
 

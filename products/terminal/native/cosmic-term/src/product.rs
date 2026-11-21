@@ -51,7 +51,7 @@ pub fn command(operation: &str, arguments: Value) -> io::Result<Value> {
 
 pub fn open(cwd: Option<&str>) -> Result<(), cos_runtime::BridgeError> {
     let mut args = vec![
-        "__desktop".to_string(), "launch".into(), "--app-id".into(), "com.clawos.Term".into(),
+        "__desktop".to_string(), "launch".into(), "--app-id".into(), "com.yuos.Term".into(),
     ];
     if let Some(cwd) = cwd {
         if cwd.is_empty() || cwd.contains('\0') || !Path::new(cwd).is_absolute() {
@@ -64,7 +64,7 @@ pub fn open(cwd: Option<&str>) -> Result<(), cos_runtime::BridgeError> {
         args.extend(["--uri".into(), uri.to_string()]);
     }
     let value = claw_os_sdk::cos_call_json("desktop", "launch", args)?;
-    if value["launched"] != true || value["app_id"] != "com.clawos.Term"
+    if value["launched"] != true || value["app_id"] != "com.yuos.Term"
         || value["launcher"] != "/usr/bin/cosmic-term"
     {
         return Err(cos_runtime::BridgeError::Decode {

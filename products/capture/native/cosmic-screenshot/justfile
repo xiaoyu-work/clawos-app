@@ -1,5 +1,5 @@
 name := 'cosmic-screenshot'
-export APPID := 'com.clawos.Screenshot'
+export APPID := 'com.yuos.Screenshot'
 
 rootdir := ''
 prefix := '/usr'

@@ -1,6 +1,6 @@
 // Yu OS Agent — background service worker.
 //
-// Connects a long-lived Native Messaging port to com.clawos.browser, then
+// Connects a long-lived Native Messaging port to com.yuos.browser, then
 // translates requests coming from the host into chrome.tabs / chrome.scripting
 // calls and forwards results back.  The port stays open for the lifetime of
 // the SW, which keeps the SW awake (an active native port is treated as
@@ -11,7 +11,7 @@
 //   { id: "<uuid>", ok: true,  result: {...} }
 //   { id: "<uuid>", ok: false, error: "..." }
 
-const HOST_NAME = "com.clawos.browser";
+const HOST_NAME = "com.yuos.browser";
 const RECONNECT_BACKOFF_MS = [500, 1000, 2000, 5000, 10000];
 // A connection is considered "stable" — and the backoff index reset — only
 // after STABLE_MS without a disconnect, OR after at least one successful

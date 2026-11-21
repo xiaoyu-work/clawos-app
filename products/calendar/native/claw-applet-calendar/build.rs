@@ -4,7 +4,7 @@ use std::{env, fs, path::PathBuf};
 use xdgen::{App, Context, FluentString};
 
 fn main() {
-    const ID: &str = "com.clawos.PanelCalendarButton";
+    const ID: &str = "com.yuos.PanelCalendarButton";
     println!("cargo:rerun-if-changed=i18n");
     println!("cargo:rerun-if-changed=data/{ID}.desktop");
     let context = Context::new("i18n/", "desktop_entries").unwrap();

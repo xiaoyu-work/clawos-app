@@ -1,5 +1,5 @@
 name := 'cosmic-notifications'
-export APPID := 'com.clawos.Notifications'
+export APPID := 'com.yuos.Notifications'
 
 rootdir := ''
 prefix := '/usr'

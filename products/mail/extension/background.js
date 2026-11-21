@@ -1,6 +1,6 @@
 // Yu Mail AI — background event page.
 //
-// One long-lived port to the Native Messaging host `os.claw.mail_ai`,
+// One long-lived port to the Native Messaging host `os.yuos.mail_ai`,
 // which Thunderbird spawns when we call `connectNative`. The port stays
 // open for the lifetime of this event page; replies are routed back to
 // whichever popup / content script issued the request via a per-id
@@ -94,7 +94,7 @@ browser.runtime.onInstalled.addListener(async () => {
 // Open the long-lived NM port as early as possible.
 ClawNative.setMailboxHandler(ClawMailbox.handle, ClawMailbox.ready);
 browser.messages.onNewMailReceived.addListener(ClawMailbox.onNewMail);
-ClawNative.connect("os.claw.mail_ai");
+ClawNative.connect("os.yuos.mail_ai");
 
 // Create the Spaces entry (TB 115+). The Spaces API is idempotent on
 // the name — calling create with the same name twice throws, so we
@@ -441,7 +441,7 @@ browser.runtime.onMessage.addListener((msg, _sender) => {
       return Promise.resolve({
         ok: true,
         status: (ClawNative.getStatus && ClawNative.getStatus().status) || "unknown",
-        hostName: "os.claw.mail_ai",
+        hostName: "os.yuos.mail_ai",
       });
 
     case "refreshSpaces":

@@ -166,7 +166,7 @@
       {
         "name": "launcher.open",
         "summary": {
-          "en": "Launch an installed graphical app. `app_id` is the AppID — the `.desktop` filename without extension (e.g. `com.clawos.Files`, `org.mozilla.firefox`). Repeat `--uri` for absolute non-file URIs and `--path` for exact local files the app should open."
+          "en": "Launch an installed graphical app. `app_id` is the AppID — the `.desktop` filename without extension (e.g. `com.yuos.Files`, `org.mozilla.firefox`). Repeat `--uri` for absolute non-file URIs and `--path` for exact local files the app should open."
         },
         "args": [
           {
@@ -259,7 +259,7 @@
           {
             "kind": "execute",
             "label": {
-              "en": "Launch an installed graphical app. `app_id` is the AppID — the `.desktop` filename without extension (e.g. `com.clawos.Files`, `org.mozilla.firefox`). Repeat `--uri` for absolute non-file URIs and `--path` for exact local files the app should open."
+              "en": "Launch an installed graphical app. `app_id` is the AppID — the `.desktop` filename without extension (e.g. `com.yuos.Files`, `org.mozilla.firefox`). Repeat `--uri` for absolute non-file URIs and `--path` for exact local files the app should open."
             },
             "recovery": "unknown",
             "target_arg": "path"

@@ -43,7 +43,7 @@ def test_standalone_keeps_original_renderer_filechooser_and_lock(tmp_path):
         },
     }
     assert (destination / "Cargo.lock").read_bytes() == (NATIVE / "Cargo.lock").read_bytes()
-    assert "Exec=cosmic-term" in (destination / "res/com.clawos.Term.desktop").read_text()
+    assert "Exec=cosmic-term" in (destination / "res/com.yuos.Term.desktop").read_text()
     assert (destination / "i18n/en/cosmic_term.ftl").is_file()
 
 

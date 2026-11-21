@@ -32,7 +32,7 @@ def test_native_staging_preserves_complete_ui_and_license(tmp_path):
     assert (output / "app.json").read_bytes() == (
         NATIVE.parent / "apps/widget-rail/app.json"
     ).read_bytes()
-    entry = (output / "data/com.clawos.AppletWidgetRail.desktop").read_text()
+    entry = (output / "data/com.yuos.AppletWidgetRail.desktop").read_text()
     assert "Exec=claw-applet-widget-rail" in entry
     assert "Icon=view-grid-symbolic" in entry
 

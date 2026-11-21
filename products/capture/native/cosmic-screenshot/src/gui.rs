@@ -188,7 +188,7 @@ pub(super) async fn notify(
         .to_string();
     let request = json!({
         "action": "post", "app_name": app_name, "summary": summary, "body": body,
-        "icon": "com.clawos.Screenshot", "expire_ms": 5000, "transient": true,
+        "icon": "com.yuos.Screenshot", "expire_ms": 5000, "transient": true,
     });
     tokio::task::spawn_blocking(move || {
         claw_os_sdk::cos_call_json_with_stdin(

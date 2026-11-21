@@ -21,7 +21,7 @@ The complete native `cosmic-files` UI, file-chooser library and
 Their source, assets, localization, licenses and original locked toolkit
 graph are preserved. UI and MCP share embedded filesystem/Recoll business
 libraries, shared multi-format document parsing and the SDK AI gate, never
-another App. Native reveal uses the OS's fixed `com.clawos.Files` target.
+another App. Native reveal uses the OS's fixed `com.yuos.Files` target.
 Metadata explicitly requires the sibling tag directory read scope; summary
 memory uses only `self:cosmic-files`, not another App's namespace.
 

@@ -72,7 +72,7 @@
             "name": "icon",
             "kind": "text",
             "required": false,
-            "default": "com.clawos.Notifications",
+            "default": "com.yuos.Notifications",
             "label": {
               "en": "Icon-theme name only (up to 128 ASCII letters, digits, dots, underscores or hyphens). Paths and URLs are unsupported."
             }

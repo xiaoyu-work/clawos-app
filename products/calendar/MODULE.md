@@ -118,7 +118,7 @@ original installer resources and GPL license; source staging does not create
 a substitute binary or signed payload.
 `tools/stage_native.py calendar --root <empty-build-input-directory>` exports
 native build inputs, not installed binaries. The product's `just install`
-installs the compiled binary, generated `com.clawos.PanelCalendarButton.desktop`
+installs the compiled binary, generated `com.yuos.PanelCalendarButton.desktop`
 and original scalable Calendar icon. Its `rootdir`, `prefix`, `targetdir` and
 `debug` parameters follow the original applet installer style.
 Localized metadata stays inside Cargo's `OUT_DIR`; the installer resolves

@@ -33,7 +33,7 @@ def test_native_staging_preserves_complete_ui_and_license(tmp_path):
         NATIVE.parent / "apps/panel-calendar/app.json"
     ).read_bytes()
     assert "Exec=claw-applet-calendar" in (
-        output / "data/com.clawos.PanelCalendarButton.desktop"
+        output / "data/com.yuos.PanelCalendarButton.desktop"
     ).read_text()
 
 
@@ -93,9 +93,9 @@ def test_install_requires_explicit_build_staging_not_live_root(tmp_path):
 
 
 @pytest.mark.parametrize("product,component,desktop_id", [
-    ("calendar", "claw-applet-calendar", "com.clawos.PanelCalendarButton"),
-    ("desktop-widgets", "claw-applet-widget-rail", "com.clawos.AppletWidgetRail"),
-    ("clipboard", "claw-applet-clipboard", "com.clawos.AppletClipboard"),
+    ("calendar", "claw-applet-calendar", "com.yuos.PanelCalendarButton"),
+    ("desktop-widgets", "claw-applet-widget-rail", "com.yuos.AppletWidgetRail"),
+    ("clipboard", "claw-applet-clipboard", "com.yuos.AppletClipboard"),
 ])
 def test_desktop_install_uses_only_this_packages_cargo_reported_output(
     tmp_path, product, component, desktop_id,

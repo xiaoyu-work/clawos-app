@@ -281,7 +281,7 @@
               "kind": "fixed",
               "scope": {
                 "kind": "name",
-                "value": "com.clawos.Files"
+                "value": "com.yuos.Files"
               }
             },
             "why": {

@@ -819,7 +819,7 @@ pub async fn page_reload() -> eyre::Result<PageRefresh> {
         })
         .collect();
 
-    let config = cosmic_config::Config::new("com.clawos.Settings", 1)
+    let config = cosmic_config::Config::new("com.yuos.Settings", 1)
         .ok()
         .map(|context| {
             let locales = context
@@ -1023,7 +1023,7 @@ fn get_default_first_day(locale: &str) -> usize {
 }
 
 fn update_time_settings_after_region_change(region: &str) -> Result<(), String> {
-    let config = cosmic_config::Config::new("com.clawos.AppletTime", 1)
+    let config = cosmic_config::Config::new("com.yuos.AppletTime", 1)
         .map_err(|error| error.to_string())?;
     let time = config.set("military_time", get_default_24h(region));
     let week = config.set("first_day_of_week", get_default_first_day(region));

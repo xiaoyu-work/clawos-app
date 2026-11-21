@@ -55,8 +55,8 @@ def test_native_staging_keeps_original_resources_modes_and_separate_renderer(tmp
     assert (target / "LICENSE").read_bytes() == (PRODUCT / "native/LICENSE").read_bytes()
     assert len(list((target / "i18n").glob("*/*.ftl"))) == 72
     for relative in (
-        "res/com.clawos.Player.desktop", "res/com.clawos.Player.metainfo.xml",
-        "res/com.clawos.Player.thumbnailer", "res/icons/hicolor/scalable/apps/com.clawos.Player.svg",
+        "res/com.yuos.Player.desktop", "res/com.yuos.Player.metainfo.xml",
+        "res/com.yuos.Player.thumbnailer", "res/icons/hicolor/scalable/apps/com.yuos.Player.svg",
         "src/video.rs", "src/project.rs", "src/thumbnail.rs", "src/xdg_portals.rs",
         "build.rs", "shell.nix", "rustfmt.toml", "debian/control", "Cargo.lock",
     ):
@@ -86,7 +86,7 @@ def test_native_mcp_and_ui_share_the_fixed_live_playback_boundary():
     for forbidden in ("Connection::session", "ListNames", "with_player", 'yu app', "CLAW_COS_BIN"):
         assert forbidden not in mcp
     backend = (NATIVE / "src/mpris_backend.rs").read_text()
-    assert '&format!("com.clawos.Player.pid{}", process::id())' in backend
+    assert '&format!("com.yuos.Player.pid{}", process::id())' in backend
     assert '&format!("org.mpris.MediaPlayer2.' not in backend
     assert "self.message(PlaybackCommand::Stop).await" in backend
     ui = (NATIVE / "src/main.rs").read_text()

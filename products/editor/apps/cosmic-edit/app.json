@@ -221,7 +221,7 @@
               "kind": "fixed",
               "scope": {
                 "kind": "name",
-                "value": "com.clawos.Edit"
+                "value": "com.yuos.Edit"
               }
             },
             "why": {

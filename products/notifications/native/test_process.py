@@ -293,7 +293,7 @@ def main():
         assert success(call("notify.post", {"summary": "Default"})) == {"id": NOTIFICATION_ID}
         assert calls[-1]["request"] == {
             "action": "post", "summary": "Default", "body": "", "app_name": "Claw OS Agent",
-            "icon": "com.clawos.Notifications", "expire_ms": -1, "transient": False,
+            "icon": "com.yuos.Notifications", "expire_ms": -1, "transient": False,
         }
         full = {"summary": "Title", "body": "<b>plain text stays off argv</b>", "app_name": "Label only",
                 "icon": "notification-symbolic", "expire_ms": 0, "transient": True, "dedupe_key": "same"}

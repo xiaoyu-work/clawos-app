@@ -42,7 +42,7 @@ def test_manifest_preserves_exact_authority_and_ai_identity():
     ]
     launch, read = tools["edit.open"]["needs"]
     assert launch["scope"] == {
-        "kind": "fixed", "scope": {"kind": "name", "value": "com.clawos.Edit"},
+        "kind": "fixed", "scope": {"kind": "name", "value": "com.yuos.Edit"},
     }
     assert read["when"] == {"kind": "arg-present", "arg": "path"}
 
@@ -61,7 +61,7 @@ def test_stages_complete_native_source_separately_from_descriptor(tmp_path):
         if path.is_file():
             assert (staged / path.relative_to(source)).read_bytes() == path.read_bytes()
     assert (staged / "app.json").read_bytes() == MANIFEST.read_bytes()
-    assert "Exec=cosmic-edit %F" in (staged / "res/com.clawos.Edit.desktop").read_text()
+    assert "Exec=cosmic-edit %F" in (staged / "res/com.yuos.Edit.desktop").read_text()
 
 
 def test_standalone_build_rewrites_only_shared_runtime_paths(tmp_path):

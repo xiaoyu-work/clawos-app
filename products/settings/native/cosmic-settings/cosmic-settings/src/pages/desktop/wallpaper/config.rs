@@ -8,7 +8,7 @@ use std::collections::VecDeque;
 use std::env;
 use std::path::{Path, PathBuf};
 
-const NAME: &str = "com.clawos.Settings.Wallpaper";
+const NAME: &str = "com.yuos.Settings.Wallpaper";
 const VERSION: u64 = 1;
 const CURRENT_FOLDER: &str = "current-folder";
 const CUSTOM_COLORS: &str = "custom-colors";
@@ -40,7 +40,7 @@ impl Config {
             }
         };
 
-        let state = match crate::owner_config::Config::new_state("com.clawos.Background", VERSION) {
+        let state = match crate::owner_config::Config::new_state("com.yuos.Background", VERSION) {
             Ok(state) => state,
             Err(why) => {
                 tracing::warn!(?why, "failed to get state");

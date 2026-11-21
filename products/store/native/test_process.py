@@ -32,9 +32,9 @@ def main():
         ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         binary = installed / "usr/bin/cosmic-store"
         assert binary.stat().st_mode & 0o777 == 0o755
-        assert "Exec=cosmic-store" in (installed / "usr/share/applications/com.clawos.Store.desktop").read_text()
-        assert (installed / "usr/share/metainfo/com.clawos.Store.metainfo.xml").is_file()
-        assert (installed / "usr/share/icons/hicolor/scalable/apps/com.clawos.Store.svg").is_file()
+        assert "Exec=cosmic-store" in (installed / "usr/share/applications/com.yuos.Store.desktop").read_text()
+        assert (installed / "usr/share/metainfo/com.yuos.Store.metainfo.xml").is_file()
+        assert (installed / "usr/share/icons/hicolor/scalable/apps/com.yuos.Store.svg").is_file()
         assert (ROOT / "build/native-target/debug/flathub-stats").is_file()
         namespace = "/run/store-fixture"
         broker = fixture / "yu"
@@ -47,7 +47,7 @@ def main():
             "if (root/'deny').exists():\n"
             " print(json.dumps({'wire_version':1,'ok':False,'error':{'code':'denied','message':'fixture denied'}}));sys.exit(1)\n"
             "if args[1]=='__policy':data={'decision':'allow','verb':args[3]}\n"
-            "elif args[1]=='__desktop':data={'launched':True,'app_id':'com.clawos.Store','launcher':'/usr/bin/cosmic-store'}\n"
+            "elif args[1]=='__desktop':data={'launched':True,'app_id':'com.yuos.Store','launcher':'/usr/bin/cosmic-store'}\n"
             "elif args[1]=='__package_query':\n"
             " with (root/'queries').open('a') as f:f.write(json.dumps(args[2:])+'\\n')\n"
             " if (root/'query-error').exists():\n"
@@ -60,7 +60,7 @@ def main():
             " elif args[2:]==['show','fixture-one']:data={'name':'fixture-one','found':True,'version':'1.2','summary':'First package','description':'Long description'}\n"
             " else:raise SystemExit(98)\n"
             "else:raise SystemExit(99)\n"
-            "if (root/'wrong-target').exists():data['app_id']='com.clawos.Term'\n"
+            "if (root/'wrong-target').exists():data['app_id']='com.yuos.Term'\n"
             "print(json.dumps({'wire_version':1,'ok':True,'data':data}))\n"
         )
         broker.chmod(0o755)

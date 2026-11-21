@@ -43,18 +43,18 @@ def main():
         binary = installed / "usr/bin/cosmic-settings"
         assert binary.stat().st_mode & 0o777 == 0o755
         resources = installed / "usr/share"
-        desktop = resources / "applications/com.clawos.Settings.desktop"
+        desktop = resources / "applications/com.yuos.Settings.desktop"
         assert "Exec=cosmic-settings" in desktop.read_text()
         assert "Name[fr]=" in desktop.read_text()
-        entries = list((resources / "applications").glob("com.clawos.Settings*.desktop"))
+        entries = list((resources / "applications").glob("com.yuos.Settings*.desktop"))
         assert len(entries) == 32
         schemas = build_root / "resources/default_schema"
         for source in schemas.rglob("*"):
             if source.is_file():
                 assert (resources / "cosmic" / source.relative_to(schemas)).read_bytes() == source.read_bytes()
         for relative in (
-            "metainfo/com.clawos.Settings.metainfo.xml",
-            "icons/hicolor/scalable/apps/com.clawos.Settings.svg",
+            "metainfo/com.yuos.Settings.metainfo.xml",
+            "icons/hicolor/scalable/apps/com.yuos.Settings.svg",
         ):
             assert (resources / relative).is_file(), relative
         assert not (resources / "polkit-1").exists()
@@ -78,12 +78,12 @@ def main():
             " data={'list':{'apps':[{'app_id':'audio-manager'}]},'show':{'app_id':'audio-manager','permissions':[{'permission_id':'exact-id','enabled':False,'live_granted':False}]},'request':{'id':'ap-fixture','status':'pending','enabled':False},'revoke':{'revoked':True,'enabled':False,'restart_required':True}}[action]\n"
             " if action=='show' and (root/'permission-state.json').exists():data=json.loads((root/'permission-state.json').read_text())\n"
             " print(json.dumps({'wire_version':1,'ok':True,'data':data}));sys.exit(0)\n"
-            "assert args[1:5]==['__desktop','launch','--app-id','com.clawos.Settings'],args\n"
+            "assert args[1:5]==['__desktop','launch','--app-id','com.yuos.Settings'],args\n"
             "assert args[5:] in ([],['--uri','settings://wireless'],['--uri','settings://accessibility-magnifier'],['--uri','settings://dock-applet'],['--uri','settings://panel-applet']),args\n"
             "if (root/'deny').exists():\n"
             " print(json.dumps({'wire_version':1,'ok':False,'code':'PERMISSION_DENIED','error':'fixture denied'}));sys.exit(1)\n"
-            "data={'launched':True,'app_id':'com.clawos.Settings','launcher':'/usr/bin/cosmic-settings'}\n"
-            "if (root/'wrong-target').exists():data['app_id']='com.clawos.Store'\n"
+            "data={'launched':True,'app_id':'com.yuos.Settings','launcher':'/usr/bin/cosmic-settings'}\n"
+            "if (root/'wrong-target').exists():data['app_id']='com.yuos.Store'\n"
             "print(json.dumps({'wire_version':1,'ok':True,'data':data}))\n"
         )
         broker.chmod(0o755)

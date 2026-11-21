@@ -63,7 +63,7 @@ impl cosmic::Application for WidgetRail {
     type Executor = cosmic::SingleThreadExecutor;
     type Flags = Providers;
 
-    const APP_ID: &'static str = "com.clawos.AppletWidgetRail";
+    const APP_ID: &'static str = "com.yuos.AppletWidgetRail";
 
     fn init(mut core: cosmic::app::Core, providers: Providers) -> (Self, app::Task<Message>) {
         let panel = SctkLayerSurfaceSettings {

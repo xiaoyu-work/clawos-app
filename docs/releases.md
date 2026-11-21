@@ -697,7 +697,7 @@ development-fixture preparation.
 The replacement is OS-defined
 `claw-os-sdk/rust/notification-presentation`, included by the existing recursive
 `rust-sdk` platform export. Its optional `dbus` feature carries normalized
-presentation data through additive `com.clawos.NotificationPresentation1` on
+presentation data through additive `com.yuos.NotificationPresentation1` on
 the existing private P2P channel. Native-owner checks report the OS panel and
 notification applet build/test without App config/util or an interface tree.
 That is source-boundary evidence, not a published SDK pin or complete runtime

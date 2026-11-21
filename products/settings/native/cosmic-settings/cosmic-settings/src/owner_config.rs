@@ -64,13 +64,13 @@ fn failed(error: impl std::fmt::Display) -> Error {
 fn canonical_id(id: &str) -> &str {
     // Retained shared types keep upstream IDs; the installed OS owns these namespaces.
     match id {
-        id if id == cosmic_settings_config::shortcuts::ID => "com.clawos.Settings.Shortcuts",
-        id if id == cosmic_settings_config::window_rules::ID => "com.clawos.Settings.WindowRules",
-        id if id == cosmic_bg_config::NAME => "com.clawos.Background",
-        id if id == cosmic_settings_daemon_config::NAME => "com.clawos.SettingsDaemon",
-        "com.system76.CosmicPanel" => "com.clawos.Panel",
-        "com.system76.CosmicPanel.Panel" => "com.clawos.Panel.Panel",
-        "com.system76.CosmicPanel.Dock" => "com.clawos.Panel.Dock",
+        id if id == cosmic_settings_config::shortcuts::ID => "com.yuos.Settings.Shortcuts",
+        id if id == cosmic_settings_config::window_rules::ID => "com.yuos.Settings.WindowRules",
+        id if id == cosmic_bg_config::NAME => "com.yuos.Background",
+        id if id == cosmic_settings_daemon_config::NAME => "com.yuos.SettingsDaemon",
+        "com.system76.CosmicPanel" => "com.yuos.Panel",
+        "com.system76.CosmicPanel.Panel" => "com.yuos.Panel.Panel",
+        "com.system76.CosmicPanel.Dock" => "com.yuos.Panel.Dock",
         _ => id,
     }
 }
@@ -78,25 +78,25 @@ fn canonical_id(id: &str) -> &str {
 fn namespace(id: &str) -> Option<&'static str> {
     let id = canonical_id(id);
     Some(match id {
-        "com.clawos.Comp" => "compositor",
-        "com.clawos.Workspaces" => "workspaces",
-        "com.clawos.Tk" => "toolkit",
-        "com.clawos.Theme.Mode" => "theme-mode",
-        "com.clawos.Theme.Light" => "theme-light",
-        "com.clawos.Theme.Dark" => "theme-dark",
-        "com.clawos.Theme.Light.Builder" => "theme-builder-light",
-        "com.clawos.Theme.Dark.Builder" => "theme-builder-dark",
-        "com.clawos.Panel.Panel" => "panel",
-        "com.clawos.Panel.Dock" => "dock",
-        "com.clawos.Panel" => "panel-container",
-        "com.clawos.Idle" => "idle",
-        "com.clawos.Audio" => "audio",
-        "com.clawos.SettingsDaemon" => "daemon",
-        "com.clawos.AppletTime" => "time",
-        "com.clawos.Settings.Shortcuts" => "shortcuts",
-        "com.clawos.Settings.WindowRules" => "window-rules",
-        "com.clawos.Background" => "background",
-        "com.clawos.Settings" => "regional",
+        "com.yuos.Comp" => "compositor",
+        "com.yuos.Workspaces" => "workspaces",
+        "com.yuos.Tk" => "toolkit",
+        "com.yuos.Theme.Mode" => "theme-mode",
+        "com.yuos.Theme.Light" => "theme-light",
+        "com.yuos.Theme.Dark" => "theme-dark",
+        "com.yuos.Theme.Light.Builder" => "theme-builder-light",
+        "com.yuos.Theme.Dark.Builder" => "theme-builder-dark",
+        "com.yuos.Panel.Panel" => "panel",
+        "com.yuos.Panel.Dock" => "dock",
+        "com.yuos.Panel" => "panel-container",
+        "com.yuos.Idle" => "idle",
+        "com.yuos.Audio" => "audio",
+        "com.yuos.SettingsDaemon" => "daemon",
+        "com.yuos.AppletTime" => "time",
+        "com.yuos.Settings.Shortcuts" => "shortcuts",
+        "com.yuos.Settings.WindowRules" => "window-rules",
+        "com.yuos.Background" => "background",
+        "com.yuos.Settings" => "regional",
         _ => return None,
     })
 }
@@ -281,7 +281,7 @@ impl Config {
 
     pub fn new_state(id: &str, version: u64) -> Result<Self, Error> {
         let id = canonical_id(id);
-        if id != "com.clawos.Background" {
+        if id != "com.yuos.Background" {
             return Err(Error::InvalidName(id.into()));
         }
         let mut config = Self::new(id, version)?;
@@ -604,12 +604,12 @@ pub fn set_field<T: Serialize + PartialEq>(
 
 #[cfg(feature = "wayland")]
 pub fn panel(name: &str) -> Result<Config, Error> {
-    Config::new(&format!("com.clawos.Panel.{name}"), 1)
+    Config::new(&format!("com.yuos.Panel.{name}"), 1)
 }
 
 #[cfg(feature = "wayland")]
 pub fn panels() -> Result<cosmic_panel_config::CosmicPanelContainerConfig, Error> {
-    let names = Config::new("com.clawos.Panel", 1)?.get::<Vec<String>>("entries")?;
+    let names = Config::new("com.yuos.Panel", 1)?.get::<Vec<String>>("entries")?;
     let mut config_list = Vec::new();
     for name in names {
         let helper = panel(&name)?;
@@ -626,7 +626,7 @@ pub fn write_panels(config: &cosmic_panel_config::CosmicPanelContainerConfig) ->
     for entry in &config.config_list {
         panel(&entry.name)?.write_entry(entry)?;
     }
-    Config::new("com.clawos.Panel", 1)?.set(
+    Config::new("com.yuos.Panel", 1)?.set(
         "entries",
         config
             .config_list

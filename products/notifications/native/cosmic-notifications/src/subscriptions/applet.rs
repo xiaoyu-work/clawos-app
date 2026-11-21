@@ -27,7 +27,7 @@ pub async fn setup_panel_conn(tx: Sender<Input>) -> Result<Connection> {
             .server(guid)
             .unwrap()
             .serve_at(
-                "/com/clawos/NotificationsSocket",
+                "/com/yuos/NotificationsSocket",
                 NotificationsSocket { tx, config },
             )?
             .build(),
@@ -70,7 +70,7 @@ pub struct NotificationsSocket {
     config: Config,
 }
 
-#[interface(name = "com.clawos.NotificationsSocket")]
+#[interface(name = "com.yuos.NotificationsSocket")]
 impl NotificationsSocket {
     #[zbus(out_args("fd"))]
     async fn get_fd(&self) -> zbus::fdo::Result<OwnedFd> {
@@ -94,7 +94,7 @@ impl NotificationsSocket {
                 .server(guid)
                 .unwrap()
                 .serve_at(
-                    "/com/clawos/NotificationsApplet",
+                    "/com/yuos/NotificationsApplet",
                     NotificationsApplet {
                         tx: tx_clone.clone(),
                     },
@@ -143,7 +143,7 @@ pub struct NotificationsApplet {
     tx: Sender<Input>,
 }
 
-#[interface(name = "com.clawos.NotificationsApplet")]
+#[interface(name = "com.yuos.NotificationsApplet")]
 impl NotificationsApplet {
     pub async fn dismiss(&self, id: u32) -> zbus::fdo::Result<()> {
         self.tx
@@ -187,7 +187,7 @@ pub(super) struct Presentation {
     config: Config,
 }
 
-#[interface(name = "com.clawos.NotificationPresentation1")]
+#[interface(name = "com.yuos.NotificationPresentation1")]
 impl Presentation {
     fn version(&self) -> u32 {
         claw_notification_presentation::VERSION

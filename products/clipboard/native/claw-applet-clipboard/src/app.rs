@@ -69,7 +69,7 @@ impl cosmic::Application for ClipboardApplet {
     type Executor = cosmic::SingleThreadExecutor;
     type Flags = Option<HistoryPolicy>;
 
-    const APP_ID: &'static str = "com.clawos.AppletClipboard";
+    const APP_ID: &'static str = "com.yuos.AppletClipboard";
 
     fn init(mut core: cosmic::app::Core, policy: Option<HistoryPolicy>) -> (Self, app::Task<Message>) {
         let (width, height) = core.applet.suggested_window_size();

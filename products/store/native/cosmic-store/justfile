@@ -1,5 +1,5 @@
 name := 'cosmic-store'
-export APPID := 'com.clawos.Store'
+export APPID := 'com.yuos.Store'
 
 rootdir := ''
 prefix := '/usr'

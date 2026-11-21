@@ -174,7 +174,7 @@ def test_publication_signs_exact_debian_app_payload_and_retains_web_assets(
     verifier, _ = runtime
     root = web_app(app())
     app_id = snapshots.read_metadata(root / "app.json")["id"]
-    desktop = root / "resources/usr/share/applications/com.clawos.Fixture.desktop"
+    desktop = root / "resources/usr/share/applications/com.yuos.Fixture.desktop"
     desktop.parent.mkdir(parents=True)
     desktop.write_text(f"[Desktop Entry]\nType=Application\nName=Fixture\nExec=yu app {app_id} --gui\n")
     artifact = app_deb(deb, [root])

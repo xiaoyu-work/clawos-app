@@ -24,7 +24,7 @@ use std::collections::VecDeque;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
-static NOTIFICATIONS_APPLET: &str = "com.clawos.AppletNotifications";
+static NOTIFICATIONS_APPLET: &str = "com.yuos.AppletNotifications";
 
 pub fn run() -> cosmic::iced::Result {
     cosmic::app::run::<CosmicNotifications>(
@@ -463,7 +463,7 @@ impl cosmic::Application for CosmicNotifications {
     type Message = Message;
     type Executor = cosmic::executor::single::Executor;
     type Flags = ();
-    const APP_ID: &'static str = "com.clawos.Notifications";
+    const APP_ID: &'static str = "com.yuos.Notifications";
 
     fn init(core: Core, _flags: ()) -> (Self, Task<Message>) {
         let helper = Config::new(
@@ -756,7 +756,7 @@ impl cosmic::Application for CosmicNotifications {
                     }
                     Message::Config(u.config)
                 }),
-            self.core.watch_config("com.clawos.Panel.Panel").map(|u| {
+            self.core.watch_config("com.yuos.Panel.Panel").map(|u| {
                 for why in u
                     .errors
                     .into_iter()
@@ -766,7 +766,7 @@ impl cosmic::Application for CosmicNotifications {
                 }
                 Message::PanelConfig(u.config)
             }),
-            self.core.watch_config("com.clawos.Panel.Dock").map(|u| {
+            self.core.watch_config("com.yuos.Panel.Dock").map(|u| {
                 for why in u
                     .errors
                     .into_iter()

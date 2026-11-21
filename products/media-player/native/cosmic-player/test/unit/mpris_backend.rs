@@ -17,7 +17,7 @@ async fn native_mpris_controls_reach_the_ui_channel_including_stop() {
         assert_eq!(commands.recv().await, Some(command));
     }
     assert!(commands.try_recv().is_err());
-    assert_eq!(player.desktop_entry().await.unwrap(), "com.clawos.Player");
+    assert_eq!(player.desktop_entry().await.unwrap(), "com.yuos.Player");
     drop(commands);
     assert!(player.play().await.is_err(), "a closed UI is not a successful playback");
 }

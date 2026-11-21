@@ -7,7 +7,7 @@ fn main() {
     let profile = env::var("PROFILE").unwrap_or_else(|_| "release".to_string());
     let out = PathBuf::from(env::var_os("OUT_DIR").expect("OUT_DIR")).join("config.rs");
     let content = format!(
-        "pub const APP_ID: &str = \"com.clawos.Launcher\";\n\
+        "pub const APP_ID: &str = \"com.yuos.Launcher\";\n\
          pub const VERSION: &str = \"{version}\";\n\
          \n\
          pub fn profile() -> &'static str {{ \"{profile}\" }}\n",

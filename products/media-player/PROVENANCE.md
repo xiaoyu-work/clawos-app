@@ -20,7 +20,7 @@ history are not copied.
 Two whitespace-only import defects in the upstream PR template and Nix shell
 were normalized for repository diff checks; their content and behavior remain.
 
-The public desktop identity remains `com.clawos.Player`, with internal
+The public desktop identity remains `com.yuos.Player`, with internal
 `cosmic-player` binary/crate/App names. OS packages pin this repository's
 published commit for corresponding source and ship the binary/resources in
 `claw-os-desktop`, not the Agent package. System76/COSMIC trademarks are not

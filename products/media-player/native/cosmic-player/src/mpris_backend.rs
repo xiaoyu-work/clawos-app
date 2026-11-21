@@ -17,7 +17,7 @@ impl MprisMeta {
             //TODO: better track id
             .trackid(
                 mpris_server::TrackId::try_from(format!(
-                    "/com/clawos/Player/pid{}/TrackList/0",
+                    "/com/yuos/Player/pid{}/TrackList/0",
                     process::id()
                 ))
                 .unwrap(),
@@ -132,7 +132,7 @@ impl RootInterface for Player {
 
     async fn desktop_entry(&self) -> fdo::Result<String> {
         log::info!("DesktopEntry");
-        Ok("com.clawos.Player".to_string())
+        Ok("com.yuos.Player".to_string())
     }
 
     async fn supported_uri_schemes(&self) -> fdo::Result<Vec<String>> {
@@ -382,7 +382,7 @@ pub async fn start(
     state: MprisState,
 ) -> Result<Server<Player>> {
     Server::new(
-        &format!("com.clawos.Player.pid{}", process::id()),
+        &format!("com.yuos.Player.pid{}", process::id()),
         Player { command_tx, meta: Mutex::new(meta), state: Mutex::new(state) },
     ).await
 }

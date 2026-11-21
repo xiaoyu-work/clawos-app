@@ -1,5 +1,5 @@
 export NAME := 'claw-launcher'
-export APPID := 'com.clawos.Launcher'
+export APPID := 'com.yuos.Launcher'
 
 rootdir := ''
 prefix := '/usr'

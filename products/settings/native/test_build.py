@@ -114,14 +114,14 @@ def test_system_authority_is_never_installed_or_removed_by_the_product():
     installer = (NATIVE / "justfile").read_text()
     debian = (NATIVE / "debian/install").read_text()
     assert "polkit" not in installer
-    for path in ("rules.d/cosmic-settings.rules", "actions/com.clawos.Settings.Users.policy"):
+    for path in ("rules.d/cosmic-settings.rules", "actions/com.yuos.Settings.Users.policy"):
         assert not (NATIVE / "resources/polkit-1" / path).exists()
         assert f"/usr/share/polkit-1/{path}" not in debian
     forbidden = (
         ".set_locale(", ".set_x11_keyboard(", ".set_x11keyboard(",
         ".set_vconsole_keyboard(", ".set_vconsolekeyboard(",
         ".set_hostname(", ".set_static_hostname(", "org.freedesktop.ModemManager1",
-        "com.clawos.Settings.Users.Admin",
+        "com.yuos.Settings.Users.Admin",
     )
     for group in ("cosmic-settings/src", "crates", "pages", "subscriptions"):
         for source in (NATIVE / group).rglob("*.rs"):

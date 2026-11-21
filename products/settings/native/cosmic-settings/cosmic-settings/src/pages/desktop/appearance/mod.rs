@@ -793,7 +793,7 @@ impl page::Page<crate::pages::Message> for Page {
 
     fn subscription(&self, _core: &cosmic::Core) -> Subscription<crate::pages::Message> {
         // Keep the Appearance page in sync when the daemon auto-switches light/dark.
-        crate::owner_config::watch::<ThemeMode>("com.clawos.Theme.Mode").map(|update| {
+        crate::owner_config::watch::<ThemeMode>("com.yuos.Theme.Mode").map(|update| {
             for why in update.errors {
                 tracing::error!(?why, "theme mode config load error");
             }

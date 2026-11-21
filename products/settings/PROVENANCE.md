@@ -28,7 +28,7 @@ no longer supply or remove those authority files.
 
 The eleven management Apps retain their original independent identities and
 permissions. The separate `cosmic-settings` binary retains
-`/usr/bin/cosmic-settings`, `com.clawos.Settings` resources and its original
+`/usr/bin/cosmic-settings`, `com.yuos.Settings` resources and its original
 page-discovery/fixed-launch contract, plus four OS-backed permission tools.
 Their shared native client, durable policy consent and fixed user-service
 activation do not import OS authority into this product. Source relocation does not migrate

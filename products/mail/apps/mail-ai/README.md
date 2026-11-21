@@ -122,7 +122,7 @@ inferred from `mcp.tools`. They grant no mailbox, credential, other-App memory,
 network or provider access.
 
 The App-owned Mail package supplies the canonical App and protocol-matched XPI at
-`/usr/lib/thunderbird/distribution/extensions/claw-mail-ai@claw.os.xpi`.
+`/usr/lib/thunderbird/distribution/extensions/yu-mail-ai@yuos.io.xpi`.
 The OS separately supplies the SDK/runtime, ordinary App host and compatibility
 launcher. Keeping the two App protocol peers together preserves their argument
 contracts on App package upgrades without making Thunderbird a headless

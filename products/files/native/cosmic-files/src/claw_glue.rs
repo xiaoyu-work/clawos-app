@@ -67,9 +67,9 @@ pub fn reveal(path: &Path) -> Result<String, String> {
     let path = std::fs::canonicalize(path).map_err(|error| error.to_string())?;
     let uri = url::Url::from_file_path(&path).map_err(|_| "invalid local path")?;
     let value = claw_os_sdk::cos_call_json("desktop", "launch", [
-        "__desktop", "launch", "--app-id", "com.clawos.Files", "--uri", uri.as_str(),
+        "__desktop", "launch", "--app-id", "com.yuos.Files", "--uri", uri.as_str(),
     ]).map_err(|error| error.to_string())?;
-    if value["launched"] != true || value["app_id"] != "com.clawos.Files"
+    if value["launched"] != true || value["app_id"] != "com.yuos.Files"
         || value["launcher"] != "/usr/bin/gtk4-launch"
     {
         return Err("desktop provider did not confirm the Files target".into());

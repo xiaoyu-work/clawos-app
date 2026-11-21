@@ -386,7 +386,7 @@ impl IconSizes {
     }
 }
 
-pub const TIME_CONFIG_ID: &str = "com.clawos.AppletTime";
+pub const TIME_CONFIG_ID: &str = "com.yuos.AppletTime";
 
 #[derive(Debug, Default, Clone, CosmicConfigEntry, PartialEq, Eq)]
 #[version = 1]

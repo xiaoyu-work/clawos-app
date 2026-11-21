@@ -210,7 +210,7 @@ impl Tool for OpenTool {
 fn open(page: Option<&str>) -> Result<(), cos_runtime::BridgeError> {
     let mut args = vec![
         "__desktop".to_string(), "launch".into(), "--app-id".into(),
-        "com.clawos.Settings".into(),
+        "com.yuos.Settings".into(),
     ];
     if let Some(page) = page {
         args.extend(["--uri".into(), format!("settings://{page}")]);
@@ -218,7 +218,7 @@ fn open(page: Option<&str>) -> Result<(), cos_runtime::BridgeError> {
     let value = claw_os_sdk::cos_call_json_with_binary(
         "/usr/local/bin/yu", "desktop", "launch", args,
     )?;
-    if value["launched"] != true || value["app_id"] != "com.clawos.Settings"
+    if value["launched"] != true || value["app_id"] != "com.yuos.Settings"
         || value["launcher"] != "/usr/bin/cosmic-settings"
     {
         return Err(cos_runtime::BridgeError::Decode {

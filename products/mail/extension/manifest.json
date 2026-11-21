@@ -8,7 +8,7 @@
 
   "browser_specific_settings": {
     "gecko": {
-      "id": "claw-mail-ai@claw.os",
+      "id": "yu-mail-ai@yuos.io",
       "strict_min_version": "115.0"
     }
   },

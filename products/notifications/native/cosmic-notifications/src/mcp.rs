@@ -12,7 +12,7 @@ fn default_sender() -> String {
     "Claw OS Agent".into()
 }
 fn default_icon() -> String {
-    "com.clawos.Notifications".into()
+    "com.yuos.Notifications".into()
 }
 fn default_expiry() -> i32 {
     -1

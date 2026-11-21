@@ -27,7 +27,7 @@ defaults, and capability needs; Rust binds only the handlers.
 
 All seven App tools use controlled primitives, never another App:
 filesystem reads/writes/replacements use `cos_runtime::filesystem`, opening
-uses the fixed `com.clawos.Edit` desktop target, and AI uses SDK
+uses the fixed `com.yuos.Edit` desktop target, and AI uses SDK
 `ai::chat` as `cosmic-edit` with `external-content` origin. Summaries do not
 write memory. Replacement proposals do not modify the file.
 

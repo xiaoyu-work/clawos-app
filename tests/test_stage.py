@@ -800,7 +800,7 @@ def test_mail_stage_contains_matching_app_and_ui_without_os_runtime(tmp_path):
     assert not (tmp_path / "usr/lib/cos/python").exists()
     assert not (tmp_path / "usr/lib/cos/claw-mail-ai-host").exists()
     manifest = json.loads((app / "app.json").read_text())
-    xpi = tmp_path / "usr/lib/thunderbird/distribution/extensions/claw-mail-ai@claw.os.xpi"
+    xpi = tmp_path / "usr/lib/thunderbird/distribution/extensions/yu-mail-ai@yuos.io.xpi"
     with zipfile.ZipFile(xpi) as archive:
         assert json.loads(archive.read("manifest.json"))["version"] == manifest["version"]
         assert "test_contract.py" not in archive.namelist()

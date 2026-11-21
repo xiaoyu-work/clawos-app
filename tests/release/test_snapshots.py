@@ -644,8 +644,8 @@ def test_complete_browser_and_mail_resources_remain_inside_signed_snapshots(tmp_
         if product == "browser":
             shutil.copytree(staged / "usr/share/claw/extensions/claw-agent-browser", resources / "extension")
         else:
-            shutil.copy2(staged / "usr/lib/thunderbird/distribution/extensions/claw-mail-ai@claw.os.xpi",
-                         resources / "claw-mail-ai@claw.os.xpi")
+            shutil.copy2(staged / "usr/lib/thunderbird/distribution/extensions/yu-mail-ai@yuos.io.xpi",
+                         resources / "yu-mail-ai@yuos.io.xpi")
         entries = tuple(sorted({
             entry for _, entry in snapshots.manifest_entries(snapshots.read_metadata(root / "app.json"))
         }))
@@ -662,7 +662,7 @@ def test_complete_browser_and_mail_resources_remain_inside_signed_snapshots(tmp_
     assert {path.name for path in (browser / "assets/extension").iterdir()} >= {
         "manifest.json", "background.js", "content.js", "popup.html", "popup.js", "README.md",
     }
-    assert (tmp_path / "extracted-mail-ai/assets/claw-mail-ai@claw.os.xpi").is_file()
+    assert (tmp_path / "extracted-mail-ai/assets/yu-mail-ai@yuos.io.xpi").is_file()
     shutil.copy2(signing.public_key, tmp_path / "archive-key.asc")
 
 
@@ -721,7 +721,7 @@ def test_real_native_package_local_signed_acceptance(
             ("applications", "usr/share/applications"),
         ):
             shutil.copytree(resources / origin, installed / target)
-        target = installed / "usr/share/metainfo/com.clawos.Settings.metainfo.xml"
+        target = installed / "usr/share/metainfo/com.yuos.Settings.metainfo.xml"
         target.parent.mkdir(parents=True)
         shutil.copy2(resources / target.name, target)
         resource_scope = (
@@ -790,8 +790,8 @@ def test_real_panel_elf_and_original_resources_are_preserved(tmp_path, runtime, 
     assert snapshots.tree_inventory(extracted, "amd64") == original
     assert (extracted / "bin/claw-applet-calendar").stat().st_mode & 0o777 == 0o755
     assert digest(extracted / "bin/claw-applet-calendar") == digest(binary)
-    assert (extracted / "assets/applications/com.clawos.PanelCalendarButton.desktop").is_file()
-    assert (extracted / "assets/icons/hicolor/scalable/actions/com.clawos.PanelCalendarButton-symbolic.svg").is_file()
+    assert (extracted / "assets/applications/com.yuos.PanelCalendarButton.desktop").is_file()
+    assert (extracted / "assets/icons/hicolor/scalable/actions/com.yuos.PanelCalendarButton-symbolic.svg").is_file()
 
 
 @pytest.mark.parametrize("name", ["DEBIAN/postinst", "postinst", "../escape", "/absolute", "bad\\path", ".", "a/../b"])

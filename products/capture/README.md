@@ -2,7 +2,7 @@
 
 Capture owns the complete `cosmic-screenshot` native portal client, its MCP
 surface, translations, icons, desktop entry and original build/debian inputs.
-Its installed identities remain `cosmic-screenshot` and `com.clawos.Screenshot`.
+Its installed identities remain `cosmic-screenshot` and `com.yuos.Screenshot`.
 
 The original UI is supplied by the OS screenshot portal, not a libcosmic
 window inside this crate. Native launch still opens that same interactive

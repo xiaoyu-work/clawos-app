@@ -161,5 +161,5 @@ def test_mail_fixture_preserves_the_working_extension_without_the_mozilla_fork(t
     extract(tmp_path / "archives" / record["filename"], root)
     assert (root / "products/mail/build-extension.py").is_file()
     assert (root / "products/mail/extension/manifest.json").is_file()
-    assert (root / "payload/usr/lib/thunderbird/distribution/extensions/claw-mail-ai@claw.os.xpi").is_file()
+    assert (root / "payload/usr/lib/thunderbird/distribution/extensions/yu-mail-ai@yuos.io.xpi").is_file()
     assert not (root / "products/mail/native").exists()

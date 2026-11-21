@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.clawos.Files</id>
+  <id>com.yuos.Files</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <project_group>Yu OS</project_group>
@@ -27,10 +27,10 @@
     <keyword>Folder</keyword>
     <keyword>Manager</keyword>
   </keywords>
-  <launchable type="desktop-id">com.clawos.Files.desktop</launchable>
-  <icon type="stock">com.clawos.Files</icon>
+  <launchable type="desktop-id">com.yuos.Files.desktop</launchable>
+  <icon type="stock">com.yuos.Files</icon>
   <provides>
-    <id>com.clawos.Application</id>
+    <id>com.yuos.Application</id>
     <mimetypes>
       <mimetype>inode/directory</mimetype>
     </mimetypes>

@@ -1,5 +1,5 @@
 name := 'claw-applet-calendar'
-appid := 'com.clawos.PanelCalendarButton'
+appid := 'com.yuos.PanelCalendarButton'
 rootdir := ''
 prefix := '/usr'
 debug := '0'

@@ -7,7 +7,7 @@ fn manifest_defaults_preserve_presentation_but_never_supply_authority() {
         value,
         json!({
             "action":"post","summary":"Hello","body":"","app_name":"Claw OS Agent",
-            "icon":"com.clawos.Notifications","expire_ms":-1,"transient":false,
+            "icon":"com.yuos.Notifications","expire_ms":-1,"transient":false,
         })
     );
     let custom = request("notify.post", json!({

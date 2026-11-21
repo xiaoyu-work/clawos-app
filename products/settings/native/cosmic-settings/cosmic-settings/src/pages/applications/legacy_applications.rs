@@ -51,7 +51,7 @@ pub struct Page {
 
 impl Default for Page {
     fn default() -> Self {
-        let comp_config = cosmic_config::Config::new("com.clawos.Comp", 1).unwrap();
+        let comp_config = cosmic_config::Config::new("com.yuos.Comp", 1).unwrap();
         let comp_config_descale_xwayland =
             comp_config.get("descale_xwayland").unwrap_or_else(|err| {
                 if err.is_err() {

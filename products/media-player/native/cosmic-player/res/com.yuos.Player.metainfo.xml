@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <component type="desktop-application">
-  <id>com.clawos.Player</id>
+  <id>com.yuos.Player</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <project_group>Yu OS</project_group>
@@ -33,10 +33,10 @@
     <keyword>Sound</keyword>
     <keyword>Video</keyword>
   </keywords>
-  <launchable type="desktop-id">com.clawos.Player.desktop</launchable>
-  <icon type="stock">com.clawos.Player</icon>
+  <launchable type="desktop-id">com.yuos.Player.desktop</launchable>
+  <icon type="stock">com.yuos.Player</icon>
   <provides>
-    <id>com.clawos.Application</id>
+    <id>com.yuos.Application</id>
     <binaries>
       <binary>cosmic-player</binary>
     </binaries>

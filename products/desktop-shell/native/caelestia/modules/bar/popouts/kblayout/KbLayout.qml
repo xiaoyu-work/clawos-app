@@ -18,7 +18,7 @@ ColumnLayout {
     }
 
     Button {
-        readonly property DesktopEntry settings: DesktopEntries.byId("com.clawos.Settings")
+        readonly property DesktopEntry settings: DesktopEntries.byId("com.yuos.Settings")
 
         text: Tr.tr("Open Settings")
         enabled: !!settings

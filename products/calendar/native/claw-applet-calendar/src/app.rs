@@ -65,7 +65,7 @@ impl cosmic::Application for CalendarApplet {
     type Executor = cosmic::SingleThreadExecutor;
     type Flags = AgendaProvider;
 
-    const APP_ID: &'static str = "com.clawos.PanelCalendarButton";
+    const APP_ID: &'static str = "com.yuos.PanelCalendarButton";
 
     fn init(mut core: cosmic::app::Core, provider: AgendaProvider) -> (Self, app::Task<Message>) {
         let panel = panel_settings(&core.applet);
@@ -190,7 +190,7 @@ impl cosmic::Application for CalendarApplet {
         let button = self
             .core
             .applet
-            .icon_button("com.clawos.PanelCalendarButton-symbolic")
+            .icon_button("com.yuos.PanelCalendarButton-symbolic")
             .on_press_down(Message::TogglePopup);
         self.core
             .applet

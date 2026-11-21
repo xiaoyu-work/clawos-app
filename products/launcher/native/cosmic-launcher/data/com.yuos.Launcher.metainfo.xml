@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Ashley Wulber 2019 <ashley@system76.com> -->
 <component type="desktop-application">
-  <id>com.clawos.Launcher</id>
+  <id>com.yuos.Launcher</id>
   <metadata_license>CC0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <name>Yu Launcher</name>
@@ -47,6 +47,6 @@
   <developer_name>Ashley Wulber</developer_name>
   <update_contact>ashley@system76.com</update_contact>
   <translation type="gettext">cosmic-launcher</translation>
-  <launchable type="desktop-id">com.clawos.Launcher.desktop</launchable>
-  <icon type="stock">com.clawos.Launcher</icon>
+  <launchable type="desktop-id">com.yuos.Launcher.desktop</launchable>
+  <icon type="stock">com.yuos.Launcher</icon>
 </component>

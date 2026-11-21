@@ -1707,7 +1707,7 @@ impl Application for App {
     type Message = Message;
 
     /// The unique application ID to supply to the window manager.
-    const APP_ID: &'static str = "com.clawos.Term";
+    const APP_ID: &'static str = "com.yuos.Term";
 
     fn core(&self) -> &Core {
         &self.core

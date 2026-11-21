@@ -22,7 +22,7 @@ presentation for OS integration tests. The original libcosmic Layer Shell UI,
 settings and freedesktop daemon are not replaced by a launcher or applet stub.
 No OS provider implementation or user notification data is copied.
 
-The public desktop identity remains `com.clawos.Notifications`; native
+The public desktop identity remains `com.yuos.Notifications`; native
 crate/binary/App identity remains `cosmic-notifications`. The OS pins the
 published product revision and ships native payloads in `claw-os-desktop`.
 System76/COSMIC trademarks are not licensed for unrestricted reuse.

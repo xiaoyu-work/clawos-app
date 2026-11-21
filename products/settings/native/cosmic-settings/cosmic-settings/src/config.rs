@@ -6,7 +6,7 @@ use cosmic::{
     cosmic_theme::palette::Srgba,
 };
 
-const NAME: &str = "com.clawos.Settings";
+const NAME: &str = "com.yuos.Settings";
 
 const ACTIVE_PAGE: &str = "active_page";
 const ACCENT_PALETTE_DARK: &str = "accent_palette_dark";

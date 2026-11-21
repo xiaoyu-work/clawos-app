@@ -42,7 +42,7 @@ def main():
             " print(json.dumps({'wire_version':1,'ok':False,'error':{'code':'denied','message':'fixture denied'}}));sys.exit(1)\n"
             "if args[1]=='__policy': data={'decision':'allow','verb':args[3]}\n"
             "elif args[1]=='__desktop':\n"
-            f" data={{'launched':True,'app_id':'com.clawos.Files','launcher':'/usr/bin/gtk4-launch','directory':{namespace + '/work'!r}}}\n"
+            f" data={{'launched':True,'app_id':'com.yuos.Files','launcher':'/usr/bin/gtk4-launch','directory':{namespace + '/work'!r}}}\n"
             "elif args[1]=='ai':\n"
             " prompt=pathlib.Path(args[args.index('--prompt-file')+1]).read_text()\n"
             " with (root/'prompts').open('a') as f:f.write(prompt+'\\n')\n"

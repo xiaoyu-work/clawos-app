@@ -736,7 +736,7 @@ impl App {
                                 {
                                     // Use the dialog ID to make it float
                                     settings.platform_specific.application_id =
-                                        "com.clawos.StoreDialog".to_string();
+                                        "com.yuos.StoreDialog".to_string();
                                 }
 
                                 let (window_id, task) = window::open(settings);
@@ -1108,7 +1108,7 @@ impl App {
                         cosmic::desktop::spawn_desktop_exec(
                             &exec,
                             Vec::<(&str, &str)>::new(),
-                            Some("com.clawos.Settings"),
+                            Some("com.yuos.Settings"),
                             false,
                         )
                         .await;

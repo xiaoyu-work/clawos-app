@@ -246,7 +246,7 @@ print(json.dumps({'ok':True,'wire_version':1,'data':data}))
             assert result.returncode == 0 and result.stdout.strip() == expected, result.stderr
         notifications = [json.loads(value) for value in (fixture / "notifications").read_text().splitlines()]
         assert [value["body"] for value in notifications] == [str(source), ""]
-        assert all(value["icon"] == "com.clawos.Screenshot" and value["app_name"] and value["summary"]
+        assert all(value["icon"] == "com.yuos.Screenshot" and value["app_name"] and value["summary"]
                    and value["expire_ms"] == 5000 and value["transient"] for value in notifications)
         result = human({"status": "cancelled"})
         assert result.returncode == 0 and result.stdout.strip() == "Screenshot cancelled by user"

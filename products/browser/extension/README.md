@@ -9,12 +9,12 @@ the user's logged-in browser tabs.
 | File | Purpose |
 |------|---------|
 | `manifest.json` | MV3 manifest; the side panel is unavailable in private windows. |
-| `background.js` | Service worker. Owns the native messaging port to `com.clawos.browser`. Translates verbs into `chrome.tabs.*` / `chrome.scripting.*` and forwards to `content.js`. |
+| `background.js` | Service worker. Owns the native messaging port to `com.yuos.browser`. Translates verbs into `chrome.tabs.*` / `chrome.scripting.*` and forwards to `content.js`. |
 | `content.js`    | Per-frame DOM helper. Owns the per-page element ref table, executes `query` / `click` / `fill` / `snapshot`. |
 | `popup.html` + `popup.js` | Chat side panel with streamed replies, tab selection, approval state, and Stop. |
 
 Click the toolbar button to open the side panel alongside the current page.
-The panel talks to the separate `com.clawos.browser_chat` host installed by
+The panel talks to the separate `com.yuos.browser_chat` host installed by
 Yu OS Desktop. It uses the existing system Agent and Job state; stopping
 a reply cancels its Job. Closing the panel does not cancel the Job; reopening
 it in the same window reconnects. **Pause tab access** separately disconnects
@@ -67,7 +67,7 @@ helium --no-default-browser-check
 ```
 
 Note the resulting extension ID and put it into
-`/etc/chromium/native-messaging-hosts/com.clawos.browser.json`'s
+`/etc/chromium/native-messaging-hosts/com.yuos.browser.json`'s
 `allowed_origins` array so Helium will start the native host. This is the
 upstream-compatible Linux path the Helium binary resolves.
 Run the installer with `CLAW_EXT_ID` to register both hosts; for chat,

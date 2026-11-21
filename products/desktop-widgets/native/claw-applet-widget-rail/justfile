@@ -1,5 +1,5 @@
 name := 'claw-applet-widget-rail'
-appid := 'com.clawos.AppletWidgetRail'
+appid := 'com.yuos.AppletWidgetRail'
 rootdir := ''
 prefix := '/usr'
 debug := '0'

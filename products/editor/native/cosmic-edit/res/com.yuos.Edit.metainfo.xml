@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.clawos.Edit</id>
+  <id>com.yuos.Edit</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <project_group>Yu OS</project_group>
@@ -73,15 +73,15 @@
     <keyword>Text</keyword>
     <keyword>Editor</keyword>
   </keywords>
-  <launchable type="desktop-id">com.clawos.Edit.desktop</launchable>
-  <icon type="stock">com.clawos.Edit</icon>
+  <launchable type="desktop-id">com.yuos.Edit.desktop</launchable>
+  <icon type="stock">com.yuos.Edit</icon>
   <screenshots>
     <screenshot type="default">
       <image>https://media.githubusercontent.com/media/pop-os/cosmic-edit/master/res/screenshots/screenshot-1.png</image>
     </screenshot>
   </screenshots>
   <provides>
-    <id>com.clawos.Application</id>
+    <id>com.yuos.Application</id>
     <mimetypes>
       <mimetype>text/plain</mimetype>
     </mimetypes>

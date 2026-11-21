@@ -47,7 +47,7 @@ StyledWindow {
 
     function settings(): void {
         page = "";
-        DesktopMenu.launch("com.clawos.Settings");
+        DesktopMenu.launch("com.yuos.Settings");
     }
 
     HyprlandFocusGrab {

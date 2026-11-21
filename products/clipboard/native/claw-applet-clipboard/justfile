@@ -1,5 +1,5 @@
 name := 'claw-applet-clipboard'
-appid := 'com.clawos.AppletClipboard'
+appid := 'com.yuos.AppletClipboard'
 rootdir := ''
 prefix := '/usr'
 debug := '0'

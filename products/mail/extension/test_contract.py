@@ -13,7 +13,7 @@ def test_protocol_pair_version_advances_without_identity_aliases():
     extension = json.loads((HERE / "manifest.json").read_text())
     assert extension["version"] == MANIFEST["version"]
     assert tuple(map(int, extension["version"].split("."))) > (0, 1, 0)
-    assert extension["browser_specific_settings"]["gecko"]["id"] == "claw-mail-ai@claw.os"
+    assert extension["browser_specific_settings"]["gecko"]["id"] == "yu-mail-ai@yuos.io"
     assert MANIFEST["id"] == "mail-ai"
 
 
@@ -155,7 +155,7 @@ const ctx = vm.createContext({
   browser: {runtime: {connectNative: () => port}},
 });
 vm.runInContext(fs.readFileSync(process.argv[1], "utf8"), ctx);
-ctx.self.ClawNative.connect("os.claw.mail_ai");
+ctx.self.ClawNative.connect("os.yuos.mail_ai");
 for (const args of [false, null, [], "", {body: true}]) {
   ctx.self.ClawNative.call("summarize", args);
 }

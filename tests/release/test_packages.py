@@ -128,7 +128,7 @@ def test_real_packages_are_deterministic_and_have_nonconflicting_ownership(tmp_p
     assert owned["usr/lib/cos/python/python_pptx-1.0.2.dist-info/LICENSE"].startswith("claw-app-files_")
     assert owned["usr/lib/cos/python/_shared/atomic.py"].startswith("claw-app-support_")
     assert owned["usr/lib/cos/python/canonical_argv.py"].startswith("claw-app-support_")
-    xpi = "usr/lib/thunderbird/distribution/extensions/claw-mail-ai@claw.os.xpi"
+    xpi = "usr/lib/thunderbird/distribution/extensions/yu-mail-ai@yuos.io.xpi"
     assert owned[xpi].startswith("claw-app-mail-desktop_")
     mail = fields(run(["dpkg-deb", "-f", first / "claw-app-mail_1.2.3_all.deb"]).stdout.decode().strip())
     assert "thunderbird" not in mail["Depends"]

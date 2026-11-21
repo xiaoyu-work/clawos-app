@@ -120,7 +120,7 @@ def test_real_browser_apt_upgrade_updates_extension_and_host_together_without_re
         "var/lib/cos/owners/1000/grants.json": b'{"browser-attached":["exact existing grants"]}\n',
         "home/owner/.local/share/claw/apps/browser-attached/state.json": b'{"owner":"unchanged"}\n',
         "home/owner/.config/chromium/Default/Preferences": b'{"profile":"unchanged"}\n',
-        "etc/chromium/native-messaging-hosts/com.clawos.browser.json": b'{"allowed_origins":["existing owner registration"]}\n',
+        "etc/chromium/native-messaging-hosts/com.yuos.browser.json": b'{"allowed_origins":["existing owner registration"]}\n',
         "etc/chromium/policies/managed/claw-browser-agent.json": b'{"policy":"OS owned"}\n',
     }.items():
         path = apt.root / relative

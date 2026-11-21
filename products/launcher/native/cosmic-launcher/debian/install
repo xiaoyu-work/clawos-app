@@ -1,5 +1,5 @@
 /usr/bin/claw-launcher
-/usr/share/applications/com.clawos.Launcher.desktop
-/usr/share/icons/hicolor/scalable/apps/com.clawos.Launcher.svg
-/usr/share/icons/hicolor/symbolic/apps/com.clawos.Launcher-symbolic.svg
-/usr/share/metainfo/com.clawos.Launcher.metainfo.xml
+/usr/share/applications/com.yuos.Launcher.desktop
+/usr/share/icons/hicolor/scalable/apps/com.yuos.Launcher.svg
+/usr/share/icons/hicolor/symbolic/apps/com.yuos.Launcher-symbolic.svg
+/usr/share/metainfo/com.yuos.Launcher.metainfo.xml

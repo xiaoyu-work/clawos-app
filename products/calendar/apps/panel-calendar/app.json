@@ -8,7 +8,7 @@
   "summary": {
     "en": "Native calendar and local agenda panel applet."
   },
-  "icon": "com.clawos.PanelCalendarButton-symbolic",
+  "icon": "com.yuos.PanelCalendarButton-symbolic",
   "runtime": "binary",
   "entry": "bin/claw-applet-calendar",
   "mcp": {
@@ -107,7 +107,7 @@
     "name": {
       "en": "Calendar"
     },
-    "icon": "com.clawos.PanelCalendarButton-symbolic",
+    "icon": "com.yuos.PanelCalendarButton-symbolic",
     "categories": [
       "Utility"
     ],

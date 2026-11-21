@@ -8,5 +8,5 @@ Categories=ClawOS
 Keywords=Yu OS;Notification;Lock;
 NoDisplay=true
 OnlyShowIn=COSMIC
-Icon=com.clawos.Settings
+Icon=com.yuos.Settings
 StartupNotify=true

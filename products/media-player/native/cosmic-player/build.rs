@@ -9,7 +9,7 @@ fn main() {
     // Immutable source preparation may replace this tree while reusing Cargo's cache.
     println!("cargo:rerun-if-changed=target/xdgen");
 
-    let id = "com.clawos.Player";
+    let id = "com.yuos.Player";
     let ctx = Context::new("i18n", env::var("CARGO_PKG_NAME").unwrap()).unwrap();
     let app = App::new(FluentString("xdg-name"))
         .comment(FluentString("xdg-comment"))

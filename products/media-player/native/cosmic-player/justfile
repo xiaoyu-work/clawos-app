@@ -1,5 +1,5 @@
 name := 'cosmic-player'
-export APPID := 'com.clawos.Player'
+export APPID := 'com.yuos.Player'
 
 rootdir := ''
 prefix := '/usr'

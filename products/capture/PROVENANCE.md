@@ -9,5 +9,5 @@ See [native/PROVENANCE.md](native/PROVENANCE.md).
 
 The original GPL-3.0 license, SPDX/copyright notices, Debian copyright and
 executable modes are preserved. Internal names remain `cosmic-screenshot`;
-public desktop resources use `com.clawos.Screenshot`. This product does not
+public desktop resources use `com.yuos.Screenshot`. This product does not
 import the shared privileged screenshot portal, compositor or user state.

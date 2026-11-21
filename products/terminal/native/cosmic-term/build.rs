@@ -2,7 +2,7 @@ use std::{env, fs, path::PathBuf};
 use xdgen::{App, Context, FluentString};
 
 fn main() {
-    let id = "com.clawos.Term";
+    let id = "com.yuos.Term";
     let ctx = Context::new("i18n", env::var("CARGO_PKG_NAME").unwrap()).unwrap();
     let app = App::new(FluentString("cosmic-terminal"))
         .comment(FluentString("comment"))

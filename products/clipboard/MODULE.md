@@ -87,7 +87,7 @@ popup results, clear/busy guards, bounded broker results, MCP discovery and
 explicit confirmation. OS tests own the scripts/parser and isolated typed-client,
 capability-authority and synthetic Unix/executable provider fixtures.
 The product's `just install` installs the real compiled standalone binary and
-generated `com.clawos.AppletClipboard.desktop`, with the original shared icon.
+generated `com.yuos.AppletClipboard.desktop`, with the original shared icon.
 This is build-time file staging with an explicit non-root `rootdir`, not an
 installed-system hook or permission installer.
 The product declares the real `bin/claw-applet-clipboard` as both primary and

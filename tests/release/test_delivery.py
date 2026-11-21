@@ -52,7 +52,7 @@ def test_app_asset_symlink_cannot_redirect_to_authority_configuration(deb):
 def test_settings_package_origin_does_not_exempt_polkit_configuration(deb):
     package = deb("claw-app-settings-desktop", architecture="amd64", files={
         "usr/share/polkit-1/rules.d/cosmic-settings.rules": b"fixture only\n",
-        "usr/share/polkit-1/actions/com.clawos.Settings.Users.policy": b"fixture only\n",
+        "usr/share/polkit-1/actions/com.yuos.Settings.Users.policy": b"fixture only\n",
     })
     with pytest.raises(ValueError, match="OS authority"):
         package_record(package)

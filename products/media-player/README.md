@@ -17,7 +17,7 @@ spoofed endpoints produce explicit errors; another player's state is never
 used. MCP does not launch a window or open media. A running native playback
 session is required; there is no synthetic headless playback cache.
 Normal MPRIS clients keep working with
-`org.mpris.MediaPlayer2.com.clawos.Player.pid<PID>`.
+`org.mpris.MediaPlayer2.com.yuos.Player.pid<PID>`.
 Stop pauses playback and resets seekable tracks without fabricating position
 after a failed seek. Empty and ended tracks report Stopped rather than Playing.
 

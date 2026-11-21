@@ -57,7 +57,7 @@ impl Fixture {
 
     pub fn config_file(&self, key: &str) -> PathBuf {
         self.root
-            .join("cosmic/com.clawos.Notifications/v1")
+            .join("cosmic/com.yuos.Notifications/v1")
             .join(key)
     }
 }

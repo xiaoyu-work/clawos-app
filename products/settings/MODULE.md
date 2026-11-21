@@ -282,7 +282,7 @@ Two desktop/first-boot consumers retain OS-owned policy:
   Settings Daemon imports system changes into owner preferences but no longer
   promotes an owner config write into a privileged system-keyboard change.
 - OS `desktop/initial-setup/src/page/user.rs` still requests
-  `com.clawos.Settings.Users.Admin` while creating/configuring accounts and
+  `com.yuos.Settings.Users.Admin` while creating/configuring accounts and
   performing UID/transaction-bound first-boot rollback. Its home-overlay setup
   and delete-new-home recovery are not the generic User Manager's deliberately
   home-retaining deletion contract. The pre-login authority/session/credential

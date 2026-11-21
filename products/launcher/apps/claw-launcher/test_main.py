@@ -143,7 +143,7 @@ def test_staged_native_embeds_canonical_product_source(tmp_path):
         PRODUCT / "apps/launcher/main.py"
     ).read_bytes()
     assert (staged / "LICENSE.md").is_file()
-    assert (staged / "data/com.clawos.Launcher.desktop").is_file()
+    assert (staged / "data/com.yuos.Launcher.desktop").is_file()
     assert '"app", "launcher"' not in (staged / "src/mcp.rs").read_text()
 
 

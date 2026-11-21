@@ -7,7 +7,7 @@ from pathlib import Path
 import zipfile
 
 
-EXTENSION_ID = "claw-mail-ai@claw.os"
+EXTENSION_ID = "yu-mail-ai@yuos.io"
 
 
 def build_extension(source: Path, destination: Path) -> None:

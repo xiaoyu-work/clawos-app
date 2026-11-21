@@ -45,7 +45,7 @@ pub struct Page {
 
 impl Default for Page {
     fn default() -> Self {
-        let daemon_helper = Config::new("com.clawos.SettingsDaemon", 1).unwrap();
+        let daemon_helper = Config::new("com.yuos.SettingsDaemon", 1).unwrap();
         Page {
             dbus_sender: None,
             entity: page::Entity::default(),

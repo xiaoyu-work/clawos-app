@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.clawos.Term</id>
+  <id>com.yuos.Term</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <project_group>Yu OS</project_group>
@@ -29,10 +29,10 @@
     <keyword>Terminal</keyword>
     <keyword>CLI</keyword>
   </keywords>
-  <launchable type="desktop-id">com.clawos.Term.desktop</launchable>
-  <icon type="stock">com.clawos.Term</icon>
+  <launchable type="desktop-id">com.yuos.Term.desktop</launchable>
+  <icon type="stock">com.yuos.Term</icon>
   <provides>
-    <id>com.clawos.Application</id>
+    <id>com.yuos.Application</id>
     <binaries>
       <binary>cosmic-term</binary>
     </binaries>

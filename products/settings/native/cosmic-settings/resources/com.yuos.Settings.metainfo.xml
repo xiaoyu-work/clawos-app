@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.clawos.Settings</id>
+  <id>com.yuos.Settings</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <project_group>Yu OS</project_group>
@@ -40,8 +40,8 @@
       <p xml:lang="es">Aplicación de configuración para escritorio Yu OS</p>
       <p xml:lang="sv">Inställningsprogram för skrivbordsmiljön Yu OS</p>
   </description>
-  <launchable type="desktop-id">com.clawos.Settings.desktop</launchable>
-  <icon type="stock">com.clawos.Settings</icon>
+  <launchable type="desktop-id">com.yuos.Settings.desktop</launchable>
+  <icon type="stock">com.yuos.Settings</icon>
   <provides>
     <binaries>
       <binary>cosmic-settings</binary>

@@ -146,7 +146,7 @@ pub(crate) fn claw_app_package(name: &str) -> bool {
 
 pub fn open(name: Option<&str>) -> Result<(), cos_runtime::BridgeError> {
     let mut args = vec![
-        "__desktop".to_string(), "launch".into(), "--app-id".into(), "com.clawos.Store".into(),
+        "__desktop".to_string(), "launch".into(), "--app-id".into(), "com.yuos.Store".into(),
     ];
     if let Some(name) = name {
         if !valid_package_name(name) {
@@ -155,7 +155,7 @@ pub fn open(name: Option<&str>) -> Result<(), cos_runtime::BridgeError> {
         args.extend(["--uri".into(), format!("apt://{name}")]);
     }
     let value = claw_os_sdk::cos_call_json("desktop", "launch", args)?;
-    if value["launched"] != true || value["app_id"] != "com.clawos.Store"
+    if value["launched"] != true || value["app_id"] != "com.yuos.Store"
         || value["launcher"] != "/usr/bin/cosmic-store"
     {
         return Err(cos_runtime::BridgeError::Decode {

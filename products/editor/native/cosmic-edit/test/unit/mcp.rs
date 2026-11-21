@@ -60,7 +60,7 @@ __filesystem)
       *) data='{"path":"/work/document","bytes":0}';;
     esac;;
   esac;;
-__desktop) data='{"launched":true,"app_id":"com.clawos.Edit","launcher":"/usr/bin/gtk4-launch"}';;
+__desktop) data='{"launched":true,"app_id":"com.yuos.Edit","launcher":"/usr/bin/gtk4-launch"}';;
 ai)
   if [ -f "$0.fail" ]; then exit 19; fi
   for arg in "$@"; do

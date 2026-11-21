@@ -38,9 +38,9 @@ def main():
             "if (root/'deny').exists():\n"
             " print(json.dumps({'wire_version':1,'ok':False,'error':{'code':'denied','message':'fixture denied'}}));sys.exit(1)\n"
             "if args[1]=='__policy':data={'decision':'allow','verb':args[3]}\n"
-            "elif args[1]=='__desktop':data={'launched':True,'app_id':'com.clawos.Term','launcher':'/usr/bin/cosmic-term'}\n"
+            "elif args[1]=='__desktop':data={'launched':True,'app_id':'com.yuos.Term','launcher':'/usr/bin/cosmic-term'}\n"
             "else:raise SystemExit(99)\n"
-            "if (root/'wrong-target').exists():data['app_id']='com.clawos.Edit'\n"
+            "if (root/'wrong-target').exists():data['app_id']='com.yuos.Edit'\n"
             "print(json.dumps({'wire_version':1,'ok':True,'data':data}))\n"
         )
         broker.chmod(0o755)

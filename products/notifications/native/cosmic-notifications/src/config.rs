@@ -1,4 +1,4 @@
-pub const APP_ID: &str = "com.clawos.Notifications";
+pub const APP_ID: &str = "com.yuos.Notifications";
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn profile() -> &'static str {

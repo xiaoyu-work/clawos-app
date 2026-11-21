@@ -2,7 +2,7 @@
 
 The complete native Claw OS Text Editor now lives in this product:
 `cosmic-edit`, its UI, seven MCP tools, localization, resources and packaging.
-Installed identity `/usr/bin/cosmic-edit` / `com.clawos.Edit` is unchanged.
+Installed identity `/usr/bin/cosmic-edit` / `com.yuos.Edit` is unchanged.
 
 See [MODULE.md](MODULE.md) for ownership and validation, and
 [native/PROVENANCE.md](native/PROVENANCE.md) for upstream licensing.

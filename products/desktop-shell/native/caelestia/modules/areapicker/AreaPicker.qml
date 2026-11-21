@@ -6,6 +6,6 @@ Scope {
     CustomShortcut {
         name: "screenshot"
         description: "Open Capture"
-        onPressed: DesktopMenu.launch("com.clawos.Screenshot")
+        onPressed: DesktopMenu.launch("com.yuos.Screenshot")
     }
 }

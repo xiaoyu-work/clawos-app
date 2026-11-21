@@ -82,7 +82,7 @@ python3 tools/native_build.py desktop-widgets test
 python3 tools/stage.py desktop-widgets --root build/widget-stage
 ```
 
-The installed identity remains `widget-rail` / `com.clawos.AppletWidgetRail`.
+The installed identity remains `widget-rail` / `com.yuos.AppletWidgetRail`.
 The product's `just install` copies the actual `/usr/bin/claw-applet-widget-rail`
 ELF and generated desktop entry. `native_payload` preserves that ELF, resources
 and original GPL license inside the package-local App; source staging never

@@ -262,7 +262,7 @@ def test_native_plan_refuses_bad_explicit_manifest_entries(entry, tmp_path, monk
 
 @pytest.mark.parametrize("path", (
     "usr/share/polkit-1/rules.d/cosmic-settings.rules",
-    "usr/share/polkit-1/actions/com.clawos.Settings.Users.policy",
+    "usr/share/polkit-1/actions/com.yuos.Settings.Users.policy",
     "etc/claw/permissions.json",
 ))
 def test_settings_authority_payload_is_rejected_not_stripped_or_exempted(path, installer, tmp_path):

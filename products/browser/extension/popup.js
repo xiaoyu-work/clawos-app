@@ -1,4 +1,4 @@
-const CHAT_HOST = "com.clawos.browser_chat";
+const CHAT_HOST = "com.yuos.browser_chat";
 const MAX_MESSAGES = 20;
 const MAX_SAVED_TEXT = 16 * 1024;
 const elements = Object.fromEntries([

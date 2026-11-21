@@ -86,7 +86,7 @@ grant desktop transport, catalog/history access or activate resources. See
 [native payloads](../../docs/native-payloads.md).
 
 The same `claw-app-launcher-desktop` package replaces the former native
-identity and command. `com.clawos.Launcher` and the separate `launcher` App
+identity and command. `com.yuos.Launcher` and the separate `launcher` App
 stay unchanged. The new signed identity does not inherit grants or private
 App data from `cosmic-launcher`.
 

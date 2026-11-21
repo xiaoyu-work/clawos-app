@@ -742,7 +742,7 @@ impl App {
             async move {
                 tokio::task::spawn_blocking(move || {
                     let start = Instant::now();
-                    let applet_provide = AppProvide::Id("com.clawos.Applet".to_string());
+                    let applet_provide = AppProvide::Id("com.yuos.Applet".to_string());
                     let results =
                         Self::generic_search(&apps, &backends, |_id, info, _installed| {
                             if !matches!(info.kind, AppKind::DesktopApplication) {
@@ -804,7 +804,7 @@ impl App {
                 })
             }
             ExplorePage::MadeForCosmic => {
-                let provide = AppProvide::Id("com.clawos.Application".to_string());
+                let provide = AppProvide::Id("com.yuos.Application".to_string());
                 Self::generic_search(apps, backends, |_id, info, _installed| {
                     if !matches!(info.kind, AppKind::DesktopApplication) {
                         return None;
@@ -2071,7 +2071,7 @@ impl Application for App {
     type Message = Message;
 
     /// The unique application ID to supply to the window manager.
-    const APP_ID: &'static str = "com.clawos.Store";
+    const APP_ID: &'static str = "com.yuos.Store";
 
     fn core(&self) -> &Core {
         &self.core

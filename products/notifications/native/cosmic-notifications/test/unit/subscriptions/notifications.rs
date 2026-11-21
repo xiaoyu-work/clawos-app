@@ -75,8 +75,8 @@ async fn actual_descriptor_handoff_fans_out_legacy_and_generic_presentations() {
     let _panel_server = panel_server.unwrap();
     let panel_client = panel_client.unwrap();
     let socket = zbus::Proxy::new(
-        &panel_client, "com.clawos.NotificationsSocket",
-        "/com/clawos/NotificationsSocket", "com.clawos.NotificationsSocket",
+        &panel_client, "com.yuos.NotificationsSocket",
+        "/com/yuos/NotificationsSocket", "com.yuos.NotificationsSocket",
     ).await.unwrap();
     let fd: zbus::zvariant::OwnedFd = socket.call("GetFd", &()).await.unwrap();
     let stream = std::os::unix::net::UnixStream::from(std::os::fd::OwnedFd::from(fd));
@@ -91,8 +91,8 @@ async fn actual_descriptor_handoff_fans_out_legacy_and_generic_presentations() {
     ).unwrap().muted);
     let mut cards = presentation.receive_card().await.unwrap();
     let legacy = zbus::Proxy::new(
-        &applet_client, "com.clawos.NotificationsApplet",
-        "/com/clawos/NotificationsApplet", "com.clawos.NotificationsApplet",
+        &applet_client, "com.yuos.NotificationsApplet",
+        "/com/yuos/NotificationsApplet", "com.yuos.NotificationsApplet",
     ).await.unwrap();
     let mut legacy_cards = legacy.receive_signal("Notify").await.unwrap();
     let Input::AppletConn(connection) = rx.recv().await.unwrap() else { panic!("missing applet connection") };

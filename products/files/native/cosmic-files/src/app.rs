@@ -3255,7 +3255,7 @@ impl Application for App {
     type Message = Message;
 
     /// The unique application ID to supply to the window manager.
-    const APP_ID: &'static str = "com.clawos.Files";
+    const APP_ID: &'static str = "com.yuos.Files";
 
     fn core(&self) -> &Core {
         &self.core
@@ -4225,7 +4225,7 @@ impl Application for App {
                 {
                     // Use the dialog ID to make it float
                     settings.platform_specific.application_id =
-                        "com.clawos.FilesDialog".to_string();
+                        "com.yuos.FilesDialog".to_string();
                 }
 
                 let (id, command) = window::open(settings);
@@ -4254,7 +4254,7 @@ impl Application for App {
                         {
                             // Use the dialog ID to make it float
                             settings.platform_specific.application_id =
-                                "com.clawos.FilesDialog".to_string();
+                                "com.yuos.FilesDialog".to_string();
                         }
 
                         let (id, command) = window::open(settings);
@@ -5347,7 +5347,7 @@ impl Application for App {
                             {
                                 // Use the dialog ID to make it float
                                 settings.platform_specific.application_id =
-                                    "com.clawos.FilesDialog".to_string();
+                                    "com.yuos.FilesDialog".to_string();
                             }
 
                             let (id, command) = window::open(settings);
