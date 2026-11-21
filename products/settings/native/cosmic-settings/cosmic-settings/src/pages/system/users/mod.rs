@@ -4,7 +4,7 @@
 use crate::{
     pages,
     regional_settings::{Failure, Pending},
-    user_settings::{self, Change, Target, DEFAULT_ICON_FILE},
+    user_settings::{self, Change, Password, Target, DEFAULT_ICON_FILE},
 };
 use cosmic::{
     Apply, Element,
@@ -23,8 +23,8 @@ pub struct User {
     profile_icon: Option<icon::Handle>,
     full_name: String,
     username: String,
-    credential: String,
-    credential_confirm: String,
+    password: Password,
+    password_confirm: Password,
     full_name_edit: bool,
     username_edit: bool,
     is_admin: bool,
@@ -51,8 +51,7 @@ pub struct Page {
     dialog: Option<Dialog>,
     default_icon: icon::Handle,
     password_label: String,
-    credential_label: String,
-    credential_confirm_label: String,
+    password_confirm_label: String,
     username_label: String,
     fullname_label: String,
     pending: Pending,
@@ -71,8 +70,7 @@ impl Default for Page {
             dialog: None,
             default_icon: icon::from_path(PathBuf::from(DEFAULT_ICON_FILE)),
             password_label: crate::fl!("password"),
-            credential_label: crate::fl!("users-password-credential"),
-            credential_confirm_label: crate::fl!("users-password-credential-confirm"),
+            password_confirm_label: crate::fl!("password-confirm"),
             username_label: crate::fl!("username"),
             fullname_label: crate::fl!("full-name"),
             pending: Pending::default(),
@@ -89,7 +87,7 @@ pub enum Message {
     Edit(usize, EditorField, String),
     LoadPage(u64, (u64, bool), Result<Vec<User>, Failure>),
     Finished(u64, Result<(), Failure>),
-    NewUser(String, String, String, bool),
+    NewUser(String, String, Password, bool),
     None,
     Refresh,
     SelectProfileImage(u32),
@@ -158,23 +156,25 @@ impl page::Page<crate::pages::Message> for Page {
                         }),
                 );
 
-                let credential_input = widget::container(
-                    widget::text_input("", &user.credential)
-                        .label(&self.credential_label)
+                let password_input = widget::container(
+                    widget::text_input("", user.password.as_str())
+                        .label(&self.password_label)
+                        .password()
                         .on_input(|value| {
                             Message::Dialog(Some(Dialog::AddNewUser(User {
-                                credential: value,
+                                password: Password::new(value),
                                 ..user.clone()
                             })))
                         }),
                 );
 
-                let credential_confirm_input = widget::container(
-                    widget::text_input("", &user.credential_confirm)
-                        .label(&self.credential_confirm_label)
+                let password_confirm_input = widget::container(
+                    widget::text_input("", user.password_confirm.as_str())
+                        .label(&self.password_confirm_label)
+                        .password()
                         .on_input(|value| {
                             Message::Dialog(Some(Dialog::AddNewUser(User {
-                                credential_confirm: value,
+                                password_confirm: Password::new(value),
                                 ..user.clone()
                             })))
                         }),
@@ -192,25 +192,22 @@ impl page::Page<crate::pages::Message> for Page {
                 let complete_maybe = if !username_valid && !user.username.is_empty() {
                     validation_msg = fl!("invalid-username");
                     None
-                } else if user.credential != user.credential_confirm
-                    && !user.credential.is_empty()
-                    && !user.credential_confirm.is_empty()
+                } else if user.password != user.password_confirm
+                    && !user.password_confirm.as_str().is_empty()
                 {
                     validation_msg = fl!("password-mismatch");
                     None
-                } else if user.full_name.is_empty()
-                    || user.username.is_empty()
-                    || !user_settings::valid_credential(&user.credential)
+                } else if !username_valid
+                    || !user.password.valid()
                     || !user_settings::valid_full_name(&user.full_name)
-                    || user.credential_confirm.is_empty()
+                    || user.password_confirm.as_str().is_empty()
                 {
-                    validation_msg = fl!("users-password-credential-hint");
                     None
                 } else {
                     Some(Message::NewUser(
                         user.username.clone(),
                         user.full_name.clone(),
-                        user.credential.clone(),
+                        user.password.clone(),
                         user.is_admin,
                     ))
                 };
@@ -228,9 +225,9 @@ impl page::Page<crate::pages::Message> for Page {
                         widget::ListColumn::default()
                             .add(full_name_input)
                             .add(username_input)
-                            .add(credential_input)
-                            .add(credential_confirm_input)
-                            .add(text::body(fl!("users-password-credential-hint")))
+                            .add(password_input)
+                            .add(password_confirm_input)
+                            .add(text::body(fl!("users-password-admin-hint")))
                             .add(
                                 row::with_capacity(3)
                                     .push(
@@ -254,39 +251,37 @@ impl page::Page<crate::pages::Message> for Page {
             }
 
             Dialog::UpdatePassword(user) => {
-                let credential_input = widget::container(
-                    widget::text_input("", &user.credential)
-                        .label(&self.credential_label)
+                let password_input = widget::container(
+                    widget::text_input("", user.password.as_str())
+                        .label(&self.password_label)
+                        .password()
                         .on_input(|value| {
                             Message::Dialog(Some(Dialog::UpdatePassword(User {
-                                credential: value,
+                                password: Password::new(value),
                                 ..user.clone()
                             })))
                         }),
                 );
 
-                let credential_confirm_input = widget::container(
-                    widget::text_input("", &user.credential_confirm)
-                        .label(&self.credential_confirm_label)
+                let password_confirm_input = widget::container(
+                    widget::text_input("", user.password_confirm.as_str())
+                        .label(&self.password_confirm_label)
+                        .password()
                         .on_input(|value| {
                             Message::Dialog(Some(Dialog::UpdatePassword(User {
-                                credential_confirm: value,
+                                password_confirm: Password::new(value),
                                 ..user.clone()
                             })))
                         }),
                 );
 
                 let mut validation_msg = String::new();
-                let complete_maybe = if user.credential != user.credential_confirm
-                    && !user.credential.is_empty()
-                    && !user.credential_confirm.is_empty()
+                let complete_maybe = if user.password != user.password_confirm
+                    && !user.password_confirm.as_str().is_empty()
                 {
                     validation_msg = fl!("password-mismatch");
                     None
-                } else if !user_settings::valid_credential(&user.credential)
-                    || user.credential_confirm.is_empty()
-                {
-                    validation_msg = fl!("users-password-credential-hint");
+                } else if !user.password.valid() || user.password_confirm.as_str().is_empty() {
                     None
                 } else {
                     Some(Message::SaveNewPassword(user.clone()))
@@ -303,9 +298,9 @@ impl page::Page<crate::pages::Message> for Page {
                     .title(fl!("change-password"))
                     .control(
                         widget::ListColumn::default()
-                            .add(credential_input)
-                            .add(credential_confirm_input)
-                            .add(text::body(fl!("users-password-credential-hint"))),
+                            .add(password_input)
+                            .add(password_confirm_input)
+                            .add(text::body(fl!("users-password-admin-hint"))),
                     )
                     .primary_action(save_button)
                     .secondary_action(cancel_button)
@@ -336,6 +331,7 @@ impl page::Page<crate::pages::Message> for Page {
     }
 
     fn on_leave(&mut self) -> cosmic::Task<crate::pages::Message> {
+        self.dialog = None;
         if let Some(handle) = self.on_enter_handle.take() {
             handle.abort();
         }
@@ -523,7 +519,7 @@ impl Page {
             Message::SaveNewPassword(user) => {
                 self.dialog = None;
                 if let Some(target) = self.target(user.id) {
-                    return self.start(Change::Password(target, user.credential));
+                    return self.start(Change::Password(target, user.password));
                 }
             }
 
@@ -548,12 +544,12 @@ impl Page {
                 self.dialog = dialog;
             }
 
-            Message::NewUser(username, full_name, credential, is_admin) => {
+            Message::NewUser(username, full_name, password, is_admin) => {
                 self.dialog = None;
                 return self.start(Change::Create {
                     user: username,
                     full_name,
-                    credential,
+                    password,
                     administrator: is_admin,
                 });
             }

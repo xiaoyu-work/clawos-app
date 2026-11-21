@@ -106,7 +106,7 @@ decisions remain OS-owned. These controls are not exposed through MCP.
 | `native/cosmic-settings/cosmic-settings/src/mcp.rs` | Static page catalog/search and fixed OS Settings activation |
 | `native/cosmic-settings/cosmic-settings/src/permissions.rs`, `src/pages/applications/permissions.rs` | OS permission client and Applications UI for lasting owner choices |
 | `native/cosmic-settings/cosmic-settings/src/regional_settings.rs`, `src/pages/time/region.rs`, `src/pages/system/about.rs` | Public SDK regional client and pending/error/partial-result UI; locale, owner language and static hostname setters remain OS-owned |
-| `native/cosmic-settings/cosmic-settings/src/user_settings.rs`, `src/pages/system/users/mod.rs` | Fixed-binary public SDK User client; protected local account/UID targets, credential references, exact icon-source paths and explicit partial outcomes |
+| `native/cosmic-settings/cosmic-settings/src/user_settings.rs`, `src/pages/system/users/mod.rs` | Local Users UI with protected UID targets, private password input, and exact icon-source paths |
 | `native/cosmic-settings/subscriptions/network-manager/`, `cosmic-settings/src/pages/networking/` | Typed metadata/profile clients, original wired/Wi-Fi/VPN presentations, independent credential-reference use/export and no native bus/secret-agent/management executable |
 | `native/cosmic-settings/subscriptions/bluetooth/`, `cosmic-settings/src/pages/bluetooth/` | Root metadata/control, finite scans, exact pairing correlations and independent exact-unit startup |
 | `native/cosmic-settings/cosmic-settings/src/pages/power/backend/`, `src/subscription/daytime.rs` | Confirmed Root power/profile state and opt-in city-level solar scheduling; no raw UPower/location portal |
@@ -238,9 +238,8 @@ unavailable, stale and ambiguous outcomes remain visible; separate system and
 owner-language writes never imply rollback. Local preference lists remain
 App-owned, and partial clock-format persistence errors are reported separately.
 
-The Users page now uses only the same fixed-binary SDK transport to
-`cos __users`; it neither preflights App-local policy before privileged D-Bus
-nor retries a denied operation through polkit. `status` and the closed
+The Users page uses the fixed-binary SDK transport to `cos __users` for
+metadata and non-password edits. `status` and the closed
 `show-user --user NAME --uid UID` require `sys.observe:identities`.
 `rename-user --new-name`, `set-full-name --full-name`, `set-account-type
 --account-type standard|administrator` and `set-icon --icon` retain
@@ -256,11 +255,12 @@ opens it under the authenticated owner's filesystem identity without symlink
 traversal, rejects protected stores, hardlinks and non-regular/oversized files,
 and hands only a bounded sealed snapshot to AccountsService. The UI explicitly
 requires an image of at most 1 MiB: it no longer silently resizes/copies to an
-unrelated temporary path with different authority. Password input is an existing
-OS `namespace/name` credential reference, not plaintext or an App-generated hash.
-The existing `set-password` route retains its distinct exact `secret.read`.
-Account creation uses existing OS defaults and then separate password, type
-and default-icon operations; the default icon also needs exact `fs.read` on
+unrelated temporary path with different authority. Add User and Change Password
+send one bounded password request on stdin through the private, OS-started
+Settings channel. Claw OS authenticates a local administrator separately and
+handles the system password policy. Passwords are not placed in arguments, stored
+in the vault, or returned in results. The default icon is only presentation;
+changing it still needs exact `fs.read` on
 `/usr/share/pixmaps/faces/pop-robot.png`. A failed later step reports partial
 creation, stops immediately and never deletes, rolls back or retries the account.
 Results are bound to their requested action/target/value; stale loads cannot

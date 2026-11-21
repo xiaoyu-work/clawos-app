@@ -82,6 +82,7 @@ no-networks = 未找到任何网络。
 no-vpn = 没有可用的 VPN 连接。
 password = 密码
 password-confirm = 确认密码
+users-password-admin-hint = 在这里输入该账号的密码。Claw OS 会另外要求管理员验证。
 remove = 移除
 settings = 设置
 ai-search-no-results = 没有匹配 “{ $query }” 的设置页面。

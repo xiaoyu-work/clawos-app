@@ -25,11 +25,6 @@
         "why": {"en": "Apply explicitly requested account changes through the OS; the Settings window can open without this permission."}
       },
       {
-        "verb": "secret.read",
-        "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "identity/*"}},
-        "why": {"en": "Ask Root to use an explicitly entered identity/name credential for an account password change. This is separate from identity management and Settings never receives the vault password."}
-      },
-      {
         "verb": "sys.permissions",
         "scope": {"kind": "fixed", "scope": {"kind": "name", "value": "manage"}},
         "why": {"en": "Inspect and request or revoke App permissions for this owner; protected OS approval remains separate."}

@@ -2,7 +2,7 @@
 
 use crate::regional_settings::Failure;
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::{Value, json};
 
 pub const DEFAULT_ICON_FILE: &str = "/usr/share/pixmaps/faces/pop-robot.png";
 
@@ -12,18 +12,41 @@ pub struct Target {
     pub uid: u32,
 }
 
+#[derive(Clone, Default, PartialEq, Eq)]
+pub struct Password(String);
+
+impl Password {
+    pub fn new(value: String) -> Self {
+        Self(value)
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+
+    pub fn valid(&self) -> bool {
+        !self.0.is_empty() && self.0.len() <= 256 && !self.0.chars().any(char::is_control)
+    }
+}
+
+impl std::fmt::Debug for Password {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Password([redacted])")
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Change {
     FullName(Target, String),
     Rename(Target, String),
     Icon(Target, String),
     AccountType(Target, bool),
-    Password(Target, String),
+    Password(Target, Password),
     Delete(Target),
     Create {
         user: String,
         full_name: String,
-        credential: String,
+        password: Password,
         administrator: bool,
     },
 }
@@ -81,23 +104,6 @@ pub(crate) fn valid_name(name: &str) -> bool {
         })
 }
 
-pub(crate) fn valid_credential(reference: &str) -> bool {
-    if reference.len() > 256 {
-        return false;
-    }
-    let Some((namespace, name)) = reference.split_once('/') else {
-        return false;
-    };
-    [namespace, name].iter().all(|part| {
-        !part.is_empty()
-            && part.len() <= 255
-            && !part.starts_with('-')
-            && part.bytes().all(|byte| {
-                byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-' | b'.' | b':')
-            })
-    })
-}
-
 pub(crate) fn valid_full_name(name: &str) -> bool {
     name.len() <= 128 && !name.contains([':', ',']) && !name.chars().any(char::is_control)
 }
@@ -145,27 +151,7 @@ impl Change {
                     .into(),
                 )),
             ),
-            Self::Password(target, credential) if valid_credential(credential) => (
-                "set-password",
-                target,
-                Some(("--credential", credential.clone())),
-            ),
             Self::Delete(target) => ("delete-user", target, None),
-            Self::Create {
-                user,
-                full_name,
-                credential,
-                ..
-            } if valid_name(user) && valid_full_name(full_name) && valid_credential(credential) => {
-                return Ok(vec![
-                    "__users".into(),
-                    "create-user".into(),
-                    "--user".into(),
-                    user.clone(),
-                    "--full-name".into(),
-                    full_name.clone(),
-                ]);
-            }
             _ => return Err(invalid("invalid local account change")),
         };
         let mut args = target_args(action, target)?;
@@ -176,12 +162,55 @@ impl Change {
         }
         Ok(args)
     }
+
+    pub(crate) fn account_request(&self) -> Result<Option<AccountRequest<'_>>, Failure> {
+        let (action, user, uid, full_name, administrator, password) = match self {
+            Self::Create { user, full_name, administrator, password } => {
+                if !valid_full_name(full_name) {
+                    return Err(invalid("invalid full name"));
+                }
+                ("create-user", user.as_str(), None, Some(full_name.as_str()), Some(*administrator), password)
+            }
+            Self::Password(target, password) if (1000..60000).contains(&target.uid) =>
+                ("set-user-password", target.user.as_str(), Some(target.uid), None, None, password),
+            Self::Password(..) => return Err(invalid("invalid password reset target")),
+            _ => return Ok(None),
+        };
+        if !valid_name(user) || !password.valid() {
+            return Err(invalid("invalid username or password"));
+        }
+        let input = serde_json::to_vec(&json!({
+            "action": action,
+            "account": {
+                "user": user, "uid": uid, "full_name": full_name,
+                "administrator": administrator, "password": password.as_str(),
+            },
+        })).map_err(|_| invalid("could not encode local account change"))?;
+        Ok(Some(AccountRequest { action, user, uid, input }))
+    }
+}
+
+pub(crate) struct AccountRequest<'a> {
+    pub action: &'static str,
+    pub user: &'a str,
+    pub uid: Option<u32>,
+    pub input: Vec<u8>,
+}
+
+impl Drop for AccountRequest<'_> {
+    fn drop(&mut self) {
+        self.input.fill(0);
+    }
 }
 
 async fn call(args: Vec<String>) -> Result<Value, Failure> {
     claw_os_sdk::cos_call_json_async_with_binary("/usr/local/bin/cos", "users", "control", args)
         .await
-        .map_err(|error| match error {
+        .map_err(bridge_failure)
+}
+
+fn bridge_failure(error: claw_os_sdk::BridgeError) -> Failure {
+    match error {
             claw_os_sdk::BridgeError::AppError { code, message, .. }
                 if code == "PERMISSION_DENIED" =>
             {
@@ -196,7 +225,7 @@ async fn call(args: Vec<String>) -> Result<Value, Failure> {
                 Failure::Unavailable(error.to_string())
             }
             other => Failure::Unconfirmed(other.to_string()),
-        })
+    }
 }
 
 fn reply(action: &str, target: &Target, value: Value, status: &str) -> Result<Reply, Failure> {
@@ -273,7 +302,7 @@ pub(crate) fn decode(change: &Change, value: Value) -> Result<(), Failure> {
                 .into(),
             ),
         ),
-        Change::Password(target, _) | Change::Delete(target) => {
+        Change::Delete(target) => {
             if value.get("action").and_then(Value::as_str) != Some(args[1].as_str())
                 || value.get("user").and_then(Value::as_str) != Some(target.user.as_str())
                 || value.get("uid").and_then(Value::as_u64) != Some(u64::from(target.uid))
@@ -284,14 +313,7 @@ pub(crate) fn decode(change: &Change, value: Value) -> Result<(), Failure> {
                     "OS did not confirm the account target/action".into(),
                 ));
             }
-            let record = &value["state"]["record"];
-            let confirmed = if matches!(change, Change::Delete(_)) {
-                value["state"]["present"] == false && record.is_null()
-            } else {
-                value["state"]["present"] == true
-                    && record["name"] == target.user
-                    && record["uid"] == target.uid
-            };
+            let confirmed = value["state"]["present"] == false && value["state"]["record"].is_null();
             return if confirmed {
                 Ok(())
             } else {
@@ -300,9 +322,7 @@ pub(crate) fn decode(change: &Change, value: Value) -> Result<(), Failure> {
                 ))
             };
         }
-        Change::Create { .. } => {
-            return Err(invalid("creation requires its separate bounded sequence"));
-        }
+        Change::Create { .. } | Change::Password(..) => return Err(invalid("use the private account request")),
     };
     let response = reply(&args[1], target, value, "applied")?;
     if response.value != expected {
@@ -312,69 +332,26 @@ pub(crate) fn decode(change: &Change, value: Value) -> Result<(), Failure> {
     }
     Ok(())
 }
-
 pub async fn apply(change: Change) -> Result<(), Failure> {
-    apply_with(change, call).await
+    if let Some(request) = change.account_request()? {
+        let value = claw_os_sdk::cos_call_json_async_with_stdin_binary(
+            "/usr/local/bin/cos", "users", "control",
+            ["__system-settings", "--request-stdin"], &request.input,
+        ).await.map_err(bridge_failure)?;
+        return check_account_reply(request.action, request.user, request.uid, value);
+    }
+    let value = call(change.argv()?).await?;
+    decode(&change, value)
 }
 
-pub(crate) async fn apply_with<F, T>(change: Change, mut transport: F) -> Result<(), Failure>
-where
-    F: FnMut(Vec<String>) -> T,
-    T: std::future::Future<Output = Result<Value, Failure>>,
-{
-    let args = change.argv()?;
-    if let Change::Create {
-        user,
-        credential,
-        administrator,
-        ..
-    } = &change
+pub(crate) fn check_account_reply(action: &str, user: &str, expected_uid: Option<u32>, value: Value) -> Result<(), Failure> {
+    let uid = value["uid"].as_u64()
+        .and_then(|value| u32::try_from(value).ok())
+        .filter(|uid| (1000..60000).contains(uid));
+    if value["action"] != action || value["status"] != "applied" || value["user"] != user
+        || uid.is_none() || expected_uid.is_some_and(|expected| uid != Some(expected))
     {
-        let value = transport(args).await?;
-        let record = &value["state"]["record"];
-        let uid = record["uid"]
-            .as_u64()
-            .and_then(|uid| u32::try_from(uid).ok())
-            .filter(|uid| (1000..=60000).contains(uid));
-        if value["action"] != "create-user"
-            || value["state"]["kind"] != "user"
-            || value["state"]["present"] != true
-            || record["name"] != *user
-            || uid.is_none()
-        {
-            return Err(Failure::Unconfirmed("account creation may have applied without a matching confirmation; refresh before retrying".into()));
-        }
-        let target = Target {
-            user: user.clone(),
-            uid: uid.unwrap(),
-        };
-        // Each OS mutation has its own grants and outcome. Never delete or retry
-        // a partly configured account on an ambiguous or denied response.
-        for step in [
-            Change::Password(target.clone(), credential.clone()),
-            Change::AccountType(target.clone(), *administrator),
-            Change::Icon(target, DEFAULT_ICON_FILE.into()),
-        ] {
-            let args = step.argv()?;
-            let stage = args[1].clone();
-            let result = match transport(args).await {
-                Ok(value) => decode(&step, value),
-                Err(error) => Err(error),
-            };
-            if let Err(error) = result {
-                let detail = match error {
-                    Failure::Denied(detail)
-                    | Failure::Review(detail)
-                    | Failure::Unavailable(detail)
-                    | Failure::Unconfirmed(detail) => detail,
-                };
-                return Err(Failure::Unconfirmed(format!(
-                    "The account was created, but {stage} was not confirmed. Earlier steps may have applied; no rollback was attempted. Refresh before retrying. {detail}",
-                )));
-            }
-        }
-        return Ok(());
+        return Err(Failure::Unconfirmed("OS did not confirm the local account change; refresh Users".into()));
     }
-    let value = transport(args).await?;
-    decode(&change, value)
+    Ok(())
 }

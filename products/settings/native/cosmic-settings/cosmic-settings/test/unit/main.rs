@@ -123,10 +123,7 @@ fn native_gui_argv_preserves_non_utf8_theme_paths() {
 
 #[cfg(feature = "page-users")]
 mod users_service {
-    use crate::{
-        regional_settings::Failure,
-        user_settings::{self, Change, Target},
-    };
+    use crate::user_settings::{self, Change, Password, Target};
     use serde_json::{Value, json};
 
     fn target() -> Target {
@@ -176,12 +173,6 @@ mod users_service {
                 "--account-type",
                 "standard",
             ),
-            (
-                Change::Password(target(), "default/fixture-password".into()),
-                "set-password",
-                "--credential",
-                "default/fixture-password",
-            ),
         ] {
             assert_eq!(
                 change.argv().unwrap(),
@@ -208,24 +199,6 @@ mod users_service {
                 "1001",
                 "--confirm",
             ]
-        );
-        assert!(
-            Change::Password(target(), "inline password".into())
-                .argv()
-                .is_err()
-        );
-        let bounded = format!("{}/{}", "n".repeat(127), "k".repeat(128));
-        assert!(Change::Password(target(), bounded.clone()).argv().is_ok());
-        assert!(Change::Password(target(), format!("{bounded}x")).argv().is_err());
-        assert!(
-            Change::Create {
-                user: "fixture_user".into(),
-                full_name: "Fixture User".into(),
-                credential: "plaintext-is-not-a-reference".into(),
-                administrator: true,
-            }
-            .argv()
-            .is_err()
         );
     }
 
@@ -260,75 +233,33 @@ mod users_service {
             )
             .is_err()
         );
-        let password = Change::Password(target(), "default/fixture-password".into());
+        let password = Change::Password(target(), Password::new("fixture-password".into()));
+        let request = password.account_request().unwrap().unwrap();
         let valid = json!({
-            "action":"set-password","user":"fixture_user","uid":1001,
-            "state":{"kind":"user","present":true,"record":{"name":"fixture_user","uid":1001}},
+            "action":"set-user-password","status":"applied","user":"fixture_user","uid":1001,
         });
-        user_settings::decode(&password, valid.clone()).unwrap();
+        user_settings::check_account_reply(request.action, request.user, request.uid, valid.clone()).unwrap();
         let mut bad = valid;
-        bad["state"]["record"]["uid"] = json!(1002);
-        assert!(user_settings::decode(&password, bad).is_err());
+        bad["uid"] = json!(1002);
+        assert!(user_settings::check_account_reply(request.action, request.user, request.uid, bad).is_err());
     }
 
     #[test]
-    fn users_service_creation_stops_at_the_first_unconfirmed_step_without_retry_or_delete() {
-        use std::{cell::RefCell, collections::VecDeque, future::ready};
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .build()
-            .unwrap();
-        let calls = RefCell::new(Vec::new());
-        let responses = RefCell::new(VecDeque::from([
-            Ok(json!({
-                "action":"create-user","state":{"kind":"user","present":true,"record":{"name":"fixture_user","uid":1001}},
-            })),
-            Err(Failure::Denied(
-                "missing exact password credential grant".into(),
-            )),
-        ]));
-        let result = runtime.block_on(user_settings::apply_with(
-            Change::Create {
-                user: "fixture_user".into(),
-                full_name: "Fixture User".into(),
-                credential: "default/fixture-password".into(),
-                administrator: true,
-            },
-            |args| {
-                calls.borrow_mut().push(args);
-                ready(
-                    responses
-                        .borrow_mut()
-                        .pop_front()
-                        .expect("unexpected retry/fallback"),
-                )
-            },
-        ));
-        let Err(Failure::Unconfirmed(message)) = result else {
-            panic!("partial creation was reported successful")
+    fn users_service_creation_uses_one_private_request_and_no_password_argument() {
+        let change = Change::Create {
+            user: "fixture_user".into(),
+            full_name: "Fixture User".into(),
+            password: Password::new("fixture password".into()),
+            administrator: false,
         };
-        assert!(message.contains("account was created"));
-        assert!(message.contains("set-password"));
-        assert!(message.contains("no rollback"));
-        assert_eq!(
-            calls
-                .borrow()
-                .iter()
-                .map(|args| args[1].as_str())
-                .collect::<Vec<_>>(),
-            ["create-user", "set-password",]
-        );
-        assert_eq!(
-            calls.borrow()[1],
-            [
-                "__users",
-                "set-password",
-                "--user",
-                "fixture_user",
-                "--uid",
-                "1001",
-                "--credential",
-                "default/fixture-password",
-            ]
-        );
+        assert!(change.argv().is_err());
+        assert!(!format!("{change:?}").contains("fixture password"));
+        let request = change.account_request().unwrap().unwrap();
+        let body: Value = serde_json::from_slice(&request.input).unwrap();
+        assert_eq!(request.action, "create-user");
+        assert_eq!(body["account"]["password"], "fixture password");
+        assert_eq!(body["account"]["administrator"], false);
+        assert!(Change::Password(target(), Password::new("two\nlines".into()))
+            .account_request().is_err());
     }
 }
