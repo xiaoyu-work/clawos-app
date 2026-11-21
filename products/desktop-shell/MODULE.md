@@ -109,7 +109,9 @@ uses the Host's startup projection in the order of `desktop.optional_needs`
 in the signed manifest. This affects presentation only: Root still checks
 live authorization for every request.
 
-The unlocked session's Logout action exits this shell. The authenticated OS
+**Log out / switch user** asks the user to save work before confirming logout.
+Confirming exits this shell and returns to the account picker; it does not
+keep a second active desktop. The authenticated OS
 session subscriber observes that exit and lets PAM retire the exact display
 session. The App does not need authority to terminate a Linux user.
 

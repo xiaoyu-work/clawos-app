@@ -93,7 +93,8 @@ StyledWindow {
                             control: Tr.tr("Control Center"),
                             notifications: Tr.tr("Notifications"),
                             overview: Tr.tr("Desktop overview"),
-                            power: Tr.tr("Power")
+                            power: Tr.tr("Power"),
+                            logout: Tr.tr("Log out to switch users?")
                         })[root.page] ?? ""
                     }
 
@@ -249,8 +250,31 @@ StyledWindow {
                         }
                     }
                     QuietButton {
-                        text: Tr.tr("Log out")
-                        onClicked: Qt.quit()
+                        text: Tr.tr("Log out / switch user")
+                        onClicked: root.page = "logout"
+                    }
+                }
+
+                ColumnLayout {
+                    visible: root.page === "logout"
+                    Layout.fillWidth: true
+
+                    Text {
+                        Layout.fillWidth: true
+                        color: Quiet.dim
+                        wrapMode: Text.WordWrap
+                        text: Tr.tr("Save your work first. Logging out closes your apps and returns to the account picker.")
+                    }
+
+                    RowLayout {
+                        QuietButton {
+                            text: Tr.tr("Cancel")
+                            onClicked: root.page = "power"
+                        }
+                        QuietButton {
+                            text: Tr.tr("Log out")
+                            onClicked: Qt.quit()
+                        }
                     }
                 }
 
